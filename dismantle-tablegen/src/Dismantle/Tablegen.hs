@@ -25,7 +25,10 @@ p :: Parser Records
 p = do
   header "Classes"
   klasses <- P.many parseClass
+  header "Defs"
+  defs <- P.many parseDef
   return Records { tblClasses = klasses
+                 , tblDefs = defs
                  }
 
 parseClass :: Parser ClassDecl
@@ -43,6 +46,19 @@ parseClass = do
                    , classDecls = decls
                    }
 
+parseDef :: Parser Def
+parseDef = do
+  _ <- symbol "class"
+  n <- name
+  _ <- symbol "{"
+  md <- parseMetadataComment
+  decls <- P.many parseNamedDeclItem
+  _ <- symbol "}"
+  return Def { defName = n
+             , defMetadata = md
+             , defDecls = decls
+             }
+
 parseNamedDeclItem :: Parser (Named DeclItem)
 parseNamedDeclItem = do
   t <- lexeme parseDeclType
@@ -53,7 +69,8 @@ parseNamedDeclItem = do
   return $ Named n di
 
 parseDeclType :: Parser DeclType
-parseDeclType = P.choice [ TGBit <$ symbol "bit"
+parseDeclType = P.choice [ TGBits <$> (symbol "bits<" *> parseInt) <* symbol ">"
+                         , TGBit <$ symbol "bit"
                          , TGString <$ symbol "string"
                          , TGInt <$ symbol "int"
                          , TGDag <$ symbol "dag"
@@ -61,8 +78,18 @@ parseDeclType = P.choice [ TGBit <$ symbol "bit"
                          , TGFieldBits <$> (symbol "field" >> symbol "bits<" >> (parseInt <* symbol ">"))
                          ]
 
+-- | Parse a decl item.
+--
+-- We try to parse the unknown value (?) first, as it fails fast and
+-- should be an unambiguous parse.
 parseDeclItem :: DeclType -> Parser DeclItem
-parseDeclItem dt =
+parseDeclItem dt = parseUnknownDeclItem dt <|> parseKnownDeclItem dt
+
+parseUnknownDeclItem :: DeclType -> Parser DeclItem
+parseUnknownDeclItem dt = UnknownItem dt <$ symbol "?"
+
+parseKnownDeclItem :: DeclType -> Parser DeclItem
+parseKnownDeclItem dt =
   case dt of
     TGBit -> BitItem <$> P.choice [ False <$ lexeme (P.char '0')
                                   , True <$ lexeme (P.char '1')
@@ -70,6 +97,7 @@ parseDeclItem dt =
     TGString -> P.choice [ StringItem <$> lexeme parseStringLiteral
                          , StringExprItem <$> undefined
                          ]
+    TGInt -> IntItem <$> lexeme parseInt
 
 parseStringLiteral :: Parser String
 parseStringLiteral = symbol "\"" >> P.manyTill P.anyChar (symbol "\"")
@@ -79,7 +107,7 @@ parseMetadataComment = do
   (symbol "//" *> P.some parseMetadata) <|> pure []
 
 parseMetadata :: Parser Metadata
-parseMetadata = undefined
+parseMetadata = name
 
 parseClassParameters :: Parser [ClassParameter]
 parseClassParameters =

@@ -1,6 +1,7 @@
 module Dismantle.Tablegen.Types (
   Records(..),
   ClassDecl(..),
+  Def(..),
   ClassParameter(..),
   Metadata(..),
   Named(..),
@@ -10,7 +11,7 @@ module Dismantle.Tablegen.Types (
 
 data Records =
   Records { tblClasses :: [ClassDecl]
-          , tblDefs :: [Int]
+          , tblDefs :: [Def]
           }
   deriving (Show)
 
@@ -20,6 +21,13 @@ data ClassDecl =
             , classDeclMetadata :: [Metadata]
             , classDecls :: [Named DeclItem]
             }
+  deriving (Show)
+
+data Def =
+  Def { defName :: String
+      , defMetadata :: [Metadata]
+      , defDecls :: [Named DeclItem]
+      }
   deriving (Show)
 
 data ClassParameter =
@@ -35,7 +43,8 @@ data Named a =
   deriving (Show)
 
 data DeclItem =
-  BitItem Bool
+  BitItem !Bool
+  | IntItem !Int
   | StringItem String
   | StringExprItem String
   | UnknownItem DeclType
@@ -46,10 +55,11 @@ data DeclItem =
 --   deriving (Show)
 
 data DeclType = TGBit
+              | TGBits !Int
               | TGString
               | TGInt
               | TGDag
-              | TGFieldBits Int
+              | TGFieldBits !Int
               | TGList DeclType
   deriving (Show)
 
