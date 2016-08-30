@@ -1,0 +1,24 @@
+name:                dismantle-tablegen
+version:             0.1.0.0
+synopsis:            A parser and interface to LLVM tablegen
+-- description:         
+license:             BSD3
+license-file:        LICENSE
+author:              Tristan Ravitch
+maintainer:          tristan@nochair.net
+-- copyright:           
+category:            Compiler
+build-type:          Simple
+extra-source-files:  ChangeLog.md
+cabal-version:       >=1.10
+
+library
+  exposed-modules: Dismantle.Tablegen
+  other-modules: Dismantle.Tablegen.Types
+  -- other-extensions:    
+  build-depends:       base >=4.8 && <4.10,
+                       text >= 1 && < 2,
+                       megaparsec >= 5 && < 6
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  ghc-options: -Wall
