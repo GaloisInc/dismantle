@@ -91,13 +91,34 @@ parseUnknownDeclItem dt = UnknownItem dt <$ symbol "?"
 parseKnownDeclItem :: DeclType -> Parser DeclItem
 parseKnownDeclItem dt =
   case dt of
-    TGBit -> BitItem <$> P.choice [ False <$ lexeme (P.char '0')
-                                  , True <$ lexeme (P.char '1')
-                                  ]
+    TGBit -> BitItem <$> parseBit
     TGString -> P.choice [ StringItem <$> lexeme parseStringLiteral
                          , StringExprItem <$> undefined
                          ]
     TGInt -> IntItem <$> lexeme parseInt
+    TGFieldBits _ -> FieldBits <$> (symbol "{" *> P.sepBy1 (lexeme parseFieldItem) (symbol ",") <* symbol "}")
+    TGDag -> DagItem <$ P.skipMany (P.satisfy (/= ';'))
+    TGBits _ ->
+      P.choice [ ExpectedBits <$> (symbol "{" *> P.sepBy1 (lexeme parseBit) (symbol ",") <* symbol "}")
+               , ExpectedUnknownBits <$> (symbol "{" *> P.sepBy1 (lexeme parseUnknownBit) (symbol ",") <* symbol "}")
+               ]
+
+parseBit :: Parser Bool
+parseBit = P.choice [ False <$ symbol "0"
+                    , True <$ symbol "1"
+                    ]
+
+parseUnknownBit :: Parser (Maybe Bool)
+parseUnknownBit = P.choice [ Just <$> parseBit
+                           , Nothing <$ symbol "?"
+                           ]
+
+parseFieldItem :: Parser FieldItem
+parseFieldItem =
+  P.choice [ ExpectedBit False <$ P.char '0'
+           , ExpectedBit True <$ P.char '1'
+           , FieldBit <$> name <*> (symbol "{" *> parseInt <* symbol "}")
+           ]
 
 parseStringLiteral :: Parser String
 parseStringLiteral = symbol "\"" >> P.manyTill P.anyChar (symbol "\"")
@@ -107,7 +128,7 @@ parseMetadataComment = do
   (symbol "//" *> P.some parseMetadata) <|> pure []
 
 parseMetadata :: Parser Metadata
-parseMetadata = name
+parseMetadata = Metadata <$> name
 
 parseClassParameters :: Parser [ClassParameter]
 parseClassParameters =

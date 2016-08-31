@@ -5,6 +5,7 @@ module Dismantle.Tablegen.Types (
   ClassParameter(..),
   Metadata(..),
   Named(..),
+  FieldItem(..),
   DeclItem(..),
   DeclType(..)
   ) where
@@ -35,7 +36,7 @@ data ClassParameter =
   deriving (Show)
 
 data Metadata =
-  Metadata
+  Metadata String
   deriving (Show)
 
 data Named a =
@@ -47,12 +48,16 @@ data DeclItem =
   | IntItem !Int
   | StringItem String
   | StringExprItem String
+  | FieldBits [FieldItem]
+  | ExpectedBits [Bool]
+  | ExpectedUnknownBits [Maybe Bool]
+  | DagItem
   | UnknownItem DeclType
   deriving (Show)
 
--- data DeclItem =
---   DeclItem DeclType String DeclValue
---   deriving (Show)
+data FieldItem = ExpectedBit Bool
+               | FieldBit String Int
+               deriving (Show)
 
 data DeclType = TGBit
               | TGBits !Int
