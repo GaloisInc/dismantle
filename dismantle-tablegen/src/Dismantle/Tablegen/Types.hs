@@ -52,6 +52,8 @@ data DeclItem =
   | ExpectedBits [Bool]
   | ExpectedUnknownBits [Maybe Bool]
   | DagItem
+  | ListItem [DeclItem]
+  | ClassItem String
   | UnknownItem DeclType
   deriving (Show)
 
@@ -66,5 +68,6 @@ data DeclType = TGBit
               | TGDag
               | TGFieldBits !Int
               | TGList DeclType
+              | TGClass String
   deriving (Show)
 

@@ -6,20 +6,37 @@ module Dismantle.Tablegen (
 
 import Control.Applicative
 import Control.Monad ( void )
+import qualified Control.Monad.State.Strict as St
+import qualified Data.Map.Strict as M
 import Data.Text.Lazy ( Text )
 import Text.Megaparsec as P
-import Text.Megaparsec.Text.Lazy ( Parser )
 import qualified Text.Megaparsec.Lexer as L
 
 import Prelude
 
 import Dismantle.Tablegen.Types
 
+data TGState = TGState { internTable :: M.Map String String
+                       }
+
+internString :: String -> Parser String
+internString s = do
+  it <- St.gets internTable
+  case M.lookup s it of
+    Just s' -> return s'
+    Nothing -> do
+      St.modify' (\st -> st { internTable = M.insert s s (internTable st) })
+      return s
+
+type Parser = P.ParsecT P.Dec Text (St.State TGState)
+
 header :: String -> Parser ()
 header hdr = P.some (P.char '-') >> sc >> P.string hdr >> sc >> P.some (P.char '-') >> return ()
 
 parseTablegen :: String -> Text -> Either (P.ParseError Char P.Dec) Records
-parseTablegen = P.runParser p
+parseTablegen fname t = St.evalState (P.runParserT p fname t) emptyState
+  where
+    emptyState = TGState M.empty
 
 p :: Parser Records
 p = do
@@ -76,6 +93,7 @@ parseDeclType = P.choice [ TGBits <$> (symbol "bits<" *> parseInt) <* symbol ">"
                          , TGDag <$ symbol "dag"
                          , TGList <$> (symbol "list<" *> parseDeclType) <* symbol ">"
                          , TGFieldBits <$> (symbol "field" >> symbol "bits<" >> (parseInt <* symbol ">"))
+                         , TGClass <$> name
                          ]
 
 -- | Parse a decl item.
@@ -102,6 +120,8 @@ parseKnownDeclItem dt =
       P.choice [ ExpectedBits <$> (symbol "{" *> P.sepBy1 (lexeme parseBit) (symbol ",") <* symbol "}")
                , ExpectedUnknownBits <$> (symbol "{" *> P.sepBy1 (lexeme parseUnknownBit) (symbol ",") <* symbol "}")
                ]
+    TGList dt' -> ListItem <$> (symbol "[" *> P.sepBy1 (lexeme (parseKnownDeclItem dt')) (symbol ",") <* symbol "]")
+    TGClass _ -> ClassItem <$> lexeme name
 
 parseBit :: Parser Bool
 parseBit = P.choice [ False <$ symbol "0"
@@ -121,7 +141,7 @@ parseFieldItem =
            ]
 
 parseStringLiteral :: Parser String
-parseStringLiteral = symbol "\"" >> P.manyTill P.anyChar (symbol "\"")
+parseStringLiteral = (symbol "\"" >> P.manyTill P.anyChar (symbol "\"")) >>= internString
 
 parseMetadataComment :: Parser [Metadata]
 parseMetadataComment = do
@@ -141,7 +161,7 @@ sc :: Parser ()
 sc = L.space (void P.spaceChar) (return ()) (return ())
 
 symbol :: String -> Parser String
-symbol = L.symbol sc
+symbol s = L.symbol sc s >>= internString
 
 parseInt :: Parser Int
 parseInt = fromIntegral <$> lexeme L.integer
@@ -150,4 +170,7 @@ lexeme :: Parser a -> Parser a
 lexeme = L.lexeme sc
 
 name :: Parser String
-name = lexeme (P.some P.alphaNumChar)
+name = lexeme (P.some nameChar) >>= internString
+
+nameChar :: Parser Char
+nameChar = P.alphaNumChar <|> P.char ':'

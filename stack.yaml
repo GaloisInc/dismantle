@@ -1,39 +1,19 @@
-resolver: ghc-8.0.1
-
+flags: {}
+extra-package-dbs: []
 packages:
 - dismantle-tablegen/
 extra-deps:
+- ansi-terminal-0.6.2.3
+- ansi-wl-pprint-0.6.7.3
 - exceptions-0.8.3
 - hashable-1.2.4.0
 - megaparsec-5.0.1
 - mtl-2.2.1
+- optparse-applicative-0.13.0.0
 - primitive-0.6.1.0
 - scientific-0.3.4.9
 - stm-2.4.4.1
 - text-1.2.2.1
 - transformers-compat-0.5.1.4
 - vector-0.11.0.0
-
-# Override default flag values for local packages and extra-deps
-flags: {}
-
-# Extra package databases containing global packages
-extra-package-dbs: []
-
-# Control whether we use the GHC we find on the path
-# system-ghc: true
-# 
-# Require a specific version of stack, using version ranges
-# require-stack-version: -any # Default
-# require-stack-version: ">=1.1"
-# 
-# Override the architecture used by stack, especially useful on Windows
-# arch: i386
-# arch: x86_64
-# 
-# Extra directories used by stack for building
-# extra-include-dirs: [/path/to/dir]
-# extra-lib-dirs: [/path/to/dir]
-# 
-# Allow a newer minor version of GHC than the snapshot specifies
-# compiler-check: newer-minor
+resolver: ghc-8.0.1
