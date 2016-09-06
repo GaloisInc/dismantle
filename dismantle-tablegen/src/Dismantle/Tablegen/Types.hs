@@ -32,7 +32,7 @@ data Def =
   deriving (Show)
 
 data ClassParameter =
-  ClassParameter
+  ClassParameter DeclType String DeclItem
   deriving (Show)
 
 data Metadata =
