@@ -64,7 +64,7 @@ parseClass = do
 
 parseDef :: Parser Def
 parseDef = do
-  _ <- symbol "class"
+  _ <- symbol "def"
   n <- name
   _ <- symbol "{"
   md <- parseMetadataComment
@@ -88,15 +88,16 @@ tryChoice :: [Parser a] -> Parser a
 tryChoice = P.choice . fmap P.try
 
 parseDeclType :: Parser DeclType
-parseDeclType = tryChoice [ TGBits <$> (symbol "bits<" *> parseInt) <* symbol ">"
-                         , TGBit <$ symbol "bit"
-                         , TGString <$ symbol "string"
-                         , TGInt <$ symbol "int"
-                         , TGDag <$ symbol "dag"
-                         , TGList <$> (symbol "list<" *> parseDeclType) <* symbol ">"
-                         , TGFieldBits <$> (symbol "field" >> symbol "bits<" >> (parseInt <* symbol ">"))
-                         , TGClass <$> name
-                         ]
+parseDeclType =
+  tryChoice [ TGFieldBits <$> (symbol "field" >> symbol "bits" >> P.between (symbol "<") (symbol ">") parseInt)
+            , TGBits <$> (symbol "bits<" *> parseInt) <* symbol ">"
+            , TGBit <$ symbol "bit"
+            , TGString <$ symbol "string"
+            , TGInt <$ symbol "int"
+            , TGDag <$ symbol "dag"
+            , TGList <$> (symbol "list<" *> parseDeclType) <* symbol ">"
+            , TGClass <$> name
+            ]
 
 -- | Parse a decl item.
 --
@@ -116,18 +117,18 @@ parseKnownDeclItem dt =
     TGString ->
       tryChoice [ StringItem <$> lexeme parseStringLiteral
                 , StringExprItem <$> P.someTill P.anyChar (P.char ';')
---                            (P.skipSome (P.satisfy (/= ';')) *> pure undefined)
                 ]
     TGInt -> IntItem <$> lexeme parseInt
-    TGFieldBits _ -> FieldBits <$> (symbol "{" *> P.sepBy1 (lexeme parseFieldItem) (symbol ",") <* symbol "}")
-    TGDag -> DagItem <$ P.someTill P.anyChar (P.char ';')
-     -- P.skipSome (P.satisfy (/= ';'))
+    TGFieldBits _ ->
+      FieldBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseFieldItem) (symbol ","))
+    TGDag ->
+      DagItem <$ P.between (symbol "(") (symbol ")") (P.some (P.satisfy (/= ')')))
     TGBits _ ->
-      tryChoice [ ExpectedBits <$> (symbol "{" *> P.sepBy1 (lexeme parseBit) (symbol ",") <* symbol "}")
-                , ExpectedUnknownBits <$> (symbol "{" *> P.sepBy1 (lexeme parseUnknownBit) (symbol ",") <* symbol "}")
+      tryChoice [ ExpectedBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseBit) (symbol ","))
+                , ExpectedUnknownBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseUnknownBit) (symbol ","))
                 ]
     TGList dt' ->
-      tryChoice [ ListItem <$> (symbol "[" *> P.sepBy1 (lexeme (parseKnownDeclItem dt')) (symbol ",") <* symbol "]")
+      tryChoice [ ListItem <$> P.between (symbol "[") (symbol "]") (P.sepBy (lexeme (parseKnownDeclItem dt')) (symbol ","))
                 , ClassItem <$> lexeme name
                 ]
     TGClass _ -> ClassItem <$> lexeme name
@@ -146,22 +147,27 @@ parseFieldItem :: Parser FieldItem
 parseFieldItem =
   tryChoice [ ExpectedBit False <$ P.char '0'
            , ExpectedBit True <$ P.char '1'
-           , FieldBit <$> name <*> (symbol "{" *> parseInt <* symbol "}")
+           , FieldBit <$> name <*> P.between (symbol "{") (symbol "}") (lexeme parseInt)
            ]
 
 parseStringLiteral :: Parser String
-parseStringLiteral = (P.char '"' >> P.someTill P.anyChar (P.char '"')) >>= internString
+parseStringLiteral =
+  P.between (symbol "\"") (symbol "\"") (P.someTill P.anyChar (P.char '"')) >>= internString
 
 parseMetadataComment :: Parser [Metadata]
 parseMetadataComment = do
-  tryChoice [ symbol "//" *> P.some parseMetadata, pure [] ]
+  tryChoice [ symbol "//" >> P.manyTill P.anyChar P.eol >> pure []
+            , pure []
+            ]
 
 parseMetadata :: Parser Metadata
 parseMetadata = Metadata <$> name
 
 parseClassParameters :: Parser [ClassParameter]
 parseClassParameters =
-  (symbol "<" *> P.sepBy parseClassParameter (symbol ",") <* symbol ">") <|> pure []
+  tryChoice [ P.between (symbol "<") (symbol ">") (P.sepBy parseClassParameter (symbol ","))
+            , pure []
+            ]
 
 parseClassParameter :: Parser ClassParameter
 parseClassParameter = do
@@ -173,7 +179,6 @@ parseClassParameter = do
 
 sc :: Parser ()
 sc = P.hidden (P.skipMany P.spaceChar)
-  -- L.space (void P.spaceChar) undefined undefined -- (return ()) (return ())
 
 symbol :: String -> Parser String
 symbol s = L.symbol sc s >>= internString
