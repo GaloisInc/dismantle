@@ -154,9 +154,12 @@ parseStringLiteral :: Parser String
 parseStringLiteral =
   P.between (symbol "\"") (symbol "\"") (P.some (P.satisfy (/='"'))) >>= internString
 
+-- This is tricky -- we have to be careful parsing names.  If we use
+-- the 'lexeme' approach, parsing the last one consumes the newline at
+-- the end of the line and we can't tell when to stop.
 parseMetadataComment :: Parser [Metadata]
 parseMetadataComment = do
-  tryChoice [ symbol "//" >> P.manyTill P.anyChar P.eol >> pure []
+  tryChoice [ (symbol "//" *> P.many (P.satisfy (/= '\n')) <* sc) >> pure []
             , pure []
             ]
 
