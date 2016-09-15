@@ -152,7 +152,7 @@ parseFieldItem =
 
 parseStringLiteral :: Parser String
 parseStringLiteral =
-  P.between (symbol "\"") (symbol "\"") (P.someTill P.anyChar (P.char '"')) >>= internString
+  P.between (symbol "\"") (symbol "\"") (P.some (P.satisfy (/='"'))) >>= internString
 
 parseMetadataComment :: Parser [Metadata]
 parseMetadataComment = do
