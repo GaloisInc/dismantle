@@ -116,13 +116,12 @@ parseKnownDeclItem dt =
     TGBit -> BitItem <$> parseBit
     TGString ->
       tryChoice [ StringItem <$> lexeme parseStringLiteral
-                , StringExprItem <$> P.someTill P.anyChar (P.char ';')
+                , StringExprItem <$> P.some (P.satisfy (/=';')) -- someTill P.anyChar (P.char ';')
                 ]
     TGInt -> IntItem <$> lexeme parseInt
     TGFieldBits _ ->
       FieldBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseFieldItem) (symbol ","))
-    TGDag ->
-      DagItem <$ P.between (symbol "(") (symbol ")") (P.some (P.satisfy (/= ')')))
+    TGDag -> parseDAGItem
     TGBits _ ->
       tryChoice [ ExpectedBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseBit) (symbol ","))
                 , ExpectedUnknownBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseUnknownBit) (symbol ","))
@@ -132,6 +131,14 @@ parseKnownDeclItem dt =
                 , ClassItem <$> lexeme name
                 ]
     TGClass _ -> ClassItem <$> lexeme name
+
+parseDAGItem :: Parser DeclItem
+parseDAGItem =
+  tryChoice [ DagItem <$ between (symbol "(") (symbol ")") (symbol "ins" >> P.sepBy1 name (symbol ","))
+            , DagItem <$ between (symbol "(") (symbol ")") (symbol "outs" >> P.sepBy1 name (symbol ","))
+            , DagItem <$ (symbol "!con" >> between (symbol "(") (symbol ")") (P.sepBy1 parseDAGItem (symbol ",")))
+            , DagItem <$ name
+            ]
 
 parseBit :: Parser Bool
 parseBit = tryChoice [ False <$ symbol "0"
@@ -167,7 +174,7 @@ parseMetadata :: Parser Metadata
 parseMetadata = Metadata <$> name
 
 parseClassParameters :: Parser [ClassParameter]
-parseClassParameters =
+parseClassParameters = P.label "ClassParameters" $
   tryChoice [ P.between (symbol "<") (symbol ">") (P.sepBy parseClassParameter (symbol ","))
             , pure []
             ]
@@ -193,9 +200,9 @@ lexeme :: Parser a -> Parser a
 lexeme = L.lexeme sc
 
 name :: Parser String
-name = lexeme (P.some nameChar) >>= internString
+name = P.label "name" $ lexeme (P.some nameChar) >>= internString
 
 nameChar :: Parser Char
 nameChar = tryChoice [ P.alphaNumChar
-                     , P.oneOf [ ':', '_' ]
+                     , P.oneOf [ ':', '_', '$' ]
                      ]
