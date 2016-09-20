@@ -5,7 +5,7 @@ module Dismantle.Tablegen.Types (
   ClassParameter(..),
   Metadata(..),
   Named(..),
-  FieldItem(..),
+  BitRef(..),
   DeclItem(..),
   DeclType(..)
   ) where
@@ -48,18 +48,19 @@ data DeclItem =
   | IntItem !Int
   | StringItem String
   | StringExprItem String
-  | FieldBits [FieldItem]
+  | FieldBits [Maybe BitRef]
   | ExpectedBits [Bool]
-  | ExpectedUnknownBits [Maybe Bool]
+  | ExpectedUnknownBits [Maybe BitRef]
   | DagItem
   | ListItem [DeclItem]
   | ClassItem String
   | UnknownItem DeclType
   deriving (Show)
 
-data FieldItem = ExpectedBit Bool
-               | FieldBit String Int
-               deriving (Show)
+data BitRef = ExpectedBit !Bool
+            | FieldBit String Int
+            | FieldVarRef String
+            deriving (Show)
 
 data DeclType = TGBit
               | TGBits !Int

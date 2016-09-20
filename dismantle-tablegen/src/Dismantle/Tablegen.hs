@@ -120,7 +120,7 @@ parseKnownDeclItem dt =
                 ]
     TGInt -> IntItem <$> lexeme parseInt
     TGFieldBits _ ->
-      FieldBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseFieldItem) (symbol ","))
+      FieldBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseUnknownBit) (symbol ","))
     TGDag -> parseDAGItem
     TGBits _ ->
       tryChoice [ ExpectedBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseBit) (symbol ","))
@@ -134,27 +134,34 @@ parseKnownDeclItem dt =
 
 parseDAGItem :: Parser DeclItem
 parseDAGItem =
-  tryChoice [ DagItem <$ between (symbol "(") (symbol ")") (symbol "ins" >> P.sepBy1 name (symbol ","))
-            , DagItem <$ between (symbol "(") (symbol ")") (symbol "outs" >> P.sepBy1 name (symbol ","))
-            , DagItem <$ (symbol "!con" >> between (symbol "(") (symbol ")") (P.sepBy1 parseDAGItem (symbol ",")))
+  tryChoice [ DagItem <$ (symbol "!con" >> parseDAGItem)
+            , DagItem <$ between (symbol "(") (symbol ")") (dagHead >> P.sepBy1 parseDAGItem (symbol ","))
+            , DagItem <$ between (symbol "(") (symbol ")") (P.sepBy1 parseDAGItem (symbol ","))
             , DagItem <$ name
             ]
+
+dagHead :: Parser String
+dagHead = name
+
+-- dagDesc :: Parser String
+-- dagDesc = tryChoice [ symbol "ins", symbol "outs", symbol "set" ]
 
 parseBit :: Parser Bool
 parseBit = tryChoice [ False <$ symbol "0"
                     , True <$ symbol "1"
                     ]
 
-parseUnknownBit :: Parser (Maybe Bool)
-parseUnknownBit = tryChoice [ Just <$> parseBit
+parseUnknownBit :: Parser (Maybe BitRef)
+parseUnknownBit = tryChoice [ Just <$> parseBitRef
                            , Nothing <$ symbol "?"
                            ]
 
-parseFieldItem :: Parser FieldItem
-parseFieldItem =
+parseBitRef :: Parser BitRef
+parseBitRef =
   tryChoice [ ExpectedBit False <$ P.char '0'
-           , ExpectedBit True <$ P.char '1'
-           , FieldBit <$> name <*> P.between (symbol "{") (symbol "}") (lexeme parseInt)
+            , ExpectedBit True <$ P.char '1'
+            , FieldBit <$> name <*> P.between (symbol "{") (symbol "}") (lexeme parseInt)
+            , FieldVarRef <$> name
            ]
 
 parseStringLiteral :: Parser String
@@ -164,6 +171,11 @@ parseStringLiteral =
 -- This is tricky -- we have to be careful parsing names.  If we use
 -- the 'lexeme' approach, parsing the last one consumes the newline at
 -- the end of the line and we can't tell when to stop.
+--
+-- We could change how whitespace works.  Instead of consuming the
+-- whitespace *after* a token, just consume whitespace *before* the
+-- token.  Then, we can consume each metadata comment until we see a
+-- newline (which won't be consumed by 'lexeme')
 parseMetadataComment :: Parser [Metadata]
 parseMetadataComment = do
   tryChoice [ (symbol "//" *> P.many (P.satisfy (/= '\n')) <* sc) >> pure []
@@ -204,5 +216,5 @@ name = P.label "name" $ lexeme (P.some nameChar) >>= internString
 
 nameChar :: Parser Char
 nameChar = tryChoice [ P.alphaNumChar
-                     , P.oneOf [ ':', '_', '$' ]
+                     , P.oneOf [ ':', '_', '$', '.' ]
                      ]
