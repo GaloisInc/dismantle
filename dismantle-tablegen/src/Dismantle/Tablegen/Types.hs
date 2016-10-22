@@ -7,7 +7,8 @@ module Dismantle.Tablegen.Types (
   Named(..),
   BitRef(..),
   DeclItem(..),
-  DeclType(..)
+  DeclType(..),
+  Expr(..)
   ) where
 
 data Records =
@@ -54,8 +55,15 @@ data DeclItem =
   | DagItem
   | ListItem [DeclItem]
   | ClassItem String
+  | ExprItem Expr
   | UnknownItem DeclType
   deriving (Show)
+
+data Expr = ENegate Expr
+          | EFuncall String [String] [Expr]
+          | ERef String
+          | EString String
+          deriving (Show)
 
 data BitRef = ExpectedBit !Bool
             | FieldBit String Int

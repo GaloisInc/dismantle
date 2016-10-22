@@ -113,10 +113,12 @@ parseUnknownDeclItem dt = UnknownItem dt <$ symbol "?"
 parseKnownDeclItem :: DeclType -> Parser DeclItem
 parseKnownDeclItem dt =
   case dt of
-    TGBit -> BitItem <$> parseBit
+    TGBit -> tryChoice [ BitItem <$> parseBit
+                       , ExprItem <$> parseExpr
+                       ]
     TGString ->
       tryChoice [ StringItem <$> lexeme parseStringLiteral
-                , StringExprItem <$> P.some (P.satisfy (/=';')) -- someTill P.anyChar (P.char ';')
+                , ExprItem <$> parseExpr
                 ]
     TGInt -> IntItem <$> lexeme parseInt
     TGFieldBits _ ->
@@ -145,6 +147,20 @@ dagHead = name
 
 -- dagDesc :: Parser String
 -- dagDesc = tryChoice [ symbol "ins", symbol "outs", symbol "set" ]
+
+parseExpr :: Parser Expr
+parseExpr =
+  tryChoice [ ENegate <$> (symbol "!" *> parseExpr)
+            , EFuncall <$> name <*> parseExprCallTemplateParams <*> P.between (symbol "(") (symbol ")") (P.sepBy1 parseExpr (symbol ","))
+            , EString <$> between (symbol "\"") (symbol "\"") (P.some P.anyChar)
+            , ERef <$> name
+            ]
+
+parseExprCallTemplateParams :: Parser [String]
+parseExprCallTemplateParams =
+  tryChoice [ P.between (symbol "<") (symbol ">") (P.sepBy1 name (symbol ","))
+            , pure []
+            ]
 
 parseBit :: Parser Bool
 parseBit = tryChoice [ False <$ symbol "0"
