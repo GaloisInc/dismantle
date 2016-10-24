@@ -63,6 +63,7 @@ data Expr = ENegate Expr
           | EFuncall String [String] [Expr]
           | ERef String
           | EString String
+          | EInt Int
           deriving (Show)
 
 data BitRef = ExpectedBit !Bool
