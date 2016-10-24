@@ -120,7 +120,10 @@ parseKnownDeclItem dt =
       tryChoice [ StringItem <$> lexeme parseStringLiteral
                 , ExprItem <$> parseExpr
                 ]
-    TGInt -> IntItem <$> lexeme parseInt
+    TGInt ->
+      tryChoice [ IntItem <$> lexeme parseInt
+                , ExprItem <$> parseExpr
+                ]
     TGFieldBits _ ->
       FieldBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseUnknownBit) (symbol ","))
     TGDag -> parseDAGItem
@@ -152,7 +155,8 @@ parseExpr :: Parser Expr
 parseExpr =
   tryChoice [ ENegate <$> (symbol "!" *> parseExpr)
             , EFuncall <$> name <*> parseExprCallTemplateParams <*> P.between (symbol "(") (symbol ")") (P.sepBy1 parseExpr (symbol ","))
-            , EString <$> between (symbol "\"") (symbol "\"") (P.some P.anyChar)
+            , EString <$> lexeme parseStringLiteral
+            , EInt <$> parseInt
             , ERef <$> name
             ]
 
@@ -182,7 +186,7 @@ parseBitRef =
 
 parseStringLiteral :: Parser String
 parseStringLiteral =
-  P.between (symbol "\"") (symbol "\"") (P.some (P.satisfy (/='"'))) >>= internString
+  P.between (symbol "\"") (symbol "\"") (P.many (P.satisfy (/='"'))) >>= internString
 
 -- This is tricky -- we have to be careful parsing names.  If we use
 -- the 'lexeme' approach, parsing the last one consumes the newline at
@@ -222,7 +226,10 @@ symbol :: String -> Parser String
 symbol s = L.symbol sc s >>= internString
 
 parseInt :: Parser Int
-parseInt = fromIntegral <$> lexeme L.integer
+parseInt =
+  tryChoice [ (fromIntegral . negate) <$> (symbol "-" *> lexeme L.integer)
+            , fromIntegral <$> lexeme L.integer
+            ]
 
 lexeme :: Parser a -> Parser a
 lexeme = L.lexeme sc
