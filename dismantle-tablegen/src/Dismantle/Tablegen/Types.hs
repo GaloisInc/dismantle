@@ -41,7 +41,9 @@ data Metadata =
   deriving (Show)
 
 data Named a =
-  Named String a
+  Named { namedName :: String
+        , namedValue :: a
+        }
   deriving (Show)
 
 data DeclItem =

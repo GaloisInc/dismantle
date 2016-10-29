@@ -32,5 +32,6 @@ executable driver
   hs-source-dirs: tools/driver
   build-depends: base,
                  optparse-applicative,
+                 containers,
                  text,
                  dismantle-tablegen
