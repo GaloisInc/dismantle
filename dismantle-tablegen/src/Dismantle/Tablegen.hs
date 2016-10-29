@@ -143,6 +143,7 @@ parseDAGItem =
             , DagItem <$ between (symbol "(") (symbol ")") (dagHead >> P.sepBy1 parseDAGItem (symbol ","))
             , DagItem <$ between (symbol "(") (symbol ")") (P.sepBy1 parseDAGItem (symbol ","))
             , DagItem <$ name
+            , DagItem <$ parseStringLiteral
             ]
 
 dagHead :: Parser String
@@ -186,7 +187,21 @@ parseBitRef =
 
 parseStringLiteral :: Parser String
 parseStringLiteral =
-  P.between (symbol "\"") (symbol "\"") (P.many (P.satisfy (/='"'))) >>= internString
+  tryChoice [ parseMultilineStringLiteral
+            , P.between (symbol "\"") (symbol "\"") (P.many (P.satisfy (/='"'))) >>= internString
+            ]
+
+-- Multiline literals start with double quote followed by newline, and
+-- contain lines until a line starts with a double quote.
+parseMultilineStringLiteral :: Parser String
+parseMultilineStringLiteral = do
+  _ <- P.char '"'
+  _ <- P.eol
+  lineStrs <- P.manyTill parseLine parseMultilineLiteralEnd
+  return (unlines lineStrs)
+  where
+    parseLine = P.manyTill P.anyChar P.eol
+    parseMultilineLiteralEnd = P.char '"'
 
 -- This is tricky -- we have to be careful parsing names.  If we use
 -- the 'lexeme' approach, parsing the last one consumes the newline at
