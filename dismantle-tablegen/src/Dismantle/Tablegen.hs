@@ -142,9 +142,13 @@ parseDAGItem =
   tryChoice [ DagItem <$ (symbol "!con" >> parseDAGItem)
             , DagItem <$ between (symbol "(") (symbol ")") (dagHead >> P.sepBy1 parseDAGItem (symbol ","))
             , DagItem <$ between (symbol "(") (symbol ")") (P.sepBy1 parseDAGItem (symbol ","))
+            , DagItem <$ between (symbol "(") (symbol ")") dagLiteral
             , DagItem <$ name
+            , DagItem <$ parseInt
             , DagItem <$ parseStringLiteral
             ]
+  where
+    dagLiteral = name >> between (symbol "{") (symbol "}") parseInt >> return ()
 
 dagHead :: Parser String
 dagHead = name
@@ -254,5 +258,5 @@ name = P.label "name" $ lexeme (P.some nameChar) >>= internString
 
 nameChar :: Parser Char
 nameChar = tryChoice [ P.alphaNumChar
-                     , P.oneOf [ ':', '_', '$', '.' ]
+                     , P.oneOf [ ':', '_', '$', '.', '?' ]
                      ]
