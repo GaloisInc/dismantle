@@ -15,6 +15,8 @@ cabal-version:       >=1.10
 library
   exposed-modules: Dismantle.Tablegen
   other-modules: Dismantle.Tablegen.Types
+                 Dismantle.Tablegen.Combinators
+                 Dismantle.Tablegen.Parser
   -- other-extensions:
   build-depends:       base >=4.8 && <4.10,
                        containers >= 0.5 && < 0.6,

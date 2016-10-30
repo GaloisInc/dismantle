@@ -1,7 +1,7 @@
 module Main ( main ) where
 
 import Control.Applicative
-import Data.Maybe ( catMaybes, listToMaybe, maybeToList )
+import Data.Maybe ( catMaybes, maybeToList )
 import Data.Monoid
 import qualified Data.Set as S
 import qualified Options.Applicative as O
@@ -37,46 +37,25 @@ dump o = do
       let defs = D.tblDefs r
       putStrLn ("# Classes: " ++ show (length (D.tblClasses r)))
       putStrLn ("# Defs: " ++ show (length defs))
-      let namespaces = S.fromList $ catMaybes [ namespace d | d <- defs ]
-          decoders = S.fromList $ catMaybes [ decoderNamespace d | d <- defs ]
+      let namespaces = S.fromList $ catMaybes [ D.namespace d | d <- defs ]
+          decoders = S.fromList $ catMaybes [ D.decoderNamespace d | d <- defs ]
       putStrLn ("Namespaces: " ++ show (S.toList namespaces))
       putStrLn ("Decoders: " ++ show (S.toList decoders))
 
       let allARM = [ d
                    | d <- defs
-                   , "ARM" <- maybeToList $ namespace d
+                   , "ARM" <- maybeToList $ D.namespace d
                    ]
           armInsns = [ d
-                     | d <- defs, "ARM" <- maybeToList $ decoderNamespace d
+                     | d <- defs, "ARM" <- maybeToList $ D.decoderNamespace d
                      ]
           thumb1Insns = [ d
-                        | d <- defs, "Thumb" <- maybeToList $ decoderNamespace d
+                        | d <- defs, "Thumb" <- maybeToList $ D.decoderNamespace d
                         ]
-          thumb2Insns = [ d | d <- defs, "Thumb2" <- maybeToList $ decoderNamespace d ]
+          thumb2Insns = [ d | d <- defs, "Thumb2" <- maybeToList $ D.decoderNamespace d ]
       putStrLn ("# Insns: " ++ show (length allARM))
       putStrLn ("# ARM Insns: " ++ show (length armInsns))
       putStrLn ("# Thumb1 Insns: " ++ show (length thumb1Insns))
       putStrLn ("# Thumb2 Insns: " ++ show (length thumb2Insns))
-
--- | If there are decls in the def for which the predicate is true, return them.
-filterDecls :: (D.Named D.DeclItem -> Bool) -> D.Def -> [D.Named D.DeclItem]
-filterDecls p = filter p . D.defDecls
-
--- | If there is a decl with the given name in the def, return it.
---
--- There should be at most one
-lookupDecl :: String -> D.Def -> Maybe (D.Named D.DeclItem)
-lookupDecl name = listToMaybe . filterDecls ((==name) . D.namedName)
-
-declAsString :: D.DeclItem -> Maybe String
-declAsString i =
-  case i of
-    D.StringItem s -> Just s
-    _ -> Nothing
-
-namespace :: D.Def -> Maybe String
-namespace def = lookupDecl "Namespace" def >>= (declAsString . D.namedValue)
-
-decoderNamespace :: D.Def -> Maybe String
-decoderNamespace def = lookupDecl "DecoderNamespace" def >>= (declAsString . D.namedValue)
+      print (map D.defName armInsns)
 
