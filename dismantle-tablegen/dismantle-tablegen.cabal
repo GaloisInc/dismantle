@@ -14,8 +14,8 @@ cabal-version:       >=1.10
 
 library
   exposed-modules: Dismantle.Tablegen
+                   Dismantle.Tablegen.ByteTrie
   other-modules: Dismantle.Tablegen.Types
-                 Dismantle.Tablegen.ByteTrie
                  Dismantle.Tablegen.Combinators
                  Dismantle.Tablegen.Parser
   -- other-extensions:
@@ -39,3 +39,14 @@ executable driver
                  containers,
                  text,
                  dismantle-tablegen
+
+test-suite dismantle-tests
+  default-language: Haskell2010
+  type: exitcode-stdio-1.0
+  ghc-options: -Wall
+  hs-source-dirs: tests
+  main-is: Main.hs
+  build-depends: dismantle-tablegen,
+                 base,
+                 tasty >= 0.10 && < 0.12,
+                 tasty-hunit
