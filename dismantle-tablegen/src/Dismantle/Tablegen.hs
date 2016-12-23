@@ -1,17 +1,15 @@
 module Dismantle.Tablegen (
   parseTablegen,
-  makeParseTables,
-  module Dismantle.Tablegen.Types,
-  module Dismantle.Tablegen.Combinators
+  makeParseTables
   ) where
 
 import Control.Monad ( guard )
 import qualified Data.Array.Unboxed as UA
 import qualified Data.Foldable as F
+import qualified Data.Map.Strict as M
 import Data.Maybe ( mapMaybe )
 import Data.Word ( Word8 )
 
-import Dismantle.Tablegen.Combinators
 import Dismantle.Tablegen.Parser ( parseTablegen )
 import Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
@@ -34,14 +32,11 @@ toTrieBit br =
 named :: String -> Named DeclItem -> Bool
 named s n = namedName n == s
 
--- FIXME: Push this conversion down into the parser so that the gross
--- parser types don't need to be exposed
-
 instructionDescriptor :: Def -> Maybe InstructionDescriptor
 instructionDescriptor def = do
   Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
-  Named _ DagItem <- F.find (named "OutOperandList") (defDecls def)
-  Named _ DagItem <- F.find (named "InOperandList") (defDecls def)
+  Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
+  Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
 
   Named _ (StringItem ns) <- F.find (named "Namespace") (defDecls def)
   Named _ (StringItem decoder) <- F.find (named "DecoderNamespace") (defDecls def)
@@ -55,7 +50,25 @@ instructionDescriptor def = do
                                }
 
 fieldDescriptors :: [Maybe BitRef] -> [FieldDescriptor]
-fieldDescriptors = undefined
+fieldDescriptors bits = map toFieldDescriptor (M.toList groups)
+  where
+    groups = foldr addBit M.empty (zip [0..] bits)
+    addBit (bitNum, mbr) m =
+      case mbr of
+        Just (FieldBit fldName fldIdx) ->
+          M.insertWith (++) fldName [(bitNum, fldIdx)] m
+        _ -> m
+
+    toFieldDescriptor :: (String, [(Int, Int)]) -> FieldDescriptor
+    toFieldDescriptor (fldName, bitPositions) =
+      let arrVals = [ (fldIdx, fromIntegral bitNum)
+                    | (bitNum, fldIdx) <- bitPositions
+                    ]
+      in FieldDescriptor { fieldName = fldName
+                         , fieldDirection = undefined
+                         , fieldType = undefined
+                         , fieldBits = UA.array (0, length bitPositions - 1) arrVals
+                         }
 
 -- | The direction of a field (input, output, or both)
 data Direction = In | Out | Both
@@ -76,6 +89,7 @@ data FieldDescriptor =
   FieldDescriptor { fieldName :: String
                   , fieldBits :: UA.UArray Int Word8
                   , fieldDirection :: Direction
+                  , fieldType :: FieldType
                   }
   deriving (Show)
 

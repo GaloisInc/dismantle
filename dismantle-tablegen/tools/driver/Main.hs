@@ -11,6 +11,8 @@ import qualified System.Exit as E
 import Prelude
 
 import qualified Dismantle.Tablegen as D
+import qualified Dismantle.Tablegen.Combinators as D
+import qualified Dismantle.Tablegen.Types as D
 
 data Options = Options { inputFile :: FilePath
                        }

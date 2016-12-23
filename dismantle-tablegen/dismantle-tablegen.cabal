@@ -15,9 +15,9 @@ cabal-version:       >=1.10
 library
   exposed-modules: Dismantle.Tablegen
                    Dismantle.Tablegen.ByteTrie
-  other-modules: Dismantle.Tablegen.Types
-                 Dismantle.Tablegen.Combinators
-                 Dismantle.Tablegen.Parser
+                   Dismantle.Tablegen.Combinators
+                   Dismantle.Tablegen.Types
+  other-modules: Dismantle.Tablegen.Parser
   -- other-extensions:
   build-depends:       base >=4.8 && <4.10,
                        array,

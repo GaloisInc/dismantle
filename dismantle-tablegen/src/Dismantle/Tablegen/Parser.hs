@@ -1,4 +1,9 @@
 {-# LANGUAGE TypeFamilies #-}
+-- | A parser for the output of the @llvm-tablegen@ tool's dumped output.
+--
+-- The full reference for the language is at
+-- http://llvm.org/docs/TableGen/LangRef.html.  The current parser
+-- only approximates that grammar.
 module Dismantle.Tablegen.Parser (
   parseTablegen
   ) where
@@ -142,22 +147,40 @@ parseKnownDeclItem dt =
 
 parseDAGItem :: Parser DeclItem
 parseDAGItem =
-  tryChoice [ DagItem <$ (symbol "!con" >> parseDAGItem)
-            , DagItem <$ between (symbol "(") (symbol ")") (dagHead >> P.sepBy1 parseDAGItem (symbol ","))
-            , DagItem <$ between (symbol "(") (symbol ")") (P.sepBy1 parseDAGItem (symbol ","))
-            , DagItem <$ between (symbol "(") (symbol ")") dagLiteral
-            , DagItem <$ name
-            , DagItem <$ parseInt
-            , DagItem <$ parseStringLiteral
+  tryChoice [ DagItem <$> Identifier <$> name
+            , DagItem <$> parseSimpleValue
             ]
-  where
-    dagLiteral = name >> between (symbol "{") (symbol "}") parseInt >> return ()
 
-dagHead :: Parser String
-dagHead = name
+parseDagArg :: Parser DagArg
+parseDagArg =
+  tryChoice [ DagVarRef <$> parseVarRef
+            , DagArg <$> parseSimpleValue <*> P.optional (P.char ':' *> parseVarRef)
+            ]
 
--- dagDesc :: Parser String
--- dagDesc = tryChoice [ symbol "ins", symbol "outs", symbol "set" ]
+parseVarRef :: Parser VarName
+parseVarRef = VarName <$> (P.char '$' *> name)
+
+parseSimpleValue :: Parser SimpleValue
+parseSimpleValue =
+  tryChoice [ Identifier <$> name
+            , VNum <$> parseInt
+            , VUnset <$ P.char '?'
+            , VString <$> parseStringLiteral
+            , VList <$> between (symbol "[") (symbol "]") (P.sepBy1 parseSimpleValue (symbol ","))
+                    <*> P.optional parseType
+            , VSequence <$> between (symbol "{") (symbol "}") (P.sepBy1 parseSimpleValue (symbol ","))
+            , VAnonRecord <$> name <*> between (symbol "<") (symbol ">") (P.sepBy1 parseSimpleValue (symbol ","))
+            , id <$> between (symbol "(") (symbol ")") (VDag <$> parseDagArg <*> P.sepBy parseDagArg (symbol ","))
+            , VBang <$> parseBangOperator
+                    <*> P.optional parseType
+                    <*> between (symbol "(") (symbol ")") (P.sepBy1 parseSimpleValue (symbol ","))
+            ]
+
+parseType :: Parser String
+parseType = between (symbol "<") (symbol ">") name
+
+parseBangOperator :: Parser BangOperator
+parseBangOperator = BangOperator <$> (P.char '!' *> name)
 
 parseExpr :: Parser Expr
 parseExpr =
@@ -261,5 +284,5 @@ name = P.label "name" $ lexeme (P.some nameChar) >>= internString
 
 nameChar :: Parser Char
 nameChar = tryChoice [ P.alphaNumChar
-                     , P.oneOf [ ':', '_', '$', '.', '?' ]
+                     , P.oneOf [ '_', '$', '.', '?', ':' ]
                      ]

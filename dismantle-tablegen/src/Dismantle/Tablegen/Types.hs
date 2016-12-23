@@ -8,7 +8,11 @@ module Dismantle.Tablegen.Types (
   BitRef(..),
   DeclItem(..),
   DeclType(..),
-  Expr(..)
+  Expr(..),
+  DagArg(..),
+  VarName(..),
+  BangOperator(..),
+  SimpleValue(..)
   ) where
 
 data Records =
@@ -54,11 +58,19 @@ data DeclItem =
   | FieldBits [Maybe BitRef]
   | ExpectedBits [Bool]
   | ExpectedUnknownBits [Maybe BitRef]
-  | DagItem
+  | DagItem SimpleValue
   | ListItem [DeclItem]
   | ClassItem String
   | ExprItem Expr
   | UnknownItem DeclType
+  deriving (Show)
+
+data DagArg = DagArg SimpleValue (Maybe VarName)
+            | DagVarRef VarName
+  deriving (Show)
+
+-- | A reference to a variable name - the string does not include the $
+data VarName = VarName String
   deriving (Show)
 
 data Expr = ENegate Expr
@@ -83,3 +95,18 @@ data DeclType = TGBit
               | TGClass String
   deriving (Show)
 
+data BangOperator = BangOperator String
+  deriving (Show)
+
+data SimpleValue = Identifier String
+                 | VString String
+                 | VNum !Int
+                 | VUnset
+                 | VList [SimpleValue] (Maybe String)
+                 -- ^ A [] list with an optional type specifier
+                 | VSequence [SimpleValue]
+                 -- ^ A {} list
+                 | VAnonRecord String [SimpleValue]
+                 | VDag DagArg [DagArg]
+                 | VBang BangOperator (Maybe String) [SimpleValue]
+  deriving (Show)
