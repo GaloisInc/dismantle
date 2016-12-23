@@ -122,15 +122,15 @@ parseKnownDeclItem :: DeclType -> Parser DeclItem
 parseKnownDeclItem dt =
   case dt of
     TGBit -> tryChoice [ BitItem <$> parseBit
-                       , ExprItem <$> parseExpr
+                       , ExprItem <$> parseSimpleValue
                        ]
     TGString ->
       tryChoice [ StringItem <$> lexeme parseStringLiteral
-                , ExprItem <$> parseExpr
+                , ExprItem <$> parseSimpleValue
                 ]
     TGInt ->
       tryChoice [ IntItem <$> lexeme parseInt
-                , ExprItem <$> parseExpr
+                , ExprItem <$> parseSimpleValue
                 ]
     TGFieldBits _ ->
       FieldBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseUnknownBit) (symbol ","))
@@ -142,9 +142,12 @@ parseKnownDeclItem dt =
     TGList dt' ->
       tryChoice [ ListItem <$> P.between (symbol "[") (symbol "]") (P.sepBy (lexeme (parseKnownDeclItem dt')) (symbol ","))
                 , ClassItem <$> lexeme name
-                , ExprItem <$> parseExpr
+                , ExprItem <$> parseSimpleValue
                 ]
-    TGClass _ -> ClassItem <$> lexeme name
+    TGClass _ ->
+      tryChoice [ ClassItem <$> lexeme name
+                , ExprItem <$> parseSimpleValue
+                ]
 
 parseDAGItem :: Parser DeclItem
 parseDAGItem =
@@ -182,21 +185,6 @@ parseType = between (symbol "<") (symbol ">") name
 
 parseBangOperator :: Parser BangOperator
 parseBangOperator = BangOperator <$> (P.char '!' *> name)
-
-parseExpr :: Parser Expr
-parseExpr =
-  tryChoice [ ENegate <$> (symbol "!" *> parseExpr)
-            , EFuncall <$> name <*> parseExprCallTemplateParams <*> P.between (symbol "(") (symbol ")") (P.sepBy1 parseExpr (symbol ","))
-            , EString <$> lexeme parseStringLiteral
-            , EInt <$> parseInt
-            , ERef <$> name
-            ]
-
-parseExprCallTemplateParams :: Parser [String]
-parseExprCallTemplateParams =
-  tryChoice [ P.between (symbol "<") (symbol ">") (P.sepBy1 name (symbol ","))
-            , pure []
-            ]
 
 parseBit :: Parser Bool
 parseBit = tryChoice [ False <$ symbol "0"

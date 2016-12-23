@@ -8,7 +8,6 @@ module Dismantle.Tablegen.Types (
   BitRef(..),
   DeclItem(..),
   DeclType(..),
-  Expr(..),
   DagArg(..),
   VarName(..),
   BangOperator(..),
@@ -61,7 +60,7 @@ data DeclItem =
   | DagItem SimpleValue
   | ListItem [DeclItem]
   | ClassItem String
-  | ExprItem Expr
+  | ExprItem SimpleValue
   | UnknownItem DeclType
   deriving (Show)
 
@@ -72,13 +71,6 @@ data DagArg = DagArg SimpleValue (Maybe VarName)
 -- | A reference to a variable name - the string does not include the $
 data VarName = VarName String
   deriving (Show)
-
-data Expr = ENegate Expr
-          | EFuncall String [String] [Expr]
-          | ERef String
-          | EString String
-          | EInt Int
-          deriving (Show)
 
 data BitRef = ExpectedBit !Bool
             | FieldBit String Int
