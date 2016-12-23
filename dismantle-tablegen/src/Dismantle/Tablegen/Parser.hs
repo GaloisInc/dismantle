@@ -142,6 +142,7 @@ parseKnownDeclItem dt =
     TGList dt' ->
       tryChoice [ ListItem <$> P.between (symbol "[") (symbol "]") (P.sepBy (lexeme (parseKnownDeclItem dt')) (symbol ","))
                 , ClassItem <$> lexeme name
+                , ExprItem <$> parseExpr
                 ]
     TGClass _ -> ClassItem <$> lexeme name
 
