@@ -24,9 +24,11 @@ import Prelude
 
 data Payload a = NextTable (ByteTrie a)
                | Element a
+               deriving (Show)
 
 -- | A data type mapping sequences of bytes to elements of type @a@
 data ByteTrie a = ByteTrie (A.Array Word8 (Payload a))
+  deriving (Show)
 
 -- | A bit with either an expected value ('ExpectedBit') or an
 -- unconstrained value ('Any')
