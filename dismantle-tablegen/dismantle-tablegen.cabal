@@ -47,7 +47,11 @@ test-suite dismantle-tests
   ghc-options: -Wall
   hs-source-dirs: tests
   main-is: Main.hs
+  other-modules: Parser
+                 Trie
   build-depends: dismantle-tablegen,
                  base,
+                 text,
+                 filemanip,
                  tasty >= 0.10 && < 0.12,
                  tasty-hunit

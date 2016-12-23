@@ -2,9 +2,11 @@ module Main ( main ) where
 
 import qualified Test.Tasty as T
 
+import Parser
 import Trie
 
 main :: IO ()
-main = T.defaultMain tests
-  where
-    tests = T.testGroup "Dismantle" [ trieTests ]
+main = do
+  tests <- sequence [ parserTests, trieTests ]
+  T.defaultMain $ T.testGroup "Dismantle" tests
+

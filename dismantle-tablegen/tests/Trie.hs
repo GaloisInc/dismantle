@@ -5,5 +5,5 @@ import qualified Test.Tasty.HUnit as T
 
 import qualified Dismantle.Tablegen.ByteTrie as BT
 
-trieTests :: T.TestTree
-trieTests = T.testGroup "Trie" []
+trieTests :: IO T.TestTree
+trieTests = return (T.testGroup "Trie" [])
