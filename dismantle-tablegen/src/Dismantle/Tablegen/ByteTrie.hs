@@ -12,6 +12,7 @@ module Dismantle.Tablegen.ByteTrie (
   ) where
 
 import Control.Applicative
+import Control.DeepSeq
 import qualified Control.Monad.State.Strict as St
 import qualified Control.Monad.Except as E
 import qualified Data.Array as A
@@ -32,9 +33,12 @@ data ByteTrie a = ByteTrie (A.Array Word8 (Payload a))
 
 -- | A bit with either an expected value ('ExpectedBit') or an
 -- unconstrained value ('Any')
-data Bit = ExpectedBit Bool
+data Bit = ExpectedBit !Bool
          | Any
          deriving (Eq, Ord, Show)
+
+instance NFData Bit where
+  rnf _ = ()
 
 -- | A wrapper around a sequence of 'Bit's
 newtype Pattern = Pattern { unPattern :: A.Array Int Bit }

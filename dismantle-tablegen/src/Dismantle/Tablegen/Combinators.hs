@@ -8,7 +8,7 @@ module Dismantle.Tablegen.Combinators (
 
 import Data.Maybe ( listToMaybe )
 
-import Dismantle.Tablegen.Types
+import Dismantle.Tablegen.Parser.Types
 
 -- | If there are decls in the def for which the predicate is true, return them.
 filterDecls :: (Named DeclItem -> Bool) -> Def -> [Named DeclItem]

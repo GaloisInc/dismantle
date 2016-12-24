@@ -30,6 +30,7 @@ extra-deps:
 - old-locale-1.0.0.7
 - old-time-1.1.0.3
 - polyparse-1.12
-- filemanip-0.3.6.3
-- unix-compat-0.4.3.1
+- located-base-0.1.1.0
+- split-0.2.3.1
+- case-insensitive-1.2.0.7
 resolver: ghc-8.0.1

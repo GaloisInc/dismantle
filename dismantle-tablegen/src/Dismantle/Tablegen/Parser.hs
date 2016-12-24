@@ -17,7 +17,7 @@ import qualified Text.Megaparsec.Lexer as L
 
 import Prelude
 
-import Dismantle.Tablegen.Types
+import Dismantle.Tablegen.Parser.Types
 
 parseTablegen :: String
               -- ^ The name of the file (used for error messages)

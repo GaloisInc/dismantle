@@ -1,104 +1,57 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Dismantle.Tablegen.Types (
-  Records(..),
-  ClassDecl(..),
-  Def(..),
-  ClassParameter(..),
-  Metadata(..),
-  Named(..),
-  BitRef(..),
-  DeclItem(..),
-  DeclType(..),
-  DagArg(..),
-  VarName(..),
-  BangOperator(..),
-  SimpleValue(..)
+  InstructionDescriptor(..),
+  FieldDescriptor(..),
+  FieldType(..),
+  RegisterDirection(..)
   ) where
 
-data Records =
-  Records { tblClasses :: [ClassDecl]
-          , tblDefs :: [Def]
-          }
+import GHC.Generics ( Generic )
+import Control.DeepSeq
+import qualified Data.Array.Unboxed as UA
+import Data.Word ( Word8 )
+
+import qualified Dismantle.Tablegen.ByteTrie as BT
+
+-- | The direction of a register field (input, output, or both)
+data RegisterDirection = In | Out | Both
+  deriving (Show, Generic, NFData)
+
+-- | The type of data contained in a field operand.
+--
+-- This is designed to distinguish between register references,
+-- immediates, and other types of values.
+data FieldType = Immediate
+               | Register
+               | Offset
+               | Predication
+               | Memory
+               | Address
+               deriving (Show, Generic, NFData)
+
+-- | Description of an operand field in an instruction (could be a
+-- register reference or an immediate)
+data FieldDescriptor =
+  FieldDescriptor { fieldName :: String
+                  , fieldBits :: !(UA.UArray Int Word8)
+                  , fieldDirection :: !RegisterDirection
+                  , fieldType :: !FieldType
+                  }
   deriving (Show)
 
-data ClassDecl =
-  ClassDecl { classDeclName :: String
-            , classDeclParams :: [ClassParameter]
-            , classDeclMetadata :: [Metadata]
-            , classDecls :: [Named DeclItem]
-            }
-  deriving (Show)
+instance NFData FieldDescriptor where
+  rnf fd = fieldName fd `deepseq` fd `seq` ()
 
-data Def =
-  Def { defName :: String
-      , defMetadata :: [Metadata]
-      , defDecls :: [Named DeclItem]
-      }
-  deriving (Show)
-
-data ClassParameter =
-  ClassParameter DeclType String DeclItem
-  deriving (Show)
-
-data Metadata =
-  Metadata String
-  deriving (Show)
-
-data Named a =
-  Named { namedName :: String
-        , namedValue :: a
-        }
-  deriving (Show)
-
-data DeclItem =
-  BitItem !Bool
-  | IntItem !Int
-  | StringItem String
-  | StringExprItem String
-  | FieldBits [Maybe BitRef]
-  | ExpectedBits [Bool]
-  | ExpectedUnknownBits [Maybe BitRef]
-  | DagItem SimpleValue
-  | ListItem [DeclItem]
-  | ClassItem String
-  | ExprItem SimpleValue
-  | UnknownItem DeclType
-  deriving (Show)
-
-data DagArg = DagArg SimpleValue (Maybe VarName)
-            | DagVarRef VarName
-  deriving (Show)
-
--- | A reference to a variable name - the string does not include the $
-data VarName = VarName String
-  deriving (Show)
-
-data BitRef = ExpectedBit !Bool
-            | FieldBit String Int
-            | FieldVarRef String
-            deriving (Show)
-
-data DeclType = TGBit
-              | TGBits !Int
-              | TGString
-              | TGInt
-              | TGDag
-              | TGFieldBits !Int
-              | TGList DeclType
-              | TGClass String
-  deriving (Show)
-
-data BangOperator = BangOperator String
-  deriving (Show)
-
-data SimpleValue = Identifier String
-                 | VString String
-                 | VNum !Int
-                 | VUnset
-                 | VList [SimpleValue] (Maybe String)
-                 -- ^ A [] list with an optional type specifier
-                 | VSequence [SimpleValue]
-                 -- ^ A {} list
-                 | VAnonRecord String [SimpleValue]
-                 | VDag DagArg [DagArg]
-                 | VBang BangOperator (Maybe String) [SimpleValue]
-  deriving (Show)
+-- | Description of an instruction, abstracted from the tablegen
+-- definition
+data InstructionDescriptor =
+  InstructionDescriptor { idMask :: [BT.Bit]
+                        , idMnemonic :: String
+                        , idFields :: [FieldDescriptor]
+                        , idNamespace :: String
+                        , idDecoder :: String
+                        , idAsmString :: String
+                        , idPseudo :: Bool
+                        }
+  deriving (Show, Generic, NFData)
