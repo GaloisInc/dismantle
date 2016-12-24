@@ -125,7 +125,7 @@ dagVarRefs iname expectedOperator v =
       case a of
         DagArg (Identifier i) _
           | [klass,var] <- L.splitOn ":" i -> M.insert (CI.mk var) klass m
-          | i == "variable_ops" -> m -- See Note [variable_ops] 
+          | i == "variable_ops" -> m -- See Note [variable_ops]
         _ -> L.error ("Unexpected variable reference in a DAG for " ++ iname ++ ": " ++ show a)
 
 {- Note [variable_ops]
