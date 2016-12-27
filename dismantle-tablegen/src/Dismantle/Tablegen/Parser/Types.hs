@@ -45,7 +45,7 @@ data ClassParameter =
 
 data Metadata =
   Metadata String
-  deriving (Show)
+  deriving (Show, Eq)
 
 data Named a =
   Named { namedName :: String
