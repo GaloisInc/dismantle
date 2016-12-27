@@ -24,10 +24,6 @@ import Dismantle.Tablegen.Parser.Types
 import Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
 
--- FIXME: Change byteTrie to not require a default value: instead,
--- just use another constructor in the ByteTrie type to represent "no
--- value".  Have lookup return Nothing if there is no value.
-
 makeParseTables :: [InstructionDescriptor] -> Either BT.TrieError (BT.ByteTrie (Maybe InstructionDescriptor))
 makeParseTables = BT.byteTrie Nothing . map (idMask &&& Just)
 
@@ -64,7 +60,16 @@ instructionDescriptor isa def = do
   guard (isaInstructionFilter isa i)
   return i
 
-fieldDescriptors :: ISA -> String -> SimpleValue -> SimpleValue -> [Maybe BitRef] -> [FieldDescriptor]
+fieldDescriptors :: ISA
+                 -> String
+                 -- ^ The instruction mnemonic
+                 -> SimpleValue
+                 -- ^ The "ins" DAG item (to let us identify instruction input types)
+                 -> SimpleValue
+                 -- ^ The "outs" DAG item (to let us identify instruction outputs)
+                 -> [Maybe BitRef]
+                 -- ^ The bits descriptor (so we can pick out fields)
+                 -> [FieldDescriptor]
 fieldDescriptors isa iname ins outs bits = map toFieldDescriptor (M.toList groups)
   where
     groups = foldr addBit M.empty (zip [0..] bits)
@@ -83,19 +88,20 @@ fieldDescriptors isa iname ins outs bits = map toFieldDescriptor (M.toList group
                     | (bitNum, fldIdx) <- bitPositions
                     ]
           (ty, dir) = fieldMetadata isa inputFields outputFields fldName
+          fldRange = findFieldBitRange bitPositions
       in FieldDescriptor { fieldName = fldName
                          , fieldDirection = dir
                          , fieldType = ty
-                         , fieldBits = UA.array (0, length bitPositions - 1) arrVals
+                         , fieldBits = UA.array fldRange arrVals
                          }
 
--- toFieldType :: String -> FieldType
--- toFieldType s =
---   case s of
---     "gprc" -> Register
---     "pred" -> Predication
---     "i32imm" -> Immediate
---     _ -> L.error ("Unexpected field type: " ++ s)
+-- | Find the actual length of a field.
+--
+-- The bit positions tell us which bits are encoded in the
+-- instruction, but some values have implicit bits that are not
+-- actually in the instruction.
+findFieldBitRange :: [(Int, Int)] -> (Int, Int)
+findFieldBitRange bitPositions = (minimum (map snd bitPositions), maximum (map snd bitPositions))
 
 fieldMetadata :: ISA -> M.Map (CI String) String -> M.Map (CI String) String -> String -> (FieldType, RegisterDirection)
 fieldMetadata isa ins outs name =
