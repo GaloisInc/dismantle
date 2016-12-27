@@ -19,6 +19,9 @@ mkTest (p, isa) = T.testCase p $ do
     Right rs -> do
       let insns = D.filterISA isa rs
       insns `deepseq` return ()
+      case D.makeParseTables isa (D.isaInstructions insns) of
+        Left err -> T.assertFailure (show err)
+        Right t -> t `seq` return ()
 
 isaTable :: [(FilePath, D.ISA)]
 isaTable = [ ("data/AArch64.tgen", D.aarch64)
@@ -29,3 +32,13 @@ isaTable = [ ("data/AArch64.tgen", D.aarch64)
            , ("data/PPC.tgen", D.ppc)
            , ("data/Sparc.tgen", D.sparc)
            ]
+
+{-
+
+Next, compute instruction operand patterns and use them to generate
+ADTs for instruction patterns.  Include a separate enumeration for the
+actual opcodes for each instruction of those forms.  Those functions
+will have to take in formatting functions as a parameter.
+
+
+-}
