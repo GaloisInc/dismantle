@@ -1,0 +1,12 @@
+diff -ur /tmp/llvm-3.9.1.src/lib/Target/AVR/AVRInstrInfo.td llvm-3.9.1.src/lib/Target/AVR/AVRInstrInfo.td
+--- /tmp/llvm-3.9.1.src/lib/Target/AVR/AVRInstrInfo.td	2016-05-06 03:12:31.000000000 -0700
++++ llvm-3.9.1.src/lib/Target/AVR/AVRInstrInfo.td	2016-12-27 14:33:54.785218099 -0800
+@@ -519,7 +519,7 @@
+                    Requires<[SupportsMultiplication]>;
+   }
+ 
+-  def MULSURdRr : FMUL2RdRr<1,
++  def MULSURdRr : FFMULRdRr<0b00,
+                             (outs),
+                             (ins GPR8:$lhs, GPR8:$rhs),
+                             "mulsu\t$lhs, $rhs",

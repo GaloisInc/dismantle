@@ -14203,8 +14203,8 @@ def MULSRdRr {	// Instruction AVRInst AVRInst16 FMUL2RdRr Requires
   bits<5> rr = { ?, ?, ?, ?, ? };
   string NAME = ?;
 }
-def MULSURdRr {	// Instruction AVRInst AVRInst16 FMUL2RdRr Requires
-  field bits<16> Inst = { 0, 0, 0, 0, 0, 0, 1, 1, rd{3}, rd{2}, rd{1}, rd{0}, rr{3}, rr{2}, rr{1}, rr{0} };
+def MULSURdRr {	// Instruction AVRInst AVRInst16 FFMULRdRr Requires
+  field bits<16> Inst = { 0, 0, 0, 0, 0, 0, 1, 1, 0, rd{2}, rd{1}, rd{0}, 0, rr{2}, rr{1}, rr{0} };
   string Namespace = "AVR";
   dag OutOperandList = (outs);
   dag InOperandList = (ins GPR8:$lhs, GPR8:$rhs);
@@ -14262,8 +14262,8 @@ def MULSURdRr {	// Instruction AVRInst AVRInst16 FMUL2RdRr Requires
   string AsmMatchConverter = "";
   string TwoOperandAliasConstraint = "";
   bit UseNamedOperandTable = 0;
-  bits<5> rd = { ?, ?, ?, ?, ? };
-  bits<5> rr = { ?, ?, ?, ?, ? };
+  bits<3> rd = { ?, ?, ? };
+  bits<3> rr = { ?, ?, ? };
   string NAME = ?;
 }
 def MemriAsmOperand {	// AsmOperandClass
