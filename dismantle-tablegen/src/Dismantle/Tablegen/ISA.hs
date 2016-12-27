@@ -17,7 +17,6 @@ import Dismantle.Tablegen.Types
 data ISA =
   ISA { isaName :: String
       , isaInstructionFilter :: InstructionDescriptor -> Bool
-      , isaFieldType :: String -> FieldType
       }
 
 arm :: ISA
@@ -44,34 +43,47 @@ aarch64 = ISA { isaName = "AArch64"
 ppc :: ISA
 ppc = ISA { isaName = "PPC"
           , isaInstructionFilter = ppcFilter
-          , isaFieldType = ppcFieldType
           }
   where
     ppcFilter i = idNamespace i == "PPC" && not (idPseudo i)
-    ppcFieldType t =
-      case t of
-        "crbitrc" -> Register
-        "vrrc" -> Register
-        "tlsreg" -> Register
-        "tlsgd32" -> Register
-        "gprc" -> Register
-        "g8rc" -> Register
-        "g8rc_nox0" -> Register
-        "gprc_nor0" -> Register
-        "tocentry" -> Register -- ?? this is some table lookup thing, so memory?
-        "s16imm" -> Immediate
-        "s16imm_64" -> Immediate
-        "s17imm" -> Immediate
-        "s17imm64" -> Immediate
-        "u16imm" -> Immediate
-        "u16imm_64" -> Immediate
-        "u17imm" -> Immediate
-        "u17imm64" -> Immediate
-        "u1imm" -> Immediate
-        "memrr" -> Memory
-        "memrix" -> Memory
-        "condbrtarget" -> Offset
-        "abscondbrtarget" -> Address
+    -- ppcFieldType t =
+    --   case t of
+    --     "crbitrc" -> Register
+    --     "vrrc" -> Register
+    --     "tlsreg" -> Register
+    --     "tlsreg32" -> Register
+    --     "tlsgd32" -> Register
+    --     "gprc" -> Register
+    --     "g8rc" -> Register
+    --     "g8rc_nox0" -> Register
+    --     "gprc_nor0" -> Register
+    --     "tocentry" -> Register -- ?? this is some table lookup thing, so memory?
+    --     "i32imm" -> Immediate
+    --     "s32imm" -> Immediate
+    --     "s16imm" -> Immediate
+    --     "s16imm_64" -> Immediate
+    --     "s17imm" -> Immediate
+    --     "s17imm64" -> Immediate
+    --     "u16imm" -> Immediate
+    --     "u16imm_64" -> Immediate
+    --     "u17imm" -> Immediate
+    --     "u17imm64" -> Immediate
+    --     "u5imm" -> Immediate
+    --     "s5imm" -> Immediate
+    --     "u4imm" -> Immediate
+    --     "s4imm" -> Immediate
+    --     "u1imm" -> Immediate
+    --     "memrr" -> Memory
+    --     "memrix" -> Memory
+    --     "memri" -> Memory
+    --     "condbrtarget" -> Offset
+    --     "abscondbrtarget" -> Address
+    --     "crrc" -> Register
+    --     "f8rc" -> Register
+    --     "f4rc" -> Register
+    --     "vsfrc" -> Register
+    --     "vssrc" -> Register
+    --     _ -> L.error ("Unexpected PPC field class: " ++ t)
 
 mips :: ISA
 mips = ISA { isaName = "Mips"

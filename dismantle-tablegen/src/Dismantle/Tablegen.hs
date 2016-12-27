@@ -27,8 +27,34 @@ import qualified Dismantle.Tablegen.ByteTrie as BT
 makeParseTables :: [InstructionDescriptor] -> Either BT.TrieError (BT.ByteTrie (Maybe InstructionDescriptor))
 makeParseTables = BT.byteTrie Nothing . map (idMask &&& Just)
 
-filterISA :: ISA -> Records -> [InstructionDescriptor]
-filterISA isa = mapMaybe (instructionDescriptor isa) . tblDefs
+filterISA :: ISA -> Records -> ISADescriptor
+filterISA isa rs =
+  ISADescriptor { isaInstructions = mapMaybe (instructionDescriptor isa) $ tblDefs rs
+                , isaRegisterClasses = registerClasses
+                , isaRegisters = registerOperands
+                }
+  where
+    dagOperands = filter isDAGOperand $ tblDefs rs
+    registerClasses = map (RegisterClass . defName) $ filter isRegisterClass dagOperands
+    registerOperands = mapMaybe isRegisterOperand dagOperands
+
+isRegisterClass :: Def -> Bool
+isRegisterClass def = Metadata "RegisterClass" `elem` defMetadata def
+
+isRegisterOperand :: Def -> Maybe (String, RegisterClass)
+isRegisterOperand def = do
+  guard (Metadata "RegisterOperand" `elem` defMetadata def)
+  Named _ (ClassItem cname) <- F.find (named "RegClass") (defDecls def)
+  return (defName def, RegisterClass cname)
+
+{-
+
+
+
+-}
+
+isDAGOperand :: Def -> Bool
+isDAGOperand d = Metadata "DAGOperand" `elem` defMetadata d
 
 toTrieBit :: Maybe BitRef -> BT.Bit
 toTrieBit br =
@@ -87,7 +113,7 @@ fieldDescriptors isa iname ins outs bits = map toFieldDescriptor (M.toList group
       let arrVals = [ (fldIdx, fromIntegral bitNum)
                     | (bitNum, fldIdx) <- bitPositions
                     ]
-          (ty, dir) = fieldMetadata isa inputFields outputFields fldName
+          (ty, dir) = fieldMetadata inputFields outputFields fldName
           fldRange = findFieldBitRange bitPositions
       in FieldDescriptor { fieldName = fldName
                          , fieldDirection = dir
@@ -103,18 +129,18 @@ fieldDescriptors isa iname ins outs bits = map toFieldDescriptor (M.toList group
 findFieldBitRange :: [(Int, Int)] -> (Int, Int)
 findFieldBitRange bitPositions = (minimum (map snd bitPositions), maximum (map snd bitPositions))
 
-fieldMetadata :: ISA -> M.Map (CI String) String -> M.Map (CI String) String -> String -> (FieldType, RegisterDirection)
-fieldMetadata isa ins outs name =
+fieldMetadata :: M.Map (CI String) String -> M.Map (CI String) String -> String -> (FieldType, RegisterDirection)
+fieldMetadata ins outs name =
   let cin = CI.mk name
   in case (M.lookup cin ins, M.lookup cin outs) of
     (Just kIn, Just kOut)
-      | kIn == kOut -> (isaFieldType isa kIn, Both)
+      | kIn == kOut -> (FieldType kIn, Both)
       | otherwise -> L.error ("Field type mismatch for in vs. out: " ++ show name)
-    (Just kIn, Nothing) -> (isaFieldType isa kIn, In)
-    (Nothing, Just kOut) -> (isaFieldType isa kOut, Out)
+    (Just kIn, Nothing) -> (FieldType kIn, In)
+    (Nothing, Just kOut) -> (FieldType kOut, Out)
     -- FIXME: This might or might not be true.. need to look at more
     -- cases
-    (Nothing, Nothing) -> (Immediate, In) -- L.error ("No field type for " ++ name)
+    (Nothing, Nothing) -> (FieldType "unknown", In)
 
 dagVarRefs :: String
            -> String

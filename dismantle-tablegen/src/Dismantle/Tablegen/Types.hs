@@ -4,7 +4,9 @@ module Dismantle.Tablegen.Types (
   InstructionDescriptor(..),
   FieldDescriptor(..),
   FieldType(..),
-  RegisterDirection(..)
+  RegisterDirection(..),
+  RegisterClass(..),
+  ISADescriptor(..)
   ) where
 
 import GHC.Generics ( Generic )
@@ -20,14 +22,20 @@ data RegisterDirection = In | Out | Both
 
 -- | The type of data contained in a field operand.
 --
--- This is designed to distinguish between register references,
--- immediates, and other types of values.
-data FieldType = Immediate
-               | Register
-               | Offset
-               | Predication
-               | Memory
-               | Address
+-- For now, this is just a wrapper around a string.  Later in the
+-- process, we will parse that out using information in the tablegen
+-- files.
+--
+-- Those have definitions for 'DAGOperand's, which will let us
+-- classify each operand with great precision.  There are subtypes of
+-- DAGOperand:
+--
+-- * RegisterClass: this defines a *class* of registers
+-- * RegisterOperand: references a register class
+--
+-- It seems like some of the details are ISA-specific, so we don't
+-- want to commit to a representation at this point.
+data FieldType = FieldType String
                deriving (Show, Generic, NFData)
 
 -- | Description of an operand field in an instruction (could be a
@@ -54,4 +62,14 @@ data InstructionDescriptor =
                         , idAsmString :: String
                         , idPseudo :: Bool
                         }
+  deriving (Show, Generic, NFData)
+
+data RegisterClass = RegisterClass String
+  deriving (Show, Generic, NFData)
+
+data ISADescriptor =
+  ISADescriptor { isaInstructions :: [InstructionDescriptor]
+                , isaRegisterClasses :: [RegisterClass]
+                , isaRegisters :: [(String, RegisterClass)]
+                }
   deriving (Show, Generic, NFData)
