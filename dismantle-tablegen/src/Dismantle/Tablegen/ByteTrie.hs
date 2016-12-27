@@ -47,7 +47,7 @@ newtype Pattern = Pattern { unPattern :: A.Array Int Bit }
 
 -- | Return the number of bytes occupied by a 'Pattern'
 patternBytes :: Pattern -> Int
-patternBytes = A.rangeSize . A.bounds . unPattern
+patternBytes = (`div` 8) . A.rangeSize . A.bounds . unPattern
 
 -- | Look up a byte in the trie.
 --
