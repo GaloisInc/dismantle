@@ -18,6 +18,7 @@ import qualified Control.Monad.Except as E
 import qualified Data.Array as A
 import Data.Bits ( testBit )
 import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 import qualified Data.Traversable as T
 import Data.Word ( Word8 )
 
@@ -68,6 +69,7 @@ data TrieError = OverlappingBitPattern [[Bit]]
   deriving (Eq, Show)
 
 data TrieState e = TrieState { tsPatterns :: M.Map Pattern e
+                             , tsCache :: M.Map (Int, S.Set Pattern) (ByteTrie e)
                              }
 
 newtype TrieM e a = TrieM { unM :: St.StateT (TrieState e) (E.Except TrieError) a }
@@ -78,58 +80,68 @@ newtype TrieM e a = TrieM { unM :: St.StateT (TrieState e) (E.Except TrieError) 
             St.MonadState (TrieState e))
 
 -- | Construct a 'ByteTrie' from a list of mappings and a default element
-byteTrie :: a -> [([Bit], a)] -> Either TrieError (ByteTrie a)
+byteTrie :: e -> [([Bit], e)] -> Either TrieError (ByteTrie e)
 byteTrie defElt mappings = mkTrie defElt (mapM_ (uncurry assertMapping) mappings)
 
 -- | Construct a 'ByteTrie' through a monadic assertion-oriented interface.
 --
 -- Any bit pattern not covered by an explicit assertion will default
 -- to the undefined parse value.
-mkTrie :: a
+mkTrie :: e
        -- ^ The value of an undefined parse
-       -> TrieM a ()
+       -> TrieM e ()
        -- ^ The assertions composing the trie
-       -> Either TrieError (ByteTrie a)
+       -> Either TrieError (ByteTrie e)
 mkTrie defElt act =
-  E.runExcept (St.execStateT (unM act) s0 >>= trieFromState defElt)
+  E.runExcept (St.evalStateT (unM (act >> trieFromState defElt)) s0)
   where
     s0 = TrieState { tsPatterns = M.empty
+                   , tsCache = M.empty
                    }
 
-trieFromState :: a -> TrieState a -> E.Except TrieError (ByteTrie a)
-trieFromState defElt s = ByteTrie <$> buildTableLevel defElt (M.toList (tsPatterns s)) 0
+trieFromState :: e -> TrieM e (ByteTrie e)
+trieFromState defElt = do
+  pats <- St.gets tsPatterns
+  buildTableLevel defElt (M.toList pats) 0
 
-buildTableLevel :: a
+buildTableLevel :: e
                 -- ^ Default element
-                -> [(Pattern, a)]
+                -> [(Pattern, e)]
                 -- ^ Remaining valid patterns
                 -> Int
                 -- ^ Byte index we are computing
-                -> E.Except TrieError (A.Array Word8 (Payload a))
+                -> TrieM e (ByteTrie e)
 buildTableLevel defElt patterns byteIndex = do
-  payloads <- T.traverse (makePayload defElt patterns byteIndex) byteValues
-  return $ A.array (0, maxWord) payloads
+  cache <- St.gets tsCache
+  let key = (byteIndex, S.fromList (map fst patterns))
+  case M.lookup key cache of
+    Just bt -> return bt
+    Nothing -> do
+      payloads <- T.traverse (makePayload defElt patterns byteIndex) byteValues
+      let bt = ByteTrie $ A.array (0, maxWord) payloads
+      St.modify' $ \s -> s { tsCache = M.insert key bt (tsCache s) }
+      return bt
   where
     maxWord :: Word8
     maxWord = maxBound
     byteValues = [0 .. maxWord]
 
-makePayload :: a
+makePayload :: e
             -- ^ Default element
-            -> [(Pattern, a)]
+            -> [(Pattern, e)]
             -- ^ Valid patterns at this point in the trie
             -> Int
             -- ^ Byte index we are computing
             -> Word8
             -- ^ The byte we are matching patterns against
-            -> E.Except TrieError (Word8, Payload a)
+            -> TrieM e (Word8, Payload e)
 makePayload defElt patterns byteIndex byte =
   case matchingPatterns of
     [] -> return (byte, Element defElt)
     [(_, elt)] -> return (byte, Element elt)
     _ | all ((> (byteIndex + 1)) . patternBytes . fst) matchingPatterns -> do
         t <- buildTableLevel defElt matchingPatterns (byteIndex + 1)
-        return (byte, NextTable (ByteTrie t))
+        return (byte, NextTable t)
       | otherwise -> E.throwError (OverlappingBitPattern (map (A.elems . unPattern . fst) matchingPatterns))
   where
     matchingPatterns = filter (patternMatches byteIndex byte . fst) patterns
