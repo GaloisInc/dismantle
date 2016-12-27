@@ -10,6 +10,7 @@ module Dismantle.Tablegen.Parser (
 
 import Control.Applicative
 import qualified Control.Monad.State.Strict as St
+import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
 import Data.Text.Lazy ( Text )
 import Text.Megaparsec as P
@@ -232,12 +233,11 @@ parseMultilineStringLiteral = do
 -- newline (which won't be consumed by 'lexeme')
 parseMetadataComment :: Parser [Metadata]
 parseMetadataComment = do
-  tryChoice [ (symbol "//" *> P.many (P.satisfy (/= '\n')) <* sc) >> pure []
+  tryChoice [ mkMetadata <$> (symbol "//" *> P.many (P.satisfy (/= '\n')) <* sc)
             , pure []
             ]
-
-parseMetadata :: Parser Metadata
-parseMetadata = Metadata <$> name
+    where
+      mkMetadata = map Metadata . L.splitOn " "
 
 parseClassParameters :: Parser [ClassParameter]
 parseClassParameters = P.label "ClassParameters" $
