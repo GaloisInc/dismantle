@@ -24,8 +24,8 @@ import Dismantle.Tablegen.Parser.Types
 import Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
 
-makeParseTables :: [InstructionDescriptor] -> Either BT.TrieError (BT.ByteTrie (Maybe InstructionDescriptor))
-makeParseTables = BT.byteTrie Nothing . map (idMask &&& Just)
+makeParseTables :: ISA -> [InstructionDescriptor] -> Either BT.TrieError (BT.ByteTrie (Maybe InstructionDescriptor))
+makeParseTables isa = BT.byteTrie Nothing . map (idMask &&& Just) . filter (not . isaPseudoInstruction isa)
 
 filterISA :: ISA -> Records -> ISADescriptor
 filterISA isa rs =
@@ -75,6 +75,7 @@ instructionDescriptor isa def = do
   Named _ (StringItem decoder) <- F.find (named "DecoderNamespace") (defDecls def)
   Named _ (StringItem asmStr) <- F.find (named "AsmString") (defDecls def)
   Named _ (BitItem b) <- F.find (named "isPseudo") (defDecls def)
+  guard (not b)
   let i = InstructionDescriptor { idMask = map toTrieBit mbits
                                 , idMnemonic = defName def
                                 , idNamespace = ns
