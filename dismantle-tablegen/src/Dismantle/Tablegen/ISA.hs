@@ -9,8 +9,6 @@ module Dismantle.Tablegen.ISA (
   sparc
   ) where
 
-import qualified GHC.Err.Located as L
-
 import Dismantle.Tablegen.Types
 
 -- | Information specific to an ISA that influences code generation
@@ -57,48 +55,71 @@ aarch64 = ISA { isaName = "AArch64"
 ppc :: ISA
 ppc = ISA { isaName = "PPC"
           , isaInstructionFilter = ppcFilter
-          , isaPseudoInstruction = const False
+          , isaPseudoInstruction = ppcPseudo
           }
   where
-    ppcFilter i = idNamespace i == "PPC" && not (idPseudo i)
-    -- ppcFieldType t =
-    --   case t of
-    --     "crbitrc" -> Register
-    --     "vrrc" -> Register
-    --     "tlsreg" -> Register
-    --     "tlsreg32" -> Register
-    --     "tlsgd32" -> Register
-    --     "gprc" -> Register
-    --     "g8rc" -> Register
-    --     "g8rc_nox0" -> Register
-    --     "gprc_nor0" -> Register
-    --     "tocentry" -> Register -- ?? this is some table lookup thing, so memory?
-    --     "i32imm" -> Immediate
-    --     "s32imm" -> Immediate
-    --     "s16imm" -> Immediate
-    --     "s16imm_64" -> Immediate
-    --     "s17imm" -> Immediate
-    --     "s17imm64" -> Immediate
-    --     "u16imm" -> Immediate
-    --     "u16imm_64" -> Immediate
-    --     "u17imm" -> Immediate
-    --     "u17imm64" -> Immediate
-    --     "u5imm" -> Immediate
-    --     "s5imm" -> Immediate
-    --     "u4imm" -> Immediate
-    --     "s4imm" -> Immediate
-    --     "u1imm" -> Immediate
-    --     "memrr" -> Memory
-    --     "memrix" -> Memory
-    --     "memri" -> Memory
-    --     "condbrtarget" -> Offset
-    --     "abscondbrtarget" -> Address
-    --     "crrc" -> Register
-    --     "f8rc" -> Register
-    --     "f4rc" -> Register
-    --     "vsfrc" -> Register
-    --     "vssrc" -> Register
-    --     _ -> L.error ("Unexpected PPC field class: " ++ t)
+    ppcFilter i = idNamespace i == "PPC" && idDecoder i == ""
+    ppcPseudo i = idPseudo i ||
+                  idMnemonic i `elem` [ "LI" -- li rD,val == addi rD,0,val
+                                      , "LIS" -- ~same
+                                      , "BDNZ" -- subsumed by gBC... maybe just BC?
+                                      , "BDNZm"
+                                      , "BDNZp"
+                                      , "BDZ"
+                                      , "BDZm"
+                                      , "BDZp"
+                                      , "BDZL"
+                                      , "BDZLm"
+                                      , "BDZLp"
+                                      , "BDZA"
+                                      , "BDZAm"
+                                      , "BDZAp"
+                                      , "BDNZLA"
+                                      , "BDZLA"
+                                      , "BDZLAm"
+                                      , "BDZLAp"
+                                      , "BDNZLAm"
+                                      , "BDNZLAp"
+                                      , "BDNZA"
+                                      , "BDNZAm"
+                                      , "BDNZAp"
+                                      , "BDNZL"
+                                      , "BDNZLm"
+                                      , "BDNZLp"
+                                      , "BDNZLR"
+                                      , "BDNZLRm"
+                                      , "BDNZLRp"
+                                      , "BDZLR"
+                                      , "BDZLRm"
+                                      , "BDZLRp"
+                                      , "BLR"
+                                      , "BLRm"
+                                      , "BLRp"
+                                      , "BDNZLRL"
+                                      , "BDNZLRLm"
+                                      , "BDNZLRLp"
+                                      , "BDZLRL"
+                                      , "BDZLRLm"
+                                      , "BDZLRLp"
+                                      , "BLRL"
+                                      , "BLRLm"
+                                      , "BLRLp"
+                                      , "BCTR"
+                                      , "BCTRL"
+                                      , "TLBSX2"
+                                      , "TLBRE2"
+                                      , "TLBWE2"
+                                      , "TLBLD"
+                                      , "MFLR"
+                                      , "MFXER"
+                                      , "MFCTR"
+                                      , "MTLR"
+                                      , "MTXER"
+                                      , "MTCTR"
+                                      , "EnforceIEIO"
+                                      , "NOP" -- encoded as OR r, 0?  maybe even or r0 r0
+                                      , "TRAP" -- encoded as TW (trap word) some constant
+                                      ]
 
 mips :: ISA
 mips = ISA { isaName = "Mips"
@@ -114,8 +135,9 @@ avr = ISA { isaName = "AVR"
           , isaPseudoInstruction = avrPsuedo
           }
   where
-    avrFilter i = idNamespace i == "AVR" && not (idPseudo i)
-    avrPsuedo i = idMnemonic i `elem` [ "CBRRdK" -- Clear bits, equivalent to an ANDi
+    avrFilter i = idNamespace i == "AVR"
+    avrPsuedo i = idPseudo i ||
+                  idMnemonic i `elem` [ "CBRRdK" -- Clear bits, equivalent to an ANDi
                                       , "LSLRd"  -- Equivalent to add rd, rd
                                       , "ROLRd"
                                       , "SBRRdK" -- Equivalent to ORi

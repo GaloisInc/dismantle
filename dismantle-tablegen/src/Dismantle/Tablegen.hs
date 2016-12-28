@@ -75,14 +75,20 @@ instructionDescriptor isa def = do
   Named _ (StringItem decoder) <- F.find (named "DecoderNamespace") (defDecls def)
   Named _ (StringItem asmStr) <- F.find (named "AsmString") (defDecls def)
   Named _ (BitItem b) <- F.find (named "isPseudo") (defDecls def)
-  guard (not b)
+  Named _ (BitItem cgOnly) <- F.find (named "isCodeGenOnly") (defDecls def)
+  Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
+
   let i = InstructionDescriptor { idMask = map toTrieBit mbits
                                 , idMnemonic = defName def
                                 , idNamespace = ns
                                 , idDecoder = decoder
                                 , idAsmString = asmStr
                                 , idFields = fieldDescriptors isa (defName def) ins outs mbits
-                                , idPseudo = b
+                                , idPseudo = or [ b -- See Note [Pseudo Instructions]
+                                                , cgOnly
+                                                , asmParseOnly
+                                                , Metadata "Pseudo" `elem` defMetadata def
+                                                ]
                                 }
   guard (isaInstructionFilter isa i)
   return i
@@ -168,5 +174,18 @@ input operands.  This virtual operand doesn't have a type annotation,
 so fails our first condition that tries to find the type.  We don't
 need to make an entry for it because no operand actually goes by that
 name.
+
+-}
+
+{- Note [Pseudo Instructions]
+
+We have an expanded definition of pseudo-instructions compared to
+LLVM.  There are instructions that are pure pseudo instructions
+(according to LLVM); these mostly represent high level things
+that turn into function calls or don't exist at all.  There are
+also "codegen only" and "assembly parser only" instructions that
+are rewritten by the assembler or codegen into more primitive
+instructions.  For the purposes of parsing, these don't need to
+exist since they have alternate parses.
 
 -}
