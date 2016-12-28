@@ -18,7 +18,7 @@ import qualified Dismantle.Tablegen.ByteTrie as BT
 
 -- | The direction of a register field (input, output, or both)
 data RegisterDirection = In | Out | Both
-  deriving (Show, Generic, NFData)
+  deriving (Eq, Ord, Show, Generic, NFData)
 
 -- | The type of data contained in a field operand.
 --
@@ -36,7 +36,7 @@ data RegisterDirection = In | Out | Both
 -- It seems like some of the details are ISA-specific, so we don't
 -- want to commit to a representation at this point.
 data FieldType = FieldType String
-               deriving (Show, Generic, NFData)
+               deriving (Eq, Ord, Show, Generic, NFData)
 
 -- | Description of an operand field in an instruction (could be a
 -- register reference or an immediate)
@@ -46,7 +46,7 @@ data FieldDescriptor =
                   , fieldDirection :: !RegisterDirection
                   , fieldType :: !FieldType
                   }
-  deriving (Show)
+  deriving (Eq, Ord, Show)
 
 instance NFData FieldDescriptor where
   rnf fd = fieldName fd `deepseq` fd `seq` ()
@@ -62,7 +62,7 @@ data InstructionDescriptor =
                         , idAsmString :: String
                         , idPseudo :: Bool
                         }
-  deriving (Show, Generic, NFData)
+  deriving (Eq, Ord, Show, Generic, NFData)
 
 data RegisterClass = RegisterClass String
   deriving (Show, Generic, NFData)

@@ -18,18 +18,19 @@ import qualified Control.Monad.Except as E
 import qualified Data.Array as A
 import Data.Bits ( testBit )
 import qualified Data.Map.Strict as M
-import qualified Data.Set as S
 import qualified Data.Traversable as T
 import Data.Word ( Word8 )
 
 import Prelude
 
+import Debug.Trace
+debug = flip trace
 data Payload a = NextTable (ByteTrie a)
                | Element a
                deriving (Show)
 
 -- | A data type mapping sequences of bytes to elements of type @a@
-data ByteTrie a = ByteTrie (A.Array Word8 (Payload a))
+newtype ByteTrie a = ByteTrie (A.Array Word8 (Payload a))
   deriving (Show)
 
 -- | A bit with either an expected value ('ExpectedBit') or an
@@ -68,8 +69,8 @@ data TrieError = OverlappingBitPattern [[Bit]]
                | InvalidPatternLength [Bit]
   deriving (Eq, Show)
 
-data TrieState e = TrieState { tsPatterns :: M.Map Pattern e
-                             , tsCache :: M.Map (Int, S.Set Pattern) (ByteTrie e)
+data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern e)
+                             , tsCache :: !(M.Map (Int, M.Map Pattern e) (ByteTrie e))
                              }
 
 newtype TrieM e a = TrieM { unM :: St.StateT (TrieState e) (E.Except TrieError) a }
@@ -80,14 +81,15 @@ newtype TrieM e a = TrieM { unM :: St.StateT (TrieState e) (E.Except TrieError) 
             St.MonadState (TrieState e))
 
 -- | Construct a 'ByteTrie' from a list of mappings and a default element
-byteTrie :: e -> [([Bit], e)] -> Either TrieError (ByteTrie e)
+byteTrie :: (Ord e, Show e) => e -> [([Bit], e)] -> Either TrieError (ByteTrie e)
 byteTrie defElt mappings = mkTrie defElt (mapM_ (uncurry assertMapping) mappings)
 
 -- | Construct a 'ByteTrie' through a monadic assertion-oriented interface.
 --
 -- Any bit pattern not covered by an explicit assertion will default
 -- to the undefined parse value.
-mkTrie :: e
+mkTrie :: (Ord e, Show e)
+       => e
        -- ^ The value of an undefined parse
        -> TrieM e ()
        -- ^ The assertions composing the trie
@@ -99,21 +101,22 @@ mkTrie defElt act =
                    , tsCache = M.empty
                    }
 
-trieFromState :: e -> TrieM e (ByteTrie e)
+trieFromState :: (Ord e, Show e) => e -> TrieM e (ByteTrie e)
 trieFromState defElt = do
   pats <- St.gets tsPatterns
-  buildTableLevel defElt (M.toList pats) 0
+  buildTableLevel defElt pats 0
 
-buildTableLevel :: e
+buildTableLevel :: (Ord e, Show e)
+                => e
                 -- ^ Default element
-                -> [(Pattern, e)]
+                -> M.Map Pattern e
                 -- ^ Remaining valid patterns
                 -> Int
                 -- ^ Byte index we are computing
                 -> TrieM e (ByteTrie e)
 buildTableLevel defElt patterns byteIndex = do
   cache <- St.gets tsCache
-  let key = (byteIndex, S.fromList (map fst patterns))
+  let key = (byteIndex, patterns)
   case M.lookup key cache of
     Just bt -> return bt
     Nothing -> do
@@ -126,9 +129,10 @@ buildTableLevel defElt patterns byteIndex = do
     maxWord = maxBound
     byteValues = [0 .. maxWord]
 
-makePayload :: e
+makePayload :: (Ord e, Show e)
+            => e
             -- ^ Default element
-            -> [(Pattern, e)]
+            -> M.Map Pattern e
             -- ^ Valid patterns at this point in the trie
             -> Int
             -- ^ Byte index we are computing
@@ -136,18 +140,19 @@ makePayload :: e
             -- ^ The byte we are matching patterns against
             -> TrieM e (Word8, Payload e)
 makePayload defElt patterns byteIndex byte =
-  case matchingPatterns of
+  case M.toList matchingPatterns of
     [] -> return (byte, Element defElt)
     [(_, elt)] -> return (byte, Element elt)
-    _ | all ((> (byteIndex + 1)) . patternBytes . fst) matchingPatterns -> do
+    _ | all ((> (byteIndex + 1)) . patternBytes) (M.keys matchingPatterns) -> do
         t <- buildTableLevel defElt matchingPatterns (byteIndex + 1)
         return (byte, NextTable t)
-      | otherwise -> E.throwError (OverlappingBitPattern (map (A.elems . unPattern . fst) matchingPatterns))
+      | otherwise -> E.throwError (OverlappingBitPattern (map (A.elems . unPattern . fst) (M.toList matchingPatterns))) `debug`
+       ("mkPayload: " ++ unlines (map (show . fst) (M.toList matchingPatterns)))
   where
-    matchingPatterns = filter (patternMatches byteIndex byte . fst) patterns
+    matchingPatterns = M.filterWithKey (patternMatches byteIndex byte) patterns
 
-patternMatches :: Int -> Word8 -> Pattern -> Bool
-patternMatches byteIndex byte (Pattern p) =
+patternMatches :: Int -> Word8 -> Pattern -> e -> Bool
+patternMatches byteIndex byte (Pattern p) _ =
   and [ bitMatches (byte `testBit` bitNum) (p A.! patternIx)
       | bitNum <- [0..7]
       , let patternIx = byteIndex * 8 + bitNum
@@ -187,14 +192,14 @@ of possibly-matching patterns.
 -- The bit pattern must have a length that is a multiple of 8.  This
 -- function can error out with a pure error ('TrieError') if an
 -- overlapping bit pattern is asserted.
-assertMapping :: [Bit] -> a -> TrieM a ()
+assertMapping :: Show a => [Bit] -> a -> TrieM a ()
 assertMapping pat val
   | plen `mod` 8 /= 0 = E.throwError (InvalidPatternLength pat)
   | otherwise = do
       pats <- St.gets tsPatterns
       let pat' = Pattern $ A.array (0, plen - 1) (zip [0..] pat)
       case M.lookup pat' pats of
-        Just _ -> E.throwError (OverlappingBitPattern [pat])
+        Just xist -> E.throwError (OverlappingBitPattern [pat]) `debug` ("Assertion time: " ++ show (val, xist))
         Nothing ->
           St.modify' $ \s -> s { tsPatterns = M.insert pat' val (tsPatterns s) }
   where
