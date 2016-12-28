@@ -21,7 +21,7 @@ mkTest (p, isa) = T.testCase p $ do
       insns `deepseq` return ()
       case D.makeParseTables isa (D.isaInstructions insns) of
         Left err -> T.assertFailure (show err)
-        Right t -> t `seq` return ()
+        Right tbl -> tbl `seq` return ()
 
 isaTable :: [(FilePath, D.ISA)]
 isaTable = [ ("data/AArch64.tgen", D.aarch64)
