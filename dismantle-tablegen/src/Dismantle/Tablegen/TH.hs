@@ -46,15 +46,11 @@ loadISA isa path = do
 -- structure.
 --
 -- String -> (String, Q Type)
---
--- FIXME: Need to derive Show, but the symbols make that difficult.
 mkOperandType :: ISADescriptor -> Q [Dec]
-mkOperandType isa = return [ DataD [] (mkName "Operand") [] (Just ksig) cons derivs
+mkOperandType isa = return [ DataD [] (mkName "Operand") [] (Just ksig) cons []
                            , StandaloneDerivD [] (ConT ''Show `AppT` (ConT (mkName "Operand") `AppT` VarT (mkName "tp")))
                            ]
   where
-    derivs = [-- ConT (mkName "Show")
-             ]
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
     tyvars = [ KindedTV (mkName "tp") (ConT ''Symbol)
              ]
