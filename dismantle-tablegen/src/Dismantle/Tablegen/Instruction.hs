@@ -2,23 +2,29 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 module Dismantle.Tablegen.Instruction (
   OperandList(..),
   Instruction(..),
-  Annotated(..)
+  Annotated(..),
+  mapOperandList
   ) where
 
 -- | A wrapper to allow operands to be easily annotated with arbitrary
 -- data (of kind '*' for now).
 --
--- Usage would be something like
+-- Assuming a definition of an instruction like the following
 --
--- > type AnnotatedInstruction = Instruction ISATag (Annotated OperandType AnnotationType)
+-- > type MyInstruction = Instruction MyISA OperandType
 --
--- The conversion to this type could be accomplished with a
--- parameterized fmap of the 'Annotated' constructor.  The annotation
--- is first so that a partial application during the initial fmap is
+-- Usage of 'Annotated' would be something like:
+--
+-- > type MyAnnotatedInstruction = Instruction MyISA (Annotated OperandType AnnotationType)
+--
+-- The conversion to this type could be accomplished with
+-- 'mapOperandList' of the 'Annotated' constructor.  The annotation is
+-- first so that a partial application during 'mapOperandList' is
 -- simplified.
 data Annotated a o tp = Annotated a (o tp)
 
@@ -41,8 +47,17 @@ data Annotated a o tp = Annotated a (o tp)
 data Instruction (t :: (k -> *) -> [k] -> *) (o :: k -> *) where
   Instruction :: t o sh -> OperandList o sh -> Instruction t o
 
+-- | An implementation of heterogeneous lists for operands, with the
+-- types of operands (caller-specified) reflected in the list type.
 data OperandList f sh where
   Nil  :: OperandList f '[]
   (:>) :: f tp -> OperandList f sh -> OperandList f (tp ': sh)
 
 infixr 5 :>
+
+-- | A type parameterized map
+mapOperandList :: (forall tp . a tp -> b tp) -> OperandList a sh -> OperandList b sh
+mapOperandList f l =
+  case l of
+    Nil -> Nil
+    e :> rest -> f e :> mapOperandList f rest
