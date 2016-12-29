@@ -72,6 +72,3 @@ dump o = do
       mapM_ (putStrLn . ("  "++) . show) (D.isaRegisters summary)
       putStrLn "Instruction mnemonics"
       mapM_ (putStrLn . ("  "++) . D.idMnemonic) (D.isaInstructions summary)
-      putStrLn ("# Shapes: " ++ show (length (D.isaInstructionClasses summary)))
-      putStrLn "Shapes"
-      mapM_ (putStrLn . ("  "++) . show) (D.isaInstructionClasses summary)
