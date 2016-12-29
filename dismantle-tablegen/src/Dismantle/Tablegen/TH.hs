@@ -41,6 +41,12 @@ loadISA isa path = do
     Left err -> fail (show err)
     Right defs -> return $ filterISA isa defs
 
+opcodeName :: Name
+opcodeName = mkName "Opcode"
+
+operandName :: Name
+operandName = mkName "Operand"
+
 mkInstructionAliases :: Q [Dec]
 mkInstructionAliases =
   return [ TySynD (mkName "Instruction") [] ity
@@ -48,18 +54,20 @@ mkInstructionAliases =
          ]
   where
     annotVar = mkName "a"
-    ity = ConT ''GenericInstruction `AppT` ConT (mkName "Opcode") `AppT` ConT (mkName "Operand")
+    ity = ConT ''GenericInstruction `AppT` ConT opcodeName `AppT` ConT operandName
     aty = ConT ''GenericInstruction `AppT`
-          ConT (mkName "Opcode") `AppT`
-          (ConT ''Annotated `AppT` VarT annotVar `AppT` ConT (mkName "Operand"))
+          ConT opcodeName `AppT`
+          (ConT ''Annotated `AppT` VarT annotVar `AppT` ConT operandName)
 
 mkOpcodeType :: ISADescriptor -> Q [Dec]
 mkOpcodeType isa =
-  return [ DataD [] (mkName "Opcode") tyVars Nothing cons []
-         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT (mkName "Opcode") `AppT` VarT (mkName "o") `AppT` VarT (mkName "sh")))
+  return [ DataD [] opcodeName tyVars Nothing cons []
+         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeName `AppT` VarT opName `AppT` VarT shapeName))
          ]
   where
-    tyVars = [PlainTV (mkName "o"), PlainTV (mkName "sh")]
+    opName = mkName "o"
+    shapeName = mkName "sh"
+    tyVars = [PlainTV opName, PlainTV shapeName]
     cons = map mkOpcodeCon (isaInstructions isa)
 
 mkOpcodeCon :: InstructionDescriptor -> Con
@@ -67,7 +75,7 @@ mkOpcodeCon i = GadtC [n] [] ty
   where
     strName = toTypeName (idMnemonic i)
     n = mkName strName
-    ty = ConT (mkName "Opcode") `AppT` ConT (mkName "Operand") `AppT` opcodeShape i
+    ty = ConT opcodeName `AppT` ConT operandName `AppT` opcodeShape i
 
 opcodeShape :: InstructionDescriptor -> Type
 opcodeShape i = foldr addField PromotedNilT (idFields i)
@@ -88,8 +96,8 @@ opcodeShape i = foldr addField PromotedNilT (idFields i)
 -- String -> (String, Q Type)
 mkOperandType :: ISADescriptor -> Q [Dec]
 mkOperandType isa =
-  return [ DataD [] (mkName "Operand") [] (Just ksig) cons []
-         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT (mkName "Operand") `AppT` VarT (mkName "tp")))
+  return [ DataD [] operandName [] (Just ksig) cons []
+         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT operandName `AppT` VarT (mkName "tp")))
          ]
   where
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
