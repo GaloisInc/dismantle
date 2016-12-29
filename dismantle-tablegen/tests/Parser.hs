@@ -19,7 +19,7 @@ mkTest (p, isa) = T.testCase p $ do
     Right rs -> do
       let insns = D.filterISA isa rs
       insns `deepseq` return ()
-      case D.makeParseTables isa (D.isaInstructions insns) of
+      case D.makeParseTables isa insns of
         Left err -> T.assertFailure (show err)
         Right tbl -> tbl `seq` return ()
 

@@ -14,25 +14,34 @@ module Dismantle.Tablegen.TH (
 
 import GHC.TypeLits ( Symbol )
 
+import qualified Codec.Compression.GZip as Z
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Unsafe as BS
 import Data.Char ( toUpper )
+import qualified Data.Text.Lazy.Encoding as LE
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
+import Language.Haskell.TH.Syntax ( qAddDependentFile )
+import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint as PP
 
 import Dismantle.Tablegen
 import Dismantle.Tablegen.Instruction
 
-genISA :: ISA -> FilePath -> DecsQ
-genISA isa path = do
+genISA :: ISA -> Name -> FilePath -> DecsQ
+genISA isa isaValName path = do
   desc <- runIO $ loadISA isa path
   operandType <- mkOperandType desc
   opcodeType <- mkOpcodeType desc
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
+  parserDef <- mkParser isaValName path
   return $ concat [ operandType
                   , opcodeType
                   , instrTypes
                   , ppDef
+                  , parserDef
                   ]
 
 -- | Load the instructions for the given ISA
@@ -48,6 +57,45 @@ opcodeName = mkName "Opcode"
 
 operandName :: Name
 operandName = mkName "Operand"
+
+mkParser :: Name -> FilePath -> Q [Dec]
+mkParser isaValName path = do
+  qAddDependentFile path
+  (blen, dataLit) <- runIO $ do
+    bs <- Z.compress <$> LBS.readFile path
+    let len = LBS.length bs
+    return (len, LitE $ StringPrimL $ LBS.unpack bs)
+  dataExpr <- [| LE.decodeUtf8 $ Z.decompress $ LBS.fromStrict $ unsafePerformIO $ BS.unsafePackAddressLen blen $(return dataLit) |]
+  trie <- [| case parseTablegen "<data>" $(return dataExpr) of
+               Left err1 -> error ("Error while parsing embedded data: " ++ show err1)
+               Right defs ->
+                 case makeParseTables $(varE isaValName) (filterISA $(varE isaValName) defs) of
+                   Left err2 -> error ("Error while building parse tables for embedded data: " ++ show err2)
+                   Right tbl -> tbl
+           |]
+  return [ ValD (VarP (mkName "trie")) (NormalB trie) []
+         ]
+
+{-
+
+Basically, for each InstructionDescriptor, we need to generate a
+function that parses a bytestring
+
+Goal (for lazy bytestrings):
+
+with TH, make a function from InstructionDescriptor -> Parser (Instruction)
+
+We can then use that function inside of something like
+'makeParseTables' to generate a 'BT.ByteTrie (Maybe (Parser
+Instruction)).  Then, we can just use the generic 'parseInstruction'.
+
+There are only two steps for the TH, then:
+
+1) convert from InstructionDescriptor to Parser
+
+2) make an expression that is essentially a call to that + makeParseTables
+
+-}
 
 mkInstructionAliases :: Q [Dec]
 mkInstructionAliases =

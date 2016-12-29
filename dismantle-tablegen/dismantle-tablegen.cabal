@@ -26,6 +26,7 @@ library
   -- other-extensions:
   build-depends:       base >=4.8 && <4.10,
                        template-haskell,
+                       bytestring,
                        pretty,
                        deepseq >= 1.4 && < 2,
                        located-base,

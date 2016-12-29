@@ -11,6 +11,7 @@ import qualified GHC.Err.Located as L
 import Control.Arrow ( (&&&) )
 import Control.Monad ( guard )
 import qualified Data.Array.Unboxed as UA
+import qualified Data.ByteString.Lazy as LBS
 import Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Foldable as F
@@ -25,8 +26,22 @@ import Dismantle.Tablegen.Parser.Types
 import Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
 
-makeParseTables :: ISA -> [InstructionDescriptor] -> Either BT.TrieError (BT.ByteTrie (Maybe InstructionDescriptor))
-makeParseTables isa = BT.byteTrie Nothing . map (idMask &&& Just) . filter (not . isaPseudoInstruction isa)
+data Parser a = Parser (LBS.ByteString -> a)
+
+parseInstruction :: BT.ByteTrie (Maybe (Parser a)) -> LBS.ByteString -> (Int, Maybe a)
+parseInstruction trie0 bs0 = go bs0 trie0 bs0 0
+  where
+    go bs1 trie bs consumed =
+      case LBS.uncons bs of
+        Nothing -> (consumed, Nothing)
+        Just (b, bs') ->
+          case BT.lookupByte trie b of
+            Left next -> go bs1 next bs' (consumed + 1)
+            Right Nothing -> (consumed + 1, Nothing)
+            Right (Just (Parser p)) -> (consumed + 1, Just (p bs1))
+
+makeParseTables :: ISA -> ISADescriptor -> Either BT.TrieError (BT.ByteTrie (Maybe InstructionDescriptor))
+makeParseTables isa = BT.byteTrie Nothing . map (idMask &&& Just) . filter (not . isaPseudoInstruction isa) . isaInstructions
 
 filterISA :: ISA -> Records -> ISADescriptor
 filterISA isa rs =
