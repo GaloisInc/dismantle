@@ -13,7 +13,6 @@ import GHC.TypeLits ( Symbol )
 import Language.Haskell.TH
 
 import Dismantle.Tablegen.Instruction
-import Dismantle.Tablegen.Shape
 import Dismantle.Tablegen.Types
 
 genISA :: ISADescriptor -> DecsQ

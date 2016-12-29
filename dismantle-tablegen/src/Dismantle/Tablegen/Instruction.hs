@@ -4,11 +4,10 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeOperators #-}
 module Dismantle.Tablegen.Instruction (
+  OperandList(..),
   Instruction(..),
   Annotated(..)
   ) where
-
-import Dismantle.Tablegen.Shape
 
 -- | A wrapper to allow operands to be easily annotated with arbitrary
 -- data (of kind '*' for now).
@@ -41,3 +40,9 @@ data Annotated a o tp = Annotated a (o tp)
 -- type-level tags on operands.
 data Instruction (t :: (k -> *) -> [k] -> *) (o :: k -> *) where
   Instruction :: t o sh -> OperandList o sh -> Instruction t o
+
+data OperandList f sh where
+  Nil  :: OperandList f '[]
+  (:>) :: f tp -> OperandList f sh -> OperandList f (tp ': sh)
+
+infixr 5 :>
