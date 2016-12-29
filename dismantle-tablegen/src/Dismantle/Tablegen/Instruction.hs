@@ -49,9 +49,10 @@ data Instruction (t :: (k -> *) -> [k] -> *) (o :: k -> *) where
 
 -- | An implementation of heterogeneous lists for operands, with the
 -- types of operands (caller-specified) reflected in the list type.
-data OperandList f sh where
+-- data OperandList f sh where
+data OperandList :: (k -> *) -> [k] -> * where
   Nil  :: OperandList f '[]
-  (:>) :: f tp -> OperandList f sh -> OperandList f (tp ': sh)
+  (:>) :: f tp -> OperandList f tps -> OperandList f (tp ': tps)
 
 infixr 5 :>
 
