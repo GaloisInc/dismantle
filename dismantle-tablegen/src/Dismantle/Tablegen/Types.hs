@@ -71,5 +71,7 @@ data ISADescriptor =
   ISADescriptor { isaInstructions :: [InstructionDescriptor]
                 , isaRegisterClasses :: [RegisterClass]
                 , isaRegisters :: [(String, RegisterClass)]
+                , isaOperands :: [FieldType]
+                -- ^ All of the operand types used in an ISA.
                 }
   deriving (Show, Generic, NFData)

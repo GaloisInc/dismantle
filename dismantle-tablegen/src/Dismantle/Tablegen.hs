@@ -17,6 +17,7 @@ import qualified Data.Foldable as F
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
 import Data.Maybe ( mapMaybe )
+import qualified Data.Set as S
 
 import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Parser ( parseTablegen )
@@ -32,12 +33,20 @@ filterISA isa rs =
   ISADescriptor { isaInstructions = insns
                 , isaRegisterClasses = registerClasses
                 , isaRegisters = registerOperands
+                , isaOperands = S.toList operandTypes
                 }
   where
     insns = mapMaybe (instructionDescriptor isa) $ tblDefs rs
     dagOperands = filter isDAGOperand $ tblDefs rs
     registerClasses = map (RegisterClass . defName) $ filter isRegisterClass dagOperands
     registerOperands = mapMaybe isRegisterOperand dagOperands
+    operandTypes = foldr extractOperands S.empty insns
+
+extractOperands :: InstructionDescriptor -> S.Set FieldType -> S.Set FieldType
+extractOperands i s = foldr extractFieldOperands s (idFields i)
+
+extractFieldOperands :: FieldDescriptor -> S.Set FieldType -> S.Set FieldType
+extractFieldOperands f = S.insert (fieldType f)
 
 isRegisterClass :: Def -> Bool
 isRegisterClass def = Metadata "RegisterClass" `elem` defMetadata def
@@ -47,12 +56,6 @@ isRegisterOperand def = do
   guard (Metadata "RegisterOperand" `elem` defMetadata def)
   Named _ (ClassItem cname) <- F.find (named "RegClass") (defDecls def)
   return (defName def, RegisterClass cname)
-
-{-
-
-
-
--}
 
 isDAGOperand :: Def -> Bool
 isDAGOperand d = Metadata "DAGOperand" `elem` defMetadata d

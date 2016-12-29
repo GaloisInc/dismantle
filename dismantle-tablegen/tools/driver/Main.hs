@@ -70,5 +70,7 @@ dump o = do
       mapM_ (putStrLn . ("  "++) . show) (D.isaRegisterClasses summary)
       putStrLn "Registers"
       mapM_ (putStrLn . ("  "++) . show) (D.isaRegisters summary)
+      putStrLn "Operand types"
+      mapM_ (putStrLn . ("  "++) . show) (D.isaOperands summary)
       putStrLn "Instruction mnemonics"
       mapM_ (putStrLn . ("  "++) . D.idMnemonic) (D.isaInstructions summary)

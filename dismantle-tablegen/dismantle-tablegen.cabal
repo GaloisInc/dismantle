@@ -20,6 +20,7 @@ library
                    Dismantle.Tablegen.Instruction
                    Dismantle.Tablegen.TH
                    Dismantle.Tablegen.Types
+                   Dismantle.PPC
   other-modules: Dismantle.Tablegen.Parser
                  Dismantle.Tablegen.Parser.Types
   -- other-extensions:

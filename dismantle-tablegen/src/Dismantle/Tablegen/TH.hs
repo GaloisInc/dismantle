@@ -3,20 +3,74 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ViewPatterns #-}
 module Dismantle.Tablegen.TH (
   genISA
   ) where
+
 import GHC.TypeLits ( Symbol )
+
+import Data.Char ( toUpper )
+import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
 
+import Dismantle.Tablegen
 import Dismantle.Tablegen.Instruction
 import Dismantle.Tablegen.Types
 
-genISA :: ISADescriptor -> DecsQ
-genISA = undefined
+genISA :: ISA -> FilePath -> DecsQ
+genISA isa path = do
+  desc <- runIO $ loadISA isa path
+  opType <- mkOperandType desc
+  return $ concat [ opType
+                  ]
+
+loadISA :: ISA -> FilePath -> IO ISADescriptor
+loadISA isa path = do
+  txt <- TL.readFile path
+  case parseTablegen path txt of
+    Left err -> fail (show err)
+    Right defs -> return $ filterISA isa defs
+
+-- | Generate a type to represent operands for this ISA
+--
+-- The type is always named @Operand@ and has a single type parameter
+-- of kind 'Symbol'.
+--
+-- FIXME: We'll definitely need a mapping from string names to
+-- suitable constructor names, as well as a description of the type
+-- structure.
+--
+-- String -> (String, Q Type)
+--
+-- FIXME: Need to derive Show, but the symbols make that difficult.
+mkOperandType :: ISADescriptor -> Q [Dec]
+mkOperandType isa = return [ DataD [] (mkName "Operand") [] (Just ksig) cons derivs
+                           , StandaloneDerivD [] (ConT ''Show `AppT` (ConT (mkName "Operand") `AppT` VarT (mkName "tp")))
+                           ]
+  where
+    derivs = [-- ConT (mkName "Show")
+             ]
+    ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
+    tyvars = [ KindedTV (mkName "tp") (ConT ''Symbol)
+             ]
+    cons = map mkOperandCon (isaOperands isa)
+
+mkOperandCon :: FieldType -> Con
+mkOperandCon (FieldType (toTypeName -> name)) = GadtC [n] [] ty
+  where
+    n = mkName name
+    ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
+
+toTypeName :: String -> String
+toTypeName s =
+  case s of
+    [] -> error "Empty names are not allowed"
+    c:rest -> toUpper c : rest
 
 {-
 
@@ -42,12 +96,12 @@ Tag and Operand types.
 
 -}
 
-data OpTag = Imm32
-           | Reg32
-
-data Operand (tp :: Symbol) where
+-- data Operand (tp :: Symbol) where
+data Operand :: Symbol -> * where
   OImm32 :: Int -> Operand "Imm32"
   OReg32 :: Int -> Operand "Reg32"
+
+deriving instance Show (Operand tp)
 
 s2 :: OperandList Operand '["Imm32", "Reg32"]
 s2 = OImm32 5 :> OReg32 0 :> Nil
