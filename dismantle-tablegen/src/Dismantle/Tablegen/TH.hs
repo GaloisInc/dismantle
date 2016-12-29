@@ -17,10 +17,10 @@ import GHC.TypeLits ( Symbol )
 import Data.Char ( toUpper )
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
+import qualified Text.PrettyPrint as PP
 
 import Dismantle.Tablegen
 import Dismantle.Tablegen.Instruction
-import Dismantle.Tablegen.Types
 
 genISA :: ISA -> FilePath -> DecsQ
 genISA isa path = do
@@ -28,9 +28,11 @@ genISA isa path = do
   operandType <- mkOperandType desc
   opcodeType <- mkOpcodeType desc
   instrTypes <- mkInstructionAliases
+  ppDef <- mkPrettyPrinter desc
   return $ concat [ operandType
                   , opcodeType
                   , instrTypes
+                  , ppDef
                   ]
 
 -- | Load the instructions for the given ISA
@@ -117,6 +119,28 @@ toTypeName s =
     [] -> error "Empty names are not allowed"
     c:rest -> toUpper c : rest
 
+mkPrettyPrinter :: ISADescriptor -> Q [Dec]
+mkPrettyPrinter desc = do
+  iname <- newName "i"
+  return [sig, pp iname]
+  where
+    ppName = mkName "ppInstruction"
+    ty = ArrowT `AppT` ConT (mkName "Instruction") `AppT` ConT ''PP.Doc
+    sig = SigD ppName ty
+    pp iname = FunD ppName [body iname]
+    body iname = Clause [VarP iname] (NormalB (ex iname)) []
+    ex iname = CaseE (VarE iname) patterns
+    patterns = map mkOpcodePrettyPrinter (isaInstructions desc)
+
+mkOpcodePrettyPrinter :: InstructionDescriptor -> Match
+mkOpcodePrettyPrinter i = Match pat (NormalB body) []
+  where
+    -- Note: Right now, we match on the wildcard - in the future, we
+    -- need to actually bind each operand and pass them to the
+    -- formatter.  The formatter will look a lot like printf
+    pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], WildP]
+    body = VarE 'PP.text `AppE` LitE (StringL (idAsmString i))
+
 {-
 
 For each ISA, we have to generate:
@@ -141,7 +165,7 @@ Tag and Operand types.
 
 -}
 
--- data Operand (tp :: Symbol) where
+{-
 data Operand :: Symbol -> * where
   OImm32 :: Int -> Operand "Imm32"
   OReg32 :: Int -> Operand "Reg32"
@@ -168,3 +192,4 @@ foo :: Instruction -> Int
 foo i =
   case i of
     Instruction Add (OImm32 imm :> OReg32 regNo :> Nil) -> imm + regNo
+-}
