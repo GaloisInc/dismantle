@@ -25,16 +25,56 @@ import Dismantle.Tablegen.Types
 genISA :: ISA -> FilePath -> DecsQ
 genISA isa path = do
   desc <- runIO $ loadISA isa path
-  opType <- mkOperandType desc
-  return $ concat [ opType
+  operandType <- mkOperandType desc
+  opcodeType <- mkOpcodeType desc
+  instrTypes <- mkInstructionAliases
+  return $ concat [ operandType
+                  , opcodeType
+                  , instrTypes
                   ]
 
+-- | Load the instructions for the given ISA
 loadISA :: ISA -> FilePath -> IO ISADescriptor
 loadISA isa path = do
   txt <- TL.readFile path
   case parseTablegen path txt of
     Left err -> fail (show err)
     Right defs -> return $ filterISA isa defs
+
+mkInstructionAliases :: Q [Dec]
+mkInstructionAliases =
+  return [ TySynD (mkName "Instruction") [] ity
+         , TySynD (mkName "AnnotatedInstruction") [PlainTV annotVar] aty
+         ]
+  where
+    annotVar = mkName "a"
+    ity = ConT ''GenericInstruction `AppT` ConT (mkName "Opcode") `AppT` ConT (mkName "Operand")
+    aty = ConT ''GenericInstruction `AppT`
+          ConT (mkName "Opcode") `AppT`
+          (ConT ''Annotated `AppT` VarT annotVar `AppT` ConT (mkName "Operand"))
+
+mkOpcodeType :: ISADescriptor -> Q [Dec]
+mkOpcodeType isa =
+  return [ DataD [] (mkName "Opcode") tyVars Nothing cons []
+         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT (mkName "Opcode") `AppT` VarT (mkName "o") `AppT` VarT (mkName "sh")))
+         ]
+  where
+    tyVars = [PlainTV (mkName "o"), PlainTV (mkName "sh")]
+    cons = map mkOpcodeCon (isaInstructions isa)
+
+mkOpcodeCon :: InstructionDescriptor -> Con
+mkOpcodeCon i = GadtC [n] [] ty
+  where
+    strName = toTypeName (idMnemonic i)
+    n = mkName strName
+    ty = ConT (mkName "Opcode") `AppT` ConT (mkName "Operand") `AppT` opcodeShape i
+
+opcodeShape :: InstructionDescriptor -> Type
+opcodeShape i = foldr addField PromotedNilT (idFields i)
+  where
+    addField f t =
+      case fieldType f of
+        FieldType (toTypeName -> fname) -> PromotedConsT `AppT` LitT (StrTyLit fname) `AppT` t
 
 -- | Generate a type to represent operands for this ISA
 --
@@ -47,9 +87,10 @@ loadISA isa path = do
 --
 -- String -> (String, Q Type)
 mkOperandType :: ISADescriptor -> Q [Dec]
-mkOperandType isa = return [ DataD [] (mkName "Operand") [] (Just ksig) cons []
-                           , StandaloneDerivD [] (ConT ''Show `AppT` (ConT (mkName "Operand") `AppT` VarT (mkName "tp")))
-                           ]
+mkOperandType isa =
+  return [ DataD [] (mkName "Operand") [] (Just ksig) cons []
+         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT (mkName "Operand") `AppT` VarT (mkName "tp")))
+         ]
   where
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
     tyvars = [ KindedTV (mkName "tp") (ConT ''Symbol)
@@ -107,14 +148,15 @@ s3 = case s2 of
 
 insn = Instruction Add s2
 
-data ISATag o sh where
+-- data ISATag o sh where
+data ISATag :: (Symbol -> *) -> [Symbol] -> * where
   Add :: ISATag Operand '["Imm32", "Reg32"]
   Sub :: ISATag Operand '["Imm32", "Reg32"]
 
-type I = Instruction ISATag Operand
-type AnnotatedI = Instruction ISATag (Annotated () Operand)
+type Instruction = GenericInstruction ISATag Operand
+type AnnotatedInstruction = GenericInstruction ISATag (Annotated () Operand)
 
-foo :: I -> Int
+foo :: Instruction -> Int
 foo i =
   case i of
     Instruction Add (OImm32 imm :> OReg32 regNo :> Nil) -> imm + regNo

@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeOperators #-}
 module Dismantle.Tablegen.Instruction (
   OperandList(..),
-  Instruction(..),
+  GenericInstruction(..),
   Annotated(..),
   mapOperandList
   ) where
@@ -44,8 +44,11 @@ data Annotated a o tp = Annotated a (o tp)
 -- This type actually requires *three* auxiliary data types: the tag
 -- type, the operand type, and a separate data type to act as
 -- type-level tags on operands.
-data Instruction (t :: (k -> *) -> [k] -> *) (o :: k -> *) where
-  Instruction :: t o sh -> OperandList o sh -> Instruction t o
+--
+-- The name is 'GenericInstruction' so that specific aliases can be
+-- instantiated as just 'Instruction'
+data GenericInstruction (t :: (k -> *) -> [k] -> *) (o :: k -> *) where
+  Instruction :: t o sh -> OperandList o sh -> GenericInstruction t o
 
 -- | An implementation of heterogeneous lists for operands, with the
 -- types of operands (caller-specified) reflected in the list type.
