@@ -17,6 +17,7 @@ import qualified Data.Foldable as F
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
 import Data.Maybe ( mapMaybe )
+import qualified Data.Set as S
 
 import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Parser ( parseTablegen )
@@ -29,14 +30,27 @@ makeParseTables isa = BT.byteTrie Nothing . map (idMask &&& Just) . filter (not 
 
 filterISA :: ISA -> Records -> ISADescriptor
 filterISA isa rs =
-  ISADescriptor { isaInstructions = mapMaybe (instructionDescriptor isa) $ tblDefs rs
+  ISADescriptor { isaInstructions = insns
                 , isaRegisterClasses = registerClasses
                 , isaRegisters = registerOperands
+                , isaInstructionClasses = groups
                 }
   where
+    insns = mapMaybe (instructionDescriptor isa) $ tblDefs rs
     dagOperands = filter isDAGOperand $ tblDefs rs
     registerClasses = map (RegisterClass . defName) $ filter isRegisterClass dagOperands
     registerOperands = mapMaybe isRegisterOperand dagOperands
+    groups = M.toList $ F.foldr groupByShape M.empty insns
+
+groupByShape :: InstructionDescriptor
+             -> M.Map (S.Set (RegisterDirection, FieldType)) [InstructionDescriptor]
+             -> M.Map (S.Set (RegisterDirection, FieldType)) [InstructionDescriptor]
+groupByShape i m = M.alter addInsn k m
+  where
+    k = S.fromList $ map extractShape (idFields i)
+    extractShape fd = (fieldDirection fd, fieldType fd)
+    addInsn Nothing = Just [i]
+    addInsn (Just is) = Just (i : is)
 
 isRegisterClass :: Def -> Bool
 isRegisterClass def = Metadata "RegisterClass" `elem` defMetadata def

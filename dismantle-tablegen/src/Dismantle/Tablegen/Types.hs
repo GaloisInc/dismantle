@@ -12,6 +12,7 @@ module Dismantle.Tablegen.Types (
 import GHC.Generics ( Generic )
 import Control.DeepSeq
 import qualified Data.Array.Unboxed as UA
+import qualified Data.Set as S
 import Data.Word ( Word8 )
 
 import qualified Dismantle.Tablegen.ByteTrie as BT
@@ -71,5 +72,7 @@ data ISADescriptor =
   ISADescriptor { isaInstructions :: [InstructionDescriptor]
                 , isaRegisterClasses :: [RegisterClass]
                 , isaRegisters :: [(String, RegisterClass)]
+                , isaInstructionClasses :: [(S.Set (RegisterDirection, FieldType), [InstructionDescriptor])]
+                -- ^ Instructions grouped by shape w.r.t. operands
                 }
   deriving (Show, Generic, NFData)

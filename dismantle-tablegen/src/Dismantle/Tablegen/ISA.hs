@@ -161,3 +161,16 @@ sparc = ISA { isaName = "Sparc"
             }
   where
     sparcFilter i = idNamespace i == "SP" && idDecoder i == "Sparc" && not (idPseudo i)
+
+{-
+
+Note, each ISA has a large list of "ignorable" instructions.  We could
+automatically ignore the specialized instances and record the parse as
+the *most general* (i.e., the one with the fewest Expected Bits).
+
+We could then maintain the mapping of those instructions so we could
+automatically render specialized versions in the pretty printer...
+
+The disadvantage is that mistakes could go unnoticed more easily.
+
+-}

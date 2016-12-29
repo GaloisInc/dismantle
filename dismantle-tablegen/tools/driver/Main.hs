@@ -1,27 +1,52 @@
 module Main ( main ) where
 
--- import Control.Applicative
+import Control.Applicative
 -- import Data.Maybe ( catMaybes, maybeToList )
 import Data.Monoid
 -- import qualified Data.Set as S
 import qualified Options.Applicative as O
--- import qualified Data.Text.Lazy.IO as TL
--- import qualified System.Exit as E
+import qualified Data.Text.Lazy.IO as TL
+import qualified System.Exit as IO
+import qualified System.IO as IO
 
--- import Prelude
+import Prelude
 
--- import qualified Dismantle.Tablegen as D
--- import qualified Dismantle.Tablegen.Combinators as D
--- import qualified Dismantle.Tablegen.Types as D
+import qualified Dismantle.Tablegen as D
 
 data Options = Options { inputFile :: FilePath
+                       , parseISA :: ISATag
                        }
                deriving (Show)
+
+data ISATag = ARM
+            | AVR
+            | AArch64
+            | Thumb
+            | PPC
+            | Sparc
+            | Mips
+            deriving (Eq, Ord, Read, Show)
 
 options :: O.Parser Options
 options = Options <$> O.strArgument ( O.metavar "FILE"
                                       <> O.help "The tablegen output to parse"
                                       )
+                  <*> O.option O.auto ( O.metavar "ISA"
+                                      <> O.short 'i'
+                                      <> O.long "isa"
+                                      <> O.help "ISA to parse the input file as"
+                                      )
+
+lookupISA :: ISATag -> D.ISA
+lookupISA t =
+  case t of
+    ARM -> D.arm
+    AVR -> D.avr
+    AArch64 -> D.aarch64
+    Thumb -> D.thumb
+    PPC -> D.ppc
+    Sparc -> D.sparc
+    Mips -> D.mips
 
 main :: IO ()
 main = O.execParser opts >>= dump
@@ -30,35 +55,23 @@ main = O.execParser opts >>= dump
 
 dump :: Options -> IO ()
 dump o = do
-  return ()
-  -- t <- TL.readFile (inputFile o)
-  -- case D.parseTablegen (inputFile o) t of
-  --   Left err -> do
-  --     print err
-  --     E.exitFailure
-  --   Right r -> do
-  --     let defs = D.tblDefs r
-  --     putStrLn ("# Classes: " ++ show (length (D.tblClasses r)))
-  --     putStrLn ("# Defs: " ++ show (length defs))
-  --     let namespaces = S.fromList $ catMaybes [ D.namespace d | d <- defs ]
-  --         decoders = S.fromList $ catMaybes [ D.decoderNamespace d | d <- defs ]
-  --     putStrLn ("Namespaces: " ++ show (S.toList namespaces))
-  --     putStrLn ("Decoders: " ++ show (S.toList decoders))
-
-  --     let allARM = [ d
-  --                  | d <- defs
-  --                  , "ARM" <- maybeToList $ D.namespace d
-  --                  ]
-  --         armInsns = [ d
-  --                    | d <- defs, "ARM" <- maybeToList $ D.decoderNamespace d
-  --                    ]
-  --         thumb1Insns = [ d
-  --                       | d <- defs, "Thumb" <- maybeToList $ D.decoderNamespace d
-  --                       ]
-  --         thumb2Insns = [ d | d <- defs, "Thumb2" <- maybeToList $ D.decoderNamespace d ]
-  --     putStrLn ("# Insns: " ++ show (length allARM))
-  --     putStrLn ("# ARM Insns: " ++ show (length armInsns))
-  --     putStrLn ("# Thumb1 Insns: " ++ show (length thumb1Insns))
-  --     putStrLn ("# Thumb2 Insns: " ++ show (length thumb2Insns))
-  --     print (map D.defName armInsns)
-
+  let p = inputFile o
+  t <- TL.readFile p
+  case D.parseTablegen p t of
+    Left err -> do
+      IO.hPutStrLn IO.stderr ("Error: " ++ show err)
+      IO.exitFailure
+    Right defs -> do
+      let isa = lookupISA (parseISA o)
+      let summary = D.filterISA isa defs
+      putStrLn ("ISA: " ++ D.isaName isa)
+      putStrLn ("# Instructions: " ++ show (length (D.isaInstructions summary)))
+      putStrLn "Register classes:"
+      mapM_ (putStrLn . ("  "++) . show) (D.isaRegisterClasses summary)
+      putStrLn "Registers"
+      mapM_ (putStrLn . ("  "++) . show) (D.isaRegisters summary)
+      putStrLn "Instruction mnemonics"
+      mapM_ (putStrLn . ("  "++) . D.idMnemonic) (D.isaInstructions summary)
+      putStrLn ("# Shapes: " ++ show (length (D.isaInstructionClasses summary)))
+      putStrLn "Shapes"
+      mapM_ (putStrLn . ("  "++) . show) (D.isaInstructionClasses summary)
