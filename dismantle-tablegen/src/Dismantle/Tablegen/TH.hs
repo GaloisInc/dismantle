@@ -9,7 +9,7 @@
 module Dismantle.Tablegen.TH (
   genISA
   ) where
-
+import GHC.TypeLits ( Symbol )
 import Language.Haskell.TH
 
 import Dismantle.Tablegen.Instruction
@@ -46,9 +46,10 @@ Tag and Operand types.
 data OpTag = Imm32
            | Reg32
 
-data Operand (tp :: OpTag) where
-  OImm32 :: Int -> Operand 'Imm32
-  OReg32 :: Int -> Operand 'Reg32
+-- data Operand (tp :: OpTag) where
+data Operand (tp :: Symbol) where
+  OImm32 :: Int -> Operand "Imm32" -- 'Imm32
+  OReg32 :: Int -> Operand "Reg32" -- 'Reg32
 
 s2 = EmptyList :> OImm32 5 :> OReg32 0
 s3 = case s2 of
@@ -56,11 +57,12 @@ s3 = case s2 of
 
 insn = Instruction Add s2
 
-data ISATag o s where
-  Add :: ISATag Operand (EmptyShape '::> 'Imm32 '::> 'Reg32)
-  Sub :: ISATag Operand (EmptyShape '::> 'Imm32 '::> 'Reg32)
+data ISATag o sh where
+  Add :: ISATag Operand (EmptyShape '::> "Imm32" '::> "Reg32")
+  Sub :: ISATag Operand (EmptyShape '::> "Imm32" '::> "Reg32")
 
 type I = Instruction ISATag Operand
+type AnnotatedI = Instruction ISATag (Annotated () Operand)
 
 foo :: I -> Int
 foo i =
