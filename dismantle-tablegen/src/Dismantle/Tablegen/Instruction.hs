@@ -2,6 +2,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE TypeOperators #-}
 module Dismantle.Tablegen.Instruction (
   Instruction(..),
   Annotated(..)
@@ -38,5 +39,5 @@ data Annotated a o tp = Annotated a (o tp)
 -- This type actually requires *three* auxiliary data types: the tag
 -- type, the operand type, and a separate data type to act as
 -- type-level tags on operands.
-data Instruction (t :: (k -> *) -> Shape k -> *) (o :: k -> *) where
+data Instruction (t :: (k -> *) -> [k] -> *) (o :: k -> *) where
   Instruction :: t o sh -> OperandList o sh -> Instruction t o

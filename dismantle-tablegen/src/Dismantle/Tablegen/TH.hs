@@ -46,20 +46,21 @@ Tag and Operand types.
 data OpTag = Imm32
            | Reg32
 
--- data Operand (tp :: OpTag) where
 data Operand (tp :: Symbol) where
-  OImm32 :: Int -> Operand "Imm32" -- 'Imm32
-  OReg32 :: Int -> Operand "Reg32" -- 'Reg32
+  OImm32 :: Int -> Operand "Imm32"
+  OReg32 :: Int -> Operand "Reg32"
 
-s2 = EmptyList :> OImm32 5 :> OReg32 0
+s2 :: OperandList Operand '["Imm32", "Reg32"]
+s2 = OImm32 5 :> OReg32 0 :> Nil
+
 s3 = case s2 of
-  l :> OReg32 _ -> l
+  OImm32 _ :> l -> l
 
 insn = Instruction Add s2
 
 data ISATag o sh where
-  Add :: ISATag Operand (EmptyShape '::> "Imm32" '::> "Reg32")
-  Sub :: ISATag Operand (EmptyShape '::> "Imm32" '::> "Reg32")
+  Add :: ISATag Operand '["Imm32", "Reg32"]
+  Sub :: ISATag Operand '["Imm32", "Reg32"]
 
 type I = Instruction ISATag Operand
 type AnnotatedI = Instruction ISATag (Annotated () Operand)
@@ -67,4 +68,4 @@ type AnnotatedI = Instruction ISATag (Annotated () Operand)
 foo :: I -> Int
 foo i =
   case i of
-    Instruction Add (EmptyList :> OImm32 imm :> OReg32 regNo) -> imm + regNo
+    Instruction Add (OImm32 imm :> OReg32 regNo :> Nil) -> imm + regNo
