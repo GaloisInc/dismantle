@@ -2,6 +2,8 @@ module Dismantle.Tablegen (
   parseTablegen,
   filterISA,
   makeParseTables,
+  parseInstruction,
+  Parser(..),
   module Dismantle.Tablegen.ISA,
   module Dismantle.Tablegen.Types
   ) where
@@ -57,11 +59,11 @@ filterISA isa rs =
     registerOperands = mapMaybe isRegisterOperand dagOperands
     operandTypes = foldr extractOperands S.empty insns
 
-extractOperands :: InstructionDescriptor -> S.Set FieldType -> S.Set FieldType
-extractOperands i s = foldr extractFieldOperands s (idFields i)
+extractOperands :: InstructionDescriptor -> S.Set OperandType -> S.Set OperandType
+extractOperands i s = foldr extractOperandTypes s (idInputOperands i ++ idOutputOperands i)
 
-extractFieldOperands :: FieldDescriptor -> S.Set FieldType -> S.Set FieldType
-extractFieldOperands f = S.insert (fieldType f)
+extractOperandTypes :: OperandDescriptor -> S.Set OperandType -> S.Set OperandType
+extractOperandTypes f = S.insert (opType f)
 
 isRegisterClass :: Def -> Bool
 isRegisterClass def = Metadata "RegisterClass" `elem` defMetadata def
@@ -84,6 +86,14 @@ toTrieBit br =
 named :: String -> Named DeclItem -> Bool
 named s n = namedName n == s
 
+-- FIXME: We'll need to do something to ensure that all of the fields
+-- of the instruction are accounted for by 'operandDescriptors'.
+-- Right now, we can only pull out those fields mentioned in the DAG
+-- descriptors.  I *believe* that should cover all operands, but have
+-- no idea if that is true.
+--
+-- Moreover, quite a few operands are spelled slightly differently in
+-- the DAG vs bit descriptors.
 instructionDescriptor :: ISA -> Def -> Maybe InstructionDescriptor
 instructionDescriptor isa def = do
   Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
@@ -102,7 +112,9 @@ instructionDescriptor isa def = do
                                 , idNamespace = ns
                                 , idDecoder = decoder
                                 , idAsmString = asmStr
-                                , idFields = fieldDescriptors isa (defName def) ins outs mbits
+                                , idInputOperands = operandDescriptors isa (defName def) "ins" ins mbits
+                                , idOutputOperands = operandDescriptors isa (defName def) "outs" outs mbits
+--                                , idFields = fieldDescriptors isa (defName def) ins outs mbits
                                 , idPseudo = or [ b -- See Note [Pseudo Instructions]
                                                 , cgOnly
                                                 , asmParseOnly
@@ -112,21 +124,90 @@ instructionDescriptor isa def = do
   guard (isaInstructionFilter isa i)
   return i
 
+-- | Extract OperandDescriptors from the bits pattern, given type
+-- information from the InOperandList or OutOperandList DAG items.
+--
+-- The important thing is that we are preserving the *order* of
+-- operands here so that users have a chance of making sense of the
+-- generated instructions.
+operandDescriptors :: ISA
+                   -> String
+                   -- ^ Instruction mnemonic
+                   -> String
+                   -- ^ DAG operator string ("ins" or "outs")
+                   -> SimpleValue
+                   -- ^ The DAG item (either InOperandList or OutOperandList)
+                   -> [Maybe BitRef]
+                   -- ^ The bits descriptor so that we can find the bit numbers for the field
+                   -> [OperandDescriptor]
+operandDescriptors isa mnemonic dagOperator dagItem bits =
+  case dagItem of
+    VDag (DagArg (Identifier hd) _) args
+      | hd == dagOperator -> mapMaybe parseOperand args
+    _ -> L.error ("Unexpected SimpleValue while looking for DAG head " ++ dagOperator ++ ": " ++ show dagItem)
+
+  where
+    -- A map of field names (derived from the 'Inst' field of a
+    -- definition) to pairs of (instructionIndex, operandIndex), where
+    -- the instruction index is the bit number in the instruction and
+    -- the operand index is the index into the operand of that bit.
+    operandBits :: M.Map (CI String) [(Int, Int)]
+    operandBits = foldr addBit M.empty (zip [0..] bits)
+
+    addBit (bitNum, mbit) m =
+      case mbit of
+        Just (FieldBit fldName fldIdx) ->
+          M.insertWith (++) (CI.mk fldName) [(bitNum, fldIdx)] m
+        _ -> m
+
+    parseOperand :: DagArg -> Maybe OperandDescriptor
+    parseOperand arg =
+      case arg of
+        DagArg (Identifier i) _
+          | [klass, var] <- L.splitOn ":$" i ->
+            let bitPositions = lookupFieldBits var
+                arrVals = [ (fldIdx, fromIntegral bitNum)
+                          | (bitNum, fldIdx) <- bitPositions
+                          ]
+                bitRange = findFieldBitRange bitPositions
+            in Just OperandDescriptor { opName = var
+                                      , opType = OperandType klass
+                                      , opBits = UA.array bitRange arrVals
+                                      }
+          | i == "variable_ops" ->
+            -- This case is expected sometimes - there is no single
+            -- argument to make (yet, we might add one)
+            Nothing
+        _ -> L.error ("Unexpected variable reference in a DAG for " ++ mnemonic ++ ": " ++ show arg)
+
+    lookupFieldBits :: String -> [(Int, Int)]
+    lookupFieldBits [] = L.error ("Empty operand name for instruction: " ++ mnemonic)
+    lookupFieldBits fldName@(c1:_) =
+      case M.lookup (CI.mk fldName) operandBits of
+        Just fldBits -> fldBits
+        Nothing
+          -- If we found nothing, try again with an 'r' prefix, which
+          -- is a common misalignment in the tablegen data.
+          | not (c1 `elem` ['r', 'R']) -> lookupFieldBits ('r' : fldName)
+          | otherwise -> L.error ("No field bits found for field " ++ fldName ++ " while parsing instruction " ++ mnemonic)
+{-
 fieldDescriptors :: ISA
                  -> String
                  -- ^ The instruction mnemonic
+                 -> String
                  -> SimpleValue
                  -- ^ The "ins" DAG item (to let us identify instruction input types)
-                 -> SimpleValue
+--                 -> SimpleValue
                  -- ^ The "outs" DAG item (to let us identify instruction outputs)
                  -> [Maybe BitRef]
                  -- ^ The bits descriptor (so we can pick out fields)
-                 -> [FieldDescriptor]
-fieldDescriptors isa iname ins outs bits = map toFieldDescriptor (M.toList groups)
+                 -> [OperandDescriptor]
+fieldDescriptors isa iname dagOpString val bits = map toFieldDescriptor (M.toList groups)
   where
     groups = foldr addBit M.empty (zip [0..] bits)
-    inputFields = dagVarRefs iname "ins" ins
-    outputFields = dagVarRefs iname "outs" outs
+    dagMap = dagVarRefs iname dagOpString val
+    -- inputFields = dagVarRefs iname "ins" ins
+    -- outputFields = dagVarRefs iname "outs" outs
 
     addBit (bitNum, mbr) m =
       case mbr of
@@ -134,19 +215,18 @@ fieldDescriptors isa iname ins outs bits = map toFieldDescriptor (M.toList group
           M.insertWith (++) fldName [(bitNum, fldIdx)] m
         _ -> m
 
-    toFieldDescriptor :: (String, [(Int, Int)]) -> FieldDescriptor
+    toFieldDescriptor :: (String, [(Int, Int)]) -> OperandDescriptor
     toFieldDescriptor (fldName, bitPositions) =
       let arrVals = [ (fldIdx, fromIntegral bitNum)
                     | (bitNum, fldIdx) <- bitPositions
                     ]
-          (ty, dir) = fieldMetadata inputFields outputFields fldName
+          ty = fieldMetadata dagMap fldName
           fldRange = findFieldBitRange bitPositions
-      in FieldDescriptor { fieldName = fldName
-                         , fieldDirection = dir
-                         , fieldType = ty
-                         , fieldBits = UA.array fldRange arrVals
-                         }
-
+      in OperandDescriptor { opName = fldName
+                           , opType = ty
+                           , opBits = UA.array fldRange arrVals
+                           }
+-}
 -- | Find the actual length of a field.
 --
 -- The bit positions tell us which bits are encoded in the
@@ -154,9 +234,9 @@ fieldDescriptors isa iname ins outs bits = map toFieldDescriptor (M.toList group
 -- actually in the instruction.
 findFieldBitRange :: [(Int, Int)] -> (Int, Int)
 findFieldBitRange bitPositions = (minimum (map snd bitPositions), maximum (map snd bitPositions))
-
-fieldMetadata :: M.Map (CI String) String -> M.Map (CI String) String -> String -> (FieldType, RegisterDirection)
-fieldMetadata ins outs name =
+{-
+fieldMetadata :: M.Map (CI String) String -> String -> OperandType
+fieldMetadata dagMap name =
   let cin = CI.mk name
   in case (M.lookup cin ins, M.lookup cin outs) of
     (Just kIn, Just kOut)
@@ -185,6 +265,7 @@ dagVarRefs iname expectedOperator v =
           | [klass,var] <- L.splitOn ":$" i -> M.insert (CI.mk var) klass m
           | i == "variable_ops" -> m -- See Note [variable_ops]
         _ -> L.error ("Unexpected variable reference in a DAG for " ++ iname ++ ": " ++ show a)
+-}
 
 {- Note [variable_ops]
 

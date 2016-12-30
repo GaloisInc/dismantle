@@ -128,11 +128,11 @@ mkOpcodeCon i = GadtC [n] [] ty
     ty = ConT opcodeName `AppT` ConT operandName `AppT` opcodeShape i
 
 opcodeShape :: InstructionDescriptor -> Type
-opcodeShape i = foldr addField PromotedNilT (idFields i)
+opcodeShape i = foldr addField PromotedNilT (idOutputOperands i ++ idInputOperands i)
   where
     addField f t =
-      case fieldType f of
-        FieldType (toTypeName -> fname) -> PromotedConsT `AppT` LitT (StrTyLit fname) `AppT` t
+      case opType f of
+        OperandType (toTypeName -> fname) -> PromotedConsT `AppT` LitT (StrTyLit fname) `AppT` t
 
 -- | Generate a type to represent operands for this ISA
 --
@@ -155,8 +155,8 @@ mkOperandType isa =
              ]
     cons = map mkOperandCon (isaOperands isa)
 
-mkOperandCon :: FieldType -> Con
-mkOperandCon (FieldType (toTypeName -> name)) = GadtC [n] [] ty
+mkOperandCon :: OperandType -> Con
+mkOperandCon (OperandType (toTypeName -> name)) = GadtC [n] [] ty
   where
     n = mkName name
     ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)

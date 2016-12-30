@@ -2,9 +2,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Dismantle.Tablegen.Types (
   InstructionDescriptor(..),
-  FieldDescriptor(..),
-  FieldType(..),
-  RegisterDirection(..),
+  OperandDescriptor(..),
+  OperandType(..),
   RegisterClass(..),
   ISADescriptor(..)
   ) where
@@ -15,10 +14,6 @@ import qualified Data.Array.Unboxed as UA
 import Data.Word ( Word8 )
 
 import qualified Dismantle.Tablegen.ByteTrie as BT
-
--- | The direction of a register field (input, output, or both)
-data RegisterDirection = In | Out | Both
-  deriving (Eq, Ord, Show, Generic, NFData)
 
 -- | The type of data contained in a field operand.
 --
@@ -35,28 +30,28 @@ data RegisterDirection = In | Out | Both
 --
 -- It seems like some of the details are ISA-specific, so we don't
 -- want to commit to a representation at this point.
-data FieldType = FieldType String
-               deriving (Eq, Ord, Show, Generic, NFData)
+data OperandType = OperandType String
+                 deriving (Eq, Ord, Show, Generic, NFData)
 
 -- | Description of an operand field in an instruction (could be a
 -- register reference or an immediate)
-data FieldDescriptor =
-  FieldDescriptor { fieldName :: String
-                  , fieldBits :: !(UA.UArray Int Word8)
-                  , fieldDirection :: !RegisterDirection
-                  , fieldType :: !FieldType
-                  }
+data OperandDescriptor =
+  OperandDescriptor { opName :: String
+                    , opBits :: !(UA.UArray Int Word8)
+                    , opType :: !OperandType
+                    }
   deriving (Eq, Ord, Show)
 
-instance NFData FieldDescriptor where
-  rnf fd = fieldName fd `deepseq` fd `seq` ()
+instance NFData OperandDescriptor where
+  rnf od = opName od `deepseq` od `seq` ()
 
 -- | Description of an instruction, abstracted from the tablegen
 -- definition
 data InstructionDescriptor =
   InstructionDescriptor { idMask :: [BT.Bit]
                         , idMnemonic :: String
-                        , idFields :: [FieldDescriptor]
+                        , idInputOperands :: [OperandDescriptor]
+                        , idOutputOperands :: [OperandDescriptor]
                         , idNamespace :: String
                         , idDecoder :: String
                         , idAsmString :: String
@@ -71,7 +66,7 @@ data ISADescriptor =
   ISADescriptor { isaInstructions :: [InstructionDescriptor]
                 , isaRegisterClasses :: [RegisterClass]
                 , isaRegisters :: [(String, RegisterClass)]
-                , isaOperands :: [FieldType]
+                , isaOperands :: [OperandType]
                 -- ^ All of the operand types used in an ISA.
                 }
   deriving (Show, Generic, NFData)
