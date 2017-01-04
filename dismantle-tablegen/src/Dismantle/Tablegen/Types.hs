@@ -68,5 +68,10 @@ data ISADescriptor =
                 , isaRegisters :: [(String, RegisterClass)]
                 , isaOperands :: [OperandType]
                 -- ^ All of the operand types used in an ISA.
+                , isaErrors :: [(String, String)]
+                -- ^ Errors while mapping operand classes to bit
+                -- fields in the instruction encoding; the first
+                -- String is the mnemonic, while the second is the
+                -- operand name.
                 }
   deriving (Show, Generic, NFData)

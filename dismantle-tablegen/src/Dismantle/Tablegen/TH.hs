@@ -32,6 +32,9 @@ import Dismantle.Tablegen.Instruction
 genISA :: ISA -> Name -> FilePath -> DecsQ
 genISA isa isaValName path = do
   desc <- runIO $ loadISA isa path
+  case isaErrors desc of
+    [] -> return ()
+    errs -> reportWarning ("Unhandled instruction definitions for ISA: " ++ show (length errs))
   operandType <- mkOperandType desc
   opcodeType <- mkOpcodeType desc
   instrTypes <- mkInstructionAliases

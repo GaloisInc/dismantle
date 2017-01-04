@@ -1,3 +1,5 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE RankNTypes #-}
 module Dismantle.Tablegen (
   parseTablegen,
   filterISA,
@@ -12,7 +14,9 @@ import qualified GHC.Err.Located as L
 
 import Control.Applicative
 import Control.Arrow ( (&&&) )
-import Control.Monad ( guard )
+import Control.Monad ( guard, when )
+import qualified Control.Monad.Cont as CC
+import qualified Control.Monad.State.Strict as St
 import qualified Data.Array.Unboxed as UA
 import qualified Data.ByteString.Lazy as LBS
 import Data.CaseInsensitive ( CI )
@@ -20,7 +24,7 @@ import qualified Data.CaseInsensitive as CI
 import qualified Data.Foldable as F
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
-import Data.Maybe ( fromMaybe, mapMaybe )
+import Data.Maybe ( catMaybes, mapMaybe )
 import qualified Data.Set as S
 
 import Dismantle.Tablegen.ISA
@@ -46,19 +50,39 @@ parseInstruction trie0 bs0 = go bs0 trie0 bs0 0
 makeParseTables :: ISA -> ISADescriptor -> Either BT.TrieError (BT.ByteTrie (Maybe InstructionDescriptor))
 makeParseTables isa = BT.byteTrie Nothing . map (idMask &&& Just) . filter (not . isaPseudoInstruction isa) . isaInstructions
 
+data FilterState = FilterState { stErrors :: [(String, String)]
+                               , stInsns :: [InstructionDescriptor]
+                               }
+
 filterISA :: ISA -> Records -> ISADescriptor
 filterISA isa rs =
   ISADescriptor { isaInstructions = insns
                 , isaRegisterClasses = registerClasses
                 , isaRegisters = registerOperands
                 , isaOperands = S.toList operandTypes
+                , isaErrors = stErrors st1
                 }
   where
-    insns = mapMaybe (instructionDescriptor isa) $ tblDefs rs
+    st0 = FilterState { stErrors = []
+                      , stInsns = []
+                      }
+    st1 = St.execState (CC.runContT (runFilter (filterInstructions isa (tblDefs rs))) return) st0
     dagOperands = filter isDAGOperand $ tblDefs rs
     registerClasses = map (RegisterClass . defName) $ filter isRegisterClass dagOperands
     registerOperands = mapMaybe isRegisterOperand dagOperands
+    insns = reverse $ stInsns st1
     operandTypes = foldr extractOperands S.empty insns
+
+-- newtype FM a = FM { runFilter :: St.StateT FilterState (CC.Cont ()) a }
+newtype FM a = FM { runFilter :: CC.ContT () (St.State FilterState) a }
+  deriving (Functor,
+            Monad,
+            Applicative,
+            CC.MonadCont,
+            St.MonadState FilterState)
+
+filterInstructions :: ISA -> [Def] -> FM ()
+filterInstructions isa = mapM_ (toInstructionDescriptor isa)
 
 extractOperands :: InstructionDescriptor -> S.Set OperandType -> S.Set OperandType
 extractOperands i s = foldr extractOperandTypes s (idInputOperands i ++ idOutputOperands i)
@@ -87,6 +111,66 @@ toTrieBit br =
 named :: String -> Named DeclItem -> Bool
 named s n = namedName n == s
 
+-- | Try to extract the basic encoding information from the 'Def'.  If
+-- it isn't available, skip the 'Def'.  If it is available, call the
+-- continuation that will use it.
+withEncoding :: Def
+             -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> FM ())
+             -> FM ()
+withEncoding def k =
+  case mvals of
+    Just (outs, ins, mbits) -> k outs ins mbits
+    Nothing -> return ()
+  where
+    mvals = do
+      Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
+      Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
+      Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
+      return (outs, ins, mbits)
+
+-- | Try to make an 'InstructionDescriptor' out of a 'Def'.  May fail
+-- (and log its error) or simply skip a 'Def' that fails a test.
+toInstructionDescriptor :: ISA -> Def -> FM ()
+toInstructionDescriptor isa def = do
+  CC.callCC $ \kexit -> do
+    withEncoding def $ \outs ins mbits -> do
+      inOperands <- mkOperandDescriptors isa (defName def) "ins" ins mbits kexit
+      outOperands <- mkOperandDescriptors isa (defName def) "outs" outs mbits kexit
+      finishInstructionDescriptor isa def mbits inOperands outOperands
+
+-- | With the difficult to compute information, finish building the
+-- 'InstructionDescriptor' if possible.  If not possible, log an error
+-- and continue.
+finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [OperandDescriptor] -> [OperandDescriptor] -> FM ()
+finishInstructionDescriptor isa def mbits ins outs =
+  case mvals of
+    Nothing -> return ()
+    Just (ns, decoder, asmStr, b, cgOnly, asmParseOnly) -> do
+      let i = InstructionDescriptor { idMask = map toTrieBit mbits
+                                    , idMnemonic = defName def
+                                    , idNamespace = ns
+                                    , idDecoder = decoder
+                                    , idAsmString = asmStr
+                                    , idInputOperands = ins
+                                    , idOutputOperands = outs
+                                    , idPseudo = or [ b -- See Note [Pseudo Instructions]
+                                                    , cgOnly
+                                                    , asmParseOnly
+                                                    , Metadata "Pseudo" `elem` defMetadata def
+                                                    ]
+                                    }
+      when (isaInstructionFilter isa i) $ do
+        St.modify $ \s -> s { stInsns = i : stInsns s }
+  where
+    mvals = do
+      Named _ (StringItem ns) <- F.find (named "Namespace") (defDecls def)
+      Named _ (StringItem decoder) <- F.find (named "DecoderNamespace") (defDecls def)
+      Named _ (StringItem asmStr) <- F.find (named "AsmString") (defDecls def)
+      Named _ (BitItem b) <- F.find (named "isPseudo") (defDecls def)
+      Named _ (BitItem cgOnly) <- F.find (named "isCodeGenOnly") (defDecls def)
+      Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
+      return (ns, decoder, asmStr, b, cgOnly, asmParseOnly)
+
 -- FIXME: We'll need to do something to ensure that all of the fields
 -- of the instruction are accounted for by 'operandDescriptors'.
 -- Right now, we can only pull out those fields mentioned in the DAG
@@ -95,35 +179,35 @@ named s n = namedName n == s
 --
 -- Moreover, quite a few operands are spelled slightly differently in
 -- the DAG vs bit descriptors.
-instructionDescriptor :: ISA -> Def -> Maybe InstructionDescriptor
-instructionDescriptor isa def = do
-  Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
-  Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
-  Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
+-- instructionDescriptor :: ISA -> Def -> Maybe InstructionDescriptor
+-- instructionDescriptor isa def = do
+--   Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
+--   Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
+--   Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
 
-  Named _ (StringItem ns) <- F.find (named "Namespace") (defDecls def)
-  Named _ (StringItem decoder) <- F.find (named "DecoderNamespace") (defDecls def)
-  Named _ (StringItem asmStr) <- F.find (named "AsmString") (defDecls def)
-  Named _ (BitItem b) <- F.find (named "isPseudo") (defDecls def)
-  Named _ (BitItem cgOnly) <- F.find (named "isCodeGenOnly") (defDecls def)
-  Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
+--   Named _ (StringItem ns) <- F.find (named "Namespace") (defDecls def)
+--   Named _ (StringItem decoder) <- F.find (named "DecoderNamespace") (defDecls def)
+--   Named _ (StringItem asmStr) <- F.find (named "AsmString") (defDecls def)
+--   Named _ (BitItem b) <- F.find (named "isPseudo") (defDecls def)
+--   Named _ (BitItem cgOnly) <- F.find (named "isCodeGenOnly") (defDecls def)
+--   Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
 
-  let i = InstructionDescriptor { idMask = map toTrieBit mbits
-                                , idMnemonic = defName def
-                                , idNamespace = ns
-                                , idDecoder = decoder
-                                , idAsmString = asmStr
-                                , idInputOperands = operandDescriptors isa (defName def) "ins" ins mbits
-                                , idOutputOperands = operandDescriptors isa (defName def) "outs" outs mbits
---                                , idFields = fieldDescriptors isa (defName def) ins outs mbits
-                                , idPseudo = or [ b -- See Note [Pseudo Instructions]
-                                                , cgOnly
-                                                , asmParseOnly
-                                                , Metadata "Pseudo" `elem` defMetadata def
-                                                ]
-                                }
-  guard (isaInstructionFilter isa i)
-  return i
+--   let i = InstructionDescriptor { idMask = map toTrieBit mbits
+--                                 , idMnemonic = defName def
+--                                 , idNamespace = ns
+--                                 , idDecoder = decoder
+--                                 , idAsmString = asmStr
+--                                 , idInputOperands = operandDescriptors isa (defName def) "ins" ins mbits
+--                                 , idOutputOperands = operandDescriptors isa (defName def) "outs" outs mbits
+-- --                                , idFields = fieldDescriptors isa (defName def) ins outs mbits
+--                                 , idPseudo = or [ b -- See Note [Pseudo Instructions]
+--                                                 , cgOnly
+--                                                 , asmParseOnly
+--                                                 , Metadata "Pseudo" `elem` defMetadata def
+--                                                 ]
+--                                 }
+--   guard (isaInstructionFilter isa i)
+--   return i
 
 -- | Extract OperandDescriptors from the bits pattern, given type
 -- information from the InOperandList or OutOperandList DAG items.
@@ -131,20 +215,24 @@ instructionDescriptor isa def = do
 -- The important thing is that we are preserving the *order* of
 -- operands here so that users have a chance of making sense of the
 -- generated instructions.
-operandDescriptors :: ISA
-                   -> String
-                   -- ^ Instruction mnemonic
-                   -> String
-                   -- ^ DAG operator string ("ins" or "outs")
-                   -> SimpleValue
-                   -- ^ The DAG item (either InOperandList or OutOperandList)
-                   -> [Maybe BitRef]
-                   -- ^ The bits descriptor so that we can find the bit numbers for the field
-                   -> [OperandDescriptor]
-operandDescriptors isa mnemonic dagOperator dagItem bits =
+mkOperandDescriptors :: ISA
+                     -> String
+                     -- ^ Instruction mnemonic
+                     -> String
+                     -- ^ DAG operator string ("ins" or "outs")
+                     -> SimpleValue
+                     -- ^ The DAG item (either InOperandList or OutOperandList)
+                     -> [Maybe BitRef]
+                     -- ^ The bits descriptor so that we can find the bit numbers for the field
+                     -> (() -> FM (Maybe OperandDescriptor))
+                     -- ^ Early termination continuation
+                     -> FM [OperandDescriptor]
+mkOperandDescriptors isa mnemonic dagOperator dagItem bits kexit =
+  -- Leave this case as an error, since that means we have a tablegen
+  -- structure we didn't expect rather than a fixable data mismatch
   case dagItem of
     VDag (DagArg (Identifier hd) _) args
-      | hd == dagOperator -> mapMaybe parseOperand args
+      | hd == dagOperator -> catMaybes <$> mapM parseOperand args
     _ -> L.error ("Unexpected SimpleValue while looking for DAG head " ++ dagOperator ++ ": " ++ show dagItem)
 
   where
@@ -161,25 +249,35 @@ operandDescriptors isa mnemonic dagOperator dagItem bits =
           M.insertWith (++) (CI.mk fldName) [(bitNum, fldIdx)] m
         _ -> m
 
-    parseOperand :: DagArg -> Maybe OperandDescriptor
+    parseOperand :: DagArg -> FM (Maybe OperandDescriptor)
     parseOperand arg =
       case arg of
         DagArg (Identifier i) _
           | [klass, var] <- L.splitOn ":$" i ->
-            let err = L.error ("No field bits found for field " ++ var ++ " while parsing instruction " ++ mnemonic)
-                bitPositions = fromMaybe err $ lookupFieldBits var
-                arrVals = [ (fldIdx, fromIntegral bitNum)
+            -- let err = L.error ("No field bits found for field " ++ var ++ " while parsing instruction " ++ mnemonic)
+            --     bitPositions = {- fromMaybe err $ -} lookupFieldBits var
+            --     arrVals = [ (fldIdx, fromIntegral bitNum)
+            --               | (bitNum, fldIdx) <- bitPositions
+            --               ]
+            --     bitRange = findFieldBitRange bitPositions
+            -- in
+            case lookupFieldBits var of
+              Nothing -> do
+                St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
+                kexit ()
+              Just bitPositions -> do
+                let arrVals = [ (fldIdx, fromIntegral bitNum)
                           | (bitNum, fldIdx) <- bitPositions
                           ]
-                bitRange = findFieldBitRange bitPositions
-            in Just OperandDescriptor { opName = var
-                                      , opType = OperandType klass
-                                      , opBits = UA.array bitRange arrVals
-                                      }
+                    bitRange = findFieldBitRange bitPositions
+                return $ Just OperandDescriptor { opName = var
+                                                , opType = OperandType klass
+                                                , opBits = UA.array bitRange arrVals
+                                                }
           | i == "variable_ops" ->
             -- This case is expected sometimes - there is no single
             -- argument to make (yet, we might add one)
-            Nothing
+            return Nothing
         _ -> L.error ("Unexpected variable reference in a DAG for " ++ mnemonic ++ ": " ++ show arg)
 
     lookupFieldBits :: String -> Maybe [(Int, Int)]
@@ -187,10 +285,9 @@ operandDescriptors isa mnemonic dagOperator dagItem bits =
       case M.lookup (CI.mk fldName) operandBits of
         Just fldBits -> Just fldBits
         Nothing ->
-          let err = L.error ("No field bits found for field " ++ fldName ++ " while parsing instruction " ++ mnemonic)
-          in case isaOperandClassMapping isa fldName of
-            [] -> Nothing -- err
-            alternatives -> foldr (<|>) err (map lookupFieldBits alternatives)
+          case isaOperandClassMapping isa fldName of
+            [] -> Nothing
+            alternatives -> foldr (<|>) Nothing (map lookupFieldBits alternatives)
 
 -- | Find the actual length of a field.
 --
