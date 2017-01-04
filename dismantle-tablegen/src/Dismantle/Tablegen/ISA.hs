@@ -26,12 +26,18 @@ data ISA =
       --
       -- Note, we might need more information here later to let us
       -- provide pretty disassembly of instructions
+      , isaOperandClassMapping :: String -> [String]
+      -- ^ In the tablegen files, sometimes the operand names
+      -- referenced in the input and output lists does not match the
+      -- names in the bit fields of the 'Instruction'.  This function
+      -- lets us specify a mapping between the broken pairs.
       }
 
 arm :: ISA
 arm = ISA { isaName = "ARM"
           , isaInstructionFilter = armFilter
           , isaPseudoInstruction = const False
+          , isaOperandClassMapping = const []
           }
   where
     armFilter i = idDecoder i == "ARM" && idNamespace i == "ARM" && not (idPseudo i)
@@ -40,6 +46,7 @@ thumb :: ISA
 thumb = ISA { isaName = "Thumb"
             , isaInstructionFilter = thumbFilter
             , isaPseudoInstruction = const False
+            , isaOperandClassMapping = const []
             }
   where
     thumbFilter i = idDecoder i == "Thumb" && idNamespace i == "ARM" && not (idPseudo i)
@@ -48,6 +55,7 @@ aarch64 :: ISA
 aarch64 = ISA { isaName = "AArch64"
               , isaInstructionFilter = aarch64Filter
               , isaPseudoInstruction = const False
+              , isaOperandClassMapping = const []
               }
   where
     aarch64Filter i = idNamespace i == "AArch64" && not (idPseudo i)
@@ -56,9 +64,79 @@ ppc :: ISA
 ppc = ISA { isaName = "PPC"
           , isaInstructionFilter = ppcFilter
           , isaPseudoInstruction = ppcPseudo
+          , isaOperandClassMapping = ppcOperandMapping
           }
   where
-    ppcFilter i = idNamespace i == "PPC" && idDecoder i == ""
+    ppcOperandMapping i =
+      case i of
+        "dst" -> ["BD"]
+        "UIM" -> ["D", "UIM5"]
+        "UIMM" -> ["UIM5", "VA"]
+        "SIMM" -> ["IMM"]
+        "imm" -> ["C"]
+        "crD" -> ["CR", "BF"]
+        "vB" -> ["B", "FRB"]
+        "VB" -> ["B", "FRB"]
+        "vT" -> ["RST", "FRT"]
+        "vA" -> ["A", "FRA"]
+        "VA" -> ["A", "FRA"]
+        "vD" -> ["RD"]
+        "SHW" -> ["D"]
+        "DM" -> ["D"]
+        "XTi" -> ["XT"]
+        "rmc" -> ["idx"]
+        "rA" -> ["A", "VA"]
+        "rB" -> ["B", "VB"]
+        "rD" -> ["VD", "B"]
+        "rS" -> ["RST"]
+        "to" -> ["RST"]
+        _ -> []
+    ppcFilter i = and [ idNamespace i == "PPC"
+                      , idDecoder i == ""
+                      -- FIXME: What is going on here? The operands don't make sense
+                      , idMnemonic i `notElem` [ "XSRQPXP"
+                                               , "XSRQPIX"
+                                               , "XSRQPI"
+                                               , "XORIS8"
+                                               , "XORIS"
+                                               , "XORI8"
+                                               , "XORI"
+                                               , "UpdateGBR"
+                                               , "UPDATE_VRSAVE"
+                                               , "TWI"
+                                               , "TW"
+                                               , "TSR"
+                                               , "TRECLAIM"
+                                               , "TRECHKPT"
+                                               , "TLBWE2"
+                                               , "TLBRE2"
+                                               , "TLBLI"
+                                               , "TLBLD"
+                                               , "TLBIEL"
+                                               , "TLBIE"
+                                               , "TEND"
+                                               , "TDI"
+                                               , "TCRETURNri8"
+                                               , "TCRETURNri"
+                                               , "TCRETURNdi8"
+                                               , "TCRETURNdi"
+                                               , "TCRETURNai8"
+                                               , "TCRETURNai"
+                                               , "TCHECK_RET"
+                                               , "TBEGIN"
+                                               , "TAILBA8"
+                                               , "TAILBA"
+                                               , "TAILB8"
+                                               , "TAILB"
+                                               , "TABORTWCI"
+                                               , "TABORTWC"
+                                               , "TABORTDCI"
+                                               , "TABORTDC"
+                                               , "TABORT"
+                                               , "STXVX" -- has one field in DAG, but two in bit pattern
+                                               , "STXVW4X"
+                                               ]
+                      ]
     ppcPseudo i = idPseudo i ||
                   idMnemonic i `elem` [ "LI" -- li rD,val == addi rD,0,val
                                       , "LIS" -- ~same
@@ -125,6 +203,7 @@ mips :: ISA
 mips = ISA { isaName = "Mips"
            , isaInstructionFilter = mipsFilter
            , isaPseudoInstruction = const False
+           , isaOperandClassMapping = const []
            }
   where
     mipsFilter i = idDecoder i == "Mips" && idNamespace i == "Mips" && not (idPseudo i)
@@ -133,6 +212,7 @@ avr :: ISA
 avr = ISA { isaName = "AVR"
           , isaInstructionFilter = avrFilter
           , isaPseudoInstruction = avrPsuedo
+          , isaOperandClassMapping = const []
           }
   where
     avrFilter i = idNamespace i == "AVR"
@@ -158,6 +238,7 @@ sparc :: ISA
 sparc = ISA { isaName = "Sparc"
             , isaInstructionFilter = sparcFilter
             , isaPseudoInstruction = const False
+            , isaOperandClassMapping = const []
             }
   where
     sparcFilter i = idNamespace i == "SP" && idDecoder i == "Sparc" && not (idPseudo i)

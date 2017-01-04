@@ -10,6 +10,7 @@ module Dismantle.Tablegen (
 
 import qualified GHC.Err.Located as L
 
+import Control.Applicative
 import Control.Arrow ( (&&&) )
 import Control.Monad ( guard )
 import qualified Data.Array.Unboxed as UA
@@ -19,7 +20,7 @@ import qualified Data.CaseInsensitive as CI
 import qualified Data.Foldable as F
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
-import Data.Maybe ( mapMaybe )
+import Data.Maybe ( fromMaybe, mapMaybe )
 import qualified Data.Set as S
 
 import Dismantle.Tablegen.ISA
@@ -165,7 +166,8 @@ operandDescriptors isa mnemonic dagOperator dagItem bits =
       case arg of
         DagArg (Identifier i) _
           | [klass, var] <- L.splitOn ":$" i ->
-            let bitPositions = lookupFieldBits var
+            let err = L.error ("No field bits found for field " ++ var ++ " while parsing instruction " ++ mnemonic)
+                bitPositions = fromMaybe err $ lookupFieldBits var
                 arrVals = [ (fldIdx, fromIntegral bitNum)
                           | (bitNum, fldIdx) <- bitPositions
                           ]
@@ -180,16 +182,15 @@ operandDescriptors isa mnemonic dagOperator dagItem bits =
             Nothing
         _ -> L.error ("Unexpected variable reference in a DAG for " ++ mnemonic ++ ": " ++ show arg)
 
-    lookupFieldBits :: String -> [(Int, Int)]
-    lookupFieldBits [] = L.error ("Empty operand name for instruction: " ++ mnemonic)
-    lookupFieldBits fldName@(c1:_) =
+    lookupFieldBits :: String -> Maybe [(Int, Int)]
+    lookupFieldBits fldName =
       case M.lookup (CI.mk fldName) operandBits of
-        Just fldBits -> fldBits
-        Nothing
-          -- If we found nothing, try again with an 'r' prefix, which
-          -- is a common misalignment in the tablegen data.
-          | not (c1 `elem` ['r', 'R']) -> lookupFieldBits ('r' : fldName)
-          | otherwise -> L.error ("No field bits found for field " ++ fldName ++ " while parsing instruction " ++ mnemonic)
+        Just fldBits -> Just fldBits
+        Nothing ->
+          let err = L.error ("No field bits found for field " ++ fldName ++ " while parsing instruction " ++ mnemonic)
+          in case isaOperandClassMapping isa fldName of
+            [] -> Nothing -- err
+            alternatives -> foldr (<|>) err (map lookupFieldBits alternatives)
 {-
 fieldDescriptors :: ISA
                  -> String
