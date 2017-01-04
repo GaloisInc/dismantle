@@ -191,43 +191,7 @@ operandDescriptors isa mnemonic dagOperator dagItem bits =
           in case isaOperandClassMapping isa fldName of
             [] -> Nothing -- err
             alternatives -> foldr (<|>) err (map lookupFieldBits alternatives)
-{-
-fieldDescriptors :: ISA
-                 -> String
-                 -- ^ The instruction mnemonic
-                 -> String
-                 -> SimpleValue
-                 -- ^ The "ins" DAG item (to let us identify instruction input types)
---                 -> SimpleValue
-                 -- ^ The "outs" DAG item (to let us identify instruction outputs)
-                 -> [Maybe BitRef]
-                 -- ^ The bits descriptor (so we can pick out fields)
-                 -> [OperandDescriptor]
-fieldDescriptors isa iname dagOpString val bits = map toFieldDescriptor (M.toList groups)
-  where
-    groups = foldr addBit M.empty (zip [0..] bits)
-    dagMap = dagVarRefs iname dagOpString val
-    -- inputFields = dagVarRefs iname "ins" ins
-    -- outputFields = dagVarRefs iname "outs" outs
 
-    addBit (bitNum, mbr) m =
-      case mbr of
-        Just (FieldBit fldName fldIdx) ->
-          M.insertWith (++) fldName [(bitNum, fldIdx)] m
-        _ -> m
-
-    toFieldDescriptor :: (String, [(Int, Int)]) -> OperandDescriptor
-    toFieldDescriptor (fldName, bitPositions) =
-      let arrVals = [ (fldIdx, fromIntegral bitNum)
-                    | (bitNum, fldIdx) <- bitPositions
-                    ]
-          ty = fieldMetadata dagMap fldName
-          fldRange = findFieldBitRange bitPositions
-      in OperandDescriptor { opName = fldName
-                           , opType = ty
-                           , opBits = UA.array fldRange arrVals
-                           }
--}
 -- | Find the actual length of a field.
 --
 -- The bit positions tell us which bits are encoded in the
@@ -235,38 +199,6 @@ fieldDescriptors isa iname dagOpString val bits = map toFieldDescriptor (M.toLis
 -- actually in the instruction.
 findFieldBitRange :: [(Int, Int)] -> (Int, Int)
 findFieldBitRange bitPositions = (minimum (map snd bitPositions), maximum (map snd bitPositions))
-{-
-fieldMetadata :: M.Map (CI String) String -> String -> OperandType
-fieldMetadata dagMap name =
-  let cin = CI.mk name
-  in case (M.lookup cin ins, M.lookup cin outs) of
-    (Just kIn, Just kOut)
-      | kIn == kOut -> (FieldType kIn, Both)
-      | otherwise -> L.error ("Field type mismatch for in vs. out: " ++ show name)
-    (Just kIn, Nothing) -> (FieldType kIn, In)
-    (Nothing, Just kOut) -> (FieldType kOut, Out)
-    -- FIXME: This might or might not be true.. need to look at more
-    -- cases
-    (Nothing, Nothing) -> (FieldType "unknown", In)
-
-dagVarRefs :: String
-           -> String
-           -- ^ The Dag head operator (e.g., "ins" or "outs")
-           -> SimpleValue
-           -> M.Map (CI String) String
-dagVarRefs iname expectedOperator v =
-  case v of
-    VDag (DagArg (Identifier hd) _) args
-      | hd == expectedOperator -> foldr argVarName M.empty args
-    _ -> L.error ("Unexpected SimpleValue while looking for dag head " ++ expectedOperator ++ ": " ++ show v)
-  where
-    argVarName a m =
-      case a of
-        DagArg (Identifier i) _
-          | [klass,var] <- L.splitOn ":$" i -> M.insert (CI.mk var) klass m
-          | i == "variable_ops" -> m -- See Note [variable_ops]
-        _ -> L.error ("Unexpected variable reference in a DAG for " ++ iname ++ ": " ++ show a)
--}
 
 {- Note [variable_ops]
 
