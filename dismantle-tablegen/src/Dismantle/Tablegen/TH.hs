@@ -21,6 +21,7 @@ import qualified Data.ByteString.Unsafe as BS
 import Data.Char ( toUpper )
 import qualified Data.Text.Lazy.Encoding as LE
 import qualified Data.Text.Lazy.IO as TL
+import Data.Word ( Word32 )
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax ( qAddDependentFile )
 import System.IO.Unsafe ( unsafePerformIO )
@@ -159,8 +160,9 @@ mkOperandType isa =
     cons = map mkOperandCon (isaOperands isa)
 
 mkOperandCon :: OperandType -> Con
-mkOperandCon (OperandType (toTypeName -> name)) = GadtC [n] [] ty
+mkOperandCon (OperandType (toTypeName -> name)) = GadtC [n] [argTy] ty
   where
+    argTy = (Bang NoSourceUnpackedness NoSourceStrictness, ConT ''Word32)
     n = mkName name
     ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
 
