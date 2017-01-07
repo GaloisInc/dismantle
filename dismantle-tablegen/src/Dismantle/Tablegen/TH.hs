@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE PolyKinds #-}
@@ -116,12 +115,12 @@ mkInstructionAliases =
 mkOpcodeType :: ISADescriptor -> Q [Dec]
 mkOpcodeType isa =
   return [ DataD [] opcodeName tyVars Nothing cons []
-         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeName `AppT` VarT opName `AppT` VarT shapeName))
+         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
          ]
   where
-    opName = mkName "o"
-    shapeName = mkName "sh"
-    tyVars = [PlainTV opName, PlainTV shapeName]
+    opVarName = mkName "o"
+    shapeVarName = mkName "sh"
+    tyVars = [PlainTV opVarName, PlainTV shapeVarName]
     cons = map mkOpcodeCon (isaInstructions isa)
 
 mkOpcodeCon :: InstructionDescriptor -> Con
@@ -155,8 +154,6 @@ mkOperandType isa =
          ]
   where
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
-    tyvars = [ KindedTV (mkName "tp") (ConT ''Symbol)
-             ]
     cons = map mkOperandCon (isaOperands isa)
 
 mkOperandCon :: OperandType -> Con
