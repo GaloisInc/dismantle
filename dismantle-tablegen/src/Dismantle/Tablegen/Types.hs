@@ -10,7 +10,6 @@ module Dismantle.Tablegen.Types (
 
 import GHC.Generics ( Generic )
 import Control.DeepSeq
-import qualified Data.Array.Unboxed as UA
 import Data.Word ( Word8 )
 
 import qualified Dismantle.Tablegen.ByteTrie as BT
@@ -37,7 +36,7 @@ data OperandType = OperandType String
 -- register reference or an immediate)
 data OperandDescriptor =
   OperandDescriptor { opName :: String
-                    , opBits :: !(UA.UArray Int Word8)
+                    , opBits :: [(Int, Word8)]
                     , opType :: !OperandType
                     }
   deriving (Eq, Ord, Show)

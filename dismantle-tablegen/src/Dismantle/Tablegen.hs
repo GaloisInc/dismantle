@@ -17,11 +17,11 @@ import Control.Arrow ( (&&&) )
 import Control.Monad ( guard, when )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
-import qualified Data.Array.Unboxed as UA
 import qualified Data.ByteString.Lazy as LBS
 import Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Foldable as F
+import qualified Data.List as L
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
 import Data.Maybe ( catMaybes, mapMaybe )
@@ -73,7 +73,6 @@ filterISA isa rs =
     insns = reverse $ stInsns st1
     operandTypes = foldr extractOperands S.empty insns
 
--- newtype FM a = FM { runFilter :: St.StateT FilterState (CC.Cont ()) a }
 newtype FM a = FM { runFilter :: CC.ContT () (St.State FilterState) a }
   deriving (Functor,
             Monad,
@@ -171,44 +170,6 @@ finishInstructionDescriptor isa def mbits ins outs =
       Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
       return (ns, decoder, asmStr, b, cgOnly, asmParseOnly)
 
--- FIXME: We'll need to do something to ensure that all of the fields
--- of the instruction are accounted for by 'operandDescriptors'.
--- Right now, we can only pull out those fields mentioned in the DAG
--- descriptors.  I *believe* that should cover all operands, but have
--- no idea if that is true.
---
--- Moreover, quite a few operands are spelled slightly differently in
--- the DAG vs bit descriptors.
--- instructionDescriptor :: ISA -> Def -> Maybe InstructionDescriptor
--- instructionDescriptor isa def = do
---   Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
---   Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
---   Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
-
---   Named _ (StringItem ns) <- F.find (named "Namespace") (defDecls def)
---   Named _ (StringItem decoder) <- F.find (named "DecoderNamespace") (defDecls def)
---   Named _ (StringItem asmStr) <- F.find (named "AsmString") (defDecls def)
---   Named _ (BitItem b) <- F.find (named "isPseudo") (defDecls def)
---   Named _ (BitItem cgOnly) <- F.find (named "isCodeGenOnly") (defDecls def)
---   Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
-
---   let i = InstructionDescriptor { idMask = map toTrieBit mbits
---                                 , idMnemonic = defName def
---                                 , idNamespace = ns
---                                 , idDecoder = decoder
---                                 , idAsmString = asmStr
---                                 , idInputOperands = operandDescriptors isa (defName def) "ins" ins mbits
---                                 , idOutputOperands = operandDescriptors isa (defName def) "outs" outs mbits
--- --                                , idFields = fieldDescriptors isa (defName def) ins outs mbits
---                                 , idPseudo = or [ b -- See Note [Pseudo Instructions]
---                                                 , cgOnly
---                                                 , asmParseOnly
---                                                 , Metadata "Pseudo" `elem` defMetadata def
---                                                 ]
---                                 }
---   guard (isaInstructionFilter isa i)
---   return i
-
 -- | Extract OperandDescriptors from the bits pattern, given type
 -- information from the InOperandList or OutOperandList DAG items.
 --
@@ -254,13 +215,6 @@ mkOperandDescriptors isa mnemonic dagOperator dagItem bits kexit =
       case arg of
         DagArg (Identifier i) _
           | [klass, var] <- L.splitOn ":$" i ->
-            -- let err = L.error ("No field bits found for field " ++ var ++ " while parsing instruction " ++ mnemonic)
-            --     bitPositions = {- fromMaybe err $ -} lookupFieldBits var
-            --     arrVals = [ (fldIdx, fromIntegral bitNum)
-            --               | (bitNum, fldIdx) <- bitPositions
-            --               ]
-            --     bitRange = findFieldBitRange bitPositions
-            -- in
             case lookupFieldBits var of
               Nothing -> do
                 St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
@@ -269,10 +223,9 @@ mkOperandDescriptors isa mnemonic dagOperator dagItem bits kexit =
                 let arrVals = [ (fldIdx, fromIntegral bitNum)
                           | (bitNum, fldIdx) <- bitPositions
                           ]
-                    bitRange = findFieldBitRange bitPositions
                 return $ Just OperandDescriptor { opName = var
                                                 , opType = OperandType klass
-                                                , opBits = UA.array bitRange arrVals
+                                                , opBits = L.sortOn fst arrVals
                                                 }
           | i == "variable_ops" ->
             -- This case is expected sometimes - there is no single
@@ -288,14 +241,6 @@ mkOperandDescriptors isa mnemonic dagOperator dagItem bits kexit =
           case isaOperandClassMapping isa fldName of
             [] -> Nothing
             alternatives -> foldr (<|>) Nothing (map lookupFieldBits alternatives)
-
--- | Find the actual length of a field.
---
--- The bit positions tell us which bits are encoded in the
--- instruction, but some values have implicit bits that are not
--- actually in the instruction.
-findFieldBitRange :: [(Int, Int)] -> (Int, Int)
-findFieldBitRange bitPositions = (minimum (map snd bitPositions), maximum (map snd bitPositions))
 
 {- Note [variable_ops]
 
