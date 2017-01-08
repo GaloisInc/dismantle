@@ -14,6 +14,7 @@ module Dismantle.Tablegen.TH (
 import GHC.TypeLits ( Symbol )
 
 import qualified Codec.Compression.GZip as Z
+import Control.Arrow ( (&&&) )
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Unsafe as BS
@@ -28,7 +29,9 @@ import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint as PP
 
 import Dismantle.Tablegen
+import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.Instruction
+import Dismantle.Tablegen.TH.Bits ( parseOperand )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
 genISA :: ISA -> Name -> FilePath -> DecsQ
@@ -74,7 +77,10 @@ mkParser isaValName path = do
   trie <- [| case parseTablegen "<data>" $(return dataExpr) of
                Left err1 -> error ("Error while parsing embedded data: " ++ show err1)
                Right defs ->
-                 case makeParseTables $(varE isaValName) (filterISA $(varE isaValName) defs) of
+                 let mkByteParser :: InstructionDescriptor -> Parser $(return (ConT (mkName "Instruction")))
+                     mkByteParser i = undefined
+                     parsable = parsableInstructions $(varE isaValName) (filterISA $(varE isaValName) defs)
+                 in case BT.byteTrie Nothing (map (idMask &&& Just . mkByteParser) parsable) of
                    Left err2 -> error ("Error while building parse tables for embedded data: " ++ show err2)
                    Right tbl -> tbl
            |]

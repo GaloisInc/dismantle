@@ -19,6 +19,7 @@ library
                    Dismantle.Tablegen.Combinators
                    Dismantle.Tablegen.Instruction
                    Dismantle.Tablegen.TH
+                   Dismantle.Tablegen.TH.Bits
                    Dismantle.Tablegen.TH.Pretty
                    Dismantle.Tablegen.Types
                    Dismantle.PPC

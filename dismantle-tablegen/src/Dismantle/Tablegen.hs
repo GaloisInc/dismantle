@@ -4,6 +4,7 @@ module Dismantle.Tablegen (
   parseTablegen,
   filterISA,
   makeParseTables,
+  parsableInstructions,
   parseInstruction,
   Parser(..),
   module Dismantle.Tablegen.ISA,
@@ -46,6 +47,9 @@ parseInstruction trie0 bs0 = go bs0 trie0 bs0 0
             Left next -> go bs1 next bs' (consumed + 1)
             Right Nothing -> (consumed + 1, Nothing)
             Right (Just (Parser p)) -> (consumed + 1, Just (p bs1))
+
+parsableInstructions :: ISA -> ISADescriptor -> [InstructionDescriptor]
+parsableInstructions isa = filter (not . isaPseudoInstruction isa) . isaInstructions
 
 makeParseTables :: ISA -> ISADescriptor -> Either BT.TrieError (BT.ByteTrie (Maybe InstructionDescriptor))
 makeParseTables isa = BT.byteTrie Nothing . map (idMask &&& Just) . filter (not . isaPseudoInstruction isa) . isaInstructions
