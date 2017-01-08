@@ -77,7 +77,7 @@ mkParser isaValName path = do
   trie <- [| case parseTablegen "<data>" $(return dataExpr) of
                Left err1 -> error ("Error while parsing embedded data: " ++ show err1)
                Right defs ->
-                 let mkByteParser :: InstructionDescriptor -> Parser $(return (ConT (mkName "Instruction")))
+                 let mkByteParser :: InstructionDescriptor -> Parser $(conT (mkName "Instruction"))
                      mkByteParser i = undefined
                      parsable = parsableInstructions $(varE isaValName) (filterISA $(varE isaValName) defs)
                  in case BT.byteTrie Nothing (map (idMask &&& Just . mkByteParser) parsable) of
