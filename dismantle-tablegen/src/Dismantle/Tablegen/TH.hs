@@ -18,6 +18,7 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Unsafe as BS
 import Data.Char ( toUpper )
+import qualified Data.Foldable as F
 import qualified Data.Text.Lazy.Encoding as LE
 import qualified Data.Text.Lazy.IO as TL
 import Data.Word ( Word32 )
@@ -28,6 +29,7 @@ import qualified Text.PrettyPrint as PP
 
 import Dismantle.Tablegen
 import Dismantle.Tablegen.Instruction
+import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
 genISA :: ISA -> Name -> FilePath -> DecsQ
 genISA isa isaValName path = do
@@ -131,7 +133,7 @@ mkOpcodeCon i = GadtC [n] [] ty
     ty = ConT opcodeName `AppT` ConT operandName `AppT` opcodeShape i
 
 opcodeShape :: InstructionDescriptor -> Type
-opcodeShape i = foldr addField PromotedNilT (idOutputOperands i ++ idInputOperands i)
+opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
   where
     addField f t =
       case opType f of
@@ -172,24 +174,37 @@ toTypeName s =
 mkPrettyPrinter :: ISADescriptor -> Q [Dec]
 mkPrettyPrinter desc = do
   iname <- newName "i"
-  return [sig, pp iname]
+  patterns <- mapM mkOpcodePrettyPrinter (isaInstructions desc)
+  let ex = CaseE (VarE iname) patterns
+      body = Clause [VarP iname] (NormalB ex) []
+      pp = FunD ppName [body]
+  return [sig, pp]
   where
     ppName = mkName "ppInstruction"
     ty = ArrowT `AppT` ConT (mkName "Instruction") `AppT` ConT ''PP.Doc
     sig = SigD ppName ty
-    pp iname = FunD ppName [body iname]
-    body iname = Clause [VarP iname] (NormalB (ex iname)) []
-    ex iname = CaseE (VarE iname) patterns
-    patterns = map mkOpcodePrettyPrinter (isaInstructions desc)
 
-mkOpcodePrettyPrinter :: InstructionDescriptor -> Match
-mkOpcodePrettyPrinter i = Match pat (NormalB body) []
+-- | This returns the operands of an instruction in canonical order.
+--
+-- For now, it just concatenates them - in the future, it will
+-- deduplicate (with a bias towards the output operands).
+--
+-- It may end up needing the ISA as input to deal with quirks
+canonicalOperands :: InstructionDescriptor -> [OperandDescriptor]
+canonicalOperands i = idOutputOperands i ++ idInputOperands i
+
+mkOpcodePrettyPrinter :: InstructionDescriptor -> Q Match
+mkOpcodePrettyPrinter i = do
+  (opsPat, prettyOps) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
+  let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
+      body = VarE 'prettyInstruction `AppE` LitE (StringL (idAsmString i)) `AppE` ListE prettyOps
+  return $ Match pat (NormalB body) []
   where
-    -- Note: Right now, we match on the wildcard - in the future, we
-    -- need to actually bind each operand and pass them to the
-    -- formatter.  The formatter will look a lot like printf
-    pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], WildP]
-    body = VarE 'PP.text `AppE` LitE (StringL (idAsmString i))
+    addOperand op (pat, pret) = do
+      vname <- newName "operand"
+      let oname = opName op
+      prettyOp <- [| PrettyOperand oname $(return (VarE vname)) show |]
+      return (InfixP (VarP vname) '(:>) pat, prettyOp : pret)
 
 {-
 
