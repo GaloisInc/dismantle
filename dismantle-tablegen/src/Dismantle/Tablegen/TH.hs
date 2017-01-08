@@ -84,9 +84,8 @@ mkParser isaValName path = do
                    Left err2 -> error ("Error while building parse tables for embedded data: " ++ show err2)
                    Right tbl -> tbl
            |]
-  parser <- [| parseInstruction $(varE (mkName "trie")) |]
-  return [ ValD (VarP (mkName "trie")) (NormalB trie) []
-         , ValD (VarP (mkName "parseInstruction")) (NormalB parser) []
+  parser <- [| parseInstruction $(return trie) |]
+  return [ ValD (VarP (mkName "parseInstruction")) (NormalB parser) []
          ]
 
 {-
