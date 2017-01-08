@@ -15,11 +15,11 @@ import GHC.TypeLits ( Symbol )
 
 import qualified Codec.Compression.GZip as Z
 import Control.Arrow ( (&&&) )
-import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Unsafe as BS
 import Data.Char ( toUpper )
 import qualified Data.Foldable as F
+import qualified Data.Map as M
 import qualified Data.Text.Lazy.Encoding as LE
 import qualified Data.Text.Lazy.IO as TL
 import Data.Word ( Word32 )
@@ -44,7 +44,7 @@ genISA isa isaValName path = do
   opcodeType <- mkOpcodeType desc
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
-  parserDef <- mkParser isaValName path
+  parserDef <- mkParser isa desc isaValName path
   return $ concat [ operandType
                   , opcodeType
                   , instrTypes
@@ -60,33 +60,73 @@ loadISA isa path = do
     Left err -> fail (show err)
     Right defs -> return $ filterISA isa defs
 
-opcodeName :: Name
-opcodeName = mkName "Opcode"
+opcodeTypeName :: Name
+opcodeTypeName = mkName "Opcode"
 
-operandName :: Name
-operandName = mkName "Operand"
+operandTypeName :: Name
+operandTypeName = mkName "Operand"
 
-mkParser :: Name -> FilePath -> Q [Dec]
-mkParser isaValName path = do
+mkParser :: ISA -> ISADescriptor -> Name -> FilePath -> Q [Dec]
+mkParser isa desc isaValName path = do
   qAddDependentFile path
   (blen, dataLit) <- runIO $ do
     bs <- Z.compress <$> LBS.readFile path
     let len = LBS.length bs
     return (len, LitE $ StringPrimL $ LBS.unpack bs)
   dataExpr <- [| LE.decodeUtf8 $ Z.decompress $ LBS.fromStrict $ unsafePerformIO $ BS.unsafePackAddressLen blen $(return dataLit) |]
+  -- Build up all of the AST fragments of the parsers into a [(String,
+  -- ExprQ)] outside of TH.  In the quasi quote, turn that into a
+  -- value-level Map, and have mkByteParser just be a lookup in that
+  -- map.
+  parseExprs <- mapM mkParserExpr (parsableInstructions isa desc)
+  mapExpr <- [| M.fromList $(listE (map (\(s, e) -> tupE [return s, return e]) parseExprs)) |]
   trie <- [| case parseTablegen "<data>" $(return dataExpr) of
                Left err1 -> error ("Error while parsing embedded data: " ++ show err1)
                Right defs ->
                  let mkByteParser :: InstructionDescriptor -> Parser $(conT (mkName "Instruction"))
-                     mkByteParser i = undefined
+                     mkByteParser i =
+                       let err = error ("No parser defined for instruction: " ++ idMnemonic i)
+                           parserMap = $(return mapExpr)
+                       in case M.lookup (idMnemonic i) parserMap of
+                         Nothing -> err
+                         Just p -> p
                      parsable = parsableInstructions $(varE isaValName) (filterISA $(varE isaValName) defs)
                  in case BT.byteTrie Nothing (map (idMask &&& Just . mkByteParser) parsable) of
                    Left err2 -> error ("Error while building parse tables for embedded data: " ++ show err2)
                    Right tbl -> tbl
            |]
   parser <- [| parseInstruction $(return trie) |]
-  return [ ValD (VarP (mkName "parseInstruction")) (NormalB parser) []
+  parserTy <- [t| LBS.ByteString -> (Int, Maybe $(conT (mkName "Instruction"))) |]
+  return [ SigD parserName parserTy
+         , ValD (VarP parserName) (NormalB parser) []
          ]
+
+parserName :: Name
+parserName = mkName "parseInstruction"
+
+mkParserExpr :: InstructionDescriptor -> Q (Exp, Exp)
+mkParserExpr i
+  | null (canonicalOperands i) = do
+    -- If we have no operands, make a much simpler constructor (so we
+    -- don't have an unused bytestring parameter)
+    e <- [| Parser $ \_ -> $(return con) $(return tag) Nil |]
+    return (LitE (StringL (idMnemonic i)), e)
+  | otherwise = do
+    bsName <- newName "bytestring"
+    opList <- F.foldrM (addOperandExpr bsName) (ConE 'Nil) (canonicalOperands i)
+    let insnCon = con `AppE` tag `AppE` opList
+    e <- [| Parser $ \ $(varP bsName) -> $(return insnCon) |]
+    return (LitE (StringL (idMnemonic i)), e)
+  where
+    tag = ConE (mkName (toTypeName (idMnemonic i)))
+    con = ConE 'Instruction
+    addOperandExpr bsName od e =
+      let bits = opBits od
+          -- FIXME: Need to write some helpers to handle making the
+          -- right operand constructor
+          OperandType tyname = opType od
+          operandCon = ConE (mkName (toTypeName tyname))
+      in [| $(return operandCon) (parseOperand $(varE bsName) bits) :> $(return e) |]
 
 {-
 
@@ -116,15 +156,15 @@ mkInstructionAliases =
          ]
   where
     annotVar = mkName "a"
-    ity = ConT ''GenericInstruction `AppT` ConT opcodeName `AppT` ConT operandName
+    ity = ConT ''GenericInstruction `AppT` ConT opcodeTypeName `AppT` ConT operandTypeName
     aty = ConT ''GenericInstruction `AppT`
-          ConT opcodeName `AppT`
-          (ConT ''Annotated `AppT` VarT annotVar `AppT` ConT operandName)
+          ConT opcodeTypeName `AppT`
+          (ConT ''Annotated `AppT` VarT annotVar `AppT` ConT operandTypeName)
 
 mkOpcodeType :: ISADescriptor -> Q [Dec]
 mkOpcodeType isa =
-  return [ DataD [] opcodeName tyVars Nothing cons []
-         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
+  return [ DataD [] opcodeTypeName tyVars Nothing cons []
+         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
          ]
   where
     opVarName = mkName "o"
@@ -137,7 +177,7 @@ mkOpcodeCon i = GadtC [n] [] ty
   where
     strName = toTypeName (idMnemonic i)
     n = mkName strName
-    ty = ConT opcodeName `AppT` ConT operandName `AppT` opcodeShape i
+    ty = ConT opcodeTypeName `AppT` ConT operandTypeName `AppT` opcodeShape i
 
 opcodeShape :: InstructionDescriptor -> Type
 opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
@@ -158,8 +198,8 @@ opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
 -- String -> (String, Q Type)
 mkOperandType :: ISADescriptor -> Q [Dec]
 mkOperandType isa =
-  return [ DataD [] operandName [] (Just ksig) cons []
-         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT operandName `AppT` VarT (mkName "tp")))
+  return [ DataD [] operandTypeName [] (Just ksig) cons []
+         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT operandTypeName `AppT` VarT (mkName "tp")))
          ]
   where
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
@@ -224,12 +264,12 @@ Reg32 operand).
 
 2) An ADT representing all possible instructions - this is a simple
 GADT with no parameters, but the return types are lists of the types
-of the operands for the instruction represented by the tag.
+of the operands for the instruction represented by the tag. [done]
 
 3) A type alias instantiating the underlying Instruction type with the
-Tag and Operand types.
+Tag and Operand types. [done]
 
-4) A pretty printer
+4) A pretty printer [done]
 
 5) A parser
 
@@ -237,31 +277,3 @@ Tag and Operand types.
 
 -}
 
-{-
-data Operand :: Symbol -> * where
-  OImm32 :: Int -> Operand "Imm32"
-  OReg32 :: Int -> Operand "Reg32"
-
-deriving instance Show (Operand tp)
-
-s2 :: OperandList Operand '["Imm32", "Reg32"]
-s2 = OImm32 5 :> OReg32 0 :> Nil
-
-s3 = case s2 of
-  OImm32 _ :> l -> l
-
-insn = Instruction Add s2
-
--- data ISATag o sh where
-data ISATag :: (Symbol -> *) -> [Symbol] -> * where
-  Add :: ISATag Operand '["Imm32", "Reg32"]
-  Sub :: ISATag Operand '["Imm32", "Reg32"]
-
-type Instruction = GenericInstruction ISATag Operand
-type AnnotatedInstruction = GenericInstruction ISATag (Annotated () Operand)
-
-foo :: Instruction -> Int
-foo i =
-  case i of
-    Instruction Add (OImm32 imm :> OReg32 regNo :> Nil) -> imm + regNo
--}
