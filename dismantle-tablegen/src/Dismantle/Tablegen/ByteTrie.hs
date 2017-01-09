@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Dismantle.Tablegen.ByteTrie (
   ByteTrie,
   byteTrie,
@@ -21,6 +22,8 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Traversable as T
 import Data.Word ( Word8 )
+import Language.Haskell.TH
+import Language.Haskell.TH.Syntax ( Lift(..) )
 
 import Prelude
 
@@ -37,6 +40,12 @@ newtype ByteTrie a = ByteTrie (A.Array Word8 (Payload a))
 data Bit = ExpectedBit !Bool
          | Any
          deriving (Eq, Ord, Show)
+
+instance Lift Bit where
+  lift b =
+    case b of
+      Any -> conE 'Any
+      ExpectedBit bit -> conE 'ExpectedBit `appE` lift bit
 
 instance NFData Bit where
   rnf _ = ()

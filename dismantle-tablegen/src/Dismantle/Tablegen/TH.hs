@@ -13,19 +13,15 @@ module Dismantle.Tablegen.TH (
 
 import GHC.TypeLits ( Symbol )
 
-import qualified Codec.Compression.GZip as Z
 import Control.Arrow ( (&&&) )
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Unsafe as BS
 import Data.Char ( toUpper )
 import qualified Data.Foldable as F
 import qualified Data.Map as M
-import qualified Data.Text.Lazy.Encoding as LE
 import qualified Data.Text.Lazy.IO as TL
 import Data.Word ( Word32 )
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax ( qAddDependentFile )
-import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint as PP
 
 import Dismantle.Tablegen
@@ -69,31 +65,24 @@ operandTypeName = mkName "Operand"
 mkParser :: ISA -> ISADescriptor -> Name -> FilePath -> Q [Dec]
 mkParser isa desc isaValName path = do
   qAddDependentFile path
-  (blen, dataLit) <- runIO $ do
-    bs <- Z.compress <$> LBS.readFile path
-    let len = LBS.length bs
-    return (len, LitE $ StringPrimL $ LBS.unpack bs)
-  dataExpr <- [| LE.decodeUtf8 $ Z.decompress $ LBS.fromStrict $ unsafePerformIO $ BS.unsafePackAddressLen blen $(return dataLit) |]
   -- Build up all of the AST fragments of the parsers into a [(String,
   -- ExprQ)] outside of TH.  In the quasi quote, turn that into a
   -- value-level Map, and have mkByteParser just be a lookup in that
   -- map.
   parseExprs <- mapM mkParserExpr (parsableInstructions isa desc)
   mapExpr <- [| M.fromList $(listE (map (\(s, e) -> tupE [return s, return e]) parseExprs)) |]
-  trie <- [| case parseTablegen "<data>" $(return dataExpr) of
-               Left err1 -> error ("Error while parsing embedded data: " ++ show err1)
-               Right defs ->
-                 let mkByteParser :: InstructionDescriptor -> Parser $(conT (mkName "Instruction"))
-                     mkByteParser i =
-                       let err = error ("No parser defined for instruction: " ++ idMnemonic i)
-                           parserMap = $(return mapExpr)
-                       in case M.lookup (idMnemonic i) parserMap of
-                         Nothing -> err
-                         Just p -> p
-                     parsable = parsableInstructions $(varE isaValName) (filterISA $(varE isaValName) defs)
-                 in case BT.byteTrie Nothing (map (idMask &&& Just . mkByteParser) parsable) of
-                   Left err2 -> error ("Error while building parse tables for embedded data: " ++ show err2)
-                   Right tbl -> tbl
+  trie <- [|
+            let mkByteParser :: InstructionDescriptor -> Parser $(conT (mkName "Instruction"))
+                mkByteParser i =
+                  let err = error ("No parser defined for instruction: " ++ idMnemonic i)
+                      parserMap = $(return mapExpr)
+                  in case M.lookup (idMnemonic i) parserMap of
+                    Nothing -> err
+                    Just p -> p
+                parsable = parsableInstructions $(varE isaValName) desc
+            in case BT.byteTrie Nothing (map (idMask &&& Just . mkByteParser) parsable) of
+              Left err2 -> error ("Error while building parse tables for embedded data: " ++ show err2)
+              Right tbl -> tbl
            |]
   parser <- [| parseInstruction $(return trie) |]
   parserTy <- [t| LBS.ByteString -> (Int, Maybe $(conT (mkName "Instruction"))) |]
