@@ -1,5 +1,7 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Dismantle.Tablegen.ISA (
   ISA(..),
+  OperandPayload(..),
   arm,
   thumb,
   aarch64,
@@ -9,7 +11,29 @@ module Dismantle.Tablegen.ISA (
   sparc
   ) where
 
+import Data.Int
+import Data.Word
+import Language.Haskell.TH
+import Language.Haskell.TH.Syntax
+
 import Dismantle.Tablegen.Types
+
+-- | Fragments of AST used during code generation.
+--
+-- This lets each ISA have its own special types for e.g., registers
+-- and immediates.
+data OperandPayload =
+  OperandPayload { opTypeDecls :: [Dec]
+                   -- ^ This can be empty if there is no additional
+                   -- wrapper type (i.e., we represent it as an inline
+                   -- primitive type)
+                 , opTypeCon :: Maybe Exp
+                   -- ^ The type constructor to wrap around the actual
+                   -- payload data.  If there is none, don't apply a
+                   -- wrapper.
+                 , opTypeName :: Name
+                   -- ^ The name of the type to use for the payload
+                 }
 
 -- | Information specific to an ISA that influences code generation
 data ISA =
@@ -31,6 +55,9 @@ data ISA =
       -- referenced in the input and output lists does not match the
       -- names in the bit fields of the 'Instruction'.  This function
       -- lets us specify a mapping between the broken pairs.
+      , isaOperandPayloadTypes :: [(String, OperandPayload)]
+      -- ^ Per-ISA operand customization.  This lets us have a custom
+      -- register type for each ISA, for example.
       }
 
 arm :: ISA
@@ -60,13 +87,91 @@ aarch64 = ISA { isaName = "AArch64"
   where
     aarch64Filter i = idNamespace i == "AArch64" && not (idPseudo i)
 
+unadorned :: Type -> BangType
+unadorned t = (Bang NoSourceUnpackedness NoSourceStrictness, t)
+
 ppc :: ISA
 ppc = ISA { isaName = "PPC"
           , isaInstructionFilter = ppcFilter
           , isaPseudoInstruction = ppcPseudo
           , isaOperandClassMapping = ppcOperandMapping
+          , isaOperandPayloadTypes = ppcOperandPayloadTypes
           }
   where
+    absoluteAddress = OperandPayload { opTypeName = ''Word64
+                                     , opTypeCon = Nothing
+                                     , opTypeDecls = []
+                                     }
+    relativeOffset = OperandPayload { opTypeName = ''Int64
+                                    , opTypeCon = Nothing
+                                    , opTypeDecls = []
+                                    }
+    gpRegister = OperandPayload { opTypeName = mkName "GPR"
+                                , opTypeCon = Just (ConE (mkName "GPR"))
+                                -- FIXME: Add pattern synonyms for all of the registers
+                                , opTypeDecls = [ NewtypeD [] (mkName "GPR") [] Nothing (NormalC (mkName "GPR") [unadorned (ConT ''Word8)]) [ConT ''Show, ConT ''Eq, ConT ''Ord]
+                                                ]
+                                }
+    conditionRegister = OperandPayload { opTypeName = mkName "CR"
+                                       , opTypeCon = Just (ConE (mkName "CR"))
+                                       , opTypeDecls = [ NewtypeD [] (mkName "CR") [] Nothing (NormalC (mkName "CR") [unadorned (ConT ''Word8)]) [ConT ''Show, ConT ''Eq, ConT ''Ord]
+                                                       ]
+                                       }
+    floatRegister = OperandPayload { opTypeName = mkName "FR"
+                                   , opTypeCon = Just (ConE (mkName "FR"))
+                                   , opTypeDecls = [ NewtypeD [] (mkName "FR") [] Nothing (NormalC (mkName "FR") [unadorned (ConT ''Word8)]) [ConT ''Show, ConT ''Eq, ConT ''Ord]
+                                                   ]
+                                   }
+    signedImmediate :: Word8 -> OperandPayload
+    signedImmediate _n = OperandPayload { opTypeName = ''Int64
+                                       , opTypeCon = Nothing
+                                       , opTypeDecls = []
+                                       }
+    unsignedImmediate :: Word8 -> OperandPayload
+    unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
+                                         , opTypeCon = Nothing
+                                         , opTypeDecls = []
+                                         }
+    vecRegister = OperandPayload { opTypeName = mkName "VR"
+                                 , opTypeCon = Just (ConE (mkName "VR"))
+                                 , opTypeDecls = [ NewtypeD [] (mkName "VR") [] Nothing (NormalC (mkName "VR") [unadorned (ConT ''Word8)]) [ConT ''Show, ConT ''Eq, ConT ''Ord]
+                                                 ]
+                                 }
+    ppcOperandPayloadTypes =
+      [ ("Abscondbrtarget", absoluteAddress)
+      , ("Condbrtarget", relativeOffset)
+      , ("Crbitm", conditionRegister)  -- these two are very odd, must investigate
+      , ("Crbitrc", conditionRegister)
+      , ("Crrc", conditionRegister) -- 4 bit
+      , ("F4rc", floatRegister)
+      , ("F8rc", floatRegister)
+      , ("G8rc", gpRegister)
+      , ("Gprc", gpRegister)
+        -- These two variants are special for instructions that treat r0 specially
+      , ("Gprc_nor0", gpRegister)
+      , ("G8rc_nox0", gpRegister)
+      , ("I1imm", signedImmediate 1)
+      , ("I32imm", signedImmediate 32)
+      , ("S16imm", signedImmediate 16)
+      , ("S16imm64", signedImmediate 16)
+      , ("S17imm", signedImmediate 17)
+      , ("S17imm64", signedImmediate 17)
+      , ("S5imm", signedImmediate 5)
+      , ("Tlsreg", gpRegister)
+      , ("Tlsreg32", gpRegister)
+      , ("U1imm", unsignedImmediate 1)
+      , ("U2imm", unsignedImmediate 2)
+      , ("U4imm", unsignedImmediate 4)
+      , ("U5imm", unsignedImmediate 5)
+      , ("U6imm", unsignedImmediate 6)
+      , ("U7imm", unsignedImmediate 7)
+      , ("U8imm", unsignedImmediate 8)
+      , ("Vrrc", vecRegister)
+      , ("Vsfrc", vecRegister) -- floating point vec?
+      , ("Vsrc", vecRegister) -- ??
+      , ("Vssrc", vecRegister) -- ??
+      ]
+
     ppcOperandMapping i =
       case i of
         "dst" -> ["BD"]

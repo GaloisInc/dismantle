@@ -18,8 +18,9 @@ import qualified Data.ByteString.Lazy as LBS
 import Data.Char ( toUpper )
 import qualified Data.Foldable as F
 import qualified Data.Map as M
+import Data.Maybe ( fromMaybe )
+import qualified Data.Set as S
 import qualified Data.Text.Lazy.IO as TL
-import Data.Word ( Word32 )
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax ( qAddDependentFile )
 import qualified Text.PrettyPrint as PP
@@ -36,12 +37,14 @@ genISA isa isaValName path = do
   case isaErrors desc of
     [] -> return ()
     errs -> reportWarning ("Unhandled instruction definitions for ISA: " ++ show (length errs))
-  operandType <- mkOperandType desc
+  let operandPayloadDecs = S.fromList $ concatMap (opTypeDecls . snd) (isaOperandPayloadTypes isa)
+  operandType <- mkOperandType isa desc
   opcodeType <- mkOpcodeType desc
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
   parserDef <- mkParser isa desc isaValName path
-  return $ concat [ operandType
+  return $ concat [ S.toList operandPayloadDecs
+                  , operandType
                   , opcodeType
                   , instrTypes
                   , ppDef
@@ -69,7 +72,7 @@ mkParser isa desc isaValName path = do
   -- ExprQ)] outside of TH.  In the quasi quote, turn that into a
   -- value-level Map, and have mkByteParser just be a lookup in that
   -- map.
-  parseExprs <- mapM mkParserExpr (parsableInstructions isa desc)
+  parseExprs <- mapM (mkParserExpr isa) (parsableInstructions isa desc)
   mapExpr <- [| M.fromList $(listE (map (\(s, e) -> tupE [return s, return e]) parseExprs)) |]
   trie <- [|
             let mkByteParser :: InstructionDescriptor -> Parser $(conT (mkName "Instruction"))
@@ -93,8 +96,8 @@ mkParser isa desc isaValName path = do
 parserName :: Name
 parserName = mkName "parseInstruction"
 
-mkParserExpr :: InstructionDescriptor -> Q (Exp, Exp)
-mkParserExpr i
+mkParserExpr :: ISA -> InstructionDescriptor -> Q (Exp, Exp)
+mkParserExpr isa i
   | null (canonicalOperands i) = do
     -- If we have no operands, make a much simpler constructor (so we
     -- don't have an unused bytestring parameter)
@@ -110,12 +113,17 @@ mkParserExpr i
     tag = ConE (mkName (toTypeName (idMnemonic i)))
     con = ConE 'Instruction
     addOperandExpr bsName od e =
-      let bits = opBits od
+      let OperandType tyname = opType od
+          otyname = toTypeName tyname
+          err = error ("No operand descriptor payload for operand type: " ++ otyname)
+          operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
+          operandCon = ConE (mkName otyname)
+          bits = opBits od
           -- FIXME: Need to write some helpers to handle making the
           -- right operand constructor
-          OperandType tyname = opType od
-          operandCon = ConE (mkName (toTypeName tyname))
-      in [| $(return operandCon) (parseOperand $(varE bsName) bits) :> $(return e) |]
+      in case opTypeCon operandPayload of
+         Nothing -> [| $(return operandCon) (parseOperand $(varE bsName) bits) :> $(return e) |]
+         Just wrapperCon -> [| $(return operandCon) ($(return wrapperCon) (parseOperand $(varE bsName) bits)) :> $(return e) |]
 
 {-
 
@@ -185,19 +193,20 @@ opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
 -- structure.
 --
 -- String -> (String, Q Type)
-mkOperandType :: ISADescriptor -> Q [Dec]
-mkOperandType isa =
+mkOperandType :: ISA -> ISADescriptor -> Q [Dec]
+mkOperandType isa desc =
   return [ DataD [] operandTypeName [] (Just ksig) cons []
          , StandaloneDerivD [] (ConT ''Show `AppT` (ConT operandTypeName `AppT` VarT (mkName "tp")))
          ]
   where
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
-    cons = map mkOperandCon (isaOperands isa)
+    cons = map (mkOperandCon isa) (isaOperands desc)
 
-mkOperandCon :: OperandType -> Con
-mkOperandCon (OperandType (toTypeName -> name)) = GadtC [n] [argTy] ty
+mkOperandCon :: ISA -> OperandType -> Con
+mkOperandCon isa (OperandType (toTypeName -> name)) = GadtC [n] [argTy] ty
   where
-    argTy = (Bang NoSourceUnpackedness NoSourceStrictness, ConT ''Word32)
+    Just payloadDesc = lookup name (isaOperandPayloadTypes isa)
+    argTy = (Bang SourceUnpack SourceStrict, ConT (opTypeName payloadDesc))
     n = mkName name
     ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
 
