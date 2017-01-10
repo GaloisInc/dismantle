@@ -14,6 +14,7 @@ module Dismantle.Tablegen.TH (
 import GHC.TypeLits ( Symbol )
 
 import Control.Arrow ( (&&&) )
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Char ( toUpper )
 import qualified Data.Foldable as F
@@ -22,13 +23,13 @@ import Data.Maybe ( fromMaybe )
 import qualified Data.Set as S
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
-import Language.Haskell.TH.Syntax ( qAddDependentFile )
+import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
 import qualified Text.PrettyPrint as PP
 
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.Instruction
-import Dismantle.Tablegen.TH.Bits ( parseOperand )
+import Dismantle.Tablegen.TH.Bits ( OperandWrapper(..), assembleBits, parseOperand )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
 genISA :: ISA -> Name -> FilePath -> DecsQ
@@ -43,12 +44,14 @@ genISA isa isaValName path = do
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
   parserDef <- mkParser isa desc isaValName path
+  asmDef <- mkAssembler isa desc
   return $ concat [ S.toList operandPayloadDecs
                   , operandType
                   , opcodeType
                   , instrTypes
                   , ppDef
                   , parserDef
+                  , asmDef
                   ]
 
 -- | Load the instructions for the given ISA
@@ -94,7 +97,7 @@ mkParser isa desc isaValName path = do
          ]
 
 parserName :: Name
-parserName = mkName "parseInstruction"
+parserName = mkName "disassembleInstruction"
 
 mkParserExpr :: ISA -> InstructionDescriptor -> Q (Exp, Exp)
 mkParserExpr isa i
@@ -124,6 +127,45 @@ mkParserExpr isa i
       in case opTypeCon operandPayload of
          Nothing -> [| $(return operandCon) (parseOperand $(varE bsName) bits) :> $(return e) |]
          Just wrapperCon -> [| $(return operandCon) ($(return wrapperCon) (parseOperand $(varE bsName) bits)) :> $(return e) |]
+
+unparserName :: Name
+unparserName = mkName "assembleInstruction"
+
+mkAssembler :: ISA -> ISADescriptor -> Q [Dec]
+mkAssembler isa desc = do
+  insnName <- newName "insn"
+  unparserTy <- [t| $(conT (mkName "Instruction")) -> BS.ByteString |]
+  cases <- mapM (mkAsmCase isa) (isaInstructions desc)
+  let body = CaseE (VarE insnName) cases
+  return [ SigD unparserName unparserTy
+         , FunD unparserName [Clause [VarP insnName] (NormalB body) []]
+         ]
+
+lookupOperandPayload :: ISA -> OperandDescriptor -> OperandPayload
+lookupOperandPayload isa od =
+  case lookup opTyName (isaOperandPayloadTypes isa) of
+    Nothing -> error ("No operand payload for " ++ opTyName)
+    Just p -> p
+  where
+    OperandType oty = opType od
+    opTyName = toTypeName oty
+
+mkAsmCase :: ISA -> InstructionDescriptor -> Q Match
+mkAsmCase isa i = do
+  lbits <- lift (idMask i)
+  (opsPat, operands) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
+  let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
+      body = VarE 'assembleBits `AppE` lbits `AppE` ListE operands
+  return $ Match pat (NormalB body) []
+  where
+    addOperand op (pat, operands) = do
+      let payload = lookupOperandPayload isa op
+      obits <- lift (opBits op)
+      vname <- newName "operand"
+      asmOp <- [| OperandWrapper $(varE vname) $(return obits) |]
+      case opTypeCon payload of
+        Nothing -> return (InfixP (VarP vname) '(:>) pat, asmOp : operands)
+        Just _con -> return (InfixP (ConP (opTypeName payload) [VarP vname]) '(:>) pat, asmOp : operands)
 
 {-
 
