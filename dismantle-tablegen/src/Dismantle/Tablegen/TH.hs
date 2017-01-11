@@ -160,12 +160,14 @@ mkAsmCase isa i = do
   where
     addOperand op (pat, operands) = do
       let payload = lookupOperandPayload isa op
+          OperandType tyname = opType op
+          otyname = toTypeName tyname
       obits <- lift (opBits op)
       vname <- newName "operand"
       asmOp <- [| OperandWrapper $(varE vname) $(return obits) |]
       case opTypeCon payload of
-        Nothing -> return (InfixP (VarP vname) '(:>) pat, asmOp : operands)
-        Just _con -> return (InfixP (ConP (opTypeName payload) [VarP vname]) '(:>) pat, asmOp : operands)
+        Nothing -> return (InfixP (ConP (mkName otyname) [(VarP vname)]) '(:>) pat, asmOp : operands)
+        Just _con -> return (InfixP (ConP (mkName otyname) [(ConP (opTypeName payload) [VarP vname])]) '(:>) pat, asmOp : operands)
 
 {-
 
