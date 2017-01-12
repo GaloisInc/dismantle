@@ -124,9 +124,9 @@ mkParserExpr isa i
           bits = opBits od
           -- FIXME: Need to write some helpers to handle making the
           -- right operand constructor
-      in case opTypeCon operandPayload of
+      in case opConName operandPayload of
          Nothing -> [| $(return operandCon) (parseOperand $(varE bsName) bits) :> $(return e) |]
-         Just wrapperCon -> [| $(return operandCon) ($(return wrapperCon) (parseOperand $(varE bsName) bits)) :> $(return e) |]
+         Just conName -> [| $(return operandCon) ($(conE conName) (parseOperand $(varE bsName) bits)) :> $(return e) |]
 
 unparserName :: Name
 unparserName = mkName "assembleInstruction"
@@ -165,9 +165,9 @@ mkAsmCase isa i = do
       obits <- lift (opBits op)
       vname <- newName "operand"
       asmOp <- [| OperandWrapper $(varE vname) $(return obits) |]
-      case opTypeCon payload of
+      case opConName payload of
         Nothing -> return (InfixP (ConP (mkName otyname) [(VarP vname)]) '(:>) pat, asmOp : operands)
-        Just _con -> return (InfixP (ConP (mkName otyname) [(ConP (opTypeName payload) [VarP vname])]) '(:>) pat, asmOp : operands)
+        Just conName -> return (InfixP (ConP (mkName otyname) [(ConP conName [VarP vname])]) '(:>) pat, asmOp : operands)
 
 {-
 

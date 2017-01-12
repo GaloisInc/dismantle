@@ -16,6 +16,7 @@ import Data.Word
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 
+import qualified Dismantle.PPC.Operands as PPC
 import Dismantle.Tablegen.Types
 
 -- | Fragments of AST used during code generation.
@@ -27,7 +28,7 @@ data OperandPayload =
                    -- ^ This can be empty if there is no additional
                    -- wrapper type (i.e., we represent it as an inline
                    -- primitive type)
-                 , opTypeCon :: Maybe Exp
+                 , opConName :: Maybe Name
                    -- ^ The type constructor to wrap around the actual
                    -- payload data.  If there is none, don't apply a
                    -- wrapper.
@@ -99,43 +100,38 @@ ppc = ISA { isaName = "PPC"
           }
   where
     absoluteAddress = OperandPayload { opTypeName = ''Word64
-                                     , opTypeCon = Nothing
+                                     , opConName = Nothing
                                      , opTypeDecls = []
                                      }
     relativeOffset = OperandPayload { opTypeName = ''Int64
-                                    , opTypeCon = Nothing
+                                    , opConName = Nothing
                                     , opTypeDecls = []
                                     }
-    gpRegister = OperandPayload { opTypeName = mkName "GPR"
-                                , opTypeCon = Just (ConE (mkName "GPR"))
-                                -- FIXME: Add pattern synonyms for all of the registers
-                                , opTypeDecls = [ NewtypeD [] (mkName "GPR") [] Nothing (NormalC (mkName "GPR") [unadorned (ConT ''Word8)]) [ConT ''Show, ConT ''Eq, ConT ''Ord]
-                                                ]
+    gpRegister = OperandPayload { opTypeName = ''PPC.GPR
+                                , opConName = Just 'PPC.GPR
+                                , opTypeDecls = []
                                 }
-    conditionRegister = OperandPayload { opTypeName = mkName "CR"
-                                       , opTypeCon = Just (ConE (mkName "CR"))
-                                       , opTypeDecls = [ NewtypeD [] (mkName "CR") [] Nothing (NormalC (mkName "CR") [unadorned (ConT ''Word8)]) [ConT ''Show, ConT ''Eq, ConT ''Ord]
-                                                       ]
+    conditionRegister = OperandPayload { opTypeName = ''PPC.CR
+                                       , opConName = Just 'PPC.CR
+                                       , opTypeDecls = []
                                        }
-    floatRegister = OperandPayload { opTypeName = mkName "FR"
-                                   , opTypeCon = Just (ConE (mkName "FR"))
-                                   , opTypeDecls = [ NewtypeD [] (mkName "FR") [] Nothing (NormalC (mkName "FR") [unadorned (ConT ''Word8)]) [ConT ''Show, ConT ''Eq, ConT ''Ord]
-                                                   ]
+    floatRegister = OperandPayload { opTypeName = ''PPC.FR
+                                   , opConName = Just 'PPC.FR
+                                   , opTypeDecls = []
                                    }
     signedImmediate :: Word8 -> OperandPayload
     signedImmediate _n = OperandPayload { opTypeName = ''Int64
-                                       , opTypeCon = Nothing
-                                       , opTypeDecls = []
-                                       }
+                                        , opConName = Nothing
+                                        , opTypeDecls = []
+                                        }
     unsignedImmediate :: Word8 -> OperandPayload
     unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
-                                         , opTypeCon = Nothing
-                                         , opTypeDecls = []
-                                         }
-    vecRegister = OperandPayload { opTypeName = mkName "VR"
-                                 , opTypeCon = Just (ConE (mkName "VR"))
-                                 , opTypeDecls = [ NewtypeD [] (mkName "VR") [] Nothing (NormalC (mkName "VR") [unadorned (ConT ''Word8)]) [ConT ''Show, ConT ''Eq, ConT ''Ord]
-                                                 ]
+                                          , opConName = Nothing
+                                          , opTypeDecls = []
+                                          }
+    vecRegister = OperandPayload { opTypeName = ''PPC.VR
+                                 , opConName = Just 'PPC.VR
+                                 , opTypeDecls = []
                                  }
     ppcOperandPayloadTypes =
       [ ("Abscondbrtarget", absoluteAddress)
