@@ -20,7 +20,6 @@ import Data.Char ( toUpper )
 import qualified Data.Foldable as F
 import qualified Data.Map as M
 import Data.Maybe ( fromMaybe )
-import qualified Data.Set as S
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
@@ -38,15 +37,13 @@ genISA isa isaValName path = do
   case isaErrors desc of
     [] -> return ()
     errs -> reportWarning ("Unhandled instruction definitions for ISA: " ++ show (length errs))
-  let operandPayloadDecs = S.fromList $ concatMap (opTypeDecls . snd) (isaOperandPayloadTypes isa)
   operandType <- mkOperandType isa desc
   opcodeType <- mkOpcodeType desc
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
   parserDef <- mkParser isa desc isaValName path
   asmDef <- mkAssembler isa desc
-  return $ concat [ S.toList operandPayloadDecs
-                  , operandType
+  return $ concat [ operandType
                   , opcodeType
                   , instrTypes
                   , ppDef

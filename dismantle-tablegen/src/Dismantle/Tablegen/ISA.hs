@@ -24,11 +24,7 @@ import Dismantle.Tablegen.Types
 -- This lets each ISA have its own special types for e.g., registers
 -- and immediates.
 data OperandPayload =
-  OperandPayload { opTypeDecls :: [Dec]
-                   -- ^ This can be empty if there is no additional
-                   -- wrapper type (i.e., we represent it as an inline
-                   -- primitive type)
-                 , opConName :: Maybe Name
+  OperandPayload { opConName :: Maybe Name
                    -- ^ The type constructor to wrap around the actual
                    -- payload data.  If there is none, don't apply a
                    -- wrapper.
@@ -101,37 +97,29 @@ ppc = ISA { isaName = "PPC"
   where
     absoluteAddress = OperandPayload { opTypeName = ''Word64
                                      , opConName = Nothing
-                                     , opTypeDecls = []
                                      }
     relativeOffset = OperandPayload { opTypeName = ''Int64
                                     , opConName = Nothing
-                                    , opTypeDecls = []
                                     }
     gpRegister = OperandPayload { opTypeName = ''PPC.GPR
                                 , opConName = Just 'PPC.GPR
-                                , opTypeDecls = []
                                 }
     conditionRegister = OperandPayload { opTypeName = ''PPC.CR
                                        , opConName = Just 'PPC.CR
-                                       , opTypeDecls = []
                                        }
     floatRegister = OperandPayload { opTypeName = ''PPC.FR
                                    , opConName = Just 'PPC.FR
-                                   , opTypeDecls = []
                                    }
     signedImmediate :: Word8 -> OperandPayload
     signedImmediate _n = OperandPayload { opTypeName = ''Int64
                                         , opConName = Nothing
-                                        , opTypeDecls = []
                                         }
     unsignedImmediate :: Word8 -> OperandPayload
     unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
                                           , opConName = Nothing
-                                          , opTypeDecls = []
                                           }
     vecRegister = OperandPayload { opTypeName = ''PPC.VR
                                  , opConName = Just 'PPC.VR
-                                 , opTypeDecls = []
                                  }
     ppcOperandPayloadTypes =
       [ ("Abscondbrtarget", absoluteAddress)
