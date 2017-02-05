@@ -43,6 +43,8 @@ instance Lift OperandType where
 data OperandDescriptor =
   OperandDescriptor { opName :: String
                     , opBits :: [(Int, Word8)]
+                    , opStartBit :: Int
+                    , opNumBits :: Int
                     , opType :: !OperandType
                     }
   deriving (Eq, Ord, Show)
@@ -51,6 +53,8 @@ instance Lift OperandDescriptor where
   lift od = conE 'OperandDescriptor `appE`
                  lift (opName od) `appE`
                  lift (opBits od) `appE`
+                 lift (opStartBit od) `appE`
+                 lift (opNumBits od) `appE`
                  lift (opType od)
 
 instance NFData OperandDescriptor where

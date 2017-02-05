@@ -2,6 +2,7 @@
 module Dismantle.Tablegen.ISA (
   ISA(..),
   OperandPayload(..),
+  Endianness(..),
   arm,
   thumb,
   aarch64,
@@ -11,13 +12,19 @@ module Dismantle.Tablegen.ISA (
   sparc
   ) where
 
+import qualified Data.Binary.Get as B
+import qualified Data.ByteString.Lazy as LBS
 import Data.Int
+import qualified Data.List as L
 import Data.Word
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 
 import qualified Dismantle.PPC.Operands as PPC
 import Dismantle.Tablegen.Types
+
+data Endianness = Little | Big
+  deriving (Eq)
 
 -- | Fragments of AST used during code generation.
 --
@@ -35,6 +42,7 @@ data OperandPayload =
 -- | Information specific to an ISA that influences code generation
 data ISA =
   ISA { isaName :: String
+      , isaEndianness :: Endianness
       , isaInstructionFilter :: InstructionDescriptor -> Bool
       , isaPseudoInstruction :: InstructionDescriptor -> Bool
       -- ^ Return 'True' if the instruction is a pseudo-instruction
@@ -55,10 +63,18 @@ data ISA =
       , isaOperandPayloadTypes :: [(String, OperandPayload)]
       -- ^ Per-ISA operand customization.  This lets us have a custom
       -- register type for each ISA, for example.
+      , isaInsnWordFromBytes :: Name
+      -- ^ The name of the function that is used to convert a prefix
+      -- of the instruction stream into a single word that contains an
+      -- instruction (e.g., ByteString -> Word32)
       }
+
+asWord32 :: LBS.ByteString -> Word32
+asWord32 = B.runGet B.getWord32be
 
 arm :: ISA
 arm = ISA { isaName = "ARM"
+          , isaEndianness = Little
           , isaInstructionFilter = armFilter
           , isaPseudoInstruction = const False
           , isaOperandClassMapping = const []
@@ -68,6 +84,7 @@ arm = ISA { isaName = "ARM"
 
 thumb :: ISA
 thumb = ISA { isaName = "Thumb"
+            , isaEndianness = Little
             , isaInstructionFilter = thumbFilter
             , isaPseudoInstruction = const False
             , isaOperandClassMapping = const []
@@ -77,6 +94,7 @@ thumb = ISA { isaName = "Thumb"
 
 aarch64 :: ISA
 aarch64 = ISA { isaName = "AArch64"
+              , isaEndianness = Little
               , isaInstructionFilter = aarch64Filter
               , isaPseudoInstruction = const False
               , isaOperandClassMapping = const []
@@ -89,10 +107,12 @@ unadorned t = (Bang NoSourceUnpackedness NoSourceStrictness, t)
 
 ppc :: ISA
 ppc = ISA { isaName = "PPC"
+          , isaEndianness = Big
           , isaInstructionFilter = ppcFilter
           , isaPseudoInstruction = ppcPseudo
           , isaOperandClassMapping = ppcOperandMapping
           , isaOperandPayloadTypes = ppcOperandPayloadTypes
+          , isaInsnWordFromBytes = 'asWord32
           }
   where
     absoluteAddress = OperandPayload { opTypeName = ''Word64
@@ -182,6 +202,7 @@ ppc = ISA { isaName = "PPC"
         _ -> []
     ppcFilter i = and [ idNamespace i == "PPC"
                       , idDecoder i == ""
+                      , L.last (idMnemonic i) /= '8'
                       -- FIXME: What is going on here? The operands don't make sense
                       , idMnemonic i `notElem` [ "XSRQPXP"
                                                , "XSRQPIX"
@@ -290,6 +311,7 @@ ppc = ISA { isaName = "PPC"
 
 mips :: ISA
 mips = ISA { isaName = "Mips"
+           , isaEndianness = Big
            , isaInstructionFilter = mipsFilter
            , isaPseudoInstruction = const False
            , isaOperandClassMapping = const []
@@ -325,6 +347,7 @@ avr = ISA { isaName = "AVR"
 
 sparc :: ISA
 sparc = ISA { isaName = "Sparc"
+            , isaEndianness = Big
             , isaInstructionFilter = sparcFilter
             , isaPseudoInstruction = const False
             , isaOperandClassMapping = const []

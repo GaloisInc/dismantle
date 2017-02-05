@@ -28,7 +28,7 @@ import qualified Text.PrettyPrint as PP
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.Instruction
-import Dismantle.Tablegen.TH.Bits ( OperandWrapper(..), assembleBits, parseOperand )
+import Dismantle.Tablegen.TH.Bits ( OperandWrapper(..), assembleBits, fieldFromWord )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
 genISA :: ISA -> Name -> FilePath -> DecsQ
@@ -105,25 +105,34 @@ mkParserExpr isa i
     return (LitE (StringL (idMnemonic i)), e)
   | otherwise = do
     bsName <- newName "bytestring"
-    opList <- F.foldrM (addOperandExpr bsName) (ConE 'Nil) (canonicalOperands i)
+    wordName <- newName "w"
+    opList <- F.foldrM (addOperandExpr wordName) (ConE 'Nil) (canonicalOperands i)
     let insnCon = con `AppE` tag `AppE` opList
-    e <- [| Parser $ \ $(varP bsName) -> $(return insnCon) |]
+    e <- [| Parser $ \ $(varP bsName) ->
+             case $(varE (isaInsnWordFromBytes isa)) $(varE bsName) of
+               $(varP wordName) -> $(return insnCon)
+          |]
     return (LitE (StringL (idMnemonic i)), e)
   where
     tag = ConE (mkName (toTypeName (idMnemonic i)))
     con = ConE 'Instruction
-    addOperandExpr bsName od e =
+    addOperandExpr wordName od e =
       let OperandType tyname = opType od
           otyname = toTypeName tyname
           err = error ("No operand descriptor payload for operand type: " ++ otyname)
           operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           operandCon = ConE (mkName otyname)
-          bits = opBits od
+--          bits = opBits od
+          intE = litE . integerL . fromIntegral
+          startBit = opStartBit od
+          numBits = opNumBits od
           -- FIXME: Need to write some helpers to handle making the
           -- right operand constructor
       in case opConName operandPayload of
-         Nothing -> [| $(return operandCon) (parseOperand $(varE bsName) bits) :> $(return e) |]
-         Just conName -> [| $(return operandCon) ($(conE conName) (parseOperand $(varE bsName) bits)) :> $(return e) |]
+         Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits)) :> $(return e) |]
+--         [| $(return operandCon) (parseOperand $(varE wordName) bits) :> $(return e) |]
+         Just conName -> [| $(return operandCon) ($(conE conName) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits))) :> $(return e) |]
+--           [| $(return operandCon) ($(conE conName) (parseOperand $(varE wordName) bits)) :> $(return e) |]
 
 unparserName :: Name
 unparserName = mkName "assembleInstruction"

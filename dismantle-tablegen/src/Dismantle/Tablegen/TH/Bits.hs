@@ -1,6 +1,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 module Dismantle.Tablegen.TH.Bits (
   parseOperand,
+  fieldFromWord,
   OperandWrapper(..),
   assembleBits
   ) where
@@ -13,6 +14,13 @@ import qualified Data.Sequence as Seq
 import Data.Word ( Word8 )
 
 import Dismantle.Tablegen.ByteTrie ( Bit(..) )
+
+-- | Parse a field from an input word
+fieldFromWord :: (Integral a, Bits a, Num b, Bits b) => a -> Int -> Int -> b
+fieldFromWord w startBit numBits =
+  fromIntegral ((w .&. mask) `shiftR` startBit)
+  where
+    mask = ((1 `shiftL` numBits) - 1) `shiftL` startBit
 
 {-# INLINE parseOperand #-}
 parseOperand :: (Bits b, Num b) => LBS.ByteString -> [(Int, Word8)] -> b
@@ -48,6 +56,10 @@ setExpectedBit (ix, bitVal) s =
 
 applyOperand :: OperandWrapper -> Seq.Seq Word8 -> Seq.Seq Word8
 applyOperand (OperandWrapper val spec) s = foldr (setOperandBit val) s spec
+
+-- FIXME: Based on experimentation, the bits for operands seem to be
+-- specified backwards from how it seems they should be -- reversing
+-- the bits yields the expected order.
 
 setOperandBit :: (Bits b) => b -> (Int, Word8) -> Seq.Seq Word8 -> Seq.Seq Word8
 setOperandBit val (insnIx, operandIx) s =

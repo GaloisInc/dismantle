@@ -58,6 +58,7 @@ data FilterState = FilterState { stErrors :: [(String, String)]
                                , stInsns :: [InstructionDescriptor]
                                }
 
+-- Use the endianness setting in the ISA to do our byteswapping here, while translating records
 filterISA :: ISA -> Records -> ISADescriptor
 filterISA isa rs =
   ISADescriptor { isaInstructions = insns
@@ -76,6 +77,7 @@ filterISA isa rs =
     registerOperands = mapMaybe isRegisterOperand dagOperands
     insns = reverse $ stInsns st1
     operandTypes = foldr extractOperands S.empty insns
+
 
 newtype FM a = FM { runFilter :: CC.ContT () (St.State FilterState) a }
   deriving (Functor,
@@ -117,29 +119,36 @@ named s n = namedName n == s
 -- | Try to extract the basic encoding information from the 'Def'.  If
 -- it isn't available, skip the 'Def'.  If it is available, call the
 -- continuation that will use it.
-withEncoding :: Def
-             -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> FM ())
+withEncoding :: Endianness
+             -> Def
+             -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> [Maybe BitRef] -> FM ())
              -> FM ()
-withEncoding def k =
+withEncoding endian def k =
   case mvals of
-    Just (outs, ins, mbits) -> k outs ins mbits
+    Just (outs, ins, mbits, endianBits) -> k outs ins mbits endianBits
     Nothing -> return ()
   where
     mvals = do
       Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
       Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
       Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
-      return (outs, ins, mbits)
+      return (outs, ins, mbits, if endian == Big then toBigEndian mbits else mbits)
+
+-- | Take a list of bits in little endian order and convert it to big endian.
+--
+-- Group into sub-lists of 8 and then reverse the sub lists.
+toBigEndian :: [Maybe BitRef] -> [Maybe BitRef]
+toBigEndian = concat . reverse . L.chunksOf 8
 
 -- | Try to make an 'InstructionDescriptor' out of a 'Def'.  May fail
 -- (and log its error) or simply skip a 'Def' that fails a test.
 toInstructionDescriptor :: ISA -> Def -> FM ()
 toInstructionDescriptor isa def = do
   CC.callCC $ \kexit -> do
-    withEncoding def $ \outs ins mbits -> do
+    withEncoding (isaEndianness isa)  def $ \outs ins mbits endianBits -> do
       inOperands <- mkOperandDescriptors isa (defName def) "ins" ins mbits kexit
       outOperands <- mkOperandDescriptors isa (defName def) "outs" outs mbits kexit
-      finishInstructionDescriptor isa def mbits inOperands outOperands
+      finishInstructionDescriptor isa def endianBits inOperands outOperands
 
 -- | With the difficult to compute information, finish building the
 -- 'InstructionDescriptor' if possible.  If not possible, log an error
@@ -230,6 +239,8 @@ mkOperandDescriptors isa mnemonic dagOperator dagItem bits kexit =
                 return $ Just OperandDescriptor { opName = var
                                                 , opType = OperandType klass
                                                 , opBits = L.sortOn fst arrVals
+                                                , opStartBit = fromIntegral (minimum (map snd arrVals))
+                                                , opNumBits = length arrVals
                                                 }
           | i == "variable_ops" ->
             -- This case is expected sometimes - there is no single
@@ -245,6 +256,18 @@ mkOperandDescriptors isa mnemonic dagOperator dagItem bits kexit =
           case isaOperandClassMapping isa fldName of
             [] -> Nothing
             alternatives -> foldr (<|>) Nothing (map lookupFieldBits alternatives)
+
+{- Note [Operand Mapping]
+
+The mapping from operands in the DAG list to fields in the Inst
+specification is a bit unclear.  I think it might actually be based on
+the ordering of the fields at the bottom of the record (the one that
+includes the total number of bits in each field).  It seems like
+outputs are mentioned first, then inputs.  Each in the order of the
+DAG lists.  That seems consistent across a few instructions and makes
+a kind of sense.  That would make the mappings easy to figure out.
+
+-}
 
 {- Note [variable_ops]
 
