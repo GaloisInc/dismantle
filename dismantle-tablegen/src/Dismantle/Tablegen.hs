@@ -13,9 +13,8 @@ module Dismantle.Tablegen (
 
 import qualified GHC.Err.Located as L
 
-import Control.Applicative
 import Control.Arrow ( (&&&) )
-import Control.Monad ( guard, when )
+import Control.Monad ( guard, when, unless )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
 import qualified Data.ByteString.Lazy as LBS
@@ -25,7 +24,7 @@ import qualified Data.Foldable as F
 import qualified Data.List as L
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
-import Data.Maybe ( catMaybes, mapMaybe )
+import Data.Maybe ( mapMaybe )
 import qualified Data.Set as S
 
 import Dismantle.Tablegen.ISA
@@ -121,18 +120,35 @@ named s n = namedName n == s
 -- continuation that will use it.
 withEncoding :: Endianness
              -> Def
-             -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> [Maybe BitRef] -> FM ())
+             -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> [Maybe BitRef] -> [String] -> FM ())
              -> FM ()
 withEncoding endian def k =
   case mvals of
-    Just (outs, ins, mbits, endianBits) -> k outs ins mbits endianBits
+    Just (outs, ins, mbits, endianBits, ordFlds) -> k outs ins mbits endianBits ordFlds
     Nothing -> return ()
   where
     mvals = do
       Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
+      -- Inst has all of the names of the fields embedded in the
+      -- instruction.  We can collect all of those names into a set.
+      -- Then we can filter *all* of the defs according to that set,
+      -- maintaining the order of the fields.  We need to return that
+      -- here so that we can map fields to DAG items, which tell us
+      -- types and direction.
+      let fields = foldr addFieldName S.empty mbits
+          orderedFieldDefs = mapMaybe (isOperandField fields) (defDecls def)
       Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
       Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
-      return (outs, ins, mbits, if endian == Big then toBigEndian mbits else mbits)
+      return (outs, ins, mbits, if endian == Big then toBigEndian mbits else mbits, orderedFieldDefs)
+    addFieldName br s =
+      case br of
+        Just (FieldBit n _) -> S.insert n s
+        _ -> s
+    isOperandField fieldNames f =
+      case f of
+        Named n _
+          | S.member n fieldNames -> Just n
+        _ -> Nothing
 
 -- | Take a list of bits in little endian order and convert it to big endian.
 --
@@ -145,9 +161,21 @@ toBigEndian = concat . reverse . L.chunksOf 8
 toInstructionDescriptor :: ISA -> Def -> FM ()
 toInstructionDescriptor isa def = do
   CC.callCC $ \kexit -> do
-    withEncoding (isaEndianness isa)  def $ \outs ins mbits endianBits -> do
-      inOperands <- mkOperandDescriptors isa (defName def) "ins" ins mbits kexit
-      outOperands <- mkOperandDescriptors isa (defName def) "outs" outs mbits kexit
+    withEncoding (isaEndianness isa)  def $ \outs ins mbits endianBits ordFlds -> do
+      -- Change mkOperandDescriptors such that it takes ordFlds and
+      -- returns the set that have not been consumed.  Note that the
+      -- outputs are listed first, so we have to process outputs first.
+      --
+      -- The current processing is only valid if fields can only be
+      -- outputs OR inputs (not both).  Note that this is distinct
+      -- from the same register being encoded in two slots - it refers
+      -- to x86-style instructions where e.g. EAX is both read as an
+      -- input and modified as a side effect of an instruction, while
+      -- only being encoded in the instruction stream once.
+      (outOperands, ordFlds') <- mkOperandDescriptors (defName def) "outs" outs ordFlds mbits kexit
+      (inOperands, ordFlds'') <- mkOperandDescriptors (defName def) "ins" ins ordFlds' mbits kexit
+      unless (null ordFlds'') $ do
+        St.modify $ \s -> s { stErrors = (defName def, "") : stErrors s }
       finishInstructionDescriptor isa def endianBits inOperands outOperands
 
 -- | With the difficult to compute information, finish building the
@@ -189,24 +217,25 @@ finishInstructionDescriptor isa def mbits ins outs =
 -- The important thing is that we are preserving the *order* of
 -- operands here so that users have a chance of making sense of the
 -- generated instructions.
-mkOperandDescriptors :: ISA
-                     -> String
+mkOperandDescriptors :: String
                      -- ^ Instruction mnemonic
                      -> String
                      -- ^ DAG operator string ("ins" or "outs")
                      -> SimpleValue
                      -- ^ The DAG item (either InOperandList or OutOperandList)
+                     -> [String]
+                     -- ^ Field name order
                      -> [Maybe BitRef]
                      -- ^ The bits descriptor so that we can find the bit numbers for the field
-                     -> (() -> FM (Maybe OperandDescriptor))
+                     -> (() -> FM ([OperandDescriptor], [String]))
                      -- ^ Early termination continuation
-                     -> FM [OperandDescriptor]
-mkOperandDescriptors isa mnemonic dagOperator dagItem bits kexit =
+                     -> FM ([OperandDescriptor], [String])
+mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
   -- Leave this case as an error, since that means we have a tablegen
   -- structure we didn't expect rather than a fixable data mismatch
   case dagItem of
     VDag (DagArg (Identifier hd) _) args
-      | hd == dagOperator -> catMaybes <$> mapM parseOperand args
+      | hd == dagOperator -> F.foldlM parseOperand ([], ordFlds) args
     _ -> L.error ("Unexpected SimpleValue while looking for DAG head " ++ dagOperator ++ ": " ++ show dagItem)
 
   where
@@ -223,39 +252,39 @@ mkOperandDescriptors isa mnemonic dagOperator dagItem bits kexit =
           M.insertWith (++) (CI.mk fldName) [(bitNum, fldIdx)] m
         _ -> m
 
-    parseOperand :: DagArg -> FM (Maybe OperandDescriptor)
-    parseOperand arg =
+    parseOperand :: ([OperandDescriptor], [String]) -> DagArg -> FM ([OperandDescriptor], [String])
+    parseOperand acc@(ops, fldNames) arg =
       case arg of
         DagArg (Identifier i) _
           | [klass, var] <- L.splitOn ":$" i ->
-            case lookupFieldBits var of
-              Nothing -> do
+            case fldNames of
+              [] -> do
                 St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
                 kexit ()
-              Just bitPositions -> do
-                let arrVals = [ (fldIdx, fromIntegral bitNum)
-                          | (bitNum, fldIdx) <- bitPositions
-                          ]
-                return $ Just OperandDescriptor { opName = var
-                                                , opType = OperandType klass
-                                                , opBits = L.sortOn fst arrVals
-                                                , opStartBit = fromIntegral (minimum (map snd arrVals))
-                                                , opNumBits = length arrVals
-                                                }
+              fldName : rest ->
+                case lookupFieldBits fldName of
+                  Nothing -> do
+                    St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
+                    kexit ()
+                  Just bitPositions -> do
+                    let arrVals = [ (fldIdx, fromIntegral bitNum)
+                              | (bitNum, fldIdx) <- bitPositions
+                              ]
+                        desc = OperandDescriptor { opName = var
+                                                    , opType = OperandType klass
+                                                    , opBits = L.sortOn fst arrVals
+                                                    , opStartBit = fromIntegral (minimum (map snd arrVals))
+                                                    , opNumBits = length arrVals
+                                                    }
+                    return (desc : ops, rest)
           | i == "variable_ops" ->
             -- This case is expected sometimes - there is no single
             -- argument to make (yet, we might add one)
-            return Nothing
+            return acc
         _ -> L.error ("Unexpected variable reference in a DAG for " ++ mnemonic ++ ": " ++ show arg)
 
     lookupFieldBits :: String -> Maybe [(Int, Int)]
-    lookupFieldBits fldName =
-      case M.lookup (CI.mk fldName) operandBits of
-        Just fldBits -> Just fldBits
-        Nothing ->
-          case isaOperandClassMapping isa fldName of
-            [] -> Nothing
-            alternatives -> foldr (<|>) Nothing (map lookupFieldBits alternatives)
+    lookupFieldBits fldName = M.lookup (CI.mk fldName) operandBits
 
 {- Note [Operand Mapping]
 

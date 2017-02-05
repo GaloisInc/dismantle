@@ -55,11 +55,6 @@ data ISA =
       --
       -- Note, we might need more information here later to let us
       -- provide pretty disassembly of instructions
-      , isaOperandClassMapping :: String -> [String]
-      -- ^ In the tablegen files, sometimes the operand names
-      -- referenced in the input and output lists does not match the
-      -- names in the bit fields of the 'Instruction'.  This function
-      -- lets us specify a mapping between the broken pairs.
       , isaOperandPayloadTypes :: [(String, OperandPayload)]
       -- ^ Per-ISA operand customization.  This lets us have a custom
       -- register type for each ISA, for example.
@@ -77,7 +72,6 @@ arm = ISA { isaName = "ARM"
           , isaEndianness = Little
           , isaInstructionFilter = armFilter
           , isaPseudoInstruction = const False
-          , isaOperandClassMapping = const []
           }
   where
     armFilter i = idDecoder i == "ARM" && idNamespace i == "ARM" && not (idPseudo i)
@@ -87,7 +81,6 @@ thumb = ISA { isaName = "Thumb"
             , isaEndianness = Little
             , isaInstructionFilter = thumbFilter
             , isaPseudoInstruction = const False
-            , isaOperandClassMapping = const []
             }
   where
     thumbFilter i = idDecoder i == "Thumb" && idNamespace i == "ARM" && not (idPseudo i)
@@ -97,7 +90,6 @@ aarch64 = ISA { isaName = "AArch64"
               , isaEndianness = Little
               , isaInstructionFilter = aarch64Filter
               , isaPseudoInstruction = const False
-              , isaOperandClassMapping = const []
               }
   where
     aarch64Filter i = idNamespace i == "AArch64" && not (idPseudo i)
@@ -110,7 +102,6 @@ ppc = ISA { isaName = "PPC"
           , isaEndianness = Big
           , isaInstructionFilter = ppcFilter
           , isaPseudoInstruction = ppcPseudo
-          , isaOperandClassMapping = ppcOperandMapping
           , isaOperandPayloadTypes = ppcOperandPayloadTypes
           , isaInsnWordFromBytes = 'asWord32
           }
@@ -143,7 +134,17 @@ ppc = ISA { isaName = "PPC"
                                  }
     ppcOperandPayloadTypes =
       [ ("Abscondbrtarget", absoluteAddress)
+      , ("Absdirectbrtarget", absoluteAddress)
       , ("Condbrtarget", relativeOffset)
+      , ("Directbrtarget", absoluteAddress)
+      , ("Calltarget", relativeOffset)
+      , ("Abscalltarget", absoluteAddress)
+      , ("Ptr_rc_nor0", gpRegister) -- fixme
+      , ("Tlscall", gpRegister) -- fixme
+      , ("Tlscall32", gpRegister) --fixme
+      , ("Spe8dis", gpRegister) -- fixme
+      , ("Spe2dis", gpRegister)
+      , ("Spe4dis", gpRegister)
       , ("Crbitm", conditionRegister)  -- these two are very odd, must investigate
       , ("Crbitrc", conditionRegister)
       , ("Crrc", conditionRegister) -- 4 bit
@@ -170,36 +171,19 @@ ppc = ISA { isaName = "PPC"
       , ("U6imm", unsignedImmediate 6)
       , ("U7imm", unsignedImmediate 7)
       , ("U8imm", unsignedImmediate 8)
+      , ("U16imm", unsignedImmediate 16)
+      , ("U16imm64", unsignedImmediate 16)
+      , ("Memrr", gpRegister) -- FIXME:
+      , ("Memri", gpRegister) -- FIXME: these are mem refs
+      , ("Memrix", gpRegister)
+      , ("Memrix16", gpRegister)
+      , ("Pred", gpRegister)
       , ("Vrrc", vecRegister)
       , ("Vsfrc", vecRegister) -- floating point vec?
       , ("Vsrc", vecRegister) -- ??
       , ("Vssrc", vecRegister) -- ??
       ]
 
-    ppcOperandMapping i =
-      case i of
-        "dst" -> ["BD"]
-        "UIM" -> ["D", "UIM5"]
-        "UIMM" -> ["UIM5", "VA"]
-        "SIMM" -> ["IMM"]
-        "imm" -> ["C"]
-        "crD" -> ["CR", "BF"]
-        "vB" -> ["B", "FRB"]
-        "VB" -> ["B", "FRB"]
-        "vT" -> ["RST", "FRT"]
-        "vA" -> ["A", "FRA"]
-        "VA" -> ["A", "FRA"]
-        "vD" -> ["RD"]
-        "SHW" -> ["D"]
-        "DM" -> ["D"]
-        "XTi" -> ["XT"]
-        "rmc" -> ["idx"]
-        "rA" -> ["A", "VA"]
-        "rB" -> ["B", "VB"]
-        "rD" -> ["VD", "B"]
-        "rS" -> ["RST"]
-        "to" -> ["RST"]
-        _ -> []
     ppcFilter i = and [ idNamespace i == "PPC"
                       , idDecoder i == ""
                       , L.last (idMnemonic i) /= '8'
@@ -314,7 +298,6 @@ mips = ISA { isaName = "Mips"
            , isaEndianness = Big
            , isaInstructionFilter = mipsFilter
            , isaPseudoInstruction = const False
-           , isaOperandClassMapping = const []
            }
   where
     mipsFilter i = idDecoder i == "Mips" && idNamespace i == "Mips" && not (idPseudo i)
@@ -323,7 +306,6 @@ avr :: ISA
 avr = ISA { isaName = "AVR"
           , isaInstructionFilter = avrFilter
           , isaPseudoInstruction = avrPsuedo
-          , isaOperandClassMapping = const []
           }
   where
     avrFilter i = idNamespace i == "AVR"
@@ -350,7 +332,6 @@ sparc = ISA { isaName = "Sparc"
             , isaEndianness = Big
             , isaInstructionFilter = sparcFilter
             , isaPseudoInstruction = const False
-            , isaOperandClassMapping = const []
             }
   where
     sparcFilter i = idNamespace i == "SP" && idDecoder i == "Sparc" && not (idPseudo i)
