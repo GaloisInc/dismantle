@@ -1,5 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 -- | Helpers for the pretty printer generated with TH
 module Dismantle.Tablegen.TH.Pretty (
   PrettyOperand(..),
@@ -7,13 +8,15 @@ module Dismantle.Tablegen.TH.Pretty (
   ) where
 
 import Data.Char ( isAlpha )
+import Data.Int ( Int64 )
 import qualified Data.Map as M
 import Data.Monoid
-import qualified Text.PrettyPrint as PP
+import Data.Word ( Word64 )
+import qualified Text.PrettyPrint.HughesPJClass as PP
 
 -- | Wrap 1) the name of an operand, 2) the operand itself, and 3) the
 -- formatter for the operand.
-data PrettyOperand = forall t . PrettyOperand String t (t -> String)
+data PrettyOperand = forall t . PrettyOperand String t (t -> PP.Doc)
 
 -- | Pretty print an instruction based on a format string and a
 -- list of operands and formatters.
@@ -26,14 +29,14 @@ data PrettyOperand = forall t . PrettyOperand String t (t -> String)
 prettyInstruction :: String -> [PrettyOperand] -> PP.Doc
 prettyInstruction fmt (toOpMap -> operands) = format fmt operands
 
-toOpMap :: [PrettyOperand] -> M.Map String String
+toOpMap :: [PrettyOperand] -> M.Map String PP.Doc
 toOpMap = foldr formatOperand M.empty
 
 
-formatOperand :: PrettyOperand -> M.Map String String -> M.Map String String
+formatOperand :: PrettyOperand -> M.Map String PP.Doc -> M.Map String PP.Doc
 formatOperand (PrettyOperand name val fmt) = M.insert name (fmt val)
 
-format :: String -> M.Map String String -> PP.Doc
+format :: String -> M.Map String PP.Doc -> PP.Doc
 format fmt operands =
   case fmt of
     [] -> mempty
@@ -41,28 +44,33 @@ format fmt operands =
     '$' : rest -> formatUnbracketedVar rest operands ""
     c : rest -> PP.char c <> format rest operands
 
-formatBracketedVar :: String -> M.Map String String -> String -> PP.Doc
+formatBracketedVar :: String -> M.Map String PP.Doc -> String -> PP.Doc
 formatBracketedVar fmt operands varName =
   case fmt of
     '}' : rest ->
       case M.lookup (reverse varName) operands of
         Nothing -> PP.text ("[UndefinedVar: " ++ reverse varName ++ "]")
-        Just s -> PP.text s <> format rest operands
+        Just s -> s <> format rest operands
     c : rest -> formatBracketedVar rest operands (c : varName)
     [] -> PP.text ("[UnterminatedVar: " ++ reverse varName ++ "]")
 
-formatUnbracketedVar :: String -> M.Map String String -> String -> PP.Doc
+formatUnbracketedVar :: String -> M.Map String PP.Doc -> String -> PP.Doc
 formatUnbracketedVar fmt operands varName =
   case fmt of
     [] ->
       case M.lookup (reverse varName) operands of
         Nothing -> PP.text ("[UndefinedVar: " ++ reverse varName ++ "]")
-        Just s -> PP.text s
+        Just s -> s
     c : rest
       | isAlpha c -> formatUnbracketedVar rest operands (c : varName)
       | otherwise ->
         case M.lookup (reverse varName) operands of
           Nothing -> PP.text ("[UndefinedVar: " ++ reverse varName ++ "]") <> PP.char c <> format rest operands
-          Just s -> PP.text s <> PP.char c <> format rest operands
+          Just s -> s <> PP.char c <> format rest operands
 
 
+instance PP.Pretty Int64 where
+  pPrint = PP.integer . fromIntegral
+
+instance PP.Pretty Word64 where
+  pPrint = PP.integer . fromIntegral

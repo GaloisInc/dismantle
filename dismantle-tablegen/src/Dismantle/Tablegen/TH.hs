@@ -23,7 +23,7 @@ import Data.Maybe ( fromMaybe )
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
-import qualified Text.PrettyPrint as PP
+import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
@@ -298,8 +298,13 @@ mkOpcodePrettyPrinter i = do
     addOperand op (pat, pret) = do
       vname <- newName "operand"
       let oname = opName op
-      prettyOp <- [| PrettyOperand oname $(return (VarE vname)) show |]
-      return (InfixP (VarP vname) '(:>) pat, prettyOp : pret)
+          OperandType otyname = opType op
+          -- unwrapper = fromMaybe id $ do
+          --   payload <- lookup ot (isaOperandPayloadTypes isa)
+          --   conName <- opConName payload
+          --   return (\x -> ConP conName [x])
+      prettyOp <- [| PrettyOperand oname $(return (VarE vname)) PP.pPrint |]
+      return (InfixP (ConP (mkName (toTypeName otyname)) [(VarP vname)]) '(:>) pat, prettyOp : pret)
 
 {-
 
