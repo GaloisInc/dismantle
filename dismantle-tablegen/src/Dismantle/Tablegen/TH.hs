@@ -299,10 +299,6 @@ mkOpcodePrettyPrinter i = do
       vname <- newName "operand"
       let oname = opName op
           OperandType otyname = opType op
-          -- unwrapper = fromMaybe id $ do
-          --   payload <- lookup ot (isaOperandPayloadTypes isa)
-          --   conName <- opConName payload
-          --   return (\x -> ConP conName [x])
       prettyOp <- [| PrettyOperand oname $(return (VarE vname)) PP.pPrint |]
       return (InfixP (ConP (mkName (toTypeName otyname)) [(VarP vname)]) '(:>) pat, prettyOp : pret)
 
