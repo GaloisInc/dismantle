@@ -37,6 +37,8 @@ data OperandPayload =
                    -- wrapper.
                  , opTypeName :: Name
                    -- ^ The name of the type to use for the payload
+                 , opConE :: Maybe Exp
+                 -- ^ The expression to construct the operand from a Word
                  }
 
 -- | Information specific to an ISA that influences code generation
@@ -108,30 +110,42 @@ ppc = ISA { isaName = "PPC"
   where
     absoluteAddress = OperandPayload { opTypeName = ''Word64
                                      , opConName = Nothing
+                                     , opConE = Nothing
                                      }
     relativeOffset = OperandPayload { opTypeName = ''Int64
                                     , opConName = Nothing
+                                    , opConE = Nothing
                                     }
     gpRegister = OperandPayload { opTypeName = ''PPC.GPR
                                 , opConName = Just 'PPC.GPR
+                                , opConE = Just (ConE 'PPC.GPR)
                                 }
     conditionRegister = OperandPayload { opTypeName = ''PPC.CR
                                        , opConName = Just 'PPC.CR
+                                       , opConE = Just (ConE 'PPC.CR)
                                        }
     floatRegister = OperandPayload { opTypeName = ''PPC.FR
                                    , opConName = Just 'PPC.FR
+                                   , opConE = Just (ConE 'PPC.FR)
                                    }
     signedImmediate :: Word8 -> OperandPayload
     signedImmediate _n = OperandPayload { opTypeName = ''Int64
                                         , opConName = Nothing
+                                        , opConE = Nothing
                                         }
     unsignedImmediate :: Word8 -> OperandPayload
     unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
                                           , opConName = Nothing
+                                          , opConE = Nothing
                                           }
     vecRegister = OperandPayload { opTypeName = ''PPC.VR
                                  , opConName = Just 'PPC.VR
+                                 , opConE = Just (ConE 'PPC.VR)
                                  }
+    mem = OperandPayload { opTypeName = ''PPC.Mem
+                         , opConName = Just 'PPC.mkMem
+                         , opConE = Just (VarE 'PPC.mkMem)
+                         }
     ppcOperandPayloadTypes =
       [ ("Abscondbrtarget", absoluteAddress)
       , ("Absdirectbrtarget", absoluteAddress)
@@ -173,10 +187,10 @@ ppc = ISA { isaName = "PPC"
       , ("U8imm", unsignedImmediate 8)
       , ("U16imm", unsignedImmediate 16)
       , ("U16imm64", unsignedImmediate 16)
-      , ("Memrr", gpRegister) -- FIXME:
-      , ("Memri", gpRegister) -- FIXME: these are mem refs
-      , ("Memrix", gpRegister)
-      , ("Memrix16", gpRegister)
+      , ("Memrr", mem)
+      , ("Memri", mem)
+      , ("Memrix", mem)
+      , ("Memrix16", mem)
       , ("Pred", gpRegister)
       , ("Vrrc", vecRegister)
       , ("Vsfrc", vecRegister) -- floating point vec?

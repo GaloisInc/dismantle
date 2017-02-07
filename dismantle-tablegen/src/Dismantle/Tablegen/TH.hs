@@ -42,7 +42,7 @@ genISA isa isaValName path = do
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
   parserDef <- mkParser isa desc isaValName path
-  asmDef <- mkAssembler isa desc
+  asmDef <- mkAssembler desc
   return $ concat [ operandType
                   , opcodeType
                   , instrTypes
@@ -122,42 +122,30 @@ mkParserExpr isa i
           err = error ("No operand descriptor payload for operand type: " ++ otyname)
           operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           operandCon = ConE (mkName otyname)
---          bits = opBits od
           intE = litE . integerL . fromIntegral
           startBit = opStartBit od
           numBits = opNumBits od
           -- FIXME: Need to write some helpers to handle making the
           -- right operand constructor
-      in case opConName operandPayload of
+      in case opConE operandPayload of
          Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits)) :> $(return e) |]
---         [| $(return operandCon) (parseOperand $(varE wordName) bits) :> $(return e) |]
-         Just conName -> [| $(return operandCon) ($(conE conName) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits))) :> $(return e) |]
---           [| $(return operandCon) ($(conE conName) (parseOperand $(varE wordName) bits)) :> $(return e) |]
+         Just conExp -> [| $(return operandCon) ($(return conExp) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits))) :> $(return e) |]
 
 unparserName :: Name
 unparserName = mkName "assembleInstruction"
 
-mkAssembler :: ISA -> ISADescriptor -> Q [Dec]
-mkAssembler isa desc = do
+mkAssembler :: ISADescriptor -> Q [Dec]
+mkAssembler desc = do
   insnName <- newName "insn"
   unparserTy <- [t| $(conT (mkName "Instruction")) -> BS.ByteString |]
-  cases <- mapM (mkAsmCase isa) (isaInstructions desc)
+  cases <- mapM mkAsmCase (isaInstructions desc)
   let body = CaseE (VarE insnName) cases
   return [ SigD unparserName unparserTy
          , FunD unparserName [Clause [VarP insnName] (NormalB body) []]
          ]
 
-lookupOperandPayload :: ISA -> OperandDescriptor -> OperandPayload
-lookupOperandPayload isa od =
-  case lookup opTyName (isaOperandPayloadTypes isa) of
-    Nothing -> error ("No operand payload for " ++ opTyName)
-    Just p -> p
-  where
-    OperandType oty = opType od
-    opTyName = toTypeName oty
-
-mkAsmCase :: ISA -> InstructionDescriptor -> Q Match
-mkAsmCase isa i = do
+mkAsmCase :: InstructionDescriptor -> Q Match
+mkAsmCase i = do
   lbits <- lift (idMask i)
   (opsPat, operands) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
   let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
@@ -165,15 +153,12 @@ mkAsmCase isa i = do
   return $ Match pat (NormalB body) []
   where
     addOperand op (pat, operands) = do
-      let payload = lookupOperandPayload isa op
-          OperandType tyname = opType op
+      let OperandType tyname = opType op
           otyname = toTypeName tyname
       obits <- lift (opBits op)
       vname <- newName "operand"
       asmOp <- [| OperandWrapper $(varE vname) $(return obits) |]
-      case opConName payload of
-        Nothing -> return (InfixP (ConP (mkName otyname) [(VarP vname)]) '(:>) pat, asmOp : operands)
-        Just conName -> return (InfixP (ConP (mkName otyname) [(ConP conName [VarP vname])]) '(:>) pat, asmOp : operands)
+      return (InfixP (ConP (mkName otyname) [VarP vname]) '(:>) pat, asmOp : operands)
 
 {-
 

@@ -37,7 +37,10 @@ parseBit bs acc (bsIx, opBitNum)
 
 -- | A wrapper around a field with a description of where each bit
 -- goes into the result.
-data OperandWrapper = forall b . (Bits b) => OperandWrapper b [(Int, Word8)]
+--
+-- Need a way to turn b into bits, which is going to be a new
+-- typeclass.
+data OperandWrapper = forall b . OperandWrapper b [(Int, Word8)]
 
 assembleBits :: [Bit] -> [OperandWrapper] -> BS.ByteString
 assembleBits bitPattern operands = BS.pack (F.toList s2)
@@ -55,7 +58,7 @@ setExpectedBit (ix, bitVal) s =
     _ -> s
 
 applyOperand :: OperandWrapper -> Seq.Seq Word8 -> Seq.Seq Word8
-applyOperand (OperandWrapper val spec) s = foldr (setOperandBit val) s spec
+applyOperand (OperandWrapper val spec) s = undefined -- foldr (setOperandBit val) s spec
 
 -- FIXME: Based on experimentation, the bits for operands seem to be
 -- specified backwards from how it seems they should be -- reversing
