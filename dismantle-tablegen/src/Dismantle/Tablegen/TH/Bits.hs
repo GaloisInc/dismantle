@@ -2,15 +2,12 @@
 module Dismantle.Tablegen.TH.Bits (
   parseOperand,
   fieldFromWord,
-  OperandWrapper(..),
   assembleBits
   ) where
 
-import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Bits
 import qualified Data.Foldable as F
-import qualified Data.Sequence as Seq
 import Data.Word ( Word8 )
 
 import Dismantle.Tablegen.ByteTrie ( Bit(..) )
@@ -35,39 +32,20 @@ parseBit bs acc (bsIx, opBitNum)
     (byteNum, bitNum) = quotRem bsIx 8
     byte = LBS.index bs (fromIntegral byteNum)
 
--- | A wrapper around a field with a description of where each bit
--- goes into the result.
---
--- Need a way to turn b into bits, which is going to be a new
--- typeclass.
-data OperandWrapper = forall b . OperandWrapper b [(Int, Word8)]
-
-assembleBits :: [Bit] -> [OperandWrapper] -> BS.ByteString
-assembleBits bitPattern operands = BS.pack (F.toList s2)
+assembleBits :: (Num b, Bits b) => [Bit] -> [(b, Int)] -> b
+assembleBits bitPattern operands =
+  F.foldl' applyOperand w1 operands
   where
-    s0 = Seq.fromList (take (length bitPattern `div` 8) (repeat 0))
-    s1 = foldr setExpectedBit s0 (zip [0..] bitPattern)
-    s2 = foldr applyOperand s1 operands
+    -- FIXME: Instead of [Bit], pre-compute a static mask to OR in here
+    w1 = F.foldl' setExpectedBit 0 (zip [0..] bitPattern)
 
-setExpectedBit :: (Int, Bit) -> Seq.Seq Word8 -> Seq.Seq Word8
-setExpectedBit (ix, bitVal) s =
+setExpectedBit :: (Bits b) => b -> (Int, Bit) -> b
+setExpectedBit w (ix, bitVal) =
   case bitVal of
-    ExpectedBit True ->
-      let (wordIx, bitIx) = ix `divMod` 8
-      in Seq.adjust (`setBit` bitIx) wordIx s
-    _ -> s
+    ExpectedBit True -> w `setBit` ix
+    _ -> w
 
-applyOperand :: OperandWrapper -> Seq.Seq Word8 -> Seq.Seq Word8
-applyOperand (OperandWrapper val spec) s = undefined -- foldr (setOperandBit val) s spec
+applyOperand :: (Bits b, Num b) => b -> (b, Int) -> b
+applyOperand w (val, off) =
+  w .|. (val `shiftL` off)
 
--- FIXME: Based on experimentation, the bits for operands seem to be
--- specified backwards from how it seems they should be -- reversing
--- the bits yields the expected order.
-
-setOperandBit :: (Bits b) => b -> (Int, Word8) -> Seq.Seq Word8 -> Seq.Seq Word8
-setOperandBit val (insnIx, operandIx) s =
-  case val `testBit` fromIntegral operandIx of
-    False -> s
-    True ->
-      let (wordIx, bitIx) = insnIx `divMod` 8
-      in Seq.adjust (`setBit` bitIx) wordIx s

@@ -176,17 +176,18 @@ toInstructionDescriptor isa def = do
       (inOperands, ordFlds'') <- mkOperandDescriptors (defName def) "ins" ins ordFlds' mbits kexit
       unless (null ordFlds'') $ do
         St.modify $ \s -> s { stErrors = (defName def, "") : stErrors s }
-      finishInstructionDescriptor isa def endianBits inOperands outOperands
+      finishInstructionDescriptor isa def mbits endianBits inOperands outOperands
 
 -- | With the difficult to compute information, finish building the
 -- 'InstructionDescriptor' if possible.  If not possible, log an error
 -- and continue.
-finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [OperandDescriptor] -> [OperandDescriptor] -> FM ()
-finishInstructionDescriptor isa def mbits ins outs =
+finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [Maybe BitRef] -> [OperandDescriptor] -> [OperandDescriptor] -> FM ()
+finishInstructionDescriptor isa def mbits endianBits ins outs =
   case mvals of
     Nothing -> return ()
     Just (ns, decoder, asmStr, b, cgOnly, asmParseOnly) -> do
-      let i = InstructionDescriptor { idMask = map toTrieBit mbits
+      let i = InstructionDescriptor { idMask = map toTrieBit endianBits
+                                    , idMaskRaw = map toTrieBit mbits
                                     , idMnemonic = defName def
                                     , idNamespace = ns
                                     , idDecoder = decoder

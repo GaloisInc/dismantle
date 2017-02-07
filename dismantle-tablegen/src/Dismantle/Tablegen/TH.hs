@@ -14,7 +14,6 @@ module Dismantle.Tablegen.TH (
 import GHC.TypeLits ( Symbol )
 
 import Control.Arrow ( (&&&) )
-import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Char ( toUpper )
 import qualified Data.Foldable as F
@@ -28,7 +27,7 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.Instruction
-import Dismantle.Tablegen.TH.Bits ( OperandWrapper(..), assembleBits, fieldFromWord )
+import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
 genISA :: ISA -> Name -> FilePath -> DecsQ
@@ -42,7 +41,7 @@ genISA isa isaValName path = do
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
   parserDef <- mkParser isa desc isaValName path
-  asmDef <- mkAssembler desc
+  asmDef <- mkAssembler isa desc
   return $ concat [ operandType
                   , opcodeType
                   , instrTypes
@@ -129,35 +128,40 @@ mkParserExpr isa i
           -- right operand constructor
       in case opConE operandPayload of
          Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits)) :> $(return e) |]
-         Just conExp -> [| $(return operandCon) ($(return conExp) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits))) :> $(return e) |]
+         Just conExp -> [| $(return operandCon) ($(conExp) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits))) :> $(return e) |]
 
 unparserName :: Name
 unparserName = mkName "assembleInstruction"
 
-mkAssembler :: ISADescriptor -> Q [Dec]
-mkAssembler desc = do
+mkAssembler :: ISA -> ISADescriptor -> Q [Dec]
+mkAssembler isa desc = do
   insnName <- newName "insn"
-  unparserTy <- [t| $(conT (mkName "Instruction")) -> BS.ByteString |]
-  cases <- mapM mkAsmCase (isaInstructions desc)
+  unparserTy <- [t| $(conT (mkName "Instruction")) -> LBS.ByteString |]
+  cases <- mapM (mkAsmCase isa) (isaInstructions desc)
   let body = CaseE (VarE insnName) cases
   return [ SigD unparserName unparserTy
          , FunD unparserName [Clause [VarP insnName] (NormalB body) []]
          ]
 
-mkAsmCase :: InstructionDescriptor -> Q Match
-mkAsmCase i = do
-  lbits <- lift (idMask i)
+mkAsmCase :: ISA -> InstructionDescriptor -> Q Match
+mkAsmCase isa i = do
+  lbits <- lift (idMaskRaw i)
   (opsPat, operands) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
   let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
-      body = VarE 'assembleBits `AppE` lbits `AppE` ListE operands
+  body <- [| $(varE (isaInsnWordToBytes isa)) (assembleBits $(return lbits) $(return (ListE operands))) |]
   return $ Match pat (NormalB body) []
   where
     addOperand op (pat, operands) = do
       let OperandType tyname = opType op
           otyname = toTypeName tyname
-      obits <- lift (opBits op)
+          err = error ("No operand descriptor payload for operand type: " ++ otyname)
+          operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
+          opToBits = fromMaybe [| id |] (opWordE operandPayload)
+--      obits <- lift (opBits op)
+      startBit <- lift (opStartBit op)
       vname <- newName "operand"
-      asmOp <- [| OperandWrapper $(varE vname) $(return obits) |]
+--      asmOp <- [| OperandWrapper $(varE vname) $(return obits) |]
+      asmOp <- [| ( $(opToBits) $(varE vname),  $(return startBit) ) |]
       return (InfixP (ConP (mkName otyname) [VarP vname]) '(:>) pat, asmOp : operands)
 
 {-

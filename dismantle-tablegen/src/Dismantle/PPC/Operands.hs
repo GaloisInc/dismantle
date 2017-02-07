@@ -5,7 +5,8 @@ module Dismantle.PPC.Operands (
   FR(..),
   VR(..),
   Mem(..),
-  mkMem
+  mkMem,
+  memToBits
   ) where
 
 import Data.Bits
@@ -14,16 +15,16 @@ import Data.Word ( Word8, Word16, Word32 )
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
-newtype CR = CR Word8
+newtype CR = CR { unCR :: Word8 }
   deriving (Eq, Ord, Show)
 
-newtype FR = FR Word8
+newtype FR = FR { unFR :: Word8 }
   deriving (Eq, Ord, Show)
 
-newtype GPR = GPR Word8
+newtype GPR = GPR { unGPR :: Word8 }
   deriving (Eq, Ord, Show)
 
-newtype VR = VR Word8
+newtype VR = VR { unVR :: Word8 }
   deriving (Eq, Ord, Show)
 
 mkMem :: Word32 -> Mem
@@ -31,6 +32,9 @@ mkMem w = Mem (GPR (fromIntegral ((w `shiftR` 16) .&. regMask))) (fromIntegral (
   where
     dispMask = (1 `shiftL` 16) - 1
     regMask = (1 `shiftL` 5) - 1
+
+memToBits :: Mem -> Word32
+memToBits (Mem (GPR r) disp) = fromIntegral (r `shiftL` 16) .|. fromIntegral disp
 
 -- | A memory reference for a load or store instruction
 --

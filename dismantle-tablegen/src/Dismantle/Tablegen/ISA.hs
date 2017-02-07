@@ -13,7 +13,9 @@ module Dismantle.Tablegen.ISA (
   ) where
 
 import qualified Data.Binary.Get as B
+import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString as BS
 import Data.Int
 import qualified Data.List as L
 import Data.Word
@@ -37,8 +39,11 @@ data OperandPayload =
                    -- wrapper.
                  , opTypeName :: Name
                    -- ^ The name of the type to use for the payload
-                 , opConE :: Maybe Exp
+                 , opConE :: Maybe ExpQ
                  -- ^ The expression to construct the operand from a Word
+                 , opWordE :: Maybe ExpQ
+                 -- ^ The expression to turn the operand into the
+                 -- instruction's native word type
                  }
 
 -- | Information specific to an ISA that influences code generation
@@ -64,10 +69,18 @@ data ISA =
       -- ^ The name of the function that is used to convert a prefix
       -- of the instruction stream into a single word that contains an
       -- instruction (e.g., ByteString -> Word32)
+      , isaInsnAssembleType :: Name
+      -- ^ The word type to use to assemble instructions into bytes
+      , isaInsnWordToBytes :: Name
+      -- ^ The function to use to turn the assembly word (e.g., a
+      -- Word32) into a bytestring.
       }
 
 asWord32 :: LBS.ByteString -> Word32
 asWord32 = B.runGet B.getWord32be
+
+fromWord32 :: Word32 -> LBS.ByteString
+fromWord32 = B.runPut . B.putWord32be
 
 arm :: ISA
 arm = ISA { isaName = "ARM"
@@ -106,45 +119,56 @@ ppc = ISA { isaName = "PPC"
           , isaPseudoInstruction = ppcPseudo
           , isaOperandPayloadTypes = ppcOperandPayloadTypes
           , isaInsnWordFromBytes = 'asWord32
+          , isaInsnWordToBytes = 'fromWord32
+          , isaInsnAssembleType = ''Word32
           }
   where
     absoluteAddress = OperandPayload { opTypeName = ''Word64
                                      , opConName = Nothing
                                      , opConE = Nothing
+                                     , opWordE = Just [| fromIntegral |]
                                      }
     relativeOffset = OperandPayload { opTypeName = ''Int64
                                     , opConName = Nothing
                                     , opConE = Nothing
+                                    , opWordE = Just [| fromIntegral |]
                                     }
     gpRegister = OperandPayload { opTypeName = ''PPC.GPR
                                 , opConName = Just 'PPC.GPR
-                                , opConE = Just (ConE 'PPC.GPR)
+                                , opConE = Just (conE 'PPC.GPR)
+                                , opWordE = Just [| fromIntegral . PPC.unGPR |]
                                 }
     conditionRegister = OperandPayload { opTypeName = ''PPC.CR
                                        , opConName = Just 'PPC.CR
-                                       , opConE = Just (ConE 'PPC.CR)
+                                       , opConE = Just (conE 'PPC.CR)
+                                       , opWordE = Just [| fromIntegral . PPC.unCR |]
                                        }
     floatRegister = OperandPayload { opTypeName = ''PPC.FR
                                    , opConName = Just 'PPC.FR
-                                   , opConE = Just (ConE 'PPC.FR)
+                                   , opConE = Just (conE 'PPC.FR)
+                                   , opWordE = Just [| fromIntegral . PPC.unFR |]
                                    }
     signedImmediate :: Word8 -> OperandPayload
     signedImmediate _n = OperandPayload { opTypeName = ''Int64
                                         , opConName = Nothing
                                         , opConE = Nothing
+                                        , opWordE = Just [| fromIntegral |]
                                         }
     unsignedImmediate :: Word8 -> OperandPayload
     unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
                                           , opConName = Nothing
                                           , opConE = Nothing
+                                          , opWordE = Just [| fromIntegral |]
                                           }
     vecRegister = OperandPayload { opTypeName = ''PPC.VR
                                  , opConName = Just 'PPC.VR
-                                 , opConE = Just (ConE 'PPC.VR)
+                                 , opConE = Just (conE 'PPC.VR)
+                                 , opWordE = Just [| fromIntegral . PPC.unVR |]
                                  }
     mem = OperandPayload { opTypeName = ''PPC.Mem
                          , opConName = Just 'PPC.mkMem
-                         , opConE = Just (VarE 'PPC.mkMem)
+                         , opConE = Just (varE 'PPC.mkMem)
+                         , opWordE = Just (varE 'PPC.memToBits)
                          }
     ppcOperandPayloadTypes =
       [ ("Abscondbrtarget", absoluteAddress)

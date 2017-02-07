@@ -60,10 +60,17 @@ instance Lift OperandDescriptor where
 instance NFData OperandDescriptor where
   rnf od = opName od `deepseq` od `seq` ()
 
+-- FIXME: Replace these big lists of bits with some cleaner bytestring
+-- masks.  We won't need the endian-corrected one if we can generate
+-- the trie tables at TH time, which would save a lot
+
 -- | Description of an instruction, abstracted from the tablegen
 -- definition
 data InstructionDescriptor =
   InstructionDescriptor { idMask :: [BT.Bit]
+                        -- ^ Endian-corrected bit mask
+                        , idMaskRaw :: [BT.Bit]
+                        -- ^ Raw bitmask with no endian correction
                         , idMnemonic :: String
                         , idInputOperands :: [OperandDescriptor]
                         , idOutputOperands :: [OperandDescriptor]
@@ -77,6 +84,7 @@ data InstructionDescriptor =
 instance Lift InstructionDescriptor where
   lift i = conE 'InstructionDescriptor `appE`
                 lift (idMask i) `appE`
+                lift (idMaskRaw i) `appE`
                 lift (idMnemonic i) `appE`
                 lift (idInputOperands i) `appE`
                 lift (idOutputOperands i) `appE`
