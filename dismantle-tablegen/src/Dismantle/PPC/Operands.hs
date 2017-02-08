@@ -34,7 +34,8 @@ mkMem w = Mem (GPR (fromIntegral ((w `shiftR` 16) .&. regMask))) (fromIntegral (
     regMask = (1 `shiftL` 5) - 1
 
 memToBits :: Mem -> Word32
-memToBits (Mem (GPR r) disp) = fromIntegral (r `shiftL` 16) .|. fromIntegral disp
+memToBits (Mem (GPR r) disp) =
+  (fromIntegral r `shiftL` 16) .|. fromIntegral disp
 
 -- | A memory reference for a load or store instruction
 --

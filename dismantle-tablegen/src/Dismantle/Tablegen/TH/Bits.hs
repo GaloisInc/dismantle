@@ -46,6 +46,5 @@ setExpectedBit w (ix, bitVal) =
     _ -> w
 
 applyOperand :: (Bits b, Num b) => b -> (b, Int) -> b
-applyOperand w (val, off) =
-  w .|. (val `shiftL` off)
+applyOperand w (val, off) = w .|. (val `shiftL` off)
 
