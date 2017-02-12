@@ -185,10 +185,14 @@ mkAssembler isa desc = do
 
 mkAsmCase :: ISA -> InstructionDescriptor -> Q Match
 mkAsmCase isa i = do
-  lbits <- lift (idMaskRaw i)
+  -- We use the byte-swapped version of the mask here because the call
+  -- to the 'isaInsnWordFromBytes' to convert the mask into a word
+  -- will re-byte swap.
+  let (_, trueMask) = bitSpecAsBytes (idMask i)
+  trueMaskE <- [| $(varE (isaInsnWordFromBytes isa)) (LBS.fromStrict (unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (stringPrimL trueMask))))) |]
   (opsPat, operands) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
   let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
-  body <- [| $(varE (isaInsnWordToBytes isa)) (assembleBits $(return lbits) $(return (ListE operands))) |]
+  body <- [| $(varE (isaInsnWordToBytes isa)) (assembleBits $(return trueMaskE) $(return (ListE operands))) |]
   return $ Match pat (NormalB body) []
   where
     addOperand op (pat, operands) = do
