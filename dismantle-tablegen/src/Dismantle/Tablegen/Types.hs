@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TemplateHaskell #-}
 module Dismantle.Tablegen.Types (
   InstructionDescriptor(..),
   OperandDescriptor(..),
@@ -12,8 +11,6 @@ module Dismantle.Tablegen.Types (
 import GHC.Generics ( Generic )
 import Control.DeepSeq
 import Data.Word ( Word8 )
-import Language.Haskell.TH
-import Language.Haskell.TH.Syntax ( Lift(..) )
 
 import qualified Dismantle.Tablegen.ByteTrie as BT
 
@@ -35,9 +32,6 @@ import qualified Dismantle.Tablegen.ByteTrie as BT
 data OperandType = OperandType String
                  deriving (Eq, Ord, Show, Generic, NFData)
 
-instance Lift OperandType where
-  lift (OperandType s) = conE 'OperandType `appE` lift s
-
 -- | Description of an operand field in an instruction (could be a
 -- register reference or an immediate)
 data OperandDescriptor =
@@ -48,14 +42,6 @@ data OperandDescriptor =
                     , opType :: !OperandType
                     }
   deriving (Eq, Ord, Show)
-
-instance Lift OperandDescriptor where
-  lift od = conE 'OperandDescriptor `appE`
-                 lift (opName od) `appE`
-                 lift (opBits od) `appE`
-                 lift (opStartBit od) `appE`
-                 lift (opNumBits od) `appE`
-                 lift (opType od)
 
 instance NFData OperandDescriptor where
   rnf od = opName od `deepseq` od `seq` ()
@@ -81,23 +67,8 @@ data InstructionDescriptor =
                         }
   deriving (Eq, Ord, Show, Generic, NFData)
 
-instance Lift InstructionDescriptor where
-  lift i = conE 'InstructionDescriptor `appE`
-                lift (idMask i) `appE`
-                lift (idMaskRaw i) `appE`
-                lift (idMnemonic i) `appE`
-                lift (idInputOperands i) `appE`
-                lift (idOutputOperands i) `appE`
-                lift (idNamespace i) `appE`
-                lift (idDecoder i) `appE`
-                lift (idAsmString i) `appE`
-                lift (idPseudo i)
-
 data RegisterClass = RegisterClass String
   deriving (Show, Generic, NFData)
-
-instance Lift RegisterClass where
-  lift (RegisterClass rc) = conE 'RegisterClass `appE` lift rc
 
 data ISADescriptor =
   ISADescriptor { isaInstructions :: [InstructionDescriptor]
@@ -112,11 +83,3 @@ data ISADescriptor =
                 -- operand name.
                 }
   deriving (Show, Generic, NFData)
-
-instance Lift ISADescriptor where
-  lift isad = conE 'ISADescriptor `appE`
-                   lift (isaInstructions isad) `appE`
-                   lift (isaRegisterClasses isad) `appE`
-                   lift (isaRegisters isad) `appE`
-                   lift (isaOperands isad) `appE`
-                   lift (isaErrors isad)
