@@ -13,15 +13,18 @@ module Dismantle.Tablegen.TH (
 
 import GHC.TypeLits ( Symbol )
 
-import Control.Arrow ( (&&&) )
+import Data.Bits
+import qualified Data.ByteString.Unsafe as UBS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Char ( toUpper )
 import qualified Data.Foldable as F
-import qualified Data.Map as M
+import qualified Data.List.Split as L
 import Data.Maybe ( fromMaybe )
+import Data.Word ( Word8 )
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
+import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Tablegen
@@ -67,24 +70,16 @@ operandTypeName = mkName "Operand"
 mkParser :: ISA -> ISADescriptor -> Name -> FilePath -> Q [Dec]
 mkParser isa desc isaValName path = do
   qAddDependentFile path
-  -- Build up all of the AST fragments of the parsers into a [(String,
-  -- ExprQ)] outside of TH.  In the quasi quote, turn that into a
-  -- value-level Map, and have mkByteParser just be a lookup in that
-  -- map.
+  -- Build up a table of AST fragments that are parser expressions.
+  -- They are associated with the bit masks required to build the
+  -- trie.  The trie is constructed at run time for now.
   parseExprs <- mapM (mkParserExpr isa) (parsableInstructions isa desc)
-  mapExpr <- [| M.fromList $(listE (map (\(s, e) -> tupE [return s, return e]) parseExprs)) |]
   trie <- [|
-            let mkByteParser :: InstructionDescriptor -> Parser $(conT (mkName "Instruction"))
-                mkByteParser i =
-                  let err = error ("No parser defined for instruction: " ++ idMnemonic i)
-                      parserMap = $(return mapExpr)
-                  in case M.lookup (idMnemonic i) parserMap of
-                    Nothing -> err
-                    Just p -> p
-                parsable = parsableInstructions $(varE isaValName) desc
-            in case BT.byteTrie Nothing (map (idMask &&& Just . mkByteParser) parsable) of
-              Left err2 -> error ("Error while building parse tables for embedded data: " ++ show err2)
-              Right tbl -> tbl
+           let parserData = $(return (ListE parseExprs))
+           in case BT.byteTrie Nothing parserData of
+             Left err -> error ("Error while building parse tables for embedded data: " ++ show err)
+             Right tbl -> tbl
+
            |]
   parser <- [| parseInstruction $(return trie) |]
   parserTy <- [t| LBS.ByteString -> (Int, Maybe $(conT (mkName "Instruction"))) |]
@@ -95,24 +90,69 @@ mkParser isa desc isaValName path = do
 parserName :: Name
 parserName = mkName "disassembleInstruction"
 
-mkParserExpr :: ISA -> InstructionDescriptor -> Q (Exp, Exp)
+-- | Convert a required bit specification into two masks
+--
+-- 1) The mask of required bits (both 1 and 0)
+--
+-- 2) The mask of bits required to be 1
+--
+-- The [Word8] forms are suitable for constructing Addr# literals,
+-- which we can turn into bytestrings efficiently (i.e., without
+-- parsing)
+bitSpecAsBytes :: [BT.Bit] -> ([Word8], [Word8])
+bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroups)
+  where
+    byteGroups = L.chunksOf 8 bits
+    setRequiredBits byteBits = foldr setRequiredBit 0 (zip [0..] byteBits)
+    setTrueBits byteBits = foldr setTrueBit 0 (zip [0..] byteBits)
+    setRequiredBit (ix, b) w =
+      case b of
+        BT.ExpectedBit _ -> w `setBit` ix
+        BT.Any -> w
+    setTrueBit (ix, b) w =
+      case b of
+        BT.ExpectedBit True -> w `setBit` ix
+        _ -> w
+
+-- | For a parsable instruction, return three expressions ready to be
+-- spliced into the AST:
+--
+-- 1) The mask (as a bytestring) of required bits
+--
+-- 2) The bits required to be 1 among the required bits
+--
+-- 3) The actual parser function wrapped in a 'Parser' constructor to
+-- existentially quantify out type parameters and shapes and whatnot.
+-- The parser is actually wrapped in a Just to satisfy the trie
+-- constructor.
+--
+-- The masks are Addr# literals wrapped in an 'unsafePackAddresLen' to
+-- create bytestrings cheaply.
+--
+-- Note that we use the endian-corrected bit specs here
+mkParserExpr :: ISA -> InstructionDescriptor -> Q Exp
 mkParserExpr isa i
   | null (canonicalOperands i) = do
     -- If we have no operands, make a much simpler constructor (so we
     -- don't have an unused bytestring parameter)
-    e <- [| Parser $ \_ -> $(return con) $(return tag) Nil |]
-    return (LitE (StringL (idMnemonic i)), e)
+    e <- [| Just (Parser (\_ -> $(return con) $(return tag) Nil)) |]
+    requiredMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length requiredMask)))) $(litE (stringPrimL requiredMask))) |]
+    trueMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (stringPrimL trueMask))) |]
+    return $ TupE [requiredMaskE, trueMaskE, e]
   | otherwise = do
     bsName <- newName "bytestring"
     wordName <- newName "w"
     opList <- F.foldrM (addOperandExpr wordName) (ConE 'Nil) (canonicalOperands i)
     let insnCon = con `AppE` tag `AppE` opList
-    e <- [| Parser $ \ $(varP bsName) ->
+    e <- [| Just (Parser (\ $(varP bsName) ->
              case $(varE (isaInsnWordFromBytes isa)) $(varE bsName) of
-               $(varP wordName) -> $(return insnCon)
+               $(varP wordName) -> $(return insnCon)))
           |]
-    return (LitE (StringL (idMnemonic i)), e)
+    requiredMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length requiredMask)))) $(litE (stringPrimL requiredMask))) |]
+    trueMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (stringPrimL trueMask))) |]
+    return $ TupE [requiredMaskE, trueMaskE, e]
   where
+    (requiredMask, trueMask) = bitSpecAsBytes (idMask i)
     tag = ConE (mkName (toTypeName (idMnemonic i)))
     con = ConE 'Instruction
     addOperandExpr wordName od e =
@@ -157,10 +197,8 @@ mkAsmCase isa i = do
           err = error ("No operand descriptor payload for operand type: " ++ otyname)
           operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           opToBits = fromMaybe [| id |] (opWordE operandPayload)
---      obits <- lift (opBits op)
       startBit <- lift (opStartBit op)
       vname <- newName "operand"
---      asmOp <- [| OperandWrapper $(varE vname) $(return obits) |]
       asmOp <- [| ( $(opToBits) $(varE vname),  $(return startBit) ) |]
       return (InfixP (ConP (mkName otyname) [VarP vname]) '(:>) pat, asmOp : operands)
 

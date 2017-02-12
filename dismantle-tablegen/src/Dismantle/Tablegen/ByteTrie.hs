@@ -17,7 +17,8 @@ import Control.DeepSeq
 import qualified Control.Monad.State.Strict as St
 import qualified Control.Monad.Except as E
 import qualified Data.Array as A
-import Data.Bits ( testBit )
+import Data.Bits ( (.&.) )
+import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Traversable as T
@@ -51,12 +52,14 @@ instance NFData Bit where
   rnf _ = ()
 
 -- | A wrapper around a sequence of 'Bit's
-newtype Pattern = Pattern { unPattern :: A.Array Int Bit }
-  deriving (Eq, Ord, Show)
+data Pattern = Pattern { requiredMask :: BS.ByteString
+                       , trueMask :: BS.ByteString
+                       }
+               deriving (Eq, Ord, Show)
 
 -- | Return the number of bytes occupied by a 'Pattern'
 patternBytes :: Pattern -> Int
-patternBytes = (`div` 8) . A.rangeSize . A.bounds . unPattern
+patternBytes = BS.length . requiredMask
 
 -- | Look up a byte in the trie.
 --
@@ -73,8 +76,8 @@ lookupByte (ByteTrie a) b =
     Element e -> Right e
     NextTable t -> Left t
 
-data TrieError = OverlappingBitPattern [[Bit]]
-               | InvalidPatternLength [Bit]
+data TrieError = OverlappingBitPattern [Pattern]
+               | InvalidPatternLength Pattern
   deriving (Eq, Show)
 
 data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern e)
@@ -89,8 +92,9 @@ newtype TrieM e a = TrieM { unM :: St.StateT (TrieState e) (E.Except TrieError) 
             St.MonadState (TrieState e))
 
 -- | Construct a 'ByteTrie' from a list of mappings and a default element
-byteTrie :: e -> [([Bit], e)] -> Either TrieError (ByteTrie e)
-byteTrie defElt mappings = mkTrie defElt (mapM_ (uncurry assertMapping) mappings)
+byteTrie :: e -> [(BS.ByteString, BS.ByteString, e)] -> Either TrieError (ByteTrie e)
+byteTrie defElt mappings =
+  mkTrie defElt (mapM_ (\(r, t, e) -> assertMapping r t e) mappings)
 
 -- | Construct a 'ByteTrie' through a monadic assertion-oriented interface.
 --
@@ -151,23 +155,17 @@ makePayload defElt patterns byteIndex byte =
     _ | all ((> (byteIndex + 1)) . patternBytes) (M.keys matchingPatterns) -> do
         t <- buildTableLevel defElt matchingPatterns (byteIndex + 1)
         return (byte, NextTable t)
-      | otherwise -> E.throwError (OverlappingBitPattern (map (A.elems . unPattern . fst) (M.toList matchingPatterns)))
+      | otherwise ->
+        E.throwError (OverlappingBitPattern (map fst (M.toList matchingPatterns)))
   where
     matchingPatterns = M.filterWithKey (patternMatches byteIndex byte) patterns
 
 patternMatches :: Int -> Word8 -> Pattern -> e -> Bool
-patternMatches byteIndex byte (Pattern p) _ =
-  and [ bitMatches (byte `testBit` bitNum) (p A.! patternIx)
-      | bitNum <- [0..7]
-      , let patternIx = byteIndex * 8 + bitNum
-      ]
-
-bitMatches :: Bool -> Bit -> Bool
-bitMatches bitVal patternBit =
-  case patternBit of
-    Any -> True
-    ExpectedBit eb -> eb == bitVal
-
+patternMatches byteIndex byte (Pattern { requiredMask = req, trueMask = true }) _ =
+  (byte .&. patRequireByte) == patTrueByte
+  where
+    patRequireByte = req `BS.index` byteIndex
+    patTrueByte = true `BS.index` byteIndex
 
 {-
 
@@ -196,15 +194,15 @@ of possibly-matching patterns.
 -- The bit pattern must have a length that is a multiple of 8.  This
 -- function can error out with a pure error ('TrieError') if an
 -- overlapping bit pattern is asserted.
-assertMapping :: [Bit] -> a -> TrieM a ()
-assertMapping pat val
-  | plen `mod` 8 /= 0 = E.throwError (InvalidPatternLength pat)
+assertMapping :: BS.ByteString -> BS.ByteString -> a -> TrieM a ()
+assertMapping patReq patTrue val
+  | BS.length patReq /= BS.length patTrue || BS.null patReq =
+    E.throwError (InvalidPatternLength pat)
   | otherwise = do
       pats <- St.gets tsPatterns
-      let pat' = Pattern $ A.array (0, plen - 1) (zip [0..] pat)
-      case M.lookup pat' pats of
+      case M.lookup pat pats of
         Just xist -> E.throwError (OverlappingBitPattern [pat])
         Nothing ->
-          St.modify' $ \s -> s { tsPatterns = M.insert pat' val (tsPatterns s) }
+          St.modify' $ \s -> s { tsPatterns = M.insert pat val (tsPatterns s) }
   where
-    plen = length pat
+    pat = Pattern patReq patTrue

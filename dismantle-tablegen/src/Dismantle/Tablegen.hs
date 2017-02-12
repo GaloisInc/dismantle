@@ -3,7 +3,6 @@
 module Dismantle.Tablegen (
   parseTablegen,
   filterISA,
-  makeParseTables,
   parsableInstructions,
   parseInstruction,
   Parser(..),
@@ -13,7 +12,6 @@ module Dismantle.Tablegen (
 
 import qualified GHC.Err.Located as L
 
-import Control.Arrow ( (&&&) )
 import Control.Monad ( guard, when, unless )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
@@ -49,9 +47,6 @@ parseInstruction trie0 bs0 = go bs0 trie0 bs0 0
 
 parsableInstructions :: ISA -> ISADescriptor -> [InstructionDescriptor]
 parsableInstructions isa = filter (not . isaPseudoInstruction isa) . isaInstructions
-
-makeParseTables :: ISA -> ISADescriptor -> Either BT.TrieError (BT.ByteTrie (Maybe InstructionDescriptor))
-makeParseTables isa = BT.byteTrie Nothing . map (idMask &&& Just) . filter (not . isaPseudoInstruction isa) . isaInstructions
 
 data FilterState = FilterState { stErrors :: [(String, String)]
                                , stInsns :: [InstructionDescriptor]
