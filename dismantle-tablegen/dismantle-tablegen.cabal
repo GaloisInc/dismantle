@@ -23,8 +23,6 @@ library
                    Dismantle.Tablegen.TH.Pretty
                    Dismantle.Tablegen.Types
                    Dismantle.Testing
-                   Dismantle.PPC
-                   Dismantle.PPC.Operands
   other-modules: Dismantle.Tablegen.Parser
                  Dismantle.Tablegen.Parser.Types
   -- other-extensions:
@@ -38,6 +36,8 @@ library
                        located-base,
                        array,
                        case-insensitive >= 1 && < 2,
+                       filemanip,
+                       filepath,
                        split >= 0.2 && < 0.3,
                        containers >= 0.5 && < 0.6,
                        zlib >= 0.6 && < 0.7,
@@ -47,17 +47,6 @@ library
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options: -Wall -fprof-auto
-
-executable driver
-  default-language: Haskell2010
-  ghc-options: -Wall
-  main-is: Main.hs
-  hs-source-dirs: tools/driver
-  build-depends: base,
-                 optparse-applicative,
-                 containers,
-                 text,
-                 dismantle-tablegen
 
 test-suite dismantle-tests
   default-language: Haskell2010

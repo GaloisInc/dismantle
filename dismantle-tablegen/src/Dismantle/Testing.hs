@@ -1,25 +1,48 @@
+{-# LANGUAGE TupleSections #-}
 -- | Provide some tools for testing disassemblers
 module Dismantle.Testing (
   Disassembly(..),
   Section(..),
   Instruction(..),
   parseObjdump,
+  withInstructions,
   withDisassembledFile
   ) where
 
 import Control.Applicative
 import Control.Monad ( replicateM_, void )
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List.NonEmpty as NL
 import Data.Maybe ( catMaybes )
 import qualified Data.Text.Lazy as T
 import qualified Data.Text.Lazy.IO as T
+import qualified Data.Traversable as T
 import Data.Word ( Word8, Word64 )
-import qualified Text.Megaparsec as P
+import System.FilePath.Glob ( namesMatching )
+import System.FilePath ( (</>) )
 import qualified System.Process as Proc
+import qualified Text.Megaparsec as P
 import Text.Read ( readMaybe )
 
 import Prelude
+
+-- | Convert a directory of executables into a list of data, where
+-- each data item is constructed by a callback called on one
+-- instruction disassembled by objdump.
+withInstructions :: FilePath
+                 -- ^ A directory containing executables (that can be objdumped)
+                 -> (Word64 -> LBS.ByteString -> T.Text -> a)
+                 -- ^ Turn a disassembled instruction into data
+                 -> IO [(FilePath, [a])]
+withInstructions dir con = do
+  files <- namesMatching (dir </> "*")
+  mapM disassembleFile files
+  where
+    disassembleFile f = do
+      insns <- withDisassembledFile f $ \d -> do
+        T.forM (concatMap instructions (sections d)) $ \i -> return (con (insnAddress i) (insnBytes i) (insnText i))
+      return (f, insns)
 
 withDisassembledFile :: FilePath -> (Disassembly -> IO a) -> IO a
 withDisassembledFile f k = do
@@ -47,7 +70,7 @@ data Section = Section { sectionName :: T.Text
              deriving (Show)
 
 data Instruction = Instruction { insnAddress :: Word64
-                               , insnBytes :: BS.ByteString
+                               , insnBytes :: LBS.ByteString
                                , insnText :: T.Text
                                }
                  deriving (Show)
@@ -121,7 +144,7 @@ parseInstruction = do
   bytes <- P.sepBy1 parseByte (P.char ' ')
   txt <- T.pack <$> P.manyTill P.anyChar P.eol
   return $ Just Instruction { insnAddress = addr
-                            , insnBytes = BS.pack bytes
+                            , insnBytes = LBS.pack bytes
                             , insnText = txt
                             }
 

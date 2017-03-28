@@ -18,9 +18,8 @@ module Dismantle.PPC (
   )where
 
 import Dismantle.PPC.Operands
-import Dismantle.Tablegen.ISA ( ppc )
+import Dismantle.PPC.ISA ( isa )
 import Dismantle.Tablegen.TH ( genISA )
 import Dismantle.Tablegen.Instruction
 
-$(genISA ppc 'ppc "data/PPC.tgen")
-
+$(genISA isa 'isa "data/PPC.tgen")

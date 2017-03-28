@@ -2,7 +2,10 @@ flags: {}
 extra-package-dbs: []
 packages:
 - dismantle-tablegen/
+- dismantle-ppc/
 extra-deps:
+- filemanip-0.3.6.3
+- unix-compat-0.4.3.1
 - ansi-terminal-0.6.2.3
 - ansi-wl-pprint-0.6.7.3
 - exceptions-0.8.3
