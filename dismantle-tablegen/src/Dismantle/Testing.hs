@@ -85,19 +85,19 @@ type Parser = P.Parsec P.Dec T.Text
 p :: Parser Disassembly
 p = do
   consumeHeader
-  Disassembly <$> P.some parseSection
+  Disassembly <$> P.sepEndBy parseSection P.space
 
 consumeLine :: Parser ()
 consumeLine = void (P.manyTill P.anyChar P.eol)
 
 consumeHeader :: Parser ()
-consumeHeader = replicateM_ 3 consumeLine
+consumeHeader = replicateM_ 2 consumeLine >> P.space
 
 parseSectionName :: Parser T.Text
 parseSectionName = T.pack <$> P.some sectionNameChar
 
 tryOne :: [Parser a] -> Parser a
-tryOne = P.try . P.choice
+tryOne = P.choice . map P.try
 
 sectionNameChar :: Parser Char
 sectionNameChar = tryOne [ P.alphaNumChar
@@ -113,14 +113,12 @@ symbolNameChar = tryOne [ P.alphaNumChar
 
 parseSection :: Parser Section
 parseSection = do
-  consumeLine
+--  consumeLine
   _ <- P.string "Disassembly of section "
   sn <- parseSectionName
   _ <- P.char ':'
   _ <- P.eol
   consumeLine
-  -- FIXME: insns has to be prepared for a line beginning with an
-  -- address, but that actually serves as a label
   insns <- catMaybes <$> P.some tryParseInstruction
   return Section { sectionName = sn
                  , instructions = insns
@@ -134,14 +132,17 @@ tryParseInstruction =
          ]
 
 parseEllipses :: Parser (Maybe a)
-parseEllipses = P.some (P.char ' ') >> P.string "..." >> P.eol >> return Nothing
+parseEllipses = tryOne [ P.space >> P.string "..." >> P.eol >> P.eol >> return Nothing
+                       , P.space >> P.string "..." >> P.eol >> return Nothing
+                       ]
 
 parseInstruction :: Parser (Maybe Instruction)
 parseInstruction = do
   addr <- parseAddress
   _ <- P.char ':'
-  _ <- P.some (P.char ' ')
-  bytes <- P.sepBy1 parseByte (P.char ' ')
+  P.space
+  bytes <- P.endBy1 parseByte (P.char ' ')
+  -- there is a tab after this
   txt <- T.pack <$> P.manyTill P.anyChar P.eol
   return $ Just Instruction { insnAddress = addr
                             , insnBytes = LBS.pack bytes
@@ -157,12 +158,13 @@ parseFunctionHeading = do
   _ <- P.string " <"
   _ <- P.some symbolNameChar
   _ <- P.string ">:"
+  _ <- P.eol
   return Nothing
 
 parseAddress :: Parser Word64
 parseAddress = do
   digits@(d:rest) <- P.some P.hexDigitChar
-  case readMaybe digits of
+  case readMaybe ('0' : 'x' : digits) of
     Just w -> return w
     Nothing -> P.unexpected (P.Tokens (d NL.:| rest))
 
@@ -170,6 +172,6 @@ parseByte :: Parser Word8
 parseByte = do
   d1 <- P.hexDigitChar
   d2 <- P.hexDigitChar
-  case readMaybe (d1 : d2 : []) of
+  case readMaybe ('0' : 'x' : d1 : d2 : []) of
     Just b -> return b
     Nothing -> P.unexpected (P.Tokens (d1 NL.:| [d2]))
