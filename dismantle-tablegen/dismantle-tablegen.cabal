@@ -1,12 +1,11 @@
 name:                dismantle-tablegen
 version:             0.1.0.0
 synopsis:            A parser and interface to LLVM tablegen
--- description:
 license:             BSD3
 license-file:        LICENSE
 author:              Tristan Ravitch
 maintainer:          tristan@nochair.net
--- copyright:
+copyright:           2016-2017 Tristan Ravitch
 category:            Compiler
 build-type:          Simple
 extra-source-files:  ChangeLog.md
