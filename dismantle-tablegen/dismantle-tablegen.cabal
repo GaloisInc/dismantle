@@ -24,7 +24,6 @@ library
                    Dismantle.Testing
   other-modules: Dismantle.Tablegen.Parser
                  Dismantle.Tablegen.Parser.Types
-  -- other-extensions:
   build-depends:       base >=4.8 && <4.10,
                        template-haskell,
                        bytestring,

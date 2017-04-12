@@ -15,7 +15,6 @@ library
   exposed-modules: Dismantle.PPC
                    Dismantle.PPC.ISA
   other-modules: Dismantle.PPC.Operands
-  -- other-extensions:    
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
                        dismantle-tablegen,
