@@ -113,7 +113,6 @@ symbolNameChar = tryOne [ P.alphaNumChar
 
 parseSection :: Parser Section
 parseSection = do
---  consumeLine
   _ <- P.string "Disassembly of section "
   sn <- parseSectionName
   _ <- P.char ':'
@@ -142,7 +141,6 @@ parseInstruction = do
   _ <- P.char ':'
   P.space
   bytes <- P.endBy1 parseByte (P.char ' ')
-  -- there is a tab after this
   txt <- T.pack <$> P.manyTill P.anyChar P.eol
   return $ Just Instruction { insnAddress = addr
                             , insnBytes = LBS.pack bytes
