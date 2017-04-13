@@ -18,12 +18,15 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 newtype CR = CR { unCR :: Word8 }
   deriving (Eq, Ord, Show)
 
+-- | Floating-point register by number
 newtype FR = FR { unFR :: Word8 }
   deriving (Eq, Ord, Show)
 
+-- | General-purpose register by number
 newtype GPR = GPR { unGPR :: Word8 }
   deriving (Eq, Ord, Show)
 
+-- | Vector register by number
 newtype VR = VR { unVR :: Word8 }
   deriving (Eq, Ord, Show)
 
