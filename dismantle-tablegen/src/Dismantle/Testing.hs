@@ -11,7 +11,6 @@ module Dismantle.Testing (
 
 import Control.Applicative
 import Control.Monad ( replicateM_, void )
-import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List.NonEmpty as NL
 import Data.Maybe ( catMaybes )
