@@ -264,8 +264,8 @@ mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
                     kexit ()
                   Just bitPositions -> do
                     let arrVals = [ (fldIdx, fromIntegral bitNum)
-                              | (bitNum, fldIdx) <- bitPositions
-                              ]
+                                  | (bitNum, fldIdx) <- bitPositions
+                                  ]
                         desc = OperandDescriptor { opName = var
                                                  , opType = OperandType klass
                                                  , opBits = L.sortOn fst arrVals
