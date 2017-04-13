@@ -1,0 +1,5 @@
+.*.swp
+.swp
+dist
+dist-newstyle
+.cabal-sandbox
