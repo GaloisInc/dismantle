@@ -267,11 +267,11 @@ mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
                               | (bitNum, fldIdx) <- bitPositions
                               ]
                         desc = OperandDescriptor { opName = var
-                                                    , opType = OperandType klass
-                                                    , opBits = L.sortOn fst arrVals
-                                                    , opStartBit = fromIntegral (minimum (map snd arrVals))
-                                                    , opNumBits = length arrVals
-                                                    }
+                                                 , opType = OperandType klass
+                                                 , opBits = L.sortOn fst arrVals
+                                                 , opStartBit = fromIntegral (minimum (map snd arrVals))
+                                                 , opNumBits = length arrVals
+                                                 }
                     return (desc : ops, rest)
           | i == "variable_ops" ->
             -- This case is expected sometimes - there is no single
