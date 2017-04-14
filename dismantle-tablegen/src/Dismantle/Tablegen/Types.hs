@@ -37,6 +37,8 @@ data OperandType = OperandType String
 data OperandDescriptor =
   OperandDescriptor { opName :: String
                     , opBits :: [(Int, Word8)]
+                    , opChunks :: [(Int, Word8, Word8)]
+                    -- ^ (Bit in the instruction, bit in the operand, number of bits in chunk)
                     , opStartBit :: Int
                     , opNumBits :: Int
                     , opType :: !OperandType

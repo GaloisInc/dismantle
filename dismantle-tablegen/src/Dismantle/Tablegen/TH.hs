@@ -167,8 +167,8 @@ mkParserExpr isa i
           -- FIXME: Need to write some helpers to handle making the
           -- right operand constructor
       in case opConE operandPayload of
-         Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits)) :> $(return e) |]
-         Just conExp -> [| $(return operandCon) ($(conExp) (fieldFromWord $(varE wordName) $(intE startBit) $(intE numBits))) :> $(return e) |]
+         Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(lift (opChunks od))) :> $(return e) |]
+         Just conExp -> [| $(return operandCon) ($(conExp) (fieldFromWord $(varE wordName) $(lift (opChunks od)))) :> $(return e) |]
 
 unparserName :: Name
 unparserName = mkName "assembleInstruction"

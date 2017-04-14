@@ -266,9 +266,11 @@ mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
                     let arrVals = [ (fldIdx, fromIntegral bitNum)
                               | (bitNum, fldIdx) <- bitPositions
                               ]
+                        bitPositions = L.sortOn fst arrVals
                         desc = OperandDescriptor { opName = var
                                                     , opType = OperandType klass
-                                                    , opBits = L.sortOn fst arrVals
+                                                    , opBits = bitPositions
+                                                    , opChunks = groupByChunk bitPositions
                                                     , opStartBit = fromIntegral (minimum (map snd arrVals))
                                                     , opNumBits = length arrVals
                                                     }
@@ -281,6 +283,26 @@ mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
 
     lookupFieldBits :: String -> Maybe [(Int, Int)]
     lookupFieldBits fldName = M.lookup (CI.mk fldName) operandBits
+
+-- | Group bits in the operand bit spec into contiguous chunks.
+--
+-- In most cases, this should be a single chunk.  In rare cases, there will be
+-- more.
+--
+-- FIXME: This needs to account for endianness in the next/last bit test
+groupByChunk :: [(Int, Word8)] -> [(Int, Word8, Word8)]
+groupByChunk = reverse . foldr growOrAddChunk []
+  where
+    -- If the next entry is part of the current chunk, grow the chunk.
+    -- Otherwise, begin a new chunk.
+    growOrAddChunk (insnIndex, operandIndex) acc =
+      case acc of
+        [] -> [(operandIndex, (insnIndex, operandIndex, 1))]
+        (lastOpIndex, (chunkInsnIndex, chunkOpIndex, chunkLen)) : rest
+          | lastOpIndex /= operandIndex + 1 ->
+            -- New chunk
+            undefined
+          | otherwise -> (operandIndex, (chunkInsnIndex, chunkOpIndex, chunkLen + 1)) : rest
 
 {- Note [Operand Mapping]
 

@@ -1,4 +1,7 @@
-{-# LANGUAGE ExistentialQuantification #-}
+-- | This module defines some helpers called in the TemplateHaskell code
+--
+-- The functions here mostly focus on extracting operands and re-assembling
+-- operands back into instructions.
 module Dismantle.Tablegen.TH.Bits (
   fieldFromWord,
   assembleBits
@@ -9,12 +12,18 @@ import Data.Bits
 import qualified Data.Foldable as F
 import Data.Word ( Word8 )
 
--- | Parse a field from an input word
-fieldFromWord :: (Integral a, Bits a, Num b, Bits b) => a -> Int -> Int -> b
-fieldFromWord w startBit numBits =
-  fromIntegral ((w .&. mask) `shiftR` startBit)
-  where
-    mask = ((1 `shiftL` numBits) - 1) `shiftL` startBit
+-- | Parse a field (operand) from an input word
+--
+-- Note that operands are *not* necessarily contiguous.  We have to have all of
+-- the bit numbers, divide them into chunks (usually one chunk, but not always).
+fieldFromWord :: (Integral w, Bits w, Num r, Bits r) => w -> [(Int, Word8, Word8)] -> r
+fieldFromWord = undefined
+
+-- fieldFromWord :: (Integral a, Bits a, Num b, Bits b) => a -> Int -> Int -> b
+-- fieldFromWord w startBit numBits =
+--   fromIntegral ((w .&. mask) `shiftR` startBit)
+--   where
+--     mask = ((1 `shiftL` numBits) - 1) `shiftL` startBit
 
 assembleBits :: (Num b, Bits b) => b -> [(b, Int)] -> b
 assembleBits requiredBitMask operands =
