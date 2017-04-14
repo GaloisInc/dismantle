@@ -59,4 +59,7 @@ test-suite dismantle-tests
                  deepseq,
                  text,
                  tasty >= 0.10 && < 0.12,
-                 tasty-hunit
+                 tasty-hunit,
+                 Glob,
+                 directory,
+                 filepath
