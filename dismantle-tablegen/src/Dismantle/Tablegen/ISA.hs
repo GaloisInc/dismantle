@@ -3,7 +3,6 @@ module Dismantle.Tablegen.ISA (
   ISA(..),
   OperandPayload(..),
   Endianness(..),
-  arm,
   thumb,
   aarch64,
   mips,
@@ -67,15 +66,6 @@ data ISA =
       -- Word32) into a bytestring.
       }
 
-
-arm :: ISA
-arm = ISA { isaName = "ARM"
-          , isaEndianness = Little
-          , isaInstructionFilter = armFilter
-          , isaPseudoInstruction = const False
-          }
-  where
-    armFilter i = idDecoder i == "ARM" && idNamespace i == "ARM" && not (idPseudo i)
 
 thumb :: ISA
 thumb = ISA { isaName = "Thumb"
