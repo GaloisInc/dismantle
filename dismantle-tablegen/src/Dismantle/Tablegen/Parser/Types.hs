@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 -- | This module contains low-level types used by the parser.
 --
 -- It is intended that users never see these types.  Instead, users
@@ -18,11 +20,14 @@ module Dismantle.Tablegen.Parser.Types (
   SimpleValue(..)
   ) where
 
+import GHC.Generics (Generic)
+import Control.DeepSeq
+
 data Records =
   Records { tblClasses :: [ClassDecl]
           , tblDefs :: [Def]
           }
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data ClassDecl =
   ClassDecl { classDeclName :: String
@@ -30,28 +35,28 @@ data ClassDecl =
             , classDeclMetadata :: [Metadata]
             , classDecls :: [Named DeclItem]
             }
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data Def =
   Def { defName :: String
       , defMetadata :: [Metadata]
       , defDecls :: [Named DeclItem]
       }
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data ClassParameter =
   ClassParameter DeclType String DeclItem
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data Metadata =
   Metadata String
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, NFData)
 
 data Named a =
   Named { namedName :: String
         , namedValue :: a
         }
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data DeclItem =
   BitItem !Bool
@@ -66,7 +71,7 @@ data DeclItem =
   | ClassItem String
   | ExprItem SimpleValue
   | UnknownItem DeclType
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data DagArg = DagArg SimpleValue (Maybe VarName)
             -- ^ Ideally, we could fill in the Maybe here.  In
@@ -74,16 +79,16 @@ data DagArg = DagArg SimpleValue (Maybe VarName)
             -- to appear in identifier names (even though it
             -- shouldn't).
             | DagVarRef VarName
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 -- | A reference to a variable name - the string does not include the $
 data VarName = VarName String
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data BitRef = ExpectedBit !Bool
             | FieldBit String Int
             | FieldVarRef String
-            deriving (Show)
+            deriving (Show, Generic, NFData)
 
 data DeclType = TGBit
               | TGBits !Int
@@ -93,10 +98,10 @@ data DeclType = TGBit
               | TGFieldBits !Int
               | TGList DeclType
               | TGClass String
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data BangOperator = BangOperator String
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 data SimpleValue = Identifier String
                  | VString String
@@ -109,4 +114,4 @@ data SimpleValue = Identifier String
                  | VAnonRecord String [SimpleValue]
                  | VDag DagArg [DagArg]
                  | VBang BangOperator (Maybe String) [SimpleValue]
-  deriving (Show)
+  deriving (Show, Generic, NFData)
