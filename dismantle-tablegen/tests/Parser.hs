@@ -27,7 +27,7 @@ requireGlob :: String -> String -> IO [FilePath]
 requireGlob ty pat = do
     paths <- mapM canonicalizePath =<< G.glob pat
     when (null paths) $ do
-        die $ "Error: could not find any i" <> ty <> " matching " <> show pat
+        die $ "Error: could not find any " <> ty <> " matching " <> show pat
     return paths
 
 -- Find all .tgen files in this package and sibling packages, assuming
