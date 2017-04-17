@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+# This script processes the ARM tgen data to extract all mentioned
+# input and output operand types. ARM operand types fall into
+# two categories: concrete (some_type:name) and indirect
+# (some_class:some_attribute:name). This script classifies each and
+# marks each with a prefix of either "concrete:" or "indirect:".
+# Duplicates are eliminated so the output is the unique list of operand
+# types.
+
 set -e
 
 HERE=$(cd `dirname $0`; pwd)
