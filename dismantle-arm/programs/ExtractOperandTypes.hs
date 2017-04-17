@@ -17,15 +17,18 @@ tgenFile = "data/ARM.tgen"
 isDecl :: String -> Named DeclItem -> Bool
 isDecl n (Named n2 _) = n == n2
 
+pseudoPropName :: String
+pseudoPropName = "isPseudo"
+
 isPsuedoClass :: ClassDecl -> Bool
 isPsuedoClass cls =
-    case find (isDecl "isPsuedo") $ classDecls cls of
+    case find (isDecl pseudoPropName) $ classDecls cls of
         Just (Named _ (BitItem v)) -> v
         _ -> False
 
 isPsuedoDef :: Def -> Bool
 isPsuedoDef def =
-    case find (isDecl "isPsuedo") $ defDecls def of
+    case find (isDecl pseudoPropName) $ defDecls def of
         Just (Named _ (BitItem v)) -> v
         _ -> False
 
