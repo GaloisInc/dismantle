@@ -143,5 +143,4 @@ main = do
                             Nothing -> do
                                 die $ "Could not find class " <> show clsName <> " when resolving " <> show ty
                             Just found -> do
-                                print ty
                                 print $ findByName attrName $ classDecls found
