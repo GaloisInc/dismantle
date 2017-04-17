@@ -8,6 +8,13 @@
 # Duplicates are eliminated so the output is the unique list of operand
 # types.
 
+# This script definitely makes some potentially brittle assumptions
+# about the TGEN file format:
+#
+# * We assume all records in the file start with "class " or "def ".
+# * We assume that the only operand lists of interest are the
+#   non-computed ones (so we ignore lists computed with e.g. !con).
+
 set -e
 
 HERE=$(cd `dirname $0`; pwd)
@@ -18,9 +25,13 @@ TGEN=$HERE/../data/ARM.tgen
 # dag OutOperandList = (outs QPR:$Vd);
 # dag InOperandList = (ins QPR:$Vm);
 
-# Only process lines that mention operand lists. This rules out lines like
-# dag InOperandList = !con(AExtI:iops, (ins pred:$p));
-grep OperandList $TGEN | {
+# First, remove all class or def records containing an explicit
+# pseudoinstruction marker.
+awk '!/isPseudo = 1/ { print $0 }' FS="\n" RS="def |class " < $TGEN | {
+    # Only process lines that mention operand lists. This rules out
+    # lines like dag InOperandList = !con(AExtI:iops, (ins pred:$p));
+    grep OperandList $TGEN
+} | {
     # Extract the right hand side of each operand list assignment.
     awk -F'= ' '{ print $2 }'
 } | {
