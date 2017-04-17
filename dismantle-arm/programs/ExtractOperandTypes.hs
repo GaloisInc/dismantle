@@ -47,7 +47,16 @@ findByName n es = namedValue <$> find (isDecl n) es
 getIdentifiers :: DeclItem -> [String]
 getIdentifiers (DagItem sv) = getIdentifiersSV sv
 getIdentifiers (ListItem is) = concat $ getIdentifiers <$> is
-getIdentifiers _ = []
+getIdentifiers (ExprItem sv) = getIdentifiersSV sv
+getIdentifiers (BitItem _) = []
+getIdentifiers (IntItem _) = []
+getIdentifiers (StringItem _) = []
+getIdentifiers (StringExprItem _) = []
+getIdentifiers (FieldBits _) = []
+getIdentifiers (ExpectedBits _) = []
+getIdentifiers (ExpectedUnknownBits _) = []
+getIdentifiers (ClassItem _) = []
+getIdentifiers (UnknownItem _) = []
 
 getIdentifiersSV :: SimpleValue -> [String]
 getIdentifiersSV (Identifier s) = [s]
@@ -56,11 +65,13 @@ getIdentifiersSV (VSequence svs) = concat $ getIdentifiersSV <$> svs
 getIdentifiersSV (VAnonRecord _ svs) = concat $ getIdentifiersSV <$> svs
 getIdentifiersSV (VBang _ _ svs) = concat $ getIdentifiersSV <$> svs
 getIdentifiersSV (VDag _ args) = concat $ getIdentifiersDA <$> args
-getIdentifiersSV _ = []
+getIdentifiersSV (VString _) = []
+getIdentifiersSV (VNum _) = []
+getIdentifiersSV VUnset = []
 
 getIdentifiersDA :: DagArg -> [String]
 getIdentifiersDA (DagArg sv _) = getIdentifiersSV sv
-getIdentifiersDA _ = []
+getIdentifiersDA (DagVarRef _) = []
 
 data OperandType = Concrete String
                  | Indirect String String
