@@ -14,6 +14,9 @@ import System.Exit
 tgenFile :: FilePath
 tgenFile = "data/ARM.tgen"
 
+targetNamespace :: String
+targetNamespace = "ARM"
+
 isDecl :: String -> Named DeclItem -> Bool
 isDecl n (Named n2 _) = n == n2
 
@@ -30,6 +33,12 @@ isPsuedoDef :: Def -> Bool
 isPsuedoDef def =
     case find (isDecl pseudoPropName) $ defDecls def of
         Just (Named _ (BitItem v)) -> v
+        _ -> False
+
+hasDecl :: String -> DeclItem -> [Named DeclItem] -> Bool
+hasDecl name value ds =
+    case find (isDecl name) ds of
+        Just (Named _ v) -> value == v
         _ -> False
 
 findByName :: String -> [Named DeclItem] -> Maybe DeclItem
@@ -86,9 +95,9 @@ main = do
             let clsMap = M.fromList $ (\c -> (classDeclName c, c)) <$> (tblClasses result)
 
             clsTys <- forM (tblClasses result) $ \cls -> do
-                case isPsuedoClass cls of
-                    True -> return []
-                    False -> do
+                case (not $ isPsuedoClass cls) && hasDecl "DecoderNamespace" (StringItem "ARM") (classDecls cls) of
+                    False -> return []
+                    True -> do
                         let inOps = findByName "InOperandList" $ classDecls cls
                             outOps = findByName "OutOperandList" $ classDecls cls
 
@@ -105,9 +114,9 @@ main = do
                         return $ filter (not . forClass (classDeclName cls)) $ i <> o
 
             defTys <- forM (tblDefs result) $ \def ->
-                case isPsuedoDef def of
-                    True -> return []
-                    False -> do
+                case (not $ isPsuedoDef def) && hasDecl "DecoderNamespace" (StringItem "ARM") (defDecls def) of
+                    False -> return []
+                    True -> do
                         let inOps = findByName "InOperandList" $ defDecls def
                             outOps = findByName "OutOperandList" $ defDecls def
 
