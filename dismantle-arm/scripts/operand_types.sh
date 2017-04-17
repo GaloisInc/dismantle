@@ -24,6 +24,6 @@ grep OperandList $TGEN \
     | grep -v outs \
     | awk -F', ' '{ for (i = 1; i <= NF; i++) { print $i } }' \
     | grep -v variable_ops \
-    | awk -F':' '(NF == 2) { print "concrete:" $1 } (NF > 2) { print "indirect:" $0 }' \
+    | awk -F':' '(NF == 2) { print "concrete:" $1 } (NF == 3) { print "indirect:" $1 ":" $2 }' \
     | sort \
     | uniq
