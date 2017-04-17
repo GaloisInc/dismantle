@@ -71,7 +71,7 @@ data DeclItem =
   | ClassItem String
   | ExprItem SimpleValue
   | UnknownItem DeclType
-  deriving (Show, Generic, NFData)
+  deriving (Show, Generic, NFData, Eq)
 
 data DagArg = DagArg SimpleValue (Maybe VarName)
             -- ^ Ideally, we could fill in the Maybe here.  In
@@ -79,16 +79,16 @@ data DagArg = DagArg SimpleValue (Maybe VarName)
             -- to appear in identifier names (even though it
             -- shouldn't).
             | DagVarRef VarName
-  deriving (Show, Generic, NFData)
+  deriving (Show, Generic, NFData, Eq)
 
 -- | A reference to a variable name - the string does not include the $
 data VarName = VarName String
-  deriving (Show, Generic, NFData)
+  deriving (Show, Generic, NFData, Eq)
 
 data BitRef = ExpectedBit !Bool
             | FieldBit String Int
             | FieldVarRef String
-            deriving (Show, Generic, NFData)
+            deriving (Show, Generic, NFData, Eq)
 
 data DeclType = TGBit
               | TGBits !Int
@@ -98,10 +98,10 @@ data DeclType = TGBit
               | TGFieldBits !Int
               | TGList DeclType
               | TGClass String
-  deriving (Show, Generic, NFData)
+  deriving (Show, Generic, NFData, Eq)
 
 data BangOperator = BangOperator String
-  deriving (Show, Generic, NFData)
+  deriving (Show, Generic, NFData, Eq)
 
 data SimpleValue = Identifier String
                  | VString String
@@ -114,4 +114,4 @@ data SimpleValue = Identifier String
                  | VAnonRecord String [SimpleValue]
                  | VDag DagArg [DagArg]
                  | VBang BangOperator (Maybe String) [SimpleValue]
-  deriving (Show, Generic, NFData)
+  deriving (Show, Generic, NFData, Eq)
