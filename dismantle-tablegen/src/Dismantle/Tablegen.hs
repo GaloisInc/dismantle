@@ -180,12 +180,12 @@ finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [Maybe BitRef] ->
 finishInstructionDescriptor isa def mbits endianBits ins outs =
   case mvals of
     Nothing -> return ()
-    Just (ns, decoder, asmStr, b, cgOnly, asmParseOnly) -> do
+    Just (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly) -> do
       let i = InstructionDescriptor { idMask = map toTrieBit endianBits
                                     , idMaskRaw = map toTrieBit mbits
                                     , idMnemonic = defName def
                                     , idNamespace = ns
-                                    , idDecoder = decoder
+                                    , idDecoderNamespace = decoderNs
                                     , idAsmString = asmStr
                                     , idInputOperands = ins
                                     , idOutputOperands = outs
@@ -200,12 +200,12 @@ finishInstructionDescriptor isa def mbits endianBits ins outs =
   where
     mvals = do
       Named _ (StringItem ns) <- F.find (named "Namespace") (defDecls def)
-      Named _ (StringItem decoder) <- F.find (named "DecoderNamespace") (defDecls def)
+      Named _ (StringItem decoderNs) <- F.find (named "DecoderNamespace") (defDecls def)
       Named _ (StringItem asmStr) <- F.find (named "AsmString") (defDecls def)
       Named _ (BitItem b) <- F.find (named "isPseudo") (defDecls def)
       Named _ (BitItem cgOnly) <- F.find (named "isCodeGenOnly") (defDecls def)
       Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
-      return (ns, decoder, asmStr, b, cgOnly, asmParseOnly)
+      return (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly)
 
 -- | Extract OperandDescriptors from the bits pattern, given type
 -- information from the InOperandList or OutOperandList DAG items.

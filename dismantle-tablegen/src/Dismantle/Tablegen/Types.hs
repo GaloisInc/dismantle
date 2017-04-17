@@ -61,7 +61,7 @@ data InstructionDescriptor =
                         , idInputOperands :: [OperandDescriptor]
                         , idOutputOperands :: [OperandDescriptor]
                         , idNamespace :: String
-                        , idDecoder :: String
+                        , idDecoderNamespace :: String
                         , idAsmString :: String
                         , idPseudo :: Bool
                         }

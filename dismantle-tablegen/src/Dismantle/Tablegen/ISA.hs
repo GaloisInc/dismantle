@@ -74,7 +74,7 @@ thumb = ISA { isaName = "Thumb"
             , isaPseudoInstruction = const False
             }
   where
-    thumbFilter i = idDecoder i == "Thumb" && idNamespace i == "ARM" && not (idPseudo i)
+    thumbFilter i = idDecoderNamespace i == "Thumb" && idNamespace i == "ARM" && not (idPseudo i)
 
 aarch64 :: ISA
 aarch64 = ISA { isaName = "AArch64"
@@ -95,7 +95,7 @@ mips = ISA { isaName = "Mips"
            , isaPseudoInstruction = const False
            }
   where
-    mipsFilter i = idDecoder i == "Mips" && idNamespace i == "Mips" && not (idPseudo i)
+    mipsFilter i = idDecoderNamespace i == "Mips" && idNamespace i == "Mips" && not (idPseudo i)
 
 avr :: ISA
 avr = ISA { isaName = "AVR"
@@ -129,7 +129,7 @@ sparc = ISA { isaName = "Sparc"
             , isaPseudoInstruction = const False
             }
   where
-    sparcFilter i = idNamespace i == "SP" && idDecoder i == "Sparc" && not (idPseudo i)
+    sparcFilter i = idNamespace i == "SP" && idDecoderNamespace i == "Sparc" && not (idPseudo i)
 
 {-
 
