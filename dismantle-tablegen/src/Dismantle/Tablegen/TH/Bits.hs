@@ -1,3 +1,4 @@
+{-# LANGUAGE ViewPatterns #-}
 -- | This module defines some helpers called in the TemplateHaskell code
 --
 -- The functions here mostly focus on extracting operands and re-assembling
@@ -17,7 +18,12 @@ import Data.Word ( Word8 )
 -- Note that operands are *not* necessarily contiguous.  We have to have all of
 -- the bit numbers, divide them into chunks (usually one chunk, but not always).
 fieldFromWord :: (Integral w, Bits w, Num r, Bits r) => w -> [(Int, Word8, Word8)] -> r
-fieldFromWord = undefined
+fieldFromWord w = foldr parseAndMergeChunk 0
+  where
+    parseAndMergeChunk (instructionBit, fromIntegral -> operandBit, fromIntegral -> chunkSize) acc =
+      let mask = ((1 `shiftL` chunkSize) - 1) `shiftL` instructionBit
+          opBits = (w .&. mask) `shiftR` instructionBit
+      in acc .|. fromIntegral (opBits `shiftL` operandBit)
 
 -- fieldFromWord :: (Integral a, Bits a, Num b, Bits b) => a -> Int -> Int -> b
 -- fieldFromWord w startBit numBits =

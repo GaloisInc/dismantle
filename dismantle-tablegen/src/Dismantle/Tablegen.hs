@@ -24,6 +24,7 @@ import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
 import Data.Maybe ( mapMaybe )
 import qualified Data.Set as S
+import Data.Word ( Word8 )
 
 import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Parser ( parseTablegen )
@@ -263,14 +264,15 @@ mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
                     St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
                     kexit ()
                   Just bitPositions -> do
-                    let arrVals = [ (fldIdx, fromIntegral bitNum)
-                              | (bitNum, fldIdx) <- bitPositions
-                              ]
-                        bitPositions = L.sortOn fst arrVals
+                    let arrVals :: [(Int, Word8)]
+                        arrVals = [ (fldIdx, fromIntegral bitNum)
+                                  | (bitNum, fldIdx) <- bitPositions
+                                  ]
+                        bitPositions' = L.sortOn fst arrVals
                         desc = OperandDescriptor { opName = var
                                                     , opType = OperandType klass
-                                                    , opBits = bitPositions
-                                                    , opChunks = groupByChunk bitPositions
+                                                    , opBits = bitPositions'
+                                                    , opChunks = groupByChunk bitPositions'
                                                     , opStartBit = fromIntegral (minimum (map snd arrVals))
                                                     , opNumBits = length arrVals
                                                     }
@@ -291,18 +293,19 @@ mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
 --
 -- FIXME: This needs to account for endianness in the next/last bit test
 groupByChunk :: [(Int, Word8)] -> [(Int, Word8, Word8)]
-groupByChunk = reverse . foldr growOrAddChunk []
+groupByChunk = reverse . map snd . foldr growOrAddChunk []
   where
     -- If the next entry is part of the current chunk, grow the chunk.
     -- Otherwise, begin a new chunk.
     growOrAddChunk (insnIndex, operandIndex) acc =
       case acc of
         [] -> [(operandIndex, (insnIndex, operandIndex, 1))]
-        (lastOpIndex, (chunkInsnIndex, chunkOpIndex, chunkLen)) : rest
-          | lastOpIndex /= operandIndex + 1 ->
+        prev@(lastOpIndex, (chunkInsnIndex, chunkOpIndex, chunkLen)) : rest
+          | lastOpIndex == operandIndex + 1 || lastOpIndex == operandIndex - 1 ->
+            (operandIndex, (chunkInsnIndex, min chunkOpIndex operandIndex, chunkLen + 1)) : rest
+          | otherwise ->
             -- New chunk
-            undefined
-          | otherwise -> (operandIndex, (chunkInsnIndex, chunkOpIndex, chunkLen + 1)) : rest
+            (operandIndex, (insnIndex, operandIndex, 1)) : prev : rest
 
 {- Note [Operand Mapping]
 
