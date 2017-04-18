@@ -5,6 +5,7 @@ import Data.Monoid ((<>))
 import Data.Maybe (catMaybes)
 import Data.List (find, nub, sort)
 import Data.List.Split (splitOn)
+import qualified Data.Set as S
 import qualified Data.Map as M
 import Dismantle.Tablegen.Parser
 import Dismantle.Tablegen.Parser.Types
@@ -23,17 +24,27 @@ isDecl n (Named n2 _) = n == n2
 pseudoPropName :: String
 pseudoPropName = "isPseudo"
 
+pseudoClasses :: S.Set Metadata
+pseudoClasses = S.fromList $ Metadata <$>
+    [ "PseudoVFPLdStM"
+    , "PseudoNLdSt"
+    ]
+
 isPsuedoClass :: ClassDecl -> Bool
 isPsuedoClass cls =
-    case find (isDecl pseudoPropName) $ classDecls cls of
-        Just (Named _ (BitItem v)) -> v
-        _ -> False
+    let parentPseudo = not $ S.null $ S.intersection pseudoClasses $ S.fromList $ classDeclMetadata cls
+        explicitPseudo = case find (isDecl pseudoPropName) $ classDecls cls of
+                             Just (Named _ (BitItem v)) -> v
+                             _ -> False
+    in parentPseudo || explicitPseudo
 
 isPsuedoDef :: Def -> Bool
 isPsuedoDef def =
-    case find (isDecl pseudoPropName) $ defDecls def of
-        Just (Named _ (BitItem v)) -> v
-        _ -> False
+    let parentPseudo = not $ S.null $ S.intersection pseudoClasses $ S.fromList $ defMetadata def
+        explicitPseudo = case find (isDecl pseudoPropName) $ defDecls def of
+                             Just (Named _ (BitItem v)) -> v
+                             _ -> False
+    in parentPseudo || explicitPseudo
 
 hasDecl :: String -> DeclItem -> [Named DeclItem] -> Bool
 hasDecl name value ds =
