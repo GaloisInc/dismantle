@@ -50,7 +50,7 @@ data ClassParameter =
 
 data Metadata =
   Metadata String
-  deriving (Show, Eq, Generic, NFData)
+  deriving (Show, Eq, Generic, NFData, Ord)
 
 data Named a =
   Named { namedName :: String
