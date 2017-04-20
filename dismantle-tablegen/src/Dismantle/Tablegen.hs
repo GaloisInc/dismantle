@@ -1,5 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ViewPatterns #-}
 module Dismantle.Tablegen (
   parseTablegen,
   filterISA,
@@ -272,7 +273,7 @@ mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
                         desc = OperandDescriptor { opName = var
                                                  , opType = OperandType klass
                                                  , opBits = bitPositions'
-                                                 , opChunks = groupByChunk bitPositions'
+                                                 , opChunks = groupByChunk (L.sortOn snd bitPositions')
                                                  , opStartBit = fromIntegral (minimum (map snd arrVals))
                                                  , opNumBits = length arrVals
                                                  }
@@ -291,19 +292,17 @@ mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
 --
 -- In most cases, this should be a single chunk.  In rare cases, there will be
 -- more.
---
--- FIXME: This needs to account for endianness in the next/last bit test
 groupByChunk :: [(Int, Word8)] -> [(Int, Word8, Word8)]
 groupByChunk = reverse . map snd . foldr growOrAddChunk []
   where
     -- If the next entry is part of the current chunk, grow the chunk.
     -- Otherwise, begin a new chunk.
-    growOrAddChunk (insnIndex, operandIndex) acc =
+    growOrAddChunk (fromIntegral -> operandIndex, fromIntegral -> insnIndex) acc =
       case acc of
         [] -> [(operandIndex, (insnIndex, operandIndex, 1))]
         prev@(lastOpIndex, (chunkInsnIndex, chunkOpIndex, chunkLen)) : rest
           | lastOpIndex == operandIndex + 1 || lastOpIndex == operandIndex - 1 ->
-            (operandIndex, (chunkInsnIndex, min chunkOpIndex operandIndex, chunkLen + 1)) : rest
+            (operandIndex, (min chunkInsnIndex insnIndex, min chunkOpIndex operandIndex, chunkLen + 1)) : rest
           | otherwise ->
             -- New chunk
             (operandIndex, (insnIndex, operandIndex, 1)) : prev : rest
