@@ -8,7 +8,6 @@ module Dismantle.Tablegen.TH.Bits (
   assembleBits
   ) where
 
-import qualified Data.ByteString.Lazy as LBS
 import Data.Bits
 import qualified Data.Foldable as F
 import Data.Word ( Word8 )
@@ -25,16 +24,28 @@ fieldFromWord w = foldr parseAndMergeChunk 0
           opBits = (w .&. mask) `shiftR` instructionBit
       in acc .|. fromIntegral (opBits `shiftL` operandBit)
 
--- fieldFromWord :: (Integral a, Bits a, Num b, Bits b) => a -> Int -> Int -> b
--- fieldFromWord w startBit numBits =
---   fromIntegral ((w .&. mask) `shiftR` startBit)
---   where
---     mask = ((1 `shiftL` numBits) - 1) `shiftL` startBit
-
-assembleBits :: (Num b, Bits b) => b -> [(b, Int)] -> b
+-- | Project a list of operands into a word.
+--
+-- The intent is that the initial word contains the require bitmask of the
+-- instruction, and this function places the operands into their required
+-- locations.
+assembleBits :: (Num b, Bits b) => b -> [(b, [(Int, Word8, Word8)])] -> b
 assembleBits requiredBitMask operands =
   F.foldl' applyOperand requiredBitMask operands
 
-applyOperand :: (Bits b, Num b) => b -> (b, Int) -> b
-applyOperand w (val, off) = w .|. (val `shiftL` off)
+-- | Project an operand (comprised of some number of chunks) into a container
+-- word @w@
+applyOperand :: (Bits b, Num b) => b -> (b, [(Int, Word8, Word8)]) -> b
+applyOperand w (val, chunks) = F.foldl' (applyChunk val) w chunks
 
+-- | Place a chunk of @opVal@ into @w@ as defined by the chunk descriptor
+--
+-- The tuple describing the operand chunk is @(instructionIndex, operandIndex,
+-- chunkSize)@; this function takes @chunkSize@ bits from @opVal@ starting at
+-- @operandIndex@ and places those bits into @w@ at @instructionBit@.
+applyChunk :: (Bits b, Num b) => b -> b -> (Int, Word8, Word8) -> b
+applyChunk opVal w (instructionBit, fromIntegral -> operandBit, fromIntegral -> chunkSize) =
+  w .|. (chunkBits `shiftL` instructionBit)
+  where
+    mask = (1 `shiftL` chunkSize) - 1
+    chunkBits = mask .&. (opVal `shiftR` operandBit)

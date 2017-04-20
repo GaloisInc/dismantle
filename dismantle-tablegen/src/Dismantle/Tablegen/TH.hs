@@ -161,9 +161,6 @@ mkParserExpr isa i
           err = error ("No operand descriptor payload for operand type: " ++ otyname)
           operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           operandCon = ConE (mkName otyname)
-          intE = litE . integerL . fromIntegral
-          startBit = opStartBit od
-          numBits = opNumBits od
           -- FIXME: Need to write some helpers to handle making the
           -- right operand constructor
       in case opConE operandPayload of
@@ -201,9 +198,9 @@ mkAsmCase isa i = do
           err = error ("No operand descriptor payload for operand type: " ++ otyname)
           operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           opToBits = fromMaybe [| id |] (opWordE operandPayload)
-      startBit <- lift (opStartBit op)
+      chunks <- lift (opChunks op)
       vname <- newName "operand"
-      asmOp <- [| ( $(opToBits) $(varE vname),  $(return startBit) ) |]
+      asmOp <- [| ( $(opToBits) $(varE vname),  $(return chunks) ) |]
       return (InfixP (ConP (mkName otyname) [VarP vname]) '(:>) pat, asmOp : operands)
 
 {-
