@@ -134,7 +134,7 @@ isa = ISA { isaName = "PPC"
       ]
 
     ppcFilter i = and [ idNamespace i == "PPC"
-                      , idDecoder i == ""
+                      , idDecoderNamespace i == ""
                       , L.last (idMnemonic i) /= '8'
                       ]
     ppcPseudo i = idPseudo i ||

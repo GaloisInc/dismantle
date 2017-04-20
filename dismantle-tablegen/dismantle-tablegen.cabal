@@ -21,9 +21,9 @@ library
                    Dismantle.Tablegen.TH.Bits
                    Dismantle.Tablegen.TH.Pretty
                    Dismantle.Tablegen.Types
+                   Dismantle.Tablegen.Parser
+                   Dismantle.Tablegen.Parser.Types
                    Dismantle.Testing
-  other-modules: Dismantle.Tablegen.Parser
-                 Dismantle.Tablegen.Parser.Types
   build-depends:       base >=4.8 && <4.10,
                        template-haskell,
                        bytestring,
@@ -59,4 +59,7 @@ test-suite dismantle-tests
                  deepseq,
                  text,
                  tasty >= 0.10 && < 0.12,
-                 tasty-hunit
+                 tasty-hunit,
+                 Glob,
+                 directory,
+                 filepath

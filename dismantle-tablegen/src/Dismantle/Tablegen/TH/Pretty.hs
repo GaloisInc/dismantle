@@ -9,6 +9,7 @@ module Dismantle.Tablegen.TH.Pretty (
 
 import Data.Char ( isAlpha )
 import Data.Int ( Int64 )
+import Data.Word ( Word8 )
 import qualified Data.Map as M
 import Data.Monoid
 import Data.Word ( Word64 )
@@ -70,6 +71,9 @@ formatUnbracketedVar fmt operands varName =
 
 
 instance PP.Pretty Int64 where
+  pPrint = PP.integer . fromIntegral
+
+instance PP.Pretty Word8 where
   pPrint = PP.integer . fromIntegral
 
 instance PP.Pretty Word64 where
