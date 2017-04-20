@@ -25,7 +25,7 @@ mkParserTestGroup (pkg, files) = do
 
 requireGlob :: String -> String -> IO [FilePath]
 requireGlob ty pat = do
-    paths <- mapM canonicalizePath =<< G.glob pat
+    paths <- mapM canonicalizePath =<< G.namesMatching pat
     when (null paths) $ do
         die $ "Error: could not find any " <> ty <> " matching " <> show pat
     return paths

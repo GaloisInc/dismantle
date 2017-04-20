@@ -60,6 +60,6 @@ test-suite dismantle-tests
                  text,
                  tasty >= 0.10 && < 0.12,
                  tasty-hunit,
-                 Glob,
+                 filemanip,
                  directory,
                  filepath
