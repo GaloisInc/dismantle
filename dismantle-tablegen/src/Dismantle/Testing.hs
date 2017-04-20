@@ -141,10 +141,17 @@ parseInstruction = do
   P.space
   bytes <- P.endBy1 parseByte (P.char ' ')
   txt <- T.pack <$> P.manyTill P.anyChar P.eol
-  return $ Just Instruction { insnAddress = addr
-                            , insnBytes = LBS.pack bytes
-                            , insnText = txt
-                            }
+  case isDataDirective txt of
+    True -> return Nothing
+    False ->
+      return $ Just Instruction { insnAddress = addr
+                                , insnBytes = LBS.pack bytes
+                                , insnText = txt
+                                }
+
+isDataDirective :: T.Text -> Bool
+isDataDirective t =  or [ T.pack ".long" `T.isInfixOf` t
+                        ]
 
 -- | These are the markers for where symbols point in the decoded
 -- stream.  Even stripped binaries tend to have at least a few (at the
