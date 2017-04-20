@@ -136,8 +136,7 @@ mkParserExpr isa i
     -- If we have no operands, make a much simpler constructor (so we
     -- don't have an unused bytestring parameter)
     e <- [| Just (Parser (\_ -> $(return con) $(return tag) Nil)) |]
-    requiredMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length requiredMask)))) $(litE (stringPrimL requiredMask))) |]
-    trueMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (stringPrimL trueMask))) |]
+    (requiredMaskE, trueMaskE) <- mkMaskByteStringExprs requiredMask trueMask
     return $ TupE [requiredMaskE, trueMaskE, e]
   | otherwise = do
     bsName <- newName "bytestring"
@@ -148,8 +147,7 @@ mkParserExpr isa i
              case $(varE (isaInsnWordFromBytes isa)) $(varE bsName) of
                $(varP wordName) -> $(return insnCon)))
           |]
-    requiredMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length requiredMask)))) $(litE (stringPrimL requiredMask))) |]
-    trueMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (stringPrimL trueMask))) |]
+    (requiredMaskE, trueMaskE) <- mkMaskByteStringExprs requiredMask trueMask
     return $ TupE [requiredMaskE, trueMaskE, e]
   where
     (requiredMask, trueMask) = bitSpecAsBytes (idMask i)
@@ -166,6 +164,15 @@ mkParserExpr isa i
       in case opConE operandPayload of
          Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(lift (opChunks od))) :> $(return e) |]
          Just conExp -> [| $(return operandCon) ($(conExp) (fieldFromWord $(varE wordName) $(lift (opChunks od)))) :> $(return e) |]
+
+-- | Convert the bytestrings representing the required bits and true bits masks into TH expressions.
+--
+-- The TH expressions are of type 'ByteString'
+mkMaskByteStringExprs :: [Word8] -> [Word8] -> Q (Exp, Exp)
+mkMaskByteStringExprs requiredMask trueMask = do
+  requiredMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length requiredMask)))) $(litE (stringPrimL requiredMask))) |]
+  trueMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (stringPrimL trueMask))) |]
+  return (requiredMaskE, trueMaskE)
 
 unparserName :: Name
 unparserName = mkName "assembleInstruction"
