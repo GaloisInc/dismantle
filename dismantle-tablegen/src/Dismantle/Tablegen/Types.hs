@@ -36,17 +36,14 @@ data OperandType = OperandType String
 -- register reference or an immediate)
 data OperandDescriptor =
   OperandDescriptor { opName :: String
-                    , opBits :: [(Int, Word8)]
                     , opChunks :: [(Int, Word8, Word8)]
                     -- ^ (Bit in the instruction, bit in the operand, number of bits in chunk)
-                    , opStartBit :: Int
-                    , opNumBits :: Int
                     , opType :: !OperandType
                     }
   deriving (Eq, Ord, Show)
 
 instance NFData OperandDescriptor where
-  rnf od = opName od `deepseq` od `seq` ()
+  rnf od = opName od `deepseq` opChunks od `deepseq` od `seq` ()
 
 -- FIXME: Replace these big lists of bits with some cleaner bytestring
 -- masks.  We won't need the endian-corrected one if we can generate

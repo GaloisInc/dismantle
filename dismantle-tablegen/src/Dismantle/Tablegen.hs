@@ -271,13 +271,10 @@ mkOperandDescriptors isa mnemonic dagOperator dagItem ordFlds bits kexit =
                         arrVals = [ (fldIdx, fromIntegral bitNum)
                                   | (bitNum, fldIdx) <- bitPositions
                                   ]
-                        bitPositions' = L.sortOn fst arrVals
+                        bitPositions' = L.sortOn snd arrVals
                         desc = OperandDescriptor { opName = var
                                                  , opType = OperandType klass
-                                                 , opBits = bitPositions'
-                                                 , opChunks = groupByChunk (L.sortOn snd bitPositions')
-                                                 , opStartBit = fromIntegral (minimum (map snd arrVals))
-                                                 , opNumBits = length arrVals
+                                                 , opChunks = groupByChunk bitPositions'
                                                  }
 
                     return (desc : ops, rest)
