@@ -169,8 +169,8 @@ toInstructionDescriptor isa def = do
       -- to x86-style instructions where e.g. EAX is both read as an
       -- input and modified as a side effect of an instruction, while
       -- only being encoded in the instruction stream once.
-      (outOperands, ordFlds') <- mkOperandDescriptors (defName def) "outs" outs ordFlds mbits kexit
-      (inOperands, ordFlds'') <- mkOperandDescriptors (defName def) "ins" ins ordFlds' mbits kexit
+      (outOperands, ordFlds') <- mkOperandDescriptors isa (defName def) "outs" outs ordFlds mbits kexit
+      (inOperands, ordFlds'') <- mkOperandDescriptors isa (defName def) "ins" ins ordFlds' mbits kexit
       unless (null ordFlds'') $ do
         St.modify $ \s -> s { stErrors = (defName def, "") : stErrors s }
       finishInstructionDescriptor isa def mbits endianBits inOperands outOperands
@@ -215,7 +215,8 @@ finishInstructionDescriptor isa def mbits endianBits ins outs =
 -- The important thing is that we are preserving the *order* of
 -- operands here so that users have a chance of making sense of the
 -- generated instructions.
-mkOperandDescriptors :: String
+mkOperandDescriptors :: ISA
+                     -> String
                      -- ^ Instruction mnemonic
                      -> String
                      -- ^ DAG operator string ("ins" or "outs")
@@ -228,7 +229,7 @@ mkOperandDescriptors :: String
                      -> (() -> FM ([OperandDescriptor], [String]))
                      -- ^ Early termination continuation
                      -> FM ([OperandDescriptor], [String])
-mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
+mkOperandDescriptors isa mnemonic dagOperator dagItem ordFlds bits kexit =
   -- Leave this case as an error, since that means we have a tablegen
   -- structure we didn't expect rather than a fixable data mismatch
   case dagItem of
@@ -254,6 +255,7 @@ mkOperandDescriptors mnemonic dagOperator dagItem ordFlds bits kexit =
     parseOperand acc@(ops, fldNames) arg =
       case arg of
         DagArg (Identifier i) _
+          | isaIgnoreOperand isa i -> return (ops, fldNames)
           | [klass, var] <- L.splitOn ":$" i ->
             case fldNames of
               [] -> do

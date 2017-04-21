@@ -29,6 +29,7 @@ isa = ISA { isaName = "PPC"
           , isaInstructionFilter = ppcFilter
           , isaPseudoInstruction = ppcPseudo
           , isaOperandPayloadTypes = ppcOperandPayloadTypes
+          , isaIgnoreOperand = ppcIgnoreOperand
           , isaInsnWordFromBytes = 'asWord32
           , isaInsnWordToBytes = 'fromWord32
           , isaInsnAssembleType = ''Word32
@@ -132,6 +133,10 @@ isa = ISA { isaName = "PPC"
       , ("Vsrc", vecRegister) -- ??
       , ("Vssrc", vecRegister) -- ??
       ]
+
+    ppcIgnoreOperand op = op `elem` [ "ptr_rc_nor0:$ea_res"
+                                    , "ptr_rc_nor0:$ea_result"
+                                    ]
 
     ppcFilter i = and [ idNamespace i == "PPC"
                       , idDecoderNamespace i == ""

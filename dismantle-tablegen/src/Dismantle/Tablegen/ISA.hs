@@ -55,6 +55,12 @@ data ISA =
       , isaOperandPayloadTypes :: [(String, OperandPayload)]
       -- ^ Per-ISA operand customization.  This lets us have a custom
       -- register type for each ISA, for example.
+      , isaIgnoreOperand :: String -> Bool
+      -- ^ Operands in the DAG argument lists that should be ignored for this
+      -- ISA.  There are some operands that are not actually encoded in the
+      -- instruction, and seem to only serve to carry metadata.  An example from
+      -- PPC is @ptr_rc_nor0:$ea_res@, which is just a marker to indicate that
+      -- the instruction updates memory at a location held in a register.
       , isaInsnWordFromBytes :: Name
       -- ^ The name of the function that is used to convert a prefix
       -- of the instruction stream into a single word that contains an
