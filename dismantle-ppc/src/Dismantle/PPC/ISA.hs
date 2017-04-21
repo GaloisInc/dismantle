@@ -37,105 +37,6 @@ isa = ISA { isaName = "PPC"
           , isaInsnAssembleType = ''Word32
           }
   where
-    absoluteAddress = OperandPayload { opTypeName = ''Word64
-                                     , opConName = Nothing
-                                     , opConE = Nothing
-                                     , opWordE = Just [| fromIntegral |]
-                                     }
-    relativeOffset = OperandPayload { opTypeName = ''Int64
-                                    , opConName = Nothing
-                                    , opConE = Nothing
-                                    , opWordE = Just [| fromIntegral |]
-                                    }
-    gpRegister = OperandPayload { opTypeName = ''PPC.GPR
-                                , opConName = Just 'PPC.GPR
-                                , opConE = Just (conE 'PPC.GPR)
-                                , opWordE = Just [| fromIntegral . PPC.unGPR |]
-                                }
-    conditionRegister = OperandPayload { opTypeName = ''PPC.CR
-                                       , opConName = Just 'PPC.CR
-                                       , opConE = Just (conE 'PPC.CR)
-                                       , opWordE = Just [| fromIntegral . PPC.unCR |]
-                                       }
-    floatRegister = OperandPayload { opTypeName = ''PPC.FR
-                                   , opConName = Just 'PPC.FR
-                                   , opConE = Just (conE 'PPC.FR)
-                                   , opWordE = Just [| fromIntegral . PPC.unFR |]
-                                   }
-    signedImmediate :: Word8 -> OperandPayload
-    signedImmediate _n = OperandPayload { opTypeName = ''Int64
-                                        , opConName = Nothing
-                                        , opConE = Nothing
-                                        , opWordE = Just [| fromIntegral |]
-                                        }
-    unsignedImmediate :: Word8 -> OperandPayload
-    unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
-                                          , opConName = Nothing
-                                          , opConE = Nothing
-                                          , opWordE = Just [| fromIntegral |]
-                                          }
-    vecRegister = OperandPayload { opTypeName = ''PPC.VR
-                                 , opConName = Just 'PPC.VR
-                                 , opConE = Just (conE 'PPC.VR)
-                                 , opWordE = Just [| fromIntegral . PPC.unVR |]
-                                 }
-    mem = OperandPayload { opTypeName = ''PPC.Mem
-                         , opConName = Just 'PPC.mkMem
-                         , opConE = Just (varE 'PPC.mkMem)
-                         , opWordE = Just (varE 'PPC.memToBits)
-                         }
-    ppcOperandPayloadTypes =
-      [ ("Abscondbrtarget", absoluteAddress)
-      , ("Absdirectbrtarget", absoluteAddress)
-      , ("Condbrtarget", relativeOffset)
-      , ("Directbrtarget", absoluteAddress)
-      , ("Calltarget", relativeOffset)
-      , ("Abscalltarget", absoluteAddress)
-      , ("Ptr_rc_nor0", gpRegister) -- fixme
-      , ("Tlscall", gpRegister) -- fixme
-      , ("Tlscall32", gpRegister) --fixme
-      , ("Spe8dis", gpRegister) -- fixme
-      , ("Spe2dis", gpRegister)
-      , ("Spe4dis", gpRegister)
-      , ("Crbitm", conditionRegister)  -- these two are very odd, must investigate
-      , ("Crbitrc", conditionRegister)
-      , ("Crrc", conditionRegister) -- 4 bit
-      , ("F4rc", floatRegister)
-      , ("F8rc", floatRegister)
-      , ("G8rc", gpRegister)
-      , ("Gprc", gpRegister)
-        -- These two variants are special for instructions that treat r0 specially
-      , ("Gprc_nor0", gpRegister)
-      , ("G8rc_nox0", gpRegister)
-      , ("I1imm", signedImmediate 1)
-      , ("I32imm", signedImmediate 32)
-      , ("S16imm", signedImmediate 16)
-      , ("S16imm64", signedImmediate 16)
-      , ("S17imm", signedImmediate 17)
-      , ("S17imm64", signedImmediate 17)
-      , ("S5imm", signedImmediate 5)
-      , ("Tlsreg", gpRegister)
-      , ("Tlsreg32", gpRegister)
-      , ("U1imm", unsignedImmediate 1)
-      , ("U2imm", unsignedImmediate 2)
-      , ("U4imm", unsignedImmediate 4)
-      , ("U5imm", unsignedImmediate 5)
-      , ("U6imm", unsignedImmediate 6)
-      , ("U7imm", unsignedImmediate 7)
-      , ("U8imm", unsignedImmediate 8)
-      , ("U16imm", unsignedImmediate 16)
-      , ("U16imm64", unsignedImmediate 16)
-      , ("Memrr", mem)
-      , ("Memri", mem)
-      , ("Memrix", mem)
-      , ("Memrix16", mem)
-      , ("Pred", gpRegister)
-      , ("Vrrc", vecRegister)
-      , ("Vsfrc", vecRegister) -- floating point vec?
-      , ("Vsrc", vecRegister) -- ??
-      , ("Vssrc", vecRegister) -- ??
-      ]
-
     ppcIgnoreOperand op = op `elem` [ "ptr_rc_nor0:$ea_res"
                                     , "ptr_rc_nor0:$ea_result"
                                     , "crrc0:$ret"
@@ -209,8 +110,7 @@ isa = ISA { isaName = "PPC"
                                       , "TRAP" -- encoded as TW (trap word) some constant
                                       ]
 
-
-
+ppcFormOverrides :: [(String, FormOverride)]
 ppcFormOverrides = [ ("BForm", ppcBForm)
                    , ("BForm_1", ppcBForm)
                    , ("BForm_2", ppcBForm)
@@ -355,3 +255,103 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                             , ("vB", SimpleDescriptor "FRB")
                             , ("rmc", SimpleDescriptor "idx")
                             ]
+
+ppcOperandPayloadTypes =
+  [ ("Abscondbrtarget", absoluteAddress)
+  , ("Absdirectbrtarget", absoluteAddress)
+  , ("Condbrtarget", relativeOffset)
+  , ("Directbrtarget", absoluteAddress)
+  , ("Calltarget", relativeOffset)
+  , ("Abscalltarget", absoluteAddress)
+  , ("Ptr_rc_nor0", gpRegister) -- fixme
+  , ("Tlscall", gpRegister) -- fixme
+  , ("Tlscall32", gpRegister) --fixme
+  , ("Spe8dis", gpRegister) -- fixme
+  , ("Spe2dis", gpRegister)
+  , ("Spe4dis", gpRegister)
+  , ("Crbitm", conditionRegister)  -- these two are very odd, must investigate
+  , ("Crbitrc", conditionRegister)
+  , ("Crrc", conditionRegister) -- 4 bit
+  , ("F4rc", floatRegister)
+  , ("F8rc", floatRegister)
+  , ("G8rc", gpRegister)
+  , ("Gprc", gpRegister)
+    -- These two variants are special for instructions that treat r0 specially
+  , ("Gprc_nor0", gpRegister)
+  , ("G8rc_nox0", gpRegister)
+  , ("I1imm", signedImmediate 1)
+  , ("I32imm", signedImmediate 32)
+  , ("S16imm", signedImmediate 16)
+  , ("S16imm64", signedImmediate 16)
+  , ("S17imm", signedImmediate 17)
+  , ("S17imm64", signedImmediate 17)
+  , ("S5imm", signedImmediate 5)
+  , ("Tlsreg", gpRegister)
+  , ("Tlsreg32", gpRegister)
+  , ("U1imm", unsignedImmediate 1)
+  , ("U2imm", unsignedImmediate 2)
+  , ("U4imm", unsignedImmediate 4)
+  , ("U5imm", unsignedImmediate 5)
+  , ("U6imm", unsignedImmediate 6)
+  , ("U7imm", unsignedImmediate 7)
+  , ("U8imm", unsignedImmediate 8)
+  , ("U16imm", unsignedImmediate 16)
+  , ("U16imm64", unsignedImmediate 16)
+  , ("Memrr", mem)
+  , ("Memri", mem)
+  , ("Memrix", mem)
+  , ("Memrix16", mem)
+  , ("Pred", gpRegister)
+  , ("Vrrc", vecRegister)
+  , ("Vsfrc", vecRegister) -- floating point vec?
+  , ("Vsrc", vecRegister) -- ??
+  , ("Vssrc", vecRegister) -- ??
+  ]
+  where
+    absoluteAddress = OperandPayload { opTypeName = ''Word64
+                                     , opConName = Nothing
+                                     , opConE = Nothing
+                                     , opWordE = Just [| fromIntegral |]
+                                     }
+    relativeOffset = OperandPayload { opTypeName = ''Int64
+                                    , opConName = Nothing
+                                    , opConE = Nothing
+                                    , opWordE = Just [| fromIntegral |]
+                                    }
+    gpRegister = OperandPayload { opTypeName = ''PPC.GPR
+                                , opConName = Just 'PPC.GPR
+                                , opConE = Just (conE 'PPC.GPR)
+                                , opWordE = Just [| fromIntegral . PPC.unGPR |]
+                                }
+    conditionRegister = OperandPayload { opTypeName = ''PPC.CR
+                                       , opConName = Just 'PPC.CR
+                                       , opConE = Just (conE 'PPC.CR)
+                                       , opWordE = Just [| fromIntegral . PPC.unCR |]
+                                       }
+    floatRegister = OperandPayload { opTypeName = ''PPC.FR
+                                   , opConName = Just 'PPC.FR
+                                   , opConE = Just (conE 'PPC.FR)
+                                   , opWordE = Just [| fromIntegral . PPC.unFR |]
+                                   }
+    signedImmediate :: Word8 -> OperandPayload
+    signedImmediate _n = OperandPayload { opTypeName = ''Int64
+                                        , opConName = Nothing
+                                        , opConE = Nothing
+                                        , opWordE = Just [| fromIntegral |]
+                                        }
+    unsignedImmediate :: Word8 -> OperandPayload
+    unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
+                                          , opConName = Nothing
+                                          , opConE = Nothing
+                                          , opWordE = Just [| fromIntegral |]
+                                          }
+    vecRegister = OperandPayload { opTypeName = ''PPC.VR
+                                 , opConName = Just 'PPC.VR
+                                 , opConE = Just (conE 'PPC.VR)
+                                 , opWordE = Just [| fromIntegral . PPC.unVR |]
+                                 }
+    mem = OperandPayload { opTypeName = ''PPC.Mem
+                         , opConName = Just 'PPC.mkMem
+                         , opConE = Just (varE 'PPC.mkMem)
+                         , opWordE = Just (varE 'PPC.memToBits)
+                         }
