@@ -211,6 +211,8 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                             , ("crD", SimpleDescriptor "BF")
                             , ("to", SimpleDescriptor "RST")
                             , ("RTS", SimpleDescriptor "RST")
+                            , ("frD", SimpleDescriptor "RST")
+                            , ("frB", SimpleDescriptor "B")
                             ]
 
     ppcXForm_8 = FormOverride [ ("rS", SimpleDescriptor "RST")
