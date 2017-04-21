@@ -202,7 +202,7 @@ parseBitRef =
   tryChoice [ ExpectedBit False <$ P.char '0'
             , ExpectedBit True <$ P.char '1'
             , FieldBit <$> name <*> P.between (symbol "{") (symbol "}") (lexeme parseInt)
-            , FieldVarRef <$> name
+            , FieldBit <$> name <*> pure 0
            ]
 
 parseStringLiteral :: Parser String
