@@ -49,7 +49,7 @@ data ClassParameter =
   deriving (Show, Generic, NFData)
 
 data Metadata =
-  Metadata String
+  Metadata { unMetadata :: String }
   deriving (Show, Eq, Generic, NFData, Ord)
 
 data Named a =

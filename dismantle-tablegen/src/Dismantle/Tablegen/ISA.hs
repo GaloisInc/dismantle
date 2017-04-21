@@ -2,6 +2,8 @@
 module Dismantle.Tablegen.ISA (
   ISA(..),
   OperandPayload(..),
+  FormOverride(..),
+  InstFieldDescriptor(..),
   Endianness(..),
   thumb,
   aarch64,
@@ -9,6 +11,8 @@ module Dismantle.Tablegen.ISA (
   avr,
   sparc
   ) where
+
+import qualified Data.List.NonEmpty as NL
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -36,6 +40,17 @@ data OperandPayload =
                  -- instruction's native word type
                  }
 
+-- | Maintains a mapping from operands in the 'OutOperandList'/'InOperandList'
+-- and the fields in the 'Inst' definition.
+data FormOverride = FormOverride [(String, InstFieldDescriptor)]
+                  deriving (Show)
+data InstFieldDescriptor = SimpleDescriptor String
+                         -- ^ A simple mapping to another string
+                         | ComplexDescriptor (NL.NonEmpty (String, Int))
+                         -- ^ A mapping to a set of strings that represent
+                         -- chunks of the operand
+                         deriving (Show)
+
 -- | Information specific to an ISA that influences code generation
 data ISA =
   ISA { isaName :: String
@@ -61,6 +76,10 @@ data ISA =
       -- instruction, and seem to only serve to carry metadata.  An example from
       -- PPC is @ptr_rc_nor0:$ea_res@, which is just a marker to indicate that
       -- the instruction updates memory at a location held in a register.
+      , isaFormOverrides :: [(String, FormOverride)]
+      -- ^ A list of *ordered* overrides to apply to operand mappings based on
+      -- the forms specified in instruction metadata.  The first match will be
+      -- used as the override (if any).
       , isaInsnWordFromBytes :: Name
       -- ^ The name of the function that is used to convert a prefix
       -- of the instruction stream into a single word that contains an

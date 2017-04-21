@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -13,7 +14,7 @@ module Dismantle.Tablegen (
 
 import qualified GHC.Err.Located as L
 
-import Control.Monad ( guard, when, unless )
+import Control.Monad ( guard, when )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
 import qualified Data.ByteString.Lazy as LBS
@@ -21,18 +22,20 @@ import Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Foldable as F
 import qualified Data.List as L
+import qualified Data.List.NonEmpty as NL
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
-import Data.Maybe ( mapMaybe )
+import Data.Maybe ( fromMaybe, mapMaybe )
 import qualified Data.Set as S
 import Data.Word ( Word8 )
+import Text.Printf ( printf )
 
 import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Parser ( parseTablegen )
 import Dismantle.Tablegen.Parser.Types
 import Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
-
+import Debug.Trace
 data Parser a = Parser (LBS.ByteString -> a)
 
 parseInstruction :: BT.ByteTrie (Maybe (Parser a)) -> LBS.ByteString -> (Int, Maybe a)
@@ -153,27 +156,108 @@ withEncoding endian def k =
 toBigEndian :: [Maybe BitRef] -> [Maybe BitRef]
 toBigEndian = concat . reverse . L.chunksOf 8
 
+-- | Match operands in the operand lists to fields in the instruction based on
+-- their variable names.
+--
+-- This is the most sensible default, but not all ISAs have a clean mapping.
+parseOperandsByName :: ISA
+                    -> String
+                    -- ^ Mnemonic
+                    -> [Metadata]
+                    -> SimpleValue
+                    -> SimpleValue
+                    -> [Maybe BitRef]
+                    -> (() -> FM [OperandDescriptor])
+                    -> FM ([OperandDescriptor], [OperandDescriptor])
+parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kexit = do
+  outOps <- parseOperandList "outs" outs
+  inOps <- parseOperandList "ins" ins
+  return (outOps, inOps)
+  where
+    moverride = lookupFormOverride isa metadata
+    -- A map of field names (derived from the 'Inst' field of a
+    -- definition) to pairs of (instructionIndex, operandIndex), where
+    -- the instruction index is the bit number in the instruction and
+    -- the operand index is the index into the operand of that bit.
+    operandBits :: M.Map (CI String) [(Int, Int)]
+    operandBits = indexFieldBits mbits
+
+    lookupFieldBits :: NL.NonEmpty (String, Int) -> Maybe [(Int, Int)]
+    lookupFieldBits (F.toList -> fldNames) = concat <$> mapM lookupAndOffset fldNames
+      where
+        lookupAndOffset (fldName, offset) = do
+          opBits <- M.lookup (CI.mk fldName) operandBits
+          return [ (insnIndex, opIndex + offset) | (insnIndex, opIndex) <- opBits ]
+
+
+    parseOperandList dagHead dagVal =
+      case dagVal of
+        VDag (DagArg (Identifier hd) _) args
+          | hd == dagHead -> F.foldlM parseOperand [] args
+        _ -> L.error (printf "Unexpected DAG head (%s) for %s" dagHead mnemonic)
+
+    parseOperand operands arg =
+      case arg of
+        DagArg (Identifier i) _
+          | isaIgnoreOperand isa i -> return operands
+          | i == "variable_ops" -> return operands
+          | [klass, var] <- L.splitOn ":$" i ->
+            case lookupFieldBits (applyOverrides moverride var) of
+              Nothing -> do
+                -- If we can't do a direct mapping and no override applies, we
+                -- have failed and need to record an error for this opcode
+                traceM (printf "Failed to find field bits for %s in opcode definition %s" var mnemonic)
+                traceM (printf "  overrides were %s" (show (applyOverrides moverride var)))
+                St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
+                kexit ()
+              Just bitPositions -> do
+                let arrVals :: [(Int, Word8)]
+                    arrVals = [ (fldIdx, fromIntegral bitNum)
+                              | (bitNum, fldIdx) <- bitPositions
+                              ]
+                    desc = OperandDescriptor { opName = var
+                                             , opType = OperandType klass
+                                             , opChunks = groupByChunk (L.sortOn snd arrVals)
+                                             }
+                return (desc : operands)
+        _ -> L.error (printf "Unexpected variable reference in a dag for %s: %s" mnemonic (show arg))
+
+indexFieldBits :: [Maybe BitRef] -> M.Map (CI String) [(Int, Int)]
+indexFieldBits bits = F.foldl' addBit M.empty (zip [0..] bits)
+  where
+    addBit m (bitNum, mbit) =
+      case mbit of
+        Just (FieldBit fldName fldIdx) ->
+          M.insertWith (++) (CI.mk fldName) [(bitNum, fldIdx)] m
+        _ -> m
+
+applyOverrides :: Maybe FormOverride -> String -> NL.NonEmpty (String, Int)
+applyOverrides mOverride varName = fromMaybe ((varName, 0) NL.:| []) $ do
+  FormOverride override <- mOverride
+  ifd <- lookup varName override
+  case ifd of
+    SimpleDescriptor var' -> return ((var', 0) NL.:| [])
+    ComplexDescriptor chunks -> return chunks
+
+-- | Look up the override associated with the form specified in the metadata, if
+-- any.  The first override found is taken, so the ordering matters.
+lookupFormOverride :: ISA -> [String] -> Maybe FormOverride
+lookupFormOverride isa metadata =
+  snd <$> F.find matchOverride (isaFormOverrides isa)
+  where
+    matchOverride = (`elem` metadata) . fst
+
 -- | Try to make an 'InstructionDescriptor' out of a 'Def'.  May fail
 -- (and log its error) or simply skip a 'Def' that fails a test.
 toInstructionDescriptor :: ISA -> Def -> FM ()
 toInstructionDescriptor isa def = do
-  CC.callCC $ \kexit -> do
-    withEncoding (isaEndianness isa)  def $ \outs ins mbits endianBits ordFlds -> do
-      -- Change mkOperandDescriptors such that it takes ordFlds and
-      -- returns the set that have not been consumed.  Note that the
-      -- outputs are listed first, so we have to process outputs first.
-      --
-      -- The current processing is only valid if fields can only be
-      -- outputs OR inputs (not both).  Note that this is distinct
-      -- from the same register being encoded in two slots - it refers
-      -- to x86-style instructions where e.g. EAX is both read as an
-      -- input and modified as a side effect of an instruction, while
-      -- only being encoded in the instruction stream once.
-      (outOperands, ordFlds') <- mkOperandDescriptors isa (defName def) "outs" outs ordFlds mbits kexit
-      (inOperands, ordFlds'') <- mkOperandDescriptors isa (defName def) "ins" ins ordFlds' mbits kexit
-      unless (null ordFlds'') $ do
-        St.modify $ \s -> s { stErrors = (defName def, "") : stErrors s }
-      finishInstructionDescriptor isa def mbits endianBits inOperands outOperands
+  case Metadata "Pseudo" `elem` defMetadata def of
+    True -> return ()
+    False -> do
+      CC.callCC $ \kexit -> do
+        withEncoding (isaEndianness isa)  def $ \outs ins mbits endianBits ordFlds -> do
+          (outOperands, inOperands) <- parseOperandsByName isa (defName def) (defMetadata def) outs ins mbits kexit
+          finishInstructionDescriptor isa def mbits endianBits inOperands outOperands
 
 -- | With the difficult to compute information, finish building the
 -- 'InstructionDescriptor' if possible.  If not possible, log an error
@@ -208,84 +292,6 @@ finishInstructionDescriptor isa def mbits endianBits ins outs =
       Named _ (BitItem cgOnly) <- F.find (named "isCodeGenOnly") (defDecls def)
       Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
       return (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly)
-
--- | Extract OperandDescriptors from the bits pattern, given type
--- information from the InOperandList or OutOperandList DAG items.
---
--- The important thing is that we are preserving the *order* of
--- operands here so that users have a chance of making sense of the
--- generated instructions.
-mkOperandDescriptors :: ISA
-                     -> String
-                     -- ^ Instruction mnemonic
-                     -> String
-                     -- ^ DAG operator string ("ins" or "outs")
-                     -> SimpleValue
-                     -- ^ The DAG item (either InOperandList or OutOperandList)
-                     -> [String]
-                     -- ^ Field name order
-                     -> [Maybe BitRef]
-                     -- ^ The bits descriptor so that we can find the bit numbers for the field
-                     -> (() -> FM ([OperandDescriptor], [String]))
-                     -- ^ Early termination continuation
-                     -> FM ([OperandDescriptor], [String])
-mkOperandDescriptors isa mnemonic dagOperator dagItem ordFlds bits kexit =
-  -- Leave this case as an error, since that means we have a tablegen
-  -- structure we didn't expect rather than a fixable data mismatch
-  case dagItem of
-    VDag (DagArg (Identifier hd) _) args
-      | hd == dagOperator -> F.foldlM parseOperand ([], ordFlds) args
-    _ -> L.error ("Unexpected SimpleValue while looking for DAG head " ++ dagOperator ++ ": " ++ show dagItem)
-
-  where
-    -- A map of field names (derived from the 'Inst' field of a
-    -- definition) to pairs of (instructionIndex, operandIndex), where
-    -- the instruction index is the bit number in the instruction and
-    -- the operand index is the index into the operand of that bit.
-    operandBits :: M.Map (CI String) [(Int, Int)]
-    operandBits = foldr addBit M.empty (zip [0..] bits)
-
-    addBit (bitNum, mbit) m =
-      case mbit of
-        Just (FieldBit fldName fldIdx) ->
-          M.insertWith (++) (CI.mk fldName) [(bitNum, fldIdx)] m
-        _ -> m
-
-    parseOperand :: ([OperandDescriptor], [String]) -> DagArg -> FM ([OperandDescriptor], [String])
-    parseOperand acc@(ops, fldNames) arg =
-      case arg of
-        DagArg (Identifier i) _
-          | isaIgnoreOperand isa i -> return (ops, fldNames)
-          | [klass, var] <- L.splitOn ":$" i ->
-            case fldNames of
-              [] -> do
-                St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
-                kexit ()
-              fldName : rest ->
-                case lookupFieldBits fldName of
-                  Nothing -> do
-                    St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
-                    kexit ()
-                  Just bitPositions -> do
-                    let arrVals :: [(Int, Word8)]
-                        arrVals = [ (fldIdx, fromIntegral bitNum)
-                                  | (bitNum, fldIdx) <- bitPositions
-                                  ]
-                        bitPositions' = L.sortOn snd arrVals
-                        desc = OperandDescriptor { opName = var
-                                                 , opType = OperandType klass
-                                                 , opChunks = groupByChunk bitPositions'
-                                                 }
-
-                    return (desc : ops, rest)
-          | i == "variable_ops" ->
-            -- This case is expected sometimes - there is no single
-            -- argument to make (yet, we might add one)
-            return acc
-        _ -> L.error ("Unexpected variable reference in a DAG for " ++ mnemonic ++ ": " ++ show arg)
-
-    lookupFieldBits :: String -> Maybe [(Int, Int)]
-    lookupFieldBits fldName = M.lookup (CI.mk fldName) operandBits
 
 -- | Group bits in the operand bit spec into contiguous chunks.
 --

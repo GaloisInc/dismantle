@@ -7,6 +7,7 @@ import qualified Data.Binary.Get as B
 import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
 import Data.Int ( Int64 )
+import qualified Data.List.NonEmpty as NL
 import qualified Data.List as L
 import Data.Word ( Word8, Word32, Word64 )
 
@@ -30,6 +31,7 @@ isa = ISA { isaName = "PPC"
           , isaPseudoInstruction = ppcPseudo
           , isaOperandPayloadTypes = ppcOperandPayloadTypes
           , isaIgnoreOperand = ppcIgnoreOperand
+          , isaFormOverrides = ppcFormOverrides
           , isaInsnWordFromBytes = 'asWord32
           , isaInsnWordToBytes = 'fromWord32
           , isaInsnAssembleType = ''Word32
@@ -136,7 +138,10 @@ isa = ISA { isaName = "PPC"
 
     ppcIgnoreOperand op = op `elem` [ "ptr_rc_nor0:$ea_res"
                                     , "ptr_rc_nor0:$ea_result"
+                                    , "crrc0:$ret"
+                                    , "crrc:$ret"
                                     ]
+
 
     ppcFilter i = and [ idNamespace i == "PPC"
                       , idDecoderNamespace i == ""
@@ -204,3 +209,149 @@ isa = ISA { isaName = "PPC"
                                       , "TRAP" -- encoded as TW (trap word) some constant
                                       ]
 
+
+
+ppcFormOverrides = [ ("BForm", ppcBForm)
+                   , ("BForm_1", ppcBForm)
+                   , ("BForm_2", ppcBForm)
+                   , ("BForm_3", ppcBForm)
+                   , ("DForm_base", ppcDForm)
+                   , ("DForm_1", ppcDForm)
+                   , ("DForm_2", ppcDForm)
+                   , ("DForm_3", ppcDForm)
+                   , ("DForm_4", ppcDForm_4)
+                   , ("DForm_5", ppcDForm_5)
+                   , ("IForm", ppcIForm)
+                   , ("VXForm_1", ppcVXForm)
+                   , ("VXForm_2", ppcVXForm)
+                   , ("VXForm_3", ppcVXForm)
+                   , ("VXForm_4", ppcVXForm)
+                   , ("XForm_1", ppcXForm)
+                   , ("XForm_2", ppcXForm)
+                   , ("XForm_3", ppcXForm)
+                   , ("XForm_4", ppcXForm)
+                   , ("XForm_5", ppcXForm)
+                   , ("XForm_6", ppcXForm)
+                   , ("XForm_7", ppcXForm)
+                   , ("XForm_8", ppcXForm_8)
+                   , ("XForm_9", ppcXForm)
+                   , ("XForm_10", ppcXForm)
+                   , ("XForm_11", ppcXForm)
+                   , ("XForm_12", ppcXForm)
+                   , ("XForm_13", ppcXForm)
+                   , ("XForm_14", ppcXForm)
+                   , ("XForm_15", ppcXForm)
+                   , ("XForm_16", ppcXForm_16)
+                   , ("XForm_16b", ppcXForm)
+                   , ("XForm_17", ppcXForm)
+                   , ("XForm_18", ppcXForm)
+                   , ("XForm_19", ppcXForm)
+                   , ("XForm_26", ppcXForm)
+                   , ("XForm_tlbws", ppcXForm)
+                   , ("XForm_base_r3xo", ppcXForm)
+                   , ("XOForm_1", ppcXOForm)
+                   , ("XSForm_1", ppcXSForm)
+                   , ("XX1Form", ppcXXForm)
+                   , ("XX2Form_1", ppcXXForm)
+                   , ("XX2Form_2", ppcXXForm)
+                   , ("XX3Form", ppcXXForm)
+                   , ("XX3Form_1", ppcXXForm)
+                   , ("XX3Form_2", ppcXXForm)
+                   , ("XX2_RD6_UIM5_RS6", ppcRD6Form)
+                   , ("X_RD5_XO5_RS5", ppcRD5Form)
+                   , ("XX2_RD5_XO5_RS6", ppcRD5Form)
+                   , ("VXForm_RD5_XO5_RS5", ppcVXForm_RD5)
+                   ]
+  where
+    ppcBForm = FormOverride [ ("dst", SimpleDescriptor "BD")
+                            , ("bi", SimpleDescriptor "BI")
+                            , ("bo", SimpleDescriptor "BO")
+                            ]
+
+    ppcDForm = FormOverride [ ("dst", SimpleDescriptor "Addr")
+                            , ("src", SimpleDescriptor "Addr")
+                            , ("rS", SimpleDescriptor "A")
+                            , ("imm", SimpleDescriptor "C")
+                            , ("to", SimpleDescriptor "A")
+                            , ("rA", SimpleDescriptor "B")
+                            , ("rD", SimpleDescriptor "A")
+                            ]
+
+    ppcDForm_4 = FormOverride [ ("dst", SimpleDescriptor "B")
+                              , ("src1", SimpleDescriptor "A")
+                              , ("src2", SimpleDescriptor "C")
+                              ]
+
+    ppcDForm_5 = FormOverride [ ("imm", SimpleDescriptor "I")
+                              , ("crD", SimpleDescriptor "BF")
+                              , ("rA", SimpleDescriptor "RA")
+                              ]
+
+    ppcIForm = FormOverride [ ("dst", SimpleDescriptor "LI")
+                            ]
+
+    ppcVXForm = FormOverride [ ("vD", SimpleDescriptor "VD")
+                             , ("vB", SimpleDescriptor "VB")
+                             , ("rA", SimpleDescriptor "VA")
+                             , ("rD", SimpleDescriptor "VD")
+                             , ("UIMM", SimpleDescriptor "VA")
+                             , ("SIMM", SimpleDescriptor "IMM")
+                             ]
+
+    ppcXForm = FormOverride [ ("rA", SimpleDescriptor "A")
+                            , ("rB", SimpleDescriptor "B")
+                            , ("rS", SimpleDescriptor "RST")
+                            , ("RB", SimpleDescriptor "B")
+                            , ("RS", SimpleDescriptor "RST")
+                            , ("vT", SimpleDescriptor "RST")
+                            , ("vB", SimpleDescriptor "B")
+                            , ("vA", SimpleDescriptor "A")
+                            , ("VB", SimpleDescriptor "FRB")
+                            , ("VA", SimpleDescriptor "FRA")
+                            , ("crD", SimpleDescriptor "BF")
+                            , ("to", SimpleDescriptor "RST")
+                            , ("RTS", SimpleDescriptor "RST")
+                            ]
+
+    ppcXForm_8 = FormOverride [ ("rS", SimpleDescriptor "RST")
+                              , ("dst", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
+                              ]
+
+    ppcXForm_16 = FormOverride [ ("rA", SimpleDescriptor "RA")
+                               , ("rB", SimpleDescriptor "RB")
+                               , ("crD", SimpleDescriptor "BF")
+                               ]
+
+    ppcXOForm = FormOverride [ ("rT", SimpleDescriptor "RT")
+                             , ("rB", SimpleDescriptor "RB")
+                             , ("rA", SimpleDescriptor "RA")
+                             ]
+
+    ppcXSForm = FormOverride [ ("rA", SimpleDescriptor "A")
+                             , ("rS", SimpleDescriptor "RS")
+                             ]
+
+    ppcXXForm = FormOverride [ ("UIM", SimpleDescriptor "D")
+                             , ("SHW", SimpleDescriptor "D")
+                             , ("DM", SimpleDescriptor "D")
+                             , ("crD", SimpleDescriptor "CR")
+                             , ("XTi", SimpleDescriptor "XT")
+                             , ("dst", SimpleDescriptor "B")
+                             ]
+
+    ppcVXForm_RD5 = FormOverride [ ("vB", SimpleDescriptor "VB")
+                                 , ("vD", SimpleDescriptor "RD")
+                                 ]
+    ppcRD5Form = FormOverride [ ("rT", SimpleDescriptor "RT")
+                              , ("vB", SimpleDescriptor "B")
+                              , ("vT", SimpleDescriptor "RST")
+                              ]
+    ppcRD6Form = FormOverride [ ("UIM", SimpleDescriptor "UIM5")
+                              , ("UIMM", SimpleDescriptor "UIM5")
+                              , ("XTi", SimpleDescriptor "XT")
+                              ]
+
+    ppcZForm = FormOverride [ ("vT", SimpleDescriptor "FRT")
+                            , ("vB", SimpleDescriptor "FRB")
+                            , ("rmc", SimpleDescriptor "idx")
+                            ]
