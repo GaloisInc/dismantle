@@ -6,7 +6,6 @@ module Dismantle.ARM.ISA (
 import qualified Data.Binary.Get as B
 import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
-import Data.Int ( Int64 )
 import qualified Data.List as L
 import Data.Word ( Word8, Word32, Word64 )
 
