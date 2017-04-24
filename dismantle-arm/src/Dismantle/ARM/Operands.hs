@@ -13,6 +13,10 @@ module Dismantle.ARM.Operands (
   mkCoprocRegister,
   coprocRegisterToBits,
 
+  Opcode(..),
+  mkOpcode,
+  opcodeToBits,
+
   AddrMode3(..),
   mkAddrMode3,
   addrMode3ToBits,
@@ -28,6 +32,10 @@ module Dismantle.ARM.Operands (
   Imm12(..),
   mkImm12,
   imm12ToBits,
+
+  Imm5(..),
+  mkImm5,
+  imm5ToBits,
 
   Imm12_4(..),
   mkImm12_4,
@@ -67,6 +75,10 @@ newtype GPR = GPR { unGPR :: Word8 }
 
 -- | Coprocessor register by number
 newtype CoprocRegister = CoprocRegister { unCoprocRegister :: Word8 }
+  deriving (Eq, Ord, Show)
+
+-- | Coprocessor operation opcode register by number
+newtype Opcode = Opcode { unOpcode :: Word8 }
   deriving (Eq, Ord, Show)
 
 -- | Double-precision register by number
@@ -127,11 +139,29 @@ imm12ToBits :: Imm12 -> Word32
 imm12ToBits (Imm12 i) =
     insert imm12Field (fromIntegral i) 0
 
+imm5Field :: Field
+imm5Field = Field 5 0
+
+mkImm5 :: Word32 -> Imm5
+mkImm5 w = Imm5 $ fromIntegral i
+  where
+    i = extract imm5Field w
+
+imm5ToBits :: Imm5 -> Word32
+imm5ToBits (Imm5 i) =
+    insert imm5Field (fromIntegral i) 0
+
 mkCoprocRegister :: Word32 -> CoprocRegister
 mkCoprocRegister w = CoprocRegister $ fromIntegral w
 
 coprocRegisterToBits :: CoprocRegister -> Word32
 coprocRegisterToBits (CoprocRegister i) = fromIntegral i
+
+mkOpcode :: Word32 -> Opcode
+mkOpcode w = Opcode $ fromIntegral w
+
+opcodeToBits :: Opcode -> Word32
+opcodeToBits (Opcode i) = fromIntegral i
 
 branchTargetField :: Field
 branchTargetField = Field 24 0
@@ -219,6 +249,11 @@ data Imm12 = Imm12 { unImm12 :: Integer
                    }
   deriving (Eq, Ord, Show)
 
+-- | A five-bit immediate
+data Imm5 = Imm5 { unImm5 :: Word8
+                 }
+  deriving (Eq, Ord, Show)
+
 -- | A branch target
 data BranchTarget = BranchTarget { unBranchTarget :: Integer
                                  }
@@ -273,6 +308,9 @@ instance PP.Pretty VR where
 
 instance PP.Pretty Imm12 where
   pPrint = PP.pPrint . unImm12
+
+instance PP.Pretty Imm5 where
+  pPrint = PP.pPrint . unImm5
 
 instance PP.Pretty BranchTarget where
   pPrint = PP.pPrint . unBranchTarget

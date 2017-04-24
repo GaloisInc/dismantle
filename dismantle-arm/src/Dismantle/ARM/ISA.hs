@@ -64,6 +64,11 @@ isa = ISA { isaName = "ARM"
                            , opConE = Just (conE 'ARM.mkImm12)
                            , opWordE = Just (varE 'ARM.imm12ToBits)
                            }
+    imm5 = OperandPayload { opTypeName = ''ARM.Imm5
+                          , opConName = Just 'ARM.Imm5
+                          , opConE = Just (conE 'ARM.mkImm5)
+                          , opWordE = Just (varE 'ARM.imm5ToBits)
+                          }
     imm12_4Operand = OperandPayload { opTypeName = ''ARM.Imm12_4
                                     , opConName = Just 'ARM.Imm12_4
                                     , opConE = Just (conE 'ARM.mkImm12_4)
@@ -99,6 +104,16 @@ isa = ISA { isaName = "ARM"
                                     , opConE = Just (conE 'ARM.mkCoprocRegister)
                                     , opWordE = Just (varE 'ARM.coprocRegisterToBits)
                                     }
+    opcodeOperand = OperandPayload { opTypeName = ''ARM.Opcode
+                                   , opConName = Just 'ARM.Opcode
+                                   , opConE = Just (conE 'ARM.mkOpcode)
+                                   , opWordE = Just (varE 'ARM.opcodeToBits)
+                                   }
+    word8Operand = OperandPayload { opTypeName = ''Word8
+                                  , opConName = Just 'fromIntegral
+                                  , opConE = Just (conE 'fromIntegral)
+                                  , opWordE = Just (varE 'fromIntegral)
+                                  }
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
@@ -115,11 +130,16 @@ isa = ISA { isaName = "ARM"
         , ("So_reg_imm"        , imm12)
         , ("So_reg_reg"        , imm12)
         , ("Adrlabel"          , adrLabelOperand)
-        , ("Imm0_65535"        , imm12_4Operand)
         , ("Arm_bl_target"     , branchTarget)
         , ("Arm_blx_target"    , branchExecuteTarget)
         , ("Arm_br_target"     , branchTarget)
         , ("P_imm"             , coprocRegister)
+        , ("Imm0_65535"        , imm12_4Operand)
+        , ("Imm0_15"           , opcodeOperand)
+        , ("Imm0_7"            , opcodeOperand)
+        , ("Imm0_31"           , imm5)
+        , ("C_imm"             , coprocRegister)
+        , ("Imod_op"           , word8Operand)
         -- , ("Addrmode3_pre"     , )
         -- , ("Addrmode5"         , )
         -- , ("Addrmode5_pre"     , )
@@ -131,16 +151,11 @@ isa = ISA { isaName = "ARM"
         -- , ("Am3offset"         , )
         -- , ("Am6offset"         , )
         -- , ("Bf_inv_mask_imm"   , )
-        -- , ("C_imm"             , )
         -- , ("Coproc_option_imm" , )
         -- , ("Iflags_op"         , )
         -- , ("Imm0_1"            , )
-        -- , ("Imm0_15"           , )
-        -- , ("Imm0_31"           , )
-        -- , ("Imm0_7"            , )
         -- , ("Imm1_32"           , )
         -- , ("Imm24b"            , )
-        -- , ("Imod_op"           , )
         -- , ("Ldst_so_reg"       , )
         -- , ("Memb_opt"          , )
         -- , ("Nohash_imm"        , )
