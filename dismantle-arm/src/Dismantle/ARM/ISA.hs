@@ -69,11 +69,11 @@ isa = ISA { isaName = "ARM"
                           , opConE = Just (conE 'ARM.mkImm5)
                           , opWordE = Just (varE 'ARM.imm5ToBits)
                           }
-    imm12_4Operand = OperandPayload { opTypeName = ''ARM.Imm12_4
-                                    , opConName = Just 'ARM.Imm12_4
-                                    , opConE = Just (conE 'ARM.mkImm12_4)
-                                    , opWordE = Just (varE 'ARM.imm12_4ToBits)
-                                    }
+    imm16 = OperandPayload { opTypeName = ''ARM.Imm16
+                           , opConName = Just 'ARM.Imm16
+                           , opConE = Just (conE 'ARM.mkImm16)
+                           , opWordE = Just (varE 'ARM.imm16ToBits)
+                           }
     predOperand = OperandPayload { opTypeName = ''ARM.Pred
                                  , opConName = Just 'ARM.Pred
                                  , opConE = Just (conE 'ARM.mkPred)
@@ -134,7 +134,7 @@ isa = ISA { isaName = "ARM"
         , ("Arm_blx_target"    , branchExecuteTarget)
         , ("Arm_br_target"     , branchTarget)
         , ("P_imm"             , coprocRegister)
-        , ("Imm0_65535"        , imm12_4Operand)
+        , ("Imm0_65535"        , imm16)
         , ("Imm0_15"           , opcodeOperand)
         , ("Imm0_7"            , opcodeOperand)
         , ("Imm0_31"           , imm5)

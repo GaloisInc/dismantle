@@ -37,9 +37,9 @@ module Dismantle.ARM.Operands (
   mkImm5,
   imm5ToBits,
 
-  Imm12_4(..),
-  mkImm12_4,
-  imm12_4ToBits,
+  Imm16(..),
+  mkImm16,
+  imm16ToBits,
 
   SBit(..),
   mkSBit,
@@ -188,11 +188,11 @@ branchExecuteTargetToBits :: BranchExecuteTarget -> Word32
 branchExecuteTargetToBits (BranchExecuteTarget i) =
     insert branchExecuteTargetField1 (i `shiftR` 1) 0
 
-mkImm12_4 :: Word32 -> Imm12_4
-mkImm12_4 = Imm12_4 . fromIntegral
+mkImm16 :: Word32 -> Imm16
+mkImm16 = Imm16 . fromIntegral
 
-imm12_4ToBits :: Imm12_4 -> Word32
-imm12_4ToBits (Imm12_4 i) = fromIntegral i
+imm16ToBits :: Imm16 -> Word32
+imm16ToBits (Imm16 i) = fromIntegral i
 
 mkSBit :: Word32 -> SBit
 mkSBit = SBit . fromIntegral
@@ -265,8 +265,8 @@ data BranchExecuteTarget = BranchExecuteTarget { unBranchExecuteTarget :: Intege
   deriving (Eq, Ord, Show)
 
 -- | A 16-bit immediate split into 12- and 4-bit chunks
-data Imm12_4 = Imm12_4 { unImm12_4 :: Integer
-                       }
+data Imm16 = Imm16 { unImm16 :: Integer
+                   }
   deriving (Eq, Ord, Show)
 
 -- | A set-flags bit ('S' in the ARM ARM)
