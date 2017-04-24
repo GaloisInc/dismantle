@@ -1,4 +1,5 @@
 {-# OPTIONS_HADDOCK not-home #-}
+{-# LANGUAGE BinaryLiterals #-}
 module Dismantle.ARM.Operands (
   GPR(..),
   DPR(..),
@@ -23,6 +24,10 @@ module Dismantle.ARM.Operands (
   SBit(..),
   mkSBit,
   sBitToBits,
+
+  AdrLabel(..),
+  mkAdrLabel,
+  adrLabelToBits,
 
   Pred(..),
   mkPred,
@@ -133,6 +138,27 @@ predToBits :: Pred -> Word32
 predToBits (Pred p) =
     insert predField (fromIntegral p) 0
 
+addBitsField :: Field
+addBitsField = Field 2 22
+
+mkAdrLabel :: Word32 -> AdrLabel
+mkAdrLabel w = AdrLabel i add
+  where
+    i = mkImm12 w
+    addBits = extract addBitsField w
+    add = case addBits of
+        0b10 -> True
+        0b1  -> False
+        _    -> error $ "mkAdrLabel: unexpected addition bits: " <> show addBits
+
+adrLabelToBits :: AdrLabel -> Word32
+adrLabelToBits (AdrLabel imm add) =
+    let addBits = if add
+                  then 0b10
+                  else 0b1
+    in insert addBitsField addBits $
+       imm12ToBits imm
+
 mkAddrOffsetNone :: Word32 -> AddrOffsetNone
 mkAddrOffsetNone w = AddrOffsetNone (GPR $ fromIntegral reg)
   where
@@ -174,6 +200,12 @@ data SBit = SBit { unSBit :: Word8
                  }
   deriving (Eq, Ord, Show)
 
+-- | An ADR immediate offset and addition bit
+data AdrLabel = AdrLabel { adrLabelImm :: Imm12
+                         , adrLabelAdd :: Bool
+                         }
+  deriving (Eq, Ord, Show)
+
 -- | Four-bit condition flag sequence
 data Pred = Pred { unPred :: Word8
                  }
@@ -211,6 +243,11 @@ instance PP.Pretty SBit where
 
 instance PP.Pretty Pred where
   pPrint = PP.pPrint . unPred
+
+instance PP.Pretty AdrLabel where
+  pPrint (AdrLabel imm add) =
+      let opStr = if add then mempty else PP.char '-'
+      in opStr <> PP.pPrint imm
 
 instance PP.Pretty AddrMode3 where
   pPrint m =

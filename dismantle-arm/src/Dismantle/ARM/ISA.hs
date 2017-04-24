@@ -80,6 +80,11 @@ isa = ISA { isaName = "ARM"
                                  , opConE = Just (conE 'ARM.mkSBit)
                                  , opWordE = Just (varE 'ARM.sBitToBits)
                                  }
+    adrLabelOperand = OperandPayload { opTypeName = ''ARM.AdrLabel
+                                     , opConName = Just 'ARM.AdrLabel
+                                     , opConE = Just (conE 'ARM.mkAdrLabel)
+                                     , opWordE = Just (varE 'ARM.adrLabelToBits)
+                                     }
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
@@ -93,13 +98,15 @@ isa = ISA { isaName = "ARM"
         , ("Addrmode3"         , addrMode3)
         , ("Pred"              , predOperand)
         , ("Cc_out"            , sBitOperand)
+        , ("So_reg_imm"        , imm12)
+        , ("So_reg_reg"        , imm12)
+        , ("Adrlabel"          , adrLabelOperand)
         -- , ("Addrmode3_pre"     , )
         -- , ("Addrmode5"         , )
         -- , ("Addrmode5_pre"     , )
         -- , ("Addrmode6"         , )
         -- , ("Addrmode_imm12"    , )
         -- , ("Addrmode_imm12_pre", )
-        -- , ("Adrlabel"          , )
         -- , ("Am2offset_imm"     , )
         -- , ("Am2offset_reg"     , )
         -- , ("Am3offset"         , )
@@ -133,8 +140,6 @@ isa = ISA { isaName = "ARM"
         -- , ("Rot_imm"           , )
         -- , ("Setend_op"         , )
         -- , ("Shift_imm"         , )
-        -- , ("So_reg_imm"        , )
-        -- , ("So_reg_reg"        , )
         ]
 
     armFilter i = and [ idNamespace i == "ARM"
