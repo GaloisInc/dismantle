@@ -85,7 +85,7 @@ isa = ISA { isaName = "ARM"
         [ ("Dpr"               , dpRegister)
         , ("GPR"               , gpRegister)
         , ("Gprpairop"         , gpRegister)
-        , ("Gprnopc"           , gpRegister)
+        , ("GPRnopc"           , gpRegister)
         , ("Qpr"               , qpRegister)
         , ("Qqpr"              , qqpRegister)
         , ("Mod_imm"           , imm12)
