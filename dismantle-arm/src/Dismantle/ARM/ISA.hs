@@ -75,11 +75,16 @@ isa = ISA { isaName = "ARM"
                                 , opConE = Just (conE 'ARM.DPR)
                                 , opWordE = Just [| fromIntegral . ARM.unDPR |]
                                 }
-    am3Register = OperandPayload { opTypeName = ''ARM.AddrMode3
-                                 , opConName = Just 'ARM.AddrMode3
-                                 , opConE = Just (conE 'ARM.mkAddrMode3)
-                                 , opWordE = Just (varE 'ARM.addrMode3ToBits)
-                                 }
+    addrMode3 = OperandPayload { opTypeName = ''ARM.AddrMode3
+                               , opConName = Just 'ARM.AddrMode3
+                               , opConE = Just (conE 'ARM.mkAddrMode3)
+                               , opWordE = Just (varE 'ARM.addrMode3ToBits)
+                               }
+    addrOffsetNone = OperandPayload { opTypeName = ''ARM.AddrOffsetNone
+                                    , opConName = Just 'ARM.AddrOffsetNone
+                                    , opConE = Just (conE 'ARM.mkAddrOffsetNone)
+                                    , opWordE = Just (varE 'ARM.addrOffsetNoneToBits)
+                                    }
     -- signedImmediate :: Word8 -> OperandPayload
     -- signedImmediate _n = OperandPayload { opTypeName = ''Int64
     --                                     , opConName = Nothing
@@ -110,8 +115,8 @@ isa = ISA { isaName = "ARM"
         , ("Gprnopc"           , gpRegister)
         , ("Qpr"               , qpRegister)
         , ("Qqpr"              , qqpRegister)
-        , ("Addr_offset_none"  , am3Register)
-        -- , ("Addrmode3"         , )
+        , ("Addr_offset_none"  , addrOffsetNone)
+        , ("Addrmode3"         , addrMode3)
         -- , ("Addrmode3_pre"     , )
         -- , ("Addrmode5"         , )
         -- , ("Addrmode5_pre"     , )

@@ -7,9 +7,14 @@ module Dismantle.ARM.Operands (
   CR(..),
   FR(..),
   VR(..),
+
   AddrMode3(..),
   mkAddrMode3,
-  addrMode3ToBits
+  addrMode3ToBits,
+
+  AddrOffsetNone(..),
+  mkAddrOffsetNone,
+  addrOffsetNoneToBits
   ) where
 
 import Data.Bits
@@ -80,6 +85,15 @@ addrMode3ToBits (AddrMode3 (GPR r) imm add) =
     insert addrMode3ImmLField imm $
     insert addrMode3ImmHField (imm `shiftR` 4) 0
 
+mkAddrOffsetNone :: Word32 -> AddrOffsetNone
+mkAddrOffsetNone w = AddrOffsetNone (GPR $ fromIntegral reg)
+  where
+    reg = extract addrMode3RegField w
+
+addrOffsetNoneToBits :: AddrOffsetNone -> Word32
+addrOffsetNoneToBits (AddrOffsetNone (GPR r)) =
+    insert addrMode3RegField r 0
+
 mkMask :: Field -> Word32
 mkMask (Field bits offset) = (2 ^ bits - 1) `shiftL` offset
 
@@ -95,6 +109,11 @@ data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
                            , addrMode3Immediate :: Word8
                            , addrMode3Add       :: Bool
                            }
+  deriving (Eq, Ord, Show)
+
+-- | An addressing mode with no offset
+data AddrOffsetNone = AddrOffsetNone { addrOffsetNoneRegister :: GPR
+                                     }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR where
@@ -117,6 +136,9 @@ instance PP.Pretty FR where
 
 instance PP.Pretty VR where
   pPrint (VR rno) = PP.char 'v' <> PP.int (fromIntegral rno)
+
+instance PP.Pretty AddrOffsetNone where
+  pPrint = PP.pPrint . addrOffsetNoneRegister
 
 instance PP.Pretty AddrMode3 where
   pPrint m =
