@@ -9,6 +9,10 @@ module Dismantle.ARM.Operands (
   FR(..),
   VR(..),
 
+  CoprocRegister(..),
+  mkCoprocRegister,
+  coprocRegisterToBits,
+
   AddrMode3(..),
   mkAddrMode3,
   addrMode3ToBits,
@@ -63,6 +67,10 @@ newtype FR = FR { unFR :: Word8 }
 
 -- | General-purpose register by number
 newtype GPR = GPR { unGPR :: Word8 }
+  deriving (Eq, Ord, Show)
+
+-- | Coprocessor register by number
+newtype CoprocRegister = CoprocRegister { unCoprocRegister :: Word8 }
   deriving (Eq, Ord, Show)
 
 -- | Double-precision register by number
@@ -125,6 +133,12 @@ mkImm12 w = Imm12 $ fromIntegral i
 imm12ToBits :: Imm12 -> Word32
 imm12ToBits (Imm12 i) =
     insert imm12Field (fromIntegral i) 0
+
+mkCoprocRegister :: Word32 -> CoprocRegister
+mkCoprocRegister w = CoprocRegister $ fromIntegral w
+
+coprocRegisterToBits :: CoprocRegister -> Word32
+coprocRegisterToBits (CoprocRegister i) = fromIntegral i
 
 branchTargetField :: Field
 branchTargetField = Field 24 0

@@ -100,6 +100,11 @@ isa = ISA { isaName = "ARM"
                                          , opConE = Just (conE 'ARM.mkBranchExecuteTarget)
                                          , opWordE = Just (varE 'ARM.branchExecuteTargetToBits)
                                          }
+    coprocRegister = OperandPayload { opTypeName = ''ARM.CoprocRegister
+                                    , opConName = Just 'ARM.CoprocRegister
+                                    , opConE = Just (conE 'ARM.mkCoprocRegister)
+                                    , opWordE = Just (varE 'ARM.coprocRegisterToBits)
+                                    }
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
@@ -119,6 +124,8 @@ isa = ISA { isaName = "ARM"
         , ("Imm0_65535"        , imm12_4Operand)
         , ("Arm_bl_target"     , branchTarget)
         , ("Arm_blx_target"    , branchExecuteTarget)
+        , ("Arm_br_target"     , branchTarget)
+        , ("P_imm"             , coprocRegister)
         -- , ("Addrmode3_pre"     , )
         -- , ("Addrmode5"         , )
         -- , ("Addrmode5_pre"     , )
@@ -129,7 +136,6 @@ isa = ISA { isaName = "ARM"
         -- , ("Am2offset_reg"     , )
         -- , ("Am3offset"         , )
         -- , ("Am6offset"         , )
-        -- , ("Arm_br_target"     , )
         -- , ("Bf_inv_mask_imm"   , )
         -- , ("C_imm"             , )
         -- , ("Coproc_option_imm" , )
@@ -144,7 +150,6 @@ isa = ISA { isaName = "ARM"
         -- , ("Ldst_so_reg"       , )
         -- , ("Memb_opt"          , )
         -- , ("Nohash_imm"        , )
-        -- , ("P_imm"             , )
         -- , ("Pkh_asr_amt"       , )
         -- , ("Pkh_lsl_amt"       , )
         -- , ("Postidx_imm8"      , )
