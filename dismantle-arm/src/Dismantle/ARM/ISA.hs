@@ -35,16 +35,6 @@ isa = ISA { isaName = "ARM"
           , isaIgnoreOperand = const False
           }
   where
-    -- absoluteAddress = OperandPayload { opTypeName = ''Word64
-    --                                  , opConName = Nothing
-    --                                  , opConE = Nothing
-    --                                  , opWordE = Just [| fromIntegral |]
-    --                                  }
-    -- relativeOffset = OperandPayload { opTypeName = ''Int64
-    --                                 , opConName = Nothing
-    --                                 , opConE = Nothing
-    --                                 , opWordE = Just [| fromIntegral |]
-    --                                 }
     gpRegister = OperandPayload { opTypeName = ''ARM.GPR
                                 , opConName = Just 'ARM.GPR
                                 , opConE = Just (conE 'ARM.GPR)
@@ -60,16 +50,6 @@ isa = ISA { isaName = "ARM"
                                  , opConE = Just (conE 'ARM.QQPR)
                                  , opWordE = Just [| fromIntegral . ARM.unQQPR |]
                                  }
-    -- conditionRegister = OperandPayload { opTypeName = ''ARM.CR
-    --                                    , opConName = Just 'ARM.CR
-    --                                    , opConE = Just (conE 'ARM.CR)
-    --                                    , opWordE = Just [| fromIntegral . ARM.unCR |]
-    --                                    }
-    -- floatRegister = OperandPayload { opTypeName = ''ARM.FR
-    --                                , opConName = Just 'ARM.FR
-    --                                , opConE = Just (conE 'ARM.FR)
-    --                                , opWordE = Just [| fromIntegral . ARM.unFR |]
-    --                                }
     dpRegister = OperandPayload { opTypeName = ''ARM.DPR
                                 , opConName = Just 'ARM.DPR
                                 , opConE = Just (conE 'ARM.DPR)
@@ -100,28 +80,6 @@ isa = ISA { isaName = "ARM"
                                  , opConE = Just (conE 'ARM.mkSBit)
                                  , opWordE = Just (varE 'ARM.sBitToBits)
                                  }
-    -- signedImmediate :: Word8 -> OperandPayload
-    -- signedImmediate _n = OperandPayload { opTypeName = ''Int64
-    --                                     , opConName = Nothing
-    --                                     , opConE = Nothing
-    --                                     , opWordE = Just [| fromIntegral |]
-    --                                     }
-    -- unsignedImmediate :: Word8 -> OperandPayload
-    -- unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
-    --                                       , opConName = Nothing
-    --                                       , opConE = Nothing
-    --                                       , opWordE = Just [| fromIntegral |]
-    --                                       }
-    -- vecRegister = OperandPayload { opTypeName = ''ARM.VR
-    --                              , opConName = Just 'ARM.VR
-    --                              , opConE = Just (conE 'ARM.VR)
-    --                              , opWordE = Just [| fromIntegral . ARM.unVR |]
-    --                              }
-    -- mem = OperandPayload { opTypeName = ''ARM.Mem
-    --                      , opConName = Just 'ARM.mkMem
-    --                      , opConE = Just (varE 'ARM.mkMem)
-    --                      , opWordE = Just (varE 'ARM.memToBits)
-    --                      }
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
