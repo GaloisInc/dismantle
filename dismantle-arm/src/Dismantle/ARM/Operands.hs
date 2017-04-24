@@ -17,10 +17,6 @@ module Dismantle.ARM.Operands (
   mkAddrMode3,
   addrMode3ToBits,
 
-  AddrOffsetNone(..),
-  mkAddrOffsetNone,
-  addrOffsetNoneToBits,
-
   BranchTarget(..),
   mkBranchTarget,
   branchTargetToBits,
@@ -95,32 +91,29 @@ data Field = Field { fieldBits :: Int
                    }
 
 addrMode3RegField :: Field
-addrMode3RegField = Field 4 16
+addrMode3RegField = Field 4 9
 
 addrMode3AddField :: Field
-addrMode3AddField = Field 1 23
+addrMode3AddField = Field 1 8
 
-addrMode3ImmLField :: Field
-addrMode3ImmLField = Field 4 0
-
-addrMode3ImmHField :: Field
-addrMode3ImmHField = Field 4 8
+addrMode3ImmField :: Field
+addrMode3ImmField = Field 8 0
 
 mkAddrMode3 :: Word32 -> AddrMode3
 mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (fromIntegral imm) (add == 1)
   where
-    reg   = extract addrMode3RegField w
-    add   = extract addrMode3AddField w
-    imm4L = extract addrMode3ImmLField w
-    imm4H = extract addrMode3ImmHField w
-    imm   = imm4L .|. (imm4H `shiftL` 4)
+    reg = extract addrMode3RegField w
+    add = extract addrMode3AddField w
+    imm = extract addrMode3ImmField w
 
 addrMode3ToBits :: AddrMode3 -> Word32
 addrMode3ToBits (AddrMode3 (GPR r) imm add) =
     insert addrMode3RegField r $
     insert addrMode3AddField (if add then 1 else 0) $
-    insert addrMode3ImmLField imm $
-    insert addrMode3ImmHField (imm `shiftR` 4) 0
+    insert addrMode3ImmField imm $
+    -- Always set bit position 13 (see the tgen data and ARM ARM for
+    -- LDRD etc. that use this operand type).
+    insert (Field 1 13) 1 0
 
 imm12Field :: Field
 imm12Field = Field 12 0
@@ -159,62 +152,32 @@ branchExecuteTargetField2 :: Field
 branchExecuteTargetField2 = Field 1 24
 
 mkBranchExecuteTarget :: Word32 -> BranchExecuteTarget
-mkBranchExecuteTarget w = BranchExecuteTarget $ fromIntegral t
-  where
-    hi = extract branchExecuteTargetField1 w
-    lo = extract branchExecuteTargetField2 w
-    t = hi `shiftL` 2 .|.
-        lo `shiftL` 1
+mkBranchExecuteTarget w = BranchExecuteTarget $ fromIntegral $ w `shiftL` 1
 
 branchExecuteTargetToBits :: BranchExecuteTarget -> Word32
 branchExecuteTargetToBits (BranchExecuteTarget i) =
-    insert branchExecuteTargetField1 (fromIntegral $ i `shiftR` 2) $
-    insert branchExecuteTargetField2 (fromIntegral $ i `shiftR` 1) 0
-
-imm12_4Field1 :: Field
-imm12_4Field1 = Field 4 0
-
-imm12_4Field2 :: Field
-imm12_4Field2 = Field 12 8
+    insert branchExecuteTargetField1 (i `shiftR` 1) 0
 
 mkImm12_4 :: Word32 -> Imm12_4
-mkImm12_4 w = Imm12_4 $ fromIntegral i
-  where
-    hi = extract imm12_4Field2 w
-    lo = extract imm12_4Field1 w
-    i = (hi `shiftL` 4) .|. lo
+mkImm12_4 = Imm12_4 . fromIntegral
 
 imm12_4ToBits :: Imm12_4 -> Word32
-imm12_4ToBits (Imm12_4 i) =
-    insert imm12_4Field1 (fromIntegral i) $
-    insert imm12_4Field2 (fromIntegral $ i `shiftR` 4) 0
-
-sBitField :: Field
-sBitField = Field 1 20
+imm12_4ToBits (Imm12_4 i) = fromIntegral i
 
 mkSBit :: Word32 -> SBit
-mkSBit w = SBit $ fromIntegral i
-  where
-    i = extract sBitField w
+mkSBit = SBit . fromIntegral
 
 sBitToBits :: SBit -> Word32
-sBitToBits (SBit i) =
-    insert sBitField (fromIntegral i) 0
-
-predField :: Field
-predField = Field 4 28
+sBitToBits (SBit i) = fromIntegral i
 
 mkPred :: Word32 -> Pred
-mkPred w = Pred $ fromIntegral i
-  where
-    i = extract predField w
+mkPred = Pred . fromIntegral
 
 predToBits :: Pred -> Word32
-predToBits (Pred p) =
-    insert predField (fromIntegral p) 0
+predToBits (Pred p) = fromIntegral p
 
 addBitsField :: Field
-addBitsField = Field 2 22
+addBitsField = Field 2 12
 
 mkAdrLabel :: Word32 -> AdrLabel
 mkAdrLabel w = AdrLabel i add
@@ -234,15 +197,6 @@ adrLabelToBits (AdrLabel imm add) =
     in insert addBitsField addBits $
        imm12ToBits imm
 
-mkAddrOffsetNone :: Word32 -> AddrOffsetNone
-mkAddrOffsetNone w = AddrOffsetNone (GPR $ fromIntegral reg)
-  where
-    reg = extract addrMode3RegField w
-
-addrOffsetNoneToBits :: AddrOffsetNone -> Word32
-addrOffsetNoneToBits (AddrOffsetNone (GPR r)) =
-    insert addrMode3RegField r 0
-
 mkMask :: Field -> Word32
 mkMask (Field bits offset) = (2 ^ bits - 1) `shiftL` offset
 
@@ -258,11 +212,6 @@ data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
                            , addrMode3Immediate :: Word8
                            , addrMode3Add       :: Bool
                            }
-  deriving (Eq, Ord, Show)
-
--- | An addressing mode with no offset
-data AddrOffsetNone = AddrOffsetNone { addrOffsetNoneRegister :: GPR
-                                     }
   deriving (Eq, Ord, Show)
 
 -- | A twelve-bit immediate
@@ -321,9 +270,6 @@ instance PP.Pretty FR where
 
 instance PP.Pretty VR where
   pPrint (VR rno) = PP.char 'v' <> PP.int (fromIntegral rno)
-
-instance PP.Pretty AddrOffsetNone where
-  pPrint = PP.pPrint . addrOffsetNoneRegister
 
 instance PP.Pretty Imm12 where
   pPrint = PP.pPrint . unImm12

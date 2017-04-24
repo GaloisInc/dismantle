@@ -60,11 +60,6 @@ isa = ISA { isaName = "ARM"
                                , opConE = Just (conE 'ARM.mkAddrMode3)
                                , opWordE = Just (varE 'ARM.addrMode3ToBits)
                                }
-    addrOffsetNone = OperandPayload { opTypeName = ''ARM.AddrOffsetNone
-                                    , opConName = Just 'ARM.AddrOffsetNone
-                                    , opConE = Just (conE 'ARM.mkAddrOffsetNone)
-                                    , opWordE = Just (varE 'ARM.addrOffsetNoneToBits)
-                                    }
     imm12 = OperandPayload { opTypeName = ''ARM.Imm12
                            , opConName = Just 'ARM.Imm12
                            , opConE = Just (conE 'ARM.mkImm12)
@@ -114,7 +109,7 @@ isa = ISA { isaName = "ARM"
         , ("Qpr"               , qpRegister)
         , ("Qqpr"              , qqpRegister)
         , ("Mod_imm"           , imm12)
-        , ("Addr_offset_none"  , addrOffsetNone)
+        , ("Addr_offset_none"  , gpRegister)
         , ("Addrmode3"         , addrMode3)
         , ("Pred"              , predOperand)
         , ("Cc_out"            , sBitOperand)
