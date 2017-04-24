@@ -32,6 +32,7 @@ isa = ISA { isaName = "ARM"
           , isaInsnWordFromBytes = 'asWord32
           , isaInsnWordToBytes = 'fromWord32
           , isaInsnAssembleType = ''Word32
+          , isaIgnoreOperand = const False
           }
   where
     -- absoluteAddress = OperandPayload { opTypeName = ''Word64
