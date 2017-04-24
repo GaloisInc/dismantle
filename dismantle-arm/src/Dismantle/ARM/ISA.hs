@@ -85,6 +85,21 @@ isa = ISA { isaName = "ARM"
                                     , opConE = Just (conE 'ARM.mkAddrOffsetNone)
                                     , opWordE = Just (varE 'ARM.addrOffsetNoneToBits)
                                     }
+    imm12 = OperandPayload { opTypeName = ''ARM.Imm12
+                           , opConName = Just 'ARM.Imm12
+                           , opConE = Just (conE 'ARM.mkImm12)
+                           , opWordE = Just (varE 'ARM.imm12ToBits)
+                           }
+    predOperand = OperandPayload { opTypeName = ''ARM.Pred
+                                 , opConName = Just 'ARM.Pred
+                                 , opConE = Just (conE 'ARM.mkPred)
+                                 , opWordE = Just (varE 'ARM.predToBits)
+                                 }
+    sBitOperand = OperandPayload { opTypeName = ''ARM.SBit
+                                 , opConName = Just 'ARM.SBit
+                                 , opConE = Just (conE 'ARM.mkSBit)
+                                 , opWordE = Just (varE 'ARM.sBitToBits)
+                                 }
     -- signedImmediate :: Word8 -> OperandPayload
     -- signedImmediate _n = OperandPayload { opTypeName = ''Int64
     --                                     , opConName = Nothing
@@ -110,13 +125,16 @@ isa = ISA { isaName = "ARM"
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
-        , ("Gpr"               , gpRegister)
+        , ("GPR"               , gpRegister)
         , ("Gprpairop"         , gpRegister)
         , ("Gprnopc"           , gpRegister)
         , ("Qpr"               , qpRegister)
         , ("Qqpr"              , qqpRegister)
+        , ("Mod_imm"           , imm12)
         , ("Addr_offset_none"  , addrOffsetNone)
         , ("Addrmode3"         , addrMode3)
+        , ("Pred"              , predOperand)
+        , ("Cc_out"            , sBitOperand)
         -- , ("Addrmode3_pre"     , )
         -- , ("Addrmode5"         , )
         -- , ("Addrmode5_pre"     , )
@@ -133,7 +151,6 @@ isa = ISA { isaName = "ARM"
         -- , ("Arm_br_target"     , )
         -- , ("Bf_inv_mask_imm"   , )
         -- , ("C_imm"             , )
-        -- , ("Cc_out"            , )
         -- , ("Coproc_option_imm" , )
         -- , ("Iflags_op"         , )
         -- , ("Imm0_1"            , )
@@ -146,7 +163,6 @@ isa = ISA { isaName = "ARM"
         -- , ("Imod_op"           , )
         -- , ("Ldst_so_reg"       , )
         -- , ("Memb_opt"          , )
-        -- , ("Mod_imm"           , )
         -- , ("Nohash_imm"        , )
         -- , ("P_imm"             , )
         -- , ("Pkh_asr_amt"       , )
@@ -154,7 +170,6 @@ isa = ISA { isaName = "ARM"
         -- , ("Postidx_imm8"      , )
         -- , ("Postidx_imm8s4"    , )
         -- , ("Postidx_reg"       , )
-        -- , ("Pred"              , )
         -- , ("Rgpr"              , )
         -- , ("Reglist"           , )
         -- , ("Rot_imm"           , )
