@@ -70,6 +70,11 @@ isa = ISA { isaName = "ARM"
                            , opConE = Just (conE 'ARM.mkImm12)
                            , opWordE = Just (varE 'ARM.imm12ToBits)
                            }
+    imm12_4Operand = OperandPayload { opTypeName = ''ARM.Imm12_4
+                                    , opConName = Just 'ARM.Imm12_4
+                                    , opConE = Just (conE 'ARM.mkImm12_4)
+                                    , opWordE = Just (varE 'ARM.imm12_4ToBits)
+                                    }
     predOperand = OperandPayload { opTypeName = ''ARM.Pred
                                  , opConName = Just 'ARM.Pred
                                  , opConE = Just (conE 'ARM.mkPred)
@@ -85,6 +90,16 @@ isa = ISA { isaName = "ARM"
                                      , opConE = Just (conE 'ARM.mkAdrLabel)
                                      , opWordE = Just (varE 'ARM.adrLabelToBits)
                                      }
+    branchTarget = OperandPayload { opTypeName = ''ARM.BranchTarget
+                                  , opConName = Just 'ARM.BranchTarget
+                                  , opConE = Just (conE 'ARM.mkBranchTarget)
+                                  , opWordE = Just (varE 'ARM.branchTargetToBits)
+                                  }
+    branchExecuteTarget = OperandPayload { opTypeName = ''ARM.BranchExecuteTarget
+                                         , opConName = Just 'ARM.BranchExecuteTarget
+                                         , opConE = Just (conE 'ARM.mkBranchExecuteTarget)
+                                         , opWordE = Just (varE 'ARM.branchExecuteTargetToBits)
+                                         }
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
@@ -101,6 +116,9 @@ isa = ISA { isaName = "ARM"
         , ("So_reg_imm"        , imm12)
         , ("So_reg_reg"        , imm12)
         , ("Adrlabel"          , adrLabelOperand)
+        , ("Imm0_65535"        , imm12_4Operand)
+        , ("Arm_bl_target"     , branchTarget)
+        , ("Arm_blx_target"    , branchExecuteTarget)
         -- , ("Addrmode3_pre"     , )
         -- , ("Addrmode5"         , )
         -- , ("Addrmode5_pre"     , )
@@ -111,8 +129,6 @@ isa = ISA { isaName = "ARM"
         -- , ("Am2offset_reg"     , )
         -- , ("Am3offset"         , )
         -- , ("Am6offset"         , )
-        -- , ("Arm_bl_target"     , )
-        -- , ("Arm_blx_target"    , )
         -- , ("Arm_br_target"     , )
         -- , ("Bf_inv_mask_imm"   , )
         -- , ("C_imm"             , )
@@ -121,7 +137,6 @@ isa = ISA { isaName = "ARM"
         -- , ("Imm0_1"            , )
         -- , ("Imm0_15"           , )
         -- , ("Imm0_31"           , )
-        -- , ("Imm0_65535"        , )
         -- , ("Imm0_7"            , )
         -- , ("Imm1_32"           , )
         -- , ("Imm24b"            , )

@@ -17,9 +17,21 @@ module Dismantle.ARM.Operands (
   mkAddrOffsetNone,
   addrOffsetNoneToBits,
 
+  BranchTarget(..),
+  mkBranchTarget,
+  branchTargetToBits,
+
+  BranchExecuteTarget(..),
+  mkBranchExecuteTarget,
+  branchExecuteTargetToBits,
+
   Imm12(..),
   mkImm12,
   imm12ToBits,
+
+  Imm12_4(..),
+  mkImm12_4,
+  imm12_4ToBits,
 
   SBit(..),
   mkSBit,
@@ -114,6 +126,55 @@ imm12ToBits :: Imm12 -> Word32
 imm12ToBits (Imm12 i) =
     insert imm12Field (fromIntegral i) 0
 
+branchTargetField :: Field
+branchTargetField = Field 24 0
+
+mkBranchTarget :: Word32 -> BranchTarget
+mkBranchTarget w = BranchTarget $ fromIntegral i
+  where
+    i = extract branchTargetField w
+
+branchTargetToBits :: BranchTarget -> Word32
+branchTargetToBits (BranchTarget i) =
+    insert branchTargetField (fromIntegral i) 0
+
+branchExecuteTargetField1 :: Field
+branchExecuteTargetField1 = Field 24 0
+
+branchExecuteTargetField2 :: Field
+branchExecuteTargetField2 = Field 1 24
+
+mkBranchExecuteTarget :: Word32 -> BranchExecuteTarget
+mkBranchExecuteTarget w = BranchExecuteTarget $ fromIntegral t
+  where
+    hi = extract branchExecuteTargetField1 w
+    lo = extract branchExecuteTargetField2 w
+    t = hi `shiftL` 2 .|.
+        lo `shiftL` 1
+
+branchExecuteTargetToBits :: BranchExecuteTarget -> Word32
+branchExecuteTargetToBits (BranchExecuteTarget i) =
+    insert branchExecuteTargetField1 (fromIntegral $ i `shiftR` 2) $
+    insert branchExecuteTargetField2 (fromIntegral $ i `shiftR` 1) 0
+
+imm12_4Field1 :: Field
+imm12_4Field1 = Field 4 0
+
+imm12_4Field2 :: Field
+imm12_4Field2 = Field 12 8
+
+mkImm12_4 :: Word32 -> Imm12_4
+mkImm12_4 w = Imm12_4 $ fromIntegral i
+  where
+    hi = extract imm12_4Field2 w
+    lo = extract imm12_4Field1 w
+    i = (hi `shiftL` 4) .|. lo
+
+imm12_4ToBits :: Imm12_4 -> Word32
+imm12_4ToBits (Imm12_4 i) =
+    insert imm12_4Field1 (fromIntegral i) $
+    insert imm12_4Field2 (fromIntegral $ i `shiftR` 4) 0
+
 sBitField :: Field
 sBitField = Field 1 20
 
@@ -195,6 +256,21 @@ data Imm12 = Imm12 { unImm12 :: Integer
                    }
   deriving (Eq, Ord, Show)
 
+-- | A branch target
+data BranchTarget = BranchTarget { unBranchTarget :: Integer
+                                 }
+  deriving (Eq, Ord, Show)
+
+-- | A branch-and-execute target
+data BranchExecuteTarget = BranchExecuteTarget { unBranchExecuteTarget :: Integer
+                                               }
+  deriving (Eq, Ord, Show)
+
+-- | A 16-bit immediate split into 12- and 4-bit chunks
+data Imm12_4 = Imm12_4 { unImm12_4 :: Integer
+                       }
+  deriving (Eq, Ord, Show)
+
 -- | A set-flags bit ('S' in the ARM ARM)
 data SBit = SBit { unSBit :: Word8
                  }
@@ -237,6 +313,9 @@ instance PP.Pretty AddrOffsetNone where
 
 instance PP.Pretty Imm12 where
   pPrint = PP.pPrint . unImm12
+
+instance PP.Pretty BranchTarget where
+  pPrint = PP.pPrint . unBranchTarget
 
 instance PP.Pretty SBit where
   pPrint = PP.pPrint . unSBit
