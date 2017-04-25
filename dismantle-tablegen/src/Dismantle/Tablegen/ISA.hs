@@ -40,6 +40,7 @@ data OperandPayload =
 -- and the fields in the 'Inst' definition.
 data FormOverride = FormOverride [(String, InstFieldDescriptor)]
                   deriving (Show)
+
 data InstFieldDescriptor = SimpleDescriptor String
                          -- ^ A simple mapping to another string
                          | ComplexDescriptor (NL.NonEmpty (String, Int))
