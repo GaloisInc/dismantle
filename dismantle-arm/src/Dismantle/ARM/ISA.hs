@@ -59,6 +59,11 @@ isa = ISA { isaName = "ARM"
                                , opConE = Just (conE 'ARM.mkAddrMode3)
                                , opWordE = Just (varE 'ARM.addrMode3ToBits)
                                }
+    addrModeImm12 = OperandPayload { opTypeName = ''ARM.AddrModeImm12
+                                   , opConName = Just 'ARM.AddrModeImm12
+                                   , opConE = Just (conE 'ARM.mkAddrModeImm12)
+                                   , opWordE = Just (varE 'ARM.addrModeImm12ToBits)
+                                   }
     imm12 = OperandPayload { opTypeName = ''ARM.Imm12
                            , opConName = Just 'ARM.Imm12
                            , opConE = Just (conE 'ARM.mkImm12)
@@ -141,11 +146,15 @@ isa = ISA { isaName = "ARM"
         , ("C_imm"             , coprocRegister)
         , ("Imod_op"           , word8Operand)
         , ("Iflags_op"         , word8Operand)
+        , ("Memb_opt"          , word8Operand)
+        , ("Pkh_lsl_amt"       , word8Operand)
+        , ("Pkh_asr_amt"       , word8Operand)
+        , ("Addrmode_imm12"    , addrModeImm12)
+        -- , ("Ldst_so_reg"       , )
         -- , ("Addrmode3_pre"     , )
         -- , ("Addrmode5"         , )
         -- , ("Addrmode5_pre"     , )
         -- , ("Addrmode6"         , )
-        -- , ("Addrmode_imm12"    , )
         -- , ("Addrmode_imm12_pre", )
         -- , ("Am2offset_imm"     , )
         -- , ("Am2offset_reg"     , )
@@ -156,11 +165,7 @@ isa = ISA { isaName = "ARM"
         -- , ("Imm0_1"            , )
         -- , ("Imm1_32"           , )
         -- , ("Imm24b"            , )
-        -- , ("Ldst_so_reg"       , )
-        -- , ("Memb_opt"          , )
         -- , ("Nohash_imm"        , )
-        -- , ("Pkh_asr_amt"       , )
-        -- , ("Pkh_lsl_amt"       , )
         -- , ("Postidx_imm8"      , )
         -- , ("Postidx_imm8s4"    , )
         -- , ("Postidx_reg"       , )

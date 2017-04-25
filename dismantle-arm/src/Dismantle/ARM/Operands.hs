@@ -21,6 +21,10 @@ module Dismantle.ARM.Operands (
   mkAddrMode3,
   addrMode3ToBits,
 
+  AddrModeImm12(..),
+  mkAddrModeImm12,
+  addrModeImm12ToBits,
+
   BranchTarget(..),
   mkBranchTarget,
   branchTargetToBits,
@@ -101,6 +105,28 @@ newtype VR = VR { unVR :: Word8 }
 data Field = Field { fieldBits :: Int
                    , fieldOffset :: Int
                    }
+
+addrModeImm12RegField :: Field
+addrModeImm12RegField = Field 4 9
+
+addrModeImm12AddField :: Field
+addrModeImm12AddField = Field 1 8
+
+addrModeImm12ImmField :: Field
+addrModeImm12ImmField = Field 8 0
+
+mkAddrModeImm12 :: Word32 -> AddrModeImm12
+mkAddrModeImm12 w = AddrModeImm12 (GPR $ fromIntegral reg) (fromIntegral imm) (add == 1)
+  where
+    reg = extract addrModeImm12RegField w
+    add = extract addrModeImm12AddField w
+    imm = extract addrModeImm12ImmField w
+
+addrModeImm12ToBits :: AddrModeImm12 -> Word32
+addrModeImm12ToBits (AddrModeImm12 (GPR r) imm add) =
+    insert addrModeImm12RegField r $
+    insert addrModeImm12AddField (if add then 1 else 0) $
+    insert addrModeImm12ImmField imm 0
 
 addrMode3RegField :: Field
 addrMode3RegField = Field 4 9
@@ -244,6 +270,14 @@ data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
                            }
   deriving (Eq, Ord, Show)
 
+-- | An AddrMode_Imm12 memory reference for a load or store instruction
+-- (with a 12-bit immediate)
+data AddrModeImm12 = AddrModeImm12 { addrModeImm12Register  :: GPR
+                                   , addrModeImm12Immediate :: Word8
+                                   , addrModeImm12Add       :: Bool
+                                   }
+  deriving (Eq, Ord, Show)
+
 -- | A twelve-bit immediate
 data Imm12 = Imm12 { unImm12 :: Integer
                    }
@@ -331,3 +365,9 @@ instance PP.Pretty AddrMode3 where
       let opStr = if addrMode3Add m then mempty else PP.char '-'
       in (PP.pPrint (addrMode3Register m) <> PP.char ',') PP.<+>
          (opStr <> PP.pPrint (addrMode3Immediate m))
+
+instance PP.Pretty AddrModeImm12 where
+  pPrint m =
+      let opStr = if addrModeImm12Add m then mempty else PP.char '-'
+      in (PP.pPrint (addrModeImm12Register m) <> PP.char ',') PP.<+>
+         (opStr <> PP.pPrint (addrModeImm12Immediate m))
