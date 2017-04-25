@@ -9,10 +9,9 @@ module Dismantle.Tablegen.TH.Pretty (
 
 import Data.Char ( isAlpha )
 import Data.Int ( Int64 )
-import Data.Word ( Word8 )
+import Data.Word ( Word8, Word16, Word32, Word64 )
 import qualified Data.Map as M
 import Data.Monoid
-import Data.Word ( Word64 )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 -- | Wrap 1) the name of an operand, 2) the operand itself, and 3) the
@@ -74,6 +73,12 @@ instance PP.Pretty Int64 where
   pPrint = PP.integer . fromIntegral
 
 instance PP.Pretty Word8 where
+  pPrint = PP.integer . fromIntegral
+
+instance PP.Pretty Word16 where
+  pPrint = PP.integer . fromIntegral
+
+instance PP.Pretty Word32 where
   pPrint = PP.integer . fromIntegral
 
 instance PP.Pretty Word64 where
