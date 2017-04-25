@@ -32,6 +32,7 @@ isa = ISA { isaName = "ARM"
           , isaInsnWordToBytes = 'fromWord32
           , isaInsnAssembleType = ''Word32
           , isaIgnoreOperand = const False
+          , isaFormOverrides = []
           }
   where
     gpRegister = OperandPayload { opTypeName = ''ARM.GPR
