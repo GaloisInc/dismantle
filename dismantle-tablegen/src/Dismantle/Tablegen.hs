@@ -202,24 +202,27 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
           | isaIgnoreOperand isa i -> return operands
           | i == "variable_ops" -> return operands
           | [klass, var] <- L.splitOn ":$" i ->
-            case lookupFieldBits (applyOverrides moverride var) of
-              Nothing -> do
-                -- If we can't do a direct mapping and no override applies, we
-                -- have failed and need to record an error for this opcode
-                traceM (printf "Failed to find field bits for %s in opcode definition %s" var mnemonic)
-                traceM (printf "  overrides were %s" (show (applyOverrides moverride var)))
-                St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
-                kexit ()
-              Just bitPositions -> do
-                let arrVals :: [(Int, Word8)]
-                    arrVals = [ (fldIdx, fromIntegral bitNum)
-                              | (bitNum, fldIdx) <- bitPositions
-                              ]
-                    desc = OperandDescriptor { opName = var
-                                             , opType = OperandType klass
-                                             , opChunks = groupByChunk (L.sortOn snd arrVals)
-                                             }
-                return (desc : operands)
+              case lookupOperandOverride moverride var of
+                  Nothing -> return operands
+                  Just overrides ->
+                      case lookupFieldBits overrides of
+                        Nothing -> do
+                          -- If we can't do a direct mapping and no override applies, we
+                          -- have failed and need to record an error for this opcode
+                          traceM (printf "Failed to find field bits for %s in opcode definition %s" var mnemonic)
+                          traceM (printf "  overrides were %s" (show overrides))
+                          St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
+                          kexit ()
+                        Just bitPositions -> do
+                          let arrVals :: [(Int, Word8)]
+                              arrVals = [ (fldIdx, fromIntegral bitNum)
+                                        | (bitNum, fldIdx) <- bitPositions
+                                        ]
+                              desc = OperandDescriptor { opName = var
+                                                       , opType = OperandType klass
+                                                       , opChunks = groupByChunk (L.sortOn snd arrVals)
+                                                       }
+                          return (desc : operands)
         _ -> L.error (printf "Unexpected variable reference in a dag for %s: %s" mnemonic (show arg))
 
 indexFieldBits :: [Maybe BitRef] -> M.Map (CI String) [(Int, Int)]
@@ -231,13 +234,31 @@ indexFieldBits bits = F.foldl' addBit M.empty (zip [0..] bits)
           M.insertWith (++) (CI.mk fldName) [(bitNum, fldIdx)] m
         _ -> m
 
-applyOverrides :: Maybe FormOverride -> String -> NL.NonEmpty (String, Int)
-applyOverrides mOverride varName = fromMaybe ((varName, 0) NL.:| []) $ do
-  FormOverride override <- mOverride
-  ifd <- lookup varName override
-  case ifd of
-    SimpleDescriptor var' -> return ((var', 0) NL.:| [])
-    ComplexDescriptor chunks -> return chunks
+-- | Determine whether the named operand decoding behavior needs to be
+-- overridden.
+--
+-- If we were given no overrides at all or if the operand name does not
+-- appear at all in a specified override list, assume that the specified
+-- operand name has only one chunk in the input word.
+--
+-- If the operand DOES appear in the override list:
+--
+-- * If it should be ignored, return Nothing.
+-- * If it should be mapped to an alternate name, assume it maps to that
+--   name in one chunk.
+-- * If it should be mapped to a set of chunks, return Just those
+--   chunks.
+lookupOperandOverride :: Maybe FormOverride -> String -> Maybe (NL.NonEmpty (String, Int))
+lookupOperandOverride Nothing varName = Just ((varName, 0) NL.:| [])
+lookupOperandOverride (Just (FormOverride pairs)) varName =
+    case snd <$> filter ((== varName) . fst) pairs of
+        [] -> Just ((varName, 0) NL.:| [])
+        [e] ->
+            case e of
+                Ignore                   -> Nothing
+                SimpleDescriptor var'    -> Just ((var', 0) NL.:| [])
+                ComplexDescriptor chunks -> Just chunks
+        _ -> error ""
 
 -- | Look up the override associated with the form specified in the metadata, if
 -- any.  The first override found is taken, so the ordering matters.

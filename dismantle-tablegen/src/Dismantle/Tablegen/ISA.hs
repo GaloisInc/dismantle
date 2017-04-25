@@ -47,7 +47,12 @@ data InstFieldDescriptor = SimpleDescriptor String
                          | ComplexDescriptor (NL.NonEmpty (String, Int))
                          -- ^ A mapping to a set of strings that represent
                          -- chunks of the operand
-                         deriving (Show)
+                         | Ignore
+                         -- ^ The operand with this descriptor should be
+                         -- ignored (e.g. for operands that appear in
+                         -- the operand lists but appear nowhere in the
+                         -- bit specfications).
+                         deriving (Show, Eq)
 
 -- | Information specific to an ISA that influences code generation
 data ISA =
