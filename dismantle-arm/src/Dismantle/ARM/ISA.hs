@@ -35,117 +35,94 @@ isa = ISA { isaName = "ARM"
           }
   where
     gpRegister = OperandPayload { opTypeName = ''ARM.GPR
-                                , opConName = Just 'ARM.GPR
-                                , opConE = Just (conE 'ARM.GPR)
+                                , opConE = Just (varE 'ARM.gpr)
                                 , opWordE = Just [| fromIntegral . ARM.unGPR |]
                                 }
     qpRegister = OperandPayload { opTypeName = ''ARM.QPR
-                                , opConName = Just 'ARM.QPR
-                                , opConE = Just (conE 'ARM.QPR)
+                                , opConE = Just (varE 'ARM.qpr)
                                 , opWordE = Just [| fromIntegral . ARM.unQPR |]
                                 }
     qqpRegister = OperandPayload { opTypeName = ''ARM.QQPR
-                                 , opConName = Just 'ARM.QQPR
-                                 , opConE = Just (conE 'ARM.QQPR)
+                                 , opConE = Just (varE 'ARM.qqpr)
                                  , opWordE = Just [| fromIntegral . ARM.unQQPR |]
                                  }
     dpRegister = OperandPayload { opTypeName = ''ARM.DPR
-                                , opConName = Just 'ARM.DPR
-                                , opConE = Just (conE 'ARM.DPR)
+                                , opConE = Just (varE 'ARM.dpr)
                                 , opWordE = Just [| fromIntegral . ARM.unDPR |]
                                 }
     addrMode3 = OperandPayload { opTypeName = ''ARM.AddrMode3
-                               , opConName = Just 'ARM.AddrMode3
                                , opConE = Just (varE 'ARM.mkAddrMode3)
                                , opWordE = Just (varE 'ARM.addrMode3ToBits)
                                }
     addrMode5 = OperandPayload { opTypeName = ''ARM.AddrMode5
-                               , opConName = Just 'ARM.AddrMode5
                                , opConE = Just (varE 'ARM.mkAddrMode5)
                                , opWordE = Just (varE 'ARM.addrMode5ToBits)
                                }
     addrModeImm12 = OperandPayload { opTypeName = ''ARM.AddrModeImm12
-                                   , opConName = Just 'ARM.AddrModeImm12
                                    , opConE = Just (varE 'ARM.mkAddrModeImm12)
                                    , opWordE = Just (varE 'ARM.addrModeImm12ToBits)
                                    }
     imm12 = OperandPayload { opTypeName = ''ARM.Imm12
-                           , opConName = Just 'ARM.Imm12
                            , opConE = Just (varE 'ARM.mkImm12)
                            , opWordE = Just (varE 'ARM.imm12ToBits)
                            }
     imm5 = OperandPayload { opTypeName = ''ARM.Imm5
-                          , opConName = Just 'ARM.Imm5
                           , opConE = Just (varE 'ARM.mkImm5)
                           , opWordE = Just (varE 'ARM.imm5ToBits)
                           }
     imm16 = OperandPayload { opTypeName = ''ARM.Imm16
-                           , opConName = Just 'ARM.Imm16
                            , opConE = Just (varE 'ARM.mkImm16)
                            , opWordE = Just (varE 'ARM.imm16ToBits)
                            }
     predOperand = OperandPayload { opTypeName = ''ARM.Pred
-                                 , opConName = Just 'ARM.Pred
                                  , opConE = Just (varE 'ARM.mkPred)
                                  , opWordE = Just (varE 'ARM.predToBits)
                                  }
     sBitOperand = OperandPayload { opTypeName = ''ARM.SBit
-                                 , opConName = Just 'ARM.SBit
                                  , opConE = Just (varE 'ARM.mkSBit)
                                  , opWordE = Just (varE 'ARM.sBitToBits)
                                  }
     adrLabelOperand = OperandPayload { opTypeName = ''ARM.AdrLabel
-                                     , opConName = Just 'ARM.AdrLabel
                                      , opConE = Just (varE 'ARM.mkAdrLabel)
                                      , opWordE = Just (varE 'ARM.adrLabelToBits)
                                      }
     branchTarget = OperandPayload { opTypeName = ''ARM.BranchTarget
-                                  , opConName = Just 'ARM.BranchTarget
                                   , opConE = Just (varE 'ARM.mkBranchTarget)
                                   , opWordE = Just (varE 'ARM.branchTargetToBits)
                                   }
     branchExecuteTarget = OperandPayload { opTypeName = ''ARM.BranchExecuteTarget
-                                         , opConName = Just 'ARM.BranchExecuteTarget
                                          , opConE = Just (varE 'ARM.mkBranchExecuteTarget)
                                          , opWordE = Just (varE 'ARM.branchExecuteTargetToBits)
                                          }
     coprocRegister = OperandPayload { opTypeName = ''ARM.CoprocRegister
-                                    , opConName = Just 'ARM.CoprocRegister
                                     , opConE = Just (varE 'ARM.mkCoprocRegister)
                                     , opWordE = Just (varE 'ARM.coprocRegisterToBits)
                                     }
     opcodeOperand = OperandPayload { opTypeName = ''ARM.Opcode
-                                   , opConName = Just 'ARM.Opcode
                                    , opConE = Just (varE 'ARM.mkOpcode)
                                    , opWordE = Just (varE 'ARM.opcodeToBits)
                                    }
     word8Operand = OperandPayload { opTypeName = ''Word8
-                                  , opConName = Just 'fromIntegral
                                   , opConE = Just (varE 'fromIntegral)
                                   , opWordE = Just (varE 'fromIntegral)
                                   }
     word16Operand = OperandPayload { opTypeName = ''Word16
-                                   , opConName = Just 'fromIntegral
                                    , opConE = Just (varE 'fromIntegral)
                                    , opWordE = Just (varE 'fromIntegral)
                                    }
     word24Operand = OperandPayload { opTypeName = ''Word32
-                                   , opConName = Just 'id
                                    , opConE = Just (varE 'id)
                                    , opWordE = Just (varE 'id)
                                    }
     ldstSoRegOperand = OperandPayload { opTypeName = ''ARM.LdstSoReg
-                                      , opConName = Just 'ARM.LdstSoReg
                                       , opConE = Just (varE 'ARM.mkLdstSoSreg)
                                       , opWordE = Just (varE 'ARM.ldstSoRegToBits)
                                       }
     shiftImm = OperandPayload { opTypeName = ''ARM.ShiftImm
-                              , opConName = Just 'ARM.ShiftImm
                               , opConE = Just (varE 'ARM.mkShiftImm)
                               , opWordE = Just (varE 'ARM.shiftImmToBits)
                               }
     bit = OperandPayload { opTypeName = ''ARM.Bit
-                         , opConName = Just 'ARM.Bit
                          , opConE = Just (varE 'ARM.mkBit)
                          , opWordE = Just (varE 'ARM.bitToBits)
                          }

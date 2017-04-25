@@ -1,75 +1,87 @@
 {-# OPTIONS_HADDOCK not-home #-}
 {-# LANGUAGE BinaryLiterals #-}
 module Dismantle.ARM.Operands (
-  GPR(..),
-  DPR(..),
-  QPR(..),
-  QQPR(..),
-  CR(..),
-  FR(..),
-  VR(..),
+  GPR,
+  gpr,
+  unGPR,
 
-  Bit(..),
+  DPR,
+  dpr,
+  unDPR,
+
+  QPR,
+  qpr,
+  unQPR,
+
+  QQPR,
+  qqpr,
+  unQQPR,
+
+  CR,
+  FR,
+  VR,
+
+  Bit,
   mkBit,
   bitToBits,
 
-  CoprocRegister(..),
+  CoprocRegister,
   mkCoprocRegister,
   coprocRegisterToBits,
 
-  Opcode(..),
+  Opcode,
   mkOpcode,
   opcodeToBits,
 
-  ShiftImm(..),
+  ShiftImm,
   mkShiftImm,
   shiftImmToBits,
 
-  AddrMode3(..),
+  AddrMode3,
   mkAddrMode3,
   addrMode3ToBits,
 
-  AddrMode5(..),
+  AddrMode5,
   mkAddrMode5,
   addrMode5ToBits,
 
-  LdstSoReg(..),
+  LdstSoReg,
   mkLdstSoSreg,
   ldstSoRegToBits,
 
-  AddrModeImm12(..),
+  AddrModeImm12,
   mkAddrModeImm12,
   addrModeImm12ToBits,
 
-  BranchTarget(..),
+  BranchTarget,
   mkBranchTarget,
   branchTargetToBits,
 
-  BranchExecuteTarget(..),
+  BranchExecuteTarget,
   mkBranchExecuteTarget,
   branchExecuteTargetToBits,
 
-  Imm12(..),
+  Imm12,
   mkImm12,
   imm12ToBits,
 
-  Imm5(..),
+  Imm5,
   mkImm5,
   imm5ToBits,
 
-  Imm16(..),
+  Imm16,
   mkImm16,
   imm16ToBits,
 
-  SBit(..),
+  SBit,
   mkSBit,
   sBitToBits,
 
-  AdrLabel(..),
+  AdrLabel,
   mkAdrLabel,
   adrLabelToBits,
 
-  Pred(..),
+  Pred,
   mkPred,
   predToBits
   ) where
@@ -105,6 +117,9 @@ newtype FR = FR { unFR :: Word8 }
 newtype GPR = GPR { unGPR :: Word8 }
   deriving (Eq, Ord, Show)
 
+gpr :: Word8 -> GPR
+gpr = GPR
+
 -- | Coprocessor register by number
 newtype CoprocRegister = CoprocRegister { unCoprocRegister :: Word8 }
   deriving (Eq, Ord, Show)
@@ -117,14 +132,23 @@ newtype Opcode = Opcode { unOpcode :: Word8 }
 newtype DPR = DPR { unDPR :: Word8 }
   deriving (Eq, Ord, Show)
 
+dpr :: Word8 -> DPR
+dpr = DPR
+
 -- | 128-bit vector register by number
 newtype QPR = QPR { unQPR :: Word8 }
   deriving (Eq, Ord, Show)
+
+qpr :: Word8 -> QPR
+qpr = QPR
 
 -- | 256-bit vector register (128-bit register pair) by number (must be
 -- even)
 newtype QQPR = QQPR { unQQPR :: Word8 }
   deriving (Eq, Ord, Show)
+
+qqpr :: Word8 -> QQPR
+qqpr = QQPR
 
 -- | Vector register by number
 newtype VR = VR { unVR :: Word8 }
