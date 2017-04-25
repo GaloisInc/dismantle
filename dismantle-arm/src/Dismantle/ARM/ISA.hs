@@ -6,9 +6,8 @@ module Dismantle.ARM.ISA (
 import qualified Data.Binary.Get as B
 import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
-import Data.Int ( Int64 )
 import qualified Data.List as L
-import Data.Word ( Word8, Word32, Word64 )
+import Data.Word ( Word8, Word16, Word32, Word64 )
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -32,130 +31,156 @@ isa = ISA { isaName = "ARM"
           , isaInsnWordFromBytes = 'asWord32
           , isaInsnWordToBytes = 'fromWord32
           , isaInsnAssembleType = ''Word32
+          , isaIgnoreOperand = const False
           }
   where
-    -- absoluteAddress = OperandPayload { opTypeName = ''Word64
-    --                                  , opConName = Nothing
-    --                                  , opConE = Nothing
-    --                                  , opWordE = Just [| fromIntegral |]
-    --                                  }
-    -- relativeOffset = OperandPayload { opTypeName = ''Int64
-    --                                 , opConName = Nothing
-    --                                 , opConE = Nothing
-    --                                 , opWordE = Just [| fromIntegral |]
-    --                                 }
     gpRegister = OperandPayload { opTypeName = ''ARM.GPR
-                                , opConName = Just 'ARM.GPR
-                                , opConE = Just (conE 'ARM.GPR)
+                                , opConE = Just (varE 'ARM.gpr)
                                 , opWordE = Just [| fromIntegral . ARM.unGPR |]
                                 }
     qpRegister = OperandPayload { opTypeName = ''ARM.QPR
-                                , opConName = Just 'ARM.QPR
-                                , opConE = Just (conE 'ARM.QPR)
+                                , opConE = Just (varE 'ARM.qpr)
                                 , opWordE = Just [| fromIntegral . ARM.unQPR |]
                                 }
     qqpRegister = OperandPayload { opTypeName = ''ARM.QQPR
-                                 , opConName = Just 'ARM.QQPR
-                                 , opConE = Just (conE 'ARM.QQPR)
+                                 , opConE = Just (varE 'ARM.unQQPR)
                                  , opWordE = Just [| fromIntegral . ARM.unQQPR |]
                                  }
-    -- conditionRegister = OperandPayload { opTypeName = ''ARM.CR
-    --                                    , opConName = Just 'ARM.CR
-    --                                    , opConE = Just (conE 'ARM.CR)
-    --                                    , opWordE = Just [| fromIntegral . ARM.unCR |]
-    --                                    }
-    -- floatRegister = OperandPayload { opTypeName = ''ARM.FR
-    --                                , opConName = Just 'ARM.FR
-    --                                , opConE = Just (conE 'ARM.FR)
-    --                                , opWordE = Just [| fromIntegral . ARM.unFR |]
-    --                                }
     dpRegister = OperandPayload { opTypeName = ''ARM.DPR
-                                , opConName = Just 'ARM.DPR
-                                , opConE = Just (conE 'ARM.DPR)
+                                , opConE = Just (varE 'ARM.dpr)
                                 , opWordE = Just [| fromIntegral . ARM.unDPR |]
                                 }
-    am3Register = OperandPayload { opTypeName = ''ARM.AddrMode3
-                                 , opConName = Just 'ARM.AddrMode3
-                                 , opConE = Just (conE 'ARM.mkAddrMode3)
-                                 , opWordE = Just (varE 'ARM.addrMode3ToBits)
+    addrMode3 = OperandPayload { opTypeName = ''ARM.AddrMode3
+                               , opConE = Just (varE 'ARM.mkAddrMode3)
+                               , opWordE = Just (varE 'ARM.addrMode3ToBits)
+                               }
+    addrMode5 = OperandPayload { opTypeName = ''ARM.AddrMode5
+                               , opConE = Just (varE 'ARM.mkAddrMode5)
+                               , opWordE = Just (varE 'ARM.addrMode5ToBits)
+                               }
+    addrModeImm12 = OperandPayload { opTypeName = ''ARM.AddrModeImm12
+                                   , opConE = Just (varE 'ARM.mkAddrModeImm12)
+                                   , opWordE = Just (varE 'ARM.addrModeImm12ToBits)
+                                   }
+    imm12 = OperandPayload { opTypeName = ''ARM.Imm12
+                           , opConE = Just (varE 'ARM.mkImm12)
+                           , opWordE = Just (varE 'ARM.imm12ToBits)
+                           }
+    imm5 = OperandPayload { opTypeName = ''ARM.Imm5
+                          , opConE = Just (varE 'ARM.mkImm5)
+                          , opWordE = Just (varE 'ARM.imm5ToBits)
+                          }
+    imm16 = OperandPayload { opTypeName = ''ARM.Imm16
+                           , opConE = Just (varE 'ARM.mkImm16)
+                           , opWordE = Just (varE 'ARM.imm16ToBits)
+                           }
+    predOperand = OperandPayload { opTypeName = ''ARM.Pred
+                                 , opConE = Just (varE 'ARM.mkPred)
+                                 , opWordE = Just (varE 'ARM.predToBits)
                                  }
-    -- signedImmediate :: Word8 -> OperandPayload
-    -- signedImmediate _n = OperandPayload { opTypeName = ''Int64
-    --                                     , opConName = Nothing
-    --                                     , opConE = Nothing
-    --                                     , opWordE = Just [| fromIntegral |]
-    --                                     }
-    -- unsignedImmediate :: Word8 -> OperandPayload
-    -- unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
-    --                                       , opConName = Nothing
-    --                                       , opConE = Nothing
-    --                                       , opWordE = Just [| fromIntegral |]
-    --                                       }
-    -- vecRegister = OperandPayload { opTypeName = ''ARM.VR
-    --                              , opConName = Just 'ARM.VR
-    --                              , opConE = Just (conE 'ARM.VR)
-    --                              , opWordE = Just [| fromIntegral . ARM.unVR |]
-    --                              }
-    -- mem = OperandPayload { opTypeName = ''ARM.Mem
-    --                      , opConName = Just 'ARM.mkMem
-    --                      , opConE = Just (varE 'ARM.mkMem)
-    --                      , opWordE = Just (varE 'ARM.memToBits)
-    --                      }
+    sBitOperand = OperandPayload { opTypeName = ''ARM.SBit
+                                 , opConE = Just (varE 'ARM.mkSBit)
+                                 , opWordE = Just (varE 'ARM.sBitToBits)
+                                 }
+    adrLabelOperand = OperandPayload { opTypeName = ''ARM.AdrLabel
+                                     , opConE = Just (varE 'ARM.mkAdrLabel)
+                                     , opWordE = Just (varE 'ARM.adrLabelToBits)
+                                     }
+    branchTarget = OperandPayload { opTypeName = ''ARM.BranchTarget
+                                  , opConE = Just (varE 'ARM.mkBranchTarget)
+                                  , opWordE = Just (varE 'ARM.branchTargetToBits)
+                                  }
+    branchExecuteTarget = OperandPayload { opTypeName = ''ARM.BranchExecuteTarget
+                                         , opConE = Just (varE 'ARM.mkBranchExecuteTarget)
+                                         , opWordE = Just (varE 'ARM.branchExecuteTargetToBits)
+                                         }
+    coprocRegister = OperandPayload { opTypeName = ''ARM.CoprocRegister
+                                    , opConE = Just (varE 'ARM.mkCoprocRegister)
+                                    , opWordE = Just (varE 'ARM.coprocRegisterToBits)
+                                    }
+    opcodeOperand = OperandPayload { opTypeName = ''ARM.Opcode
+                                   , opConE = Just (varE 'ARM.mkOpcode)
+                                   , opWordE = Just (varE 'ARM.opcodeToBits)
+                                   }
+    word8Operand = OperandPayload { opTypeName = ''Word8
+                                  , opConE = Nothing
+                                  , opWordE = Just [| fromIntegral |]
+                                  }
+    word16Operand = OperandPayload { opTypeName = ''Word16
+                                   , opConE = Nothing
+                                   , opWordE = Just [| fromIntegral |]
+                                   }
+    word24Operand = OperandPayload { opTypeName = ''Word32
+                                   , opConE = Nothing
+                                   , opWordE = Nothing
+                                   }
+    ldstSoRegOperand = OperandPayload { opTypeName = ''ARM.LdstSoReg
+                                      , opConE = Just (varE 'ARM.mkLdstSoSreg)
+                                      , opWordE = Just (varE 'ARM.ldstSoRegToBits)
+                                      }
+    shiftImm = OperandPayload { opTypeName = ''ARM.ShiftImm
+                              , opConE = Just (varE 'ARM.mkShiftImm)
+                              , opWordE = Just (varE 'ARM.shiftImmToBits)
+                              }
+    bit = OperandPayload { opTypeName = ''ARM.Bit
+                         , opConE = Just (varE 'ARM.mkBit)
+                         , opWordE = Just (varE 'ARM.bitToBits)
+                         }
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
-        , ("Gpr"               , gpRegister)
-        , ("Gprpairop"         , gpRegister)
-        , ("Gprnopc"           , gpRegister)
+        , ("GPR"               , gpRegister)
+        , ("GPRPairOp"         , gpRegister)
+        , ("GPRnopc"           , gpRegister)
         , ("Qpr"               , qpRegister)
         , ("Qqpr"              , qqpRegister)
-        , ("Addr_offset_none"  , am3Register)
-        -- , ("Addrmode3"         , )
+        , ("Mod_imm"           , imm12)
+        , ("Addr_offset_none"  , gpRegister)
+        , ("Addrmode3"         , addrMode3)
+        , ("Pred"              , predOperand)
+        , ("Cc_out"            , sBitOperand)
+        , ("So_reg_imm"        , imm12)
+        , ("So_reg_reg"        , imm12)
+        , ("Adrlabel"          , adrLabelOperand)
+        , ("Arm_bl_target"     , branchTarget)
+        , ("Arm_blx_target"    , branchExecuteTarget)
+        , ("Arm_br_target"     , branchTarget)
+        , ("P_imm"             , coprocRegister)
+        , ("Imm0_65535"        , imm16)
+        , ("Imm0_15"           , opcodeOperand)
+        , ("Imm0_7"            , opcodeOperand)
+        , ("Imm0_31"           , imm5)
+        , ("C_imm"             , coprocRegister)
+        , ("Imod_op"           , word8Operand)
+        , ("Iflags_op"         , word8Operand)
+        , ("Memb_opt"          , word8Operand)
+        , ("Pkh_lsl_amt"       , word8Operand)
+        , ("Pkh_asr_amt"       , word8Operand)
+        , ("Addrmode_imm12"    , addrModeImm12)
+        , ("Ldst_so_reg"       , ldstSoRegOperand)
+        , ("Imm1_32"           , imm5)
+        , ("Setend_op"         , bit)
+        , ("Imm0_1"            , bit)
+        , ("Addrmode5"         , addrMode5)
+        , ("Addrmode5_pre"     , addrMode5)
+        , ("Coproc_option_imm" , word8Operand)
+        , ("Postidx_imm8s4"    , word8Operand)
+        , ("Reglist"           , word16Operand)
+        , ("Imm24b"            , word24Operand)
+        , ("Rot_imm"           , word8Operand)
+        , ("Shift_imm"         , shiftImm)
         -- , ("Addrmode3_pre"     , )
-        -- , ("Addrmode5"         , )
-        -- , ("Addrmode5_pre"     , )
         -- , ("Addrmode6"         , )
-        -- , ("Addrmode_imm12"    , )
         -- , ("Addrmode_imm12_pre", )
-        -- , ("Adrlabel"          , )
         -- , ("Am2offset_imm"     , )
         -- , ("Am2offset_reg"     , )
         -- , ("Am3offset"         , )
         -- , ("Am6offset"         , )
-        -- , ("Arm_bl_target"     , )
-        -- , ("Arm_blx_target"    , )
-        -- , ("Arm_br_target"     , )
         -- , ("Bf_inv_mask_imm"   , )
-        -- , ("C_imm"             , )
-        -- , ("Cc_out"            , )
-        -- , ("Coproc_option_imm" , )
-        -- , ("Iflags_op"         , )
-        -- , ("Imm0_1"            , )
-        -- , ("Imm0_15"           , )
-        -- , ("Imm0_31"           , )
-        -- , ("Imm0_65535"        , )
-        -- , ("Imm0_7"            , )
-        -- , ("Imm1_32"           , )
-        -- , ("Imm24b"            , )
-        -- , ("Imod_op"           , )
-        -- , ("Ldst_so_reg"       , )
-        -- , ("Memb_opt"          , )
-        -- , ("Mod_imm"           , )
         -- , ("Nohash_imm"        , )
-        -- , ("P_imm"             , )
-        -- , ("Pkh_asr_amt"       , )
-        -- , ("Pkh_lsl_amt"       , )
         -- , ("Postidx_imm8"      , )
-        -- , ("Postidx_imm8s4"    , )
         -- , ("Postidx_reg"       , )
-        -- , ("Pred"              , )
         -- , ("Rgpr"              , )
-        -- , ("Reglist"           , )
-        -- , ("Rot_imm"           , )
-        -- , ("Setend_op"         , )
-        -- , ("Shift_imm"         , )
-        -- , ("So_reg_imm"        , )
-        -- , ("So_reg_reg"        , )
         ]
 
     armFilter i = and [ idNamespace i == "ARM"

@@ -311,49 +311,40 @@ ppcOperandPayloadTypes =
   ]
   where
     absoluteAddress = OperandPayload { opTypeName = ''Word64
-                                     , opConName = Nothing
                                      , opConE = Nothing
                                      , opWordE = Just [| fromIntegral |]
                                      }
     relativeOffset = OperandPayload { opTypeName = ''Int64
-                                    , opConName = Nothing
                                     , opConE = Nothing
                                     , opWordE = Just [| fromIntegral |]
                                     }
     gpRegister = OperandPayload { opTypeName = ''PPC.GPR
-                                , opConName = Just 'PPC.GPR
                                 , opConE = Just (conE 'PPC.GPR)
                                 , opWordE = Just [| fromIntegral . PPC.unGPR |]
                                 }
     conditionRegister = OperandPayload { opTypeName = ''PPC.CR
-                                       , opConName = Just 'PPC.CR
                                        , opConE = Just (conE 'PPC.CR)
                                        , opWordE = Just [| fromIntegral . PPC.unCR |]
                                        }
     floatRegister = OperandPayload { opTypeName = ''PPC.FR
-                                   , opConName = Just 'PPC.FR
                                    , opConE = Just (conE 'PPC.FR)
                                    , opWordE = Just [| fromIntegral . PPC.unFR |]
                                    }
     signedImmediate :: Word8 -> OperandPayload
     signedImmediate _n = OperandPayload { opTypeName = ''Int64
-                                        , opConName = Nothing
                                         , opConE = Nothing
                                         , opWordE = Just [| fromIntegral |]
                                         }
     unsignedImmediate :: Word8 -> OperandPayload
     unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
-                                          , opConName = Nothing
                                           , opConE = Nothing
                                           , opWordE = Just [| fromIntegral |]
                                           }
     vecRegister = OperandPayload { opTypeName = ''PPC.VR
-                                 , opConName = Just 'PPC.VR
                                  , opConE = Just (conE 'PPC.VR)
                                  , opWordE = Just [| fromIntegral . PPC.unVR |]
                                  }
     mem = OperandPayload { opTypeName = ''PPC.Mem
-                         , opConName = Just 'PPC.mkMem
                          , opConE = Just (varE 'PPC.mkMem)
                          , opWordE = Just (varE 'PPC.memToBits)
                          }
