@@ -43,7 +43,7 @@ isa = ISA { isaName = "ARM"
                                 , opWordE = Just [| fromIntegral . ARM.unQPR |]
                                 }
     qqpRegister = OperandPayload { opTypeName = ''ARM.QQPR
-                                 , opConE = Just (varE 'ARM.qqpr)
+                                 , opConE = Just (varE 'ARM.unQQPR)
                                  , opWordE = Just [| fromIntegral . ARM.unQQPR |]
                                  }
     dpRegister = OperandPayload { opTypeName = ''ARM.DPR
@@ -103,16 +103,16 @@ isa = ISA { isaName = "ARM"
                                    , opWordE = Just (varE 'ARM.opcodeToBits)
                                    }
     word8Operand = OperandPayload { opTypeName = ''Word8
-                                  , opConE = Just (varE 'fromIntegral)
-                                  , opWordE = Just (varE 'fromIntegral)
+                                  , opConE = Nothing
+                                  , opWordE = Just [| fromIntegral |]
                                   }
     word16Operand = OperandPayload { opTypeName = ''Word16
-                                   , opConE = Just (varE 'fromIntegral)
-                                   , opWordE = Just (varE 'fromIntegral)
+                                   , opConE = Nothing
+                                   , opWordE = Just [| fromIntegral |]
                                    }
     word24Operand = OperandPayload { opTypeName = ''Word32
-                                   , opConE = Just (varE 'id)
-                                   , opWordE = Just (varE 'id)
+                                   , opConE = Nothing
+                                   , opWordE = Nothing
                                    }
     ldstSoRegOperand = OperandPayload { opTypeName = ''ARM.LdstSoReg
                                       , opConE = Just (varE 'ARM.mkLdstSoSreg)
