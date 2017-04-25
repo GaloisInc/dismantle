@@ -9,6 +9,10 @@ module Dismantle.ARM.Operands (
   FR(..),
   VR(..),
 
+  Bit(..),
+  mkBit,
+  bitToBits,
+
   CoprocRegister(..),
   mkCoprocRegister,
   coprocRegisterToBits,
@@ -17,9 +21,17 @@ module Dismantle.ARM.Operands (
   mkOpcode,
   opcodeToBits,
 
+  ShiftImm(..),
+  mkShiftImm,
+  shiftImmToBits,
+
   AddrMode3(..),
   mkAddrMode3,
   addrMode3ToBits,
+
+  AddrMode5(..),
+  mkAddrMode5,
+  addrMode5ToBits,
 
   LdstSoReg(..),
   mkLdstSoSreg,
@@ -64,11 +76,23 @@ module Dismantle.ARM.Operands (
 
 import Data.Bits
 import Data.Monoid
-import Data.Word ( Word8, Word16, Word32 )
+import Data.Word ( Word8, Word32 )
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Tablegen.TH.Pretty
+
+newtype Bit = Bit { unBit :: Bool }
+  deriving (Eq, Ord, Show)
+
+mkBit :: Word32 -> Bit
+mkBit 0 = Bit False
+mkBit 1 = Bit True
+mkBit v = error $ "Unexpected Bit value: " <> show v
+
+bitToBits :: Bit -> Word32
+bitToBits (Bit True ) = 1
+bitToBits (Bit False) = 0
 
 newtype CR = CR { unCR :: Word8 }
   deriving (Eq, Ord, Show)
@@ -156,6 +180,47 @@ addrMode3ToBits (AddrMode3 (GPR r) imm add) =
     -- Always set bit position 13 (see the tgen data and ARM ARM for
     -- LDRD etc. that use this operand type).
     insert (Field 1 13) 1 0
+
+shiftImmImmField :: Field
+shiftImmImmField = Field 5 0
+
+shiftImmTypeField :: Field
+shiftImmTypeField = Field 1 5
+
+mkShiftImm :: Word32 -> ShiftImm
+mkShiftImm w = ShiftImm (fromIntegral imm) (fromIntegral ty)
+  where
+    ty = extract shiftImmTypeField w
+    imm = extract shiftImmImmField w
+
+shiftImmToBits :: ShiftImm -> Word32
+shiftImmToBits (ShiftImm imm ty) =
+    insert shiftImmTypeField ty $
+    insert shiftImmImmField imm 0
+
+addrMode5RegField :: Field
+addrMode5RegField = Field 4 9
+
+addrMode5AddField :: Field
+addrMode5AddField = Field 1 8
+
+addrMode5ImmField :: Field
+addrMode5ImmField = Field 8 0
+
+mkAddrMode5 :: Word32 -> AddrMode5
+mkAddrMode5 w = AddrMode5 (fromIntegral imm) (add == 1)
+  where
+    add = extract addrMode5AddField w
+    imm = extract addrMode5ImmField w
+
+addrMode5ToBits :: AddrMode5 -> Word32
+addrMode5ToBits (AddrMode5 imm add) =
+    let allOne = Field 4 9
+    in insert addrMode5AddField (if add then 1 else 0) $
+       insert addrMode5ImmField imm $
+       -- Always set bits 12:9 to 1 (see the tgen data and ARM ARM for LDCL
+       -- etc. that use this operand type).
+       insert allOne (2 ^ 5 - 1) 0
 
 ldstSoRegBaseRegField :: Field
 ldstSoRegBaseRegField = Field 4 13
@@ -304,6 +369,19 @@ data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
                            }
   deriving (Eq, Ord, Show)
 
+-- | A shift_imm operand with a shift immediate and shift type (l/r).
+-- See also USAT in the ARM ARM and tgen.
+data ShiftImm = ShiftImm { shiftImmImmediate :: Word8
+                         , shiftImmType      :: Word8
+                         }
+  deriving (Eq, Ord, Show)
+
+-- | An AddrMode5 memory reference
+data AddrMode5 = AddrMode5 { addrMode5Immediate :: Word8
+                           , addrMode5Add       :: Bool
+                           }
+  deriving (Eq, Ord, Show)
+
 -- | An load/store memory reference for a preload (e.g. PLDW)
 -- instruction
 data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
@@ -362,6 +440,19 @@ data Pred = Pred { unPred :: Word8
                  }
   deriving (Eq, Ord, Show)
 
+instance PP.Pretty Bit where
+  pPrint (Bit True) = PP.int 1
+  pPrint (Bit False) = PP.int 0
+
+instance PP.Pretty Imm16 where
+  pPrint (Imm16 i) = PP.integer i
+
+instance PP.Pretty CoprocRegister where
+  pPrint (CoprocRegister r) = PP.char 'p' <> PP.pPrint r
+
+instance PP.Pretty Opcode where
+  pPrint (Opcode o) = PP.pPrint o
+
 instance PP.Pretty GPR where
   pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
 
@@ -408,6 +499,26 @@ instance PP.Pretty AddrMode3 where
       let opStr = if addrMode3Add m then mempty else PP.char '-'
       in (PP.pPrint (addrMode3Register m) <> PP.char ',') PP.<+>
          (opStr <> PP.pPrint (addrMode3Immediate m))
+
+instance PP.Pretty AddrMode5 where
+  pPrint m =
+      let opStr = if addrMode5Add m then mempty else PP.char '-'
+      in (opStr <> PP.pPrint (addrMode5Immediate m))
+
+instance PP.Pretty ShiftImm where
+  pPrint m =
+      let tyStr = if shiftImmType m == 1 then "ASR" else "LSL"
+          -- See the ARM ARM on USAT for information on this
+          -- representation.
+          amtStr = if shiftImmType m == 0
+                   then show $ shiftImmImmediate m
+                   else if shiftImmImmediate m == 0
+                        then "32"
+                        else show $ shiftImmImmediate m
+      in (PP.text tyStr PP.<+> PP.text amtStr)
+
+instance PP.Pretty BranchExecuteTarget where
+    pPrint (BranchExecuteTarget t) = PP.pPrint t
 
 instance PP.Pretty LdstSoReg where
   pPrint m =
