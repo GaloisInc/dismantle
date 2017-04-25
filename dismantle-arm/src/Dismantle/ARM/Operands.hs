@@ -21,6 +21,10 @@ module Dismantle.ARM.Operands (
   mkAddrMode3,
   addrMode3ToBits,
 
+  LdstSoReg(..),
+  mkLdstSoSreg,
+  ldstSoRegToBits,
+
   AddrModeImm12(..),
   mkAddrModeImm12,
   addrModeImm12ToBits,
@@ -153,6 +157,36 @@ addrMode3ToBits (AddrMode3 (GPR r) imm add) =
     -- LDRD etc. that use this operand type).
     insert (Field 1 13) 1 0
 
+ldstSoRegBaseRegField :: Field
+ldstSoRegBaseRegField = Field 4 13
+
+ldstSoRegOffsetRegField :: Field
+ldstSoRegOffsetRegField = Field 4 0
+
+ldstSoRegAddField :: Field
+ldstSoRegAddField = Field 1 12
+
+ldstSoRegImmField :: Field
+ldstSoRegImmField = Field 5 7
+
+mkLdstSoSreg :: Word32 -> LdstSoReg
+mkLdstSoSreg w = LdstSoReg (GPR $ fromIntegral baseReg)
+                           (GPR $ fromIntegral offsetReg)
+                           (fromIntegral imm)
+                           (add == 1)
+  where
+    baseReg   = extract ldstSoRegBaseRegField w
+    offsetReg = extract ldstSoRegOffsetRegField w
+    add       = extract ldstSoRegAddField w
+    imm       = extract ldstSoRegImmField w
+
+ldstSoRegToBits :: LdstSoReg -> Word32
+ldstSoRegToBits (LdstSoReg (GPR baseR) (GPR offsetR) imm add) =
+    insert ldstSoRegBaseRegField baseR $
+    insert ldstSoRegOffsetRegField offsetR $
+    insert ldstSoRegAddField (if add then 1 else 0) $
+    insert ldstSoRegImmField imm 0
+
 imm12Field :: Field
 imm12Field = Field 12 0
 
@@ -270,6 +304,15 @@ data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
                            }
   deriving (Eq, Ord, Show)
 
+-- | An load/store memory reference for a preload (e.g. PLDW)
+-- instruction
+data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
+                           , ldstSoRegOffsetRegister :: GPR
+                           , ldstSoRegImmediate      :: Word8
+                           , ldstSoRegAdd            :: Bool
+                           }
+  deriving (Eq, Ord, Show)
+
 -- | An AddrMode_Imm12 memory reference for a load or store instruction
 -- (with a 12-bit immediate)
 data AddrModeImm12 = AddrModeImm12 { addrModeImm12Register  :: GPR
@@ -365,6 +408,13 @@ instance PP.Pretty AddrMode3 where
       let opStr = if addrMode3Add m then mempty else PP.char '-'
       in (PP.pPrint (addrMode3Register m) <> PP.char ',') PP.<+>
          (opStr <> PP.pPrint (addrMode3Immediate m))
+
+instance PP.Pretty LdstSoReg where
+  pPrint m =
+      let opStr = if ldstSoRegAdd m then mempty else PP.char '-'
+      in (PP.pPrint (ldstSoRegBaseRegister m) <> PP.char ',') PP.<+>
+         (opStr <> ((PP.pPrint (ldstSoRegOffsetRegister m) <> PP.char ',') PP.<+>
+                    (PP.pPrint (ldstSoRegImmediate m))))
 
 instance PP.Pretty AddrModeImm12 where
   pPrint m =

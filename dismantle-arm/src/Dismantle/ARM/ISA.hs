@@ -119,6 +119,11 @@ isa = ISA { isaName = "ARM"
                                   , opConE = Just (conE 'fromIntegral)
                                   , opWordE = Just (varE 'fromIntegral)
                                   }
+    ldstSoRegOperand = OperandPayload { opTypeName = ''ARM.LdstSoReg
+                                      , opConName = Just 'ARM.LdstSoReg
+                                      , opConE = Just (conE 'ARM.mkLdstSoSreg)
+                                      , opWordE = Just (varE 'ARM.ldstSoRegToBits)
+                                      }
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
@@ -150,7 +155,7 @@ isa = ISA { isaName = "ARM"
         , ("Pkh_lsl_amt"       , word8Operand)
         , ("Pkh_asr_amt"       , word8Operand)
         , ("Addrmode_imm12"    , addrModeImm12)
-        -- , ("Ldst_so_reg"       , )
+        , ("Ldst_so_reg"       , ldstSoRegOperand)
         -- , ("Addrmode3_pre"     , )
         -- , ("Addrmode5"         , )
         -- , ("Addrmode5_pre"     , )
