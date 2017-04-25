@@ -36,8 +36,9 @@ data OperandPayload =
                  -- instruction's native word type
                  }
 
--- | Maintains a mapping from operands in the 'OutOperandList'/'InOperandList'
--- and the fields in the 'Inst' definition.
+-- | Maintains a mapping from operands in the
+-- 'OutOperandList'/'InOperandList' to the fields in the 'Inst'
+-- definition.
 data FormOverride = FormOverride [(String, InstFieldDescriptor)]
                   deriving (Show)
 
