@@ -112,9 +112,6 @@ toTrieBit br =
     Just (ExpectedBit b) -> BT.ExpectedBit b
     _ -> BT.Any
 
-named :: String -> Named DeclItem -> Bool
-named s n = namedName n == s
-
 -- | Try to extract the basic encoding information from the 'Def'.  If
 -- it isn't available, skip the 'Def'.  If it is available, call the
 -- continuation that will use it.
@@ -272,9 +269,7 @@ lookupFormOverride isa mnemonic metadata =
 -- (and log its error) or simply skip a 'Def' that fails a test.
 toInstructionDescriptor :: ISA -> Def -> FM ()
 toInstructionDescriptor isa def = do
-  case Metadata "Pseudo" `elem` defMetadata def of
-    True -> return ()
-    False -> do
+    when (isaInstructionFilter isa def) $ do
       CC.callCC $ \kexit -> do
         withEncoding (isaEndianness isa)  def $ \outs ins mbits endianBits ordFlds -> do
           (outOperands, inOperands) <- parseOperandsByName isa (defName def) (defMetadata def) outs ins mbits kexit
@@ -302,8 +297,7 @@ finishInstructionDescriptor isa def mbits endianBits ins outs =
                                                     , Metadata "Pseudo" `elem` defMetadata def
                                                     ]
                                     }
-      when (isaInstructionFilter isa i) $ do
-        St.modify $ \s -> s { stInsns = i : stInsns s }
+      St.modify $ \s -> s { stInsns = i : stInsns s }
   where
     mvals = do
       Named _ (StringItem ns) <- F.find (named "Namespace") (defDecls def)

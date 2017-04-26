@@ -9,15 +9,22 @@ module Dismantle.Tablegen.ISA (
   aarch64,
   mips,
   avr,
-  sparc
+  sparc,
+
+  named,
+  hasNamedString,
+  isPseudo,
+  (&&&)
   ) where
 
+import qualified Data.Foldable as F
 import qualified Data.List.NonEmpty as NL
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 
 import Dismantle.Tablegen.Types
+import Dismantle.Tablegen.Parser.Types
 
 data Endianness = Little | Big
   deriving (Eq)
@@ -58,7 +65,9 @@ data InstFieldDescriptor = SimpleDescriptor String
 data ISA =
   ISA { isaName :: String
       , isaEndianness :: Endianness
-      , isaInstructionFilter :: InstructionDescriptor -> Bool
+      , isaInstructionFilter :: Def -> Bool
+      -- ^ A function that should return True for the def if it is part
+      -- of the ISA and False if not.
       , isaPseudoInstruction :: InstructionDescriptor -> Bool
       -- ^ Return 'True' if the instruction is a pseudo-instruction
       -- that should not be disassembled.  As an example, some
@@ -102,7 +111,9 @@ thumb = ISA { isaName = "Thumb"
             , isaPseudoInstruction = const False
             }
   where
-    thumbFilter i = idDecoderNamespace i == "Thumb" && idNamespace i == "ARM" && not (idPseudo i)
+    thumbFilter = hasNamedString "DecoderNamespace" "Thumb" &&&
+                  hasNamedString "Namespace" "ARM" &&&
+                  (not . isPseudo)
 
 aarch64 :: ISA
 aarch64 = ISA { isaName = "AArch64"
@@ -111,7 +122,8 @@ aarch64 = ISA { isaName = "AArch64"
               , isaPseudoInstruction = const False
               }
   where
-    aarch64Filter i = idNamespace i == "AArch64" && not (idPseudo i)
+    aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
+                    (not . isPseudo)
 
 unadorned :: Type -> BangType
 unadorned t = (Bang NoSourceUnpackedness NoSourceStrictness, t)
@@ -123,7 +135,9 @@ mips = ISA { isaName = "Mips"
            , isaPseudoInstruction = const False
            }
   where
-    mipsFilter i = idDecoderNamespace i == "Mips" && idNamespace i == "Mips" && not (idPseudo i)
+    mipsFilter = hasNamedString "DecoderNamespace" "Mips" &&&
+                 hasNamedString "Namespace" "Mips" &&&
+                 (not . isPseudo)
 
 avr :: ISA
 avr = ISA { isaName = "AVR"
@@ -131,7 +145,7 @@ avr = ISA { isaName = "AVR"
           , isaPseudoInstruction = avrPsuedo
           }
   where
-    avrFilter i = idNamespace i == "AVR"
+    avrFilter = hasNamedString "Namespace" "AVR"
     avrPsuedo i = idPseudo i ||
                   idMnemonic i `elem` [ "CBRRdK" -- Clear bits, equivalent to an ANDi
                                       , "LSLRd"  -- Equivalent to add rd, rd
@@ -157,7 +171,29 @@ sparc = ISA { isaName = "Sparc"
             , isaPseudoInstruction = const False
             }
   where
-    sparcFilter i = idNamespace i == "SP" && idDecoderNamespace i == "Sparc" && not (idPseudo i)
+    sparcFilter = hasNamedString "Namespace" "SP" &&&
+                  hasNamedString "DecoderNamespace" "Sparc" &&&
+                  (not . isPseudo)
+
+isPseudo :: Def -> Bool
+isPseudo def =
+    let binding = case F.find (named "isPseudo") (defDecls def) of
+            Just (Named _ (BitItem b)) -> b
+            _ -> False
+        metadata = Metadata "Pseudo" `elem` (defMetadata def)
+    in binding || metadata
+
+hasNamedString :: String -> String -> Def -> Bool
+hasNamedString label value def =
+    case F.find (named label) (defDecls def) of
+        Just (Named _ (StringItem s)) -> s == value
+        _ -> False
+
+(&&&) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
+(&&&) f g val = f val && g val
+
+named :: String -> Named DeclItem -> Bool
+named s n = namedName n == s
 
 {-
 

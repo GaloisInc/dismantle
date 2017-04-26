@@ -184,9 +184,10 @@ isa = ISA { isaName = "ARM"
         -- , ("Rgpr"              , )
         ]
 
-    armFilter i = and [ idNamespace i == "ARM"
-                      , idDecoderNamespace i == "ARM"
-                      ]
+    armFilter = hasNamedString "Namespace" "ARM" &&&
+                hasNamedString "DecoderNamespace" "ARM" &&&
+                (not . isPseudo)
+
     armPseudo i = idPseudo i ||
                   idMnemonic i `elem` pseudoInstructionNames
 

@@ -16,6 +16,7 @@ import Language.Haskell.TH.Syntax
 
 import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Types
+import Dismantle.Tablegen.Parser.Types (defName)
 import qualified Dismantle.PPC.Operands as PPC
 
 asWord32 :: LBS.ByteString -> Word32
@@ -44,10 +45,10 @@ isa = ISA { isaName = "PPC"
                                     ]
 
 
-    ppcFilter i = and [ idNamespace i == "PPC"
-                      , idDecoderNamespace i == ""
-                      , L.last (idMnemonic i) /= '8'
-                      ]
+    ppcFilter d = hasNamedString "Namespace" "PPC" d &&
+                  hasNamedString "DecoderNamespace" "" d &&
+                  L.last (defName d) /= '8'
+
     ppcPseudo i = idPseudo i ||
                   idMnemonic i `elem` [ "LI" -- li rD,val == addi rD,0,val
                                       , "LIS" -- ~same
