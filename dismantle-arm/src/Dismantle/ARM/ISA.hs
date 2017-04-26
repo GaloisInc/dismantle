@@ -32,7 +32,7 @@ isa = ISA { isaName = "ARM"
           , isaInsnWordToBytes = 'fromWord32
           , isaInsnAssembleType = ''Word32
           , isaIgnoreOperand = const False
-          , isaFormOverrides = []
+          , isaFormOverrides = overrides
           }
   where
     gpRegister = OperandPayload { opTypeName = ''ARM.GPR
@@ -192,4 +192,12 @@ isa = ISA { isaName = "ARM"
 
     pseudoInstructionNames =
         [
+        ]
+
+    overrides =
+        [ ("AES2Op",     FormOverride [("src", Ignore)])
+        , ("BFC",        FormOverride [("src", Ignore)])
+        , ("BFI",        FormOverride [("src", Ignore)])
+        , ("XDB_UPD",    FormOverride [("wb", Ignore)])
+        , ("N3SHA3Op",   FormOverride [("src", Ignore)])
         ]
