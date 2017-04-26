@@ -41,6 +41,10 @@ module Dismantle.ARM.Operands (
   mkAddrMode3,
   addrMode3ToBits,
 
+  Am2OffsetImm,
+  mkAm2OffsetImm,
+  am2OffsetImmToBits,
+
   AddrMode5,
   mkAddrMode5,
   addrMode5ToBits,
@@ -88,7 +92,7 @@ module Dismantle.ARM.Operands (
 
 import Data.Bits
 import Data.Monoid
-import Data.Word ( Word8, Word32 )
+import Data.Word ( Word8, Word16, Word32 )
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
@@ -222,8 +226,22 @@ shiftImmToBits (ShiftImm imm ty) =
     insert shiftImmTypeField ty $
     insert shiftImmImmField imm 0
 
-addrMode5RegField :: Field
-addrMode5RegField = Field 4 9
+am2OffsetImmAddField :: Field
+am2OffsetImmAddField = Field 1 12
+
+am2OffsetImmImmField :: Field
+am2OffsetImmImmField = Field 12 0
+
+mkAm2OffsetImm :: Word32 -> Am2OffsetImm
+mkAm2OffsetImm w = Am2OffsetImm (fromIntegral imm) (add == 1)
+  where
+    add = extract am2OffsetImmAddField w
+    imm = extract am2OffsetImmImmField w
+
+am2OffsetImmToBits :: Am2OffsetImm -> Word32
+am2OffsetImmToBits (Am2OffsetImm imm add) =
+    insert am2OffsetImmAddField (if add then 1 else 0) $
+    insert am2OffsetImmImmField imm 0
 
 addrMode5AddField :: Field
 addrMode5AddField = Field 1 8
@@ -406,6 +424,12 @@ data AddrMode5 = AddrMode5 { addrMode5Immediate :: Word8
                            }
   deriving (Eq, Ord, Show)
 
+-- | An Am2offset_imm memory reference
+data Am2OffsetImm = Am2OffsetImm { am2OffsetImmImmediate :: Word16
+                                 , am2OffsetImmAdd       :: Bool
+                                 }
+  deriving (Eq, Ord, Show)
+
 -- | An load/store memory reference for a preload (e.g. PLDW)
 -- instruction
 data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
@@ -523,6 +547,11 @@ instance PP.Pretty AddrMode3 where
       let opStr = if addrMode3Add m then mempty else PP.char '-'
       in (PP.pPrint (addrMode3Register m) <> PP.char ',') PP.<+>
          (opStr <> PP.pPrint (addrMode3Immediate m))
+
+instance PP.Pretty Am2OffsetImm where
+  pPrint m =
+      let opStr = if am2OffsetImmAdd m then mempty else PP.char '-'
+      in (opStr <> PP.pPrint (am2OffsetImmImmediate m))
 
 instance PP.Pretty AddrMode5 where
   pPrint m =

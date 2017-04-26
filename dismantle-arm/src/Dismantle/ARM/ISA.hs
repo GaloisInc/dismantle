@@ -127,6 +127,10 @@ isa = ISA { isaName = "ARM"
                          , opConE = Just (varE 'ARM.mkBit)
                          , opWordE = Just (varE 'ARM.bitToBits)
                          }
+    am2OffsetImm = OperandPayload { opTypeName = ''ARM.Am2OffsetImm
+                                  , opConE = Just (varE 'ARM.mkAm2OffsetImm)
+                                  , opWordE = Just (varE 'ARM.am2OffsetImmToBits)
+                                  }
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
@@ -171,10 +175,10 @@ isa = ISA { isaName = "ARM"
         , ("Rot_imm"           , word8Operand)
         , ("Shift_imm"         , shiftImm)
         , ("Bf_inv_mask_imm"   , word16Operand)
+        , ("Am2offset_imm"     , am2OffsetImm)
         -- , ("Addrmode3_pre"     , )
         -- , ("Addrmode6"         , )
         -- , ("Addrmode_imm12_pre", )
-        -- , ("Am2offset_imm"     , )
         -- , ("Am2offset_reg"     , )
         -- , ("Am3offset"         , )
         -- , ("Am6offset"         , )
