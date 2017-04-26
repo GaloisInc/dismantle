@@ -174,7 +174,7 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
   inOps <- parseOperandList "ins" ins
   return (outOps, inOps)
   where
-    moverride = lookupFormOverride isa metadata
+    moverride = lookupFormOverride isa mnemonic metadata
     -- A map of field names (derived from the 'Inst' field of a
     -- definition) to pairs of (instructionIndex, operandIndex), where
     -- the instruction index is the bit number in the instruction and
@@ -262,11 +262,11 @@ lookupOperandOverride (Just (FormOverride pairs)) varName =
 
 -- | Look up the override associated with the form specified in the metadata, if
 -- any.  The first override found is taken, so the ordering matters.
-lookupFormOverride :: ISA -> [String] -> Maybe FormOverride
-lookupFormOverride isa metadata =
+lookupFormOverride :: ISA -> String -> [String] -> Maybe FormOverride
+lookupFormOverride isa mnemonic metadata =
   snd <$> F.find matchOverride (isaFormOverrides isa)
   where
-    matchOverride = (`elem` metadata) . fst
+    matchOverride = (\n -> n `elem` metadata || n == mnemonic) . fst
 
 -- | Try to make an 'InstructionDescriptor' out of a 'Def'.  May fail
 -- (and log its error) or simply skip a 'Def' that fails a test.
