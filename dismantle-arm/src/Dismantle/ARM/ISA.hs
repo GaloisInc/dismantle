@@ -7,6 +7,7 @@ import qualified Data.Binary.Get as B
 import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List as L
+import qualified Data.Set as S
 import Data.Word ( Word8, Word16, Word32, Word64 )
 
 import Language.Haskell.TH
@@ -14,6 +15,11 @@ import Language.Haskell.TH.Syntax
 
 import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Types
+import Dismantle.Tablegen.Parser.Types
+  ( Metadata(Metadata)
+  , defName
+  , defMetadata
+  )
 import qualified Dismantle.ARM.Operands as ARM
 
 asWord32 :: LBS.ByteString -> Word32
@@ -190,19 +196,59 @@ isa = ISA { isaName = "ARM"
 
     armFilter = hasNamedString "Namespace" "ARM" &&&
                 hasNamedString "DecoderNamespace" "ARM" &&&
-                (not . isPseudo)
+                (not . isPseudo) &&&
+                (not . ignoredDef) &&&
+                (not . ignoredMetadata)
 
-    armPseudo i = idPseudo i ||
-                  idMnemonic i `elem` pseudoInstructionNames
+    armPseudo = idPseudo
 
     pseudoInstructionNames =
         [
         ]
 
+    ignoredDef d = defName d `elem`
+        [ "tInt_eh_sjlj_longjmp"
+        , "tInt_WIN_eh_sjlj_longjmp"
+        ]
+
+    ignoredMetadataNames = S.fromList $ Metadata <$>
+        [ "PseudoNLdSt"
+        , "PseudoNeonI"
+        , "PseudoVFPLdStM"
+        ]
+
+    ignoredMetadata d = not $ S.null $
+                        S.intersection (S.fromList $ defMetadata d)
+                                       ignoredMetadataNames
+
     overrides =
-        [ ("AES2Op",     FormOverride [("src", Ignore)])
-        , ("BFC",        FormOverride [("src", Ignore)])
-        , ("BFI",        FormOverride [("src", Ignore)])
-        , ("XDB_UPD",    FormOverride [("wb", Ignore)])
-        , ("N3SHA3Op",   FormOverride [("src", Ignore)])
+        [ ("AES2Op",         FormOverride [("src", Ignore)])
+        , ("BFC",            FormOverride [("src", Ignore)])
+        , ("BFI",            FormOverride [("src", Ignore)])
+        , ("DA_UPD",         FormOverride [("wb", Ignore)])
+        , ("DB_UPD",         FormOverride [("wb", Ignore)])
+        , ("IA_UPD",         FormOverride [("wb", Ignore)])
+        , ("IB_UPD",         FormOverride [("wb", Ignore)])
+        , ("N3SHA3Op",       FormOverride [("src", Ignore)])
+        , ("SMLAL",          FormOverride [("RLo", Ignore), ("RHi", Ignore)])
+        , ("STMIA_UPD",      FormOverride [("wb", Ignore)])
+        , ("STMIB_UPD",      FormOverride [("wb", Ignore)])
+        , ("STRBT_POST_IMM", FormOverride [("Rn_wb", Ignore)])
+        , ("STRBT_POST_REG", FormOverride [("Rn_wb", Ignore)])
+        , ("STRD",           FormOverride [("Rt2", Ignore)])
+        , ("STRD_POST",      FormOverride [("Rt2", Ignore), ("Rn_wb", Ignore)])
+        , ("STRD_PRE",       FormOverride [("Rt2", Ignore), ("Rn_wb", Ignore)])
+        , ("STRHTi",         FormOverride [("base_wb", Ignore)])
+        , ("STRHTr",         FormOverride [("base_wb", Ignore)])
+        , ("STRH_POST",      FormOverride [("Rn_wb", Ignore)])
+        , ("STRH_PRE",       FormOverride [("Rn_wb", Ignore)])
+        , ("STRT_POST_IMM" , FormOverride [("Rn_wb", Ignore)])
+        , ("STRT_POST_REG" , FormOverride [("Rn_wb", Ignore)])
+        , ("UMAAL",          FormOverride [("RLo", Ignore), ("RHi", Ignore)])
+        , ("UMLAL",          FormOverride [("RLo", Ignore), ("RHi", Ignore)])
+        , ("XDB_UPD",        FormOverride [("wb", Ignore)])
+        , ("_POST_IMM",      FormOverride [("Rn_wb", Ignore)])
+        , ("_POST_REG",      FormOverride [("Rn_wb", Ignore)])
+        , ("_PRE_IMM",       FormOverride [("Rn_wb", Ignore)])
+        , ("_PRE_REG",       FormOverride [("Rn_wb", Ignore)])
         ]
