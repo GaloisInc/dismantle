@@ -89,10 +89,6 @@ isa = ISA { isaName = "ARM"
                                  , opConE = Just (varE 'ARM.mkPred)
                                  , opWordE = Just (varE 'ARM.predToBits)
                                  }
-    sBitOperand = OperandPayload { opTypeName = ''ARM.SBit
-                                 , opConE = Just (varE 'ARM.mkSBit)
-                                 , opWordE = Just (varE 'ARM.sBitToBits)
-                                 }
     adrLabelOperand = OperandPayload { opTypeName = ''ARM.AdrLabel
                                      , opConE = Just (varE 'ARM.mkAdrLabel)
                                      , opWordE = Just (varE 'ARM.adrLabelToBits)
@@ -167,7 +163,7 @@ isa = ISA { isaName = "ARM"
         , ("Arm_br_target"     , branchTarget)
         , ("Bf_inv_mask_imm"   , word16Operand)
         , ("C_imm"             , coprocRegister)
-        , ("Cc_out"            , sBitOperand)
+        , ("Cc_out"            , bit)
         , ("Coproc_option_imm" , word8Operand)
         , ("Dpr"               , dpRegister)
         , ("GPR"               , gpRegister)

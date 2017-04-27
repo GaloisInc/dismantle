@@ -85,10 +85,6 @@ module Dismantle.ARM.Operands (
   mkImm16,
   imm16ToBits,
 
-  SBit,
-  mkSBit,
-  sBitToBits,
-
   AdrLabel,
   mkAdrLabel,
   adrLabelToBits,
@@ -616,20 +612,6 @@ mkImm16 = Imm16 . fromIntegral
 
 imm16ToBits :: Imm16 -> Word32
 imm16ToBits (Imm16 i) = fromIntegral i
-
--- | A set-flags bit ('S' in the ARM ARM)
-data SBit = SBit { unSBit :: Word8
-                 }
-  deriving (Eq, Ord, Show)
-
-instance PP.Pretty SBit where
-  pPrint = PP.pPrint . unSBit
-
-mkSBit :: Word32 -> SBit
-mkSBit = SBit . fromIntegral
-
-sBitToBits :: SBit -> Word32
-sBitToBits (SBit i) = fromIntegral i
 
 -- | Four-bit condition flag sequence
 data Pred = Pred { unPred :: Word8
