@@ -167,13 +167,13 @@ data Field = Field { fieldBits :: Int
                    }
 
 addrModeImm12RegField :: Field
-addrModeImm12RegField = Field 4 9
+addrModeImm12RegField = Field 4 13
 
 addrModeImm12AddField :: Field
-addrModeImm12AddField = Field 1 8
+addrModeImm12AddField = Field 1 12
 
 addrModeImm12ImmField :: Field
-addrModeImm12ImmField = Field 8 0
+addrModeImm12ImmField = Field 12 0
 
 mkAddrModeImm12 :: Word32 -> AddrModeImm12
 mkAddrModeImm12 w = AddrModeImm12 (GPR $ fromIntegral reg) (fromIntegral imm) (add == 1)
