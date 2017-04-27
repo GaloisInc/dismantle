@@ -17,10 +17,6 @@ module Dismantle.ARM.Operands (
   qqpr,
   unQQPR,
 
-  CR,
-  FR,
-  VR,
-
   Bit,
   mkBit,
   bitToBits,
@@ -122,13 +118,6 @@ bitToBits :: Bit -> Word32
 bitToBits (Bit True ) = 1
 bitToBits (Bit False) = 0
 
-newtype CR = CR { unCR :: Word8 }
-  deriving (Eq, Ord, Show)
-
--- | Floating-point register by number
-newtype FR = FR { unFR :: Word8 }
-  deriving (Eq, Ord, Show)
-
 -- | General-purpose register by number
 newtype GPR = GPR { unGPR :: Word8 }
   deriving (Eq, Ord, Show)
@@ -165,10 +154,6 @@ newtype QQPR = QQPR { unQQPR :: Word8 }
 
 qqpr :: Word8 -> QQPR
 qqpr = QQPR
-
--- | Vector register by number
-newtype VR = VR { unVR :: Word8 }
-  deriving (Eq, Ord, Show)
 
 data Field = Field { fieldBits :: Int
                    , fieldOffset :: Int
@@ -609,15 +594,6 @@ instance PP.Pretty QPR where
 
 instance PP.Pretty QQPR where
   pPrint (QQPR rno) = PP.char 'q' <> PP.int (fromIntegral rno)
-
-instance PP.Pretty CR where
-  pPrint (CR rno) = PP.char 'c' <> PP.int (fromIntegral rno)
-
-instance PP.Pretty FR where
-  pPrint (FR rno) = PP.char 'f' <> PP.int (fromIntegral rno)
-
-instance PP.Pretty VR where
-  pPrint (VR rno) = PP.char 'v' <> PP.int (fromIntegral rno)
 
 instance PP.Pretty Imm12 where
   pPrint = PP.pPrint . unImm12
