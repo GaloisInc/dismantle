@@ -37,9 +37,17 @@ module Dismantle.ARM.Operands (
   mkShiftImm,
   shiftImmToBits,
 
+  RegWithAdd,
+  mkRegWithAdd,
+  regWithAddToBits,
+
   AddrMode3,
   mkAddrMode3,
   addrMode3ToBits,
+
+  AM3Offset,
+  mkAM3Offset,
+  am3OffsetToBits,
 
   Am2OffsetReg,
   mkAm2OffsetReg,
@@ -213,6 +221,26 @@ addrMode3ToBits (AddrMode3 (GPR r) imm add) =
     -- LDRD etc. that use this operand type).
     insert (Field 1 13) 1 0
 
+am3OffsetAddField :: Field
+am3OffsetAddField = Field 1 8
+
+am3OffsetImmField :: Field
+am3OffsetImmField = Field 8 0
+
+mkAM3Offset :: Word32 -> AM3Offset
+mkAM3Offset w = AM3Offset (fromIntegral imm) (add == 1)
+  where
+    add = extract am3OffsetAddField w
+    imm = extract am3OffsetImmField w
+
+am3OffsetToBits :: AM3Offset -> Word32
+am3OffsetToBits (AM3Offset imm add) =
+    insert am3OffsetAddField (if add then 1 else 0) $
+    insert am3OffsetImmField imm $
+    -- Always set bit position 9 (see the tgen data and ARM ARM for STRD
+    -- etc. that use this operand type).
+    insert (Field 1 9) 1 0
+
 shiftImmImmField :: Field
 shiftImmImmField = Field 5 0
 
@@ -229,6 +257,23 @@ shiftImmToBits :: ShiftImm -> Word32
 shiftImmToBits (ShiftImm imm ty) =
     insert shiftImmTypeField ty $
     insert shiftImmImmField imm 0
+
+regWithAddRegField :: Field
+regWithAddRegField = Field 4 0
+
+regWithAddAddField :: Field
+regWithAddAddField = Field 1 4
+
+mkRegWithAdd :: Word32 -> RegWithAdd
+mkRegWithAdd w = RegWithAdd (GPR $ fromIntegral reg) (add == 1)
+  where
+    add = extract regWithAddAddField w
+    reg = extract regWithAddRegField w
+
+regWithAddToBits :: RegWithAdd -> Word32
+regWithAddToBits (RegWithAdd (GPR reg) add) =
+    insert regWithAddAddField (if add then 1 else 0) $
+    insert regWithAddRegField reg 0
 
 am2OffsetImmAddField :: Field
 am2OffsetImmAddField = Field 1 12
@@ -443,6 +488,12 @@ data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
                            }
   deriving (Eq, Ord, Show)
 
+-- | An am3Offset memory reference for a load or store instruction
+data AM3Offset = AM3Offset { am3OffsetImmediate :: Word8
+                           , am3OffsetAdd       :: Bool
+                           }
+  deriving (Eq, Ord, Show)
+
 -- | A shift_imm operand with a shift immediate and shift type (l/r).
 -- See also USAT in the ARM ARM and tgen.
 data ShiftImm = ShiftImm { shiftImmImmediate :: Word8
@@ -478,6 +529,11 @@ data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
                            , ldstSoRegImmediate      :: Word8
                            , ldstSoRegAdd            :: Bool
                            }
+  deriving (Eq, Ord, Show)
+
+data RegWithAdd = RegWithAdd { regWithAddReg :: GPR
+                             , regWithAddAdd :: Bool
+                             }
   deriving (Eq, Ord, Show)
 
 -- | An AddrMode_Imm12 memory reference for a load or store instruction
@@ -634,6 +690,16 @@ instance PP.Pretty LdstSoReg where
       in (PP.pPrint (ldstSoRegBaseRegister m) <> PP.char ',') PP.<+>
          (opStr <> ((PP.pPrint (ldstSoRegOffsetRegister m) <> PP.char ',') PP.<+>
                     (PP.pPrint (ldstSoRegImmediate m))))
+
+instance PP.Pretty AM3Offset where
+  pPrint m =
+      let opStr = if am3OffsetAdd m then mempty else PP.char '-'
+      in (opStr <> PP.pPrint (am3OffsetImmediate m))
+
+instance PP.Pretty RegWithAdd where
+  pPrint m =
+      let opStr = if regWithAddAdd m then mempty else PP.char '-'
+      in (opStr <> PP.pPrint (regWithAddReg m))
 
 instance PP.Pretty AddrModeImm12 where
   pPrint m =

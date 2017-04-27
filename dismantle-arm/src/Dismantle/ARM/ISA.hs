@@ -61,6 +61,10 @@ isa = ISA { isaName = "ARM"
                                , opConE = Just (varE 'ARM.mkAddrMode3)
                                , opWordE = Just (varE 'ARM.addrMode3ToBits)
                                }
+    addrMode3Offset = OperandPayload { opTypeName = ''ARM.AM3Offset
+                                     , opConE = Just (varE 'ARM.mkAM3Offset)
+                                     , opWordE = Just (varE 'ARM.am3OffsetToBits)
+                                     }
     addrMode5 = OperandPayload { opTypeName = ''ARM.AddrMode5
                                , opConE = Just (varE 'ARM.mkAddrMode5)
                                , opWordE = Just (varE 'ARM.addrMode5ToBits)
@@ -141,6 +145,10 @@ isa = ISA { isaName = "ARM"
                                   , opConE = Just (varE 'ARM.mkAm2OffsetReg)
                                   , opWordE = Just (varE 'ARM.am2OffsetRegToBits)
                                   }
+    regWithAdd = OperandPayload { opTypeName = ''ARM.RegWithAdd
+                                , opConE = Just (varE 'ARM.mkRegWithAdd)
+                                , opWordE = Just (varE 'ARM.regWithAddToBits)
+                                }
 
     armOperandPayloadTypes =
         [ ("Dpr"               , dpRegister)
@@ -188,13 +196,13 @@ isa = ISA { isaName = "ARM"
         , ("Am2offset_imm"     , am2OffsetImm)
         , ("Am2offset_reg"     , am2OffsetReg)
         , ("Addrmode_imm12_pre", addrModeImm12)
-        -- , ("Addrmode3_pre"     , )
+        , ("Am3offset"         , addrMode3Offset)
+        , ("Addrmode3_pre"     , addrMode3)
+        , ("Postidx_imm8"      , addrMode3Offset)
+        , ("Postidx_reg"       , regWithAdd)
         -- , ("Addrmode6"         , )
-        -- , ("Am3offset"         , )
         -- , ("Am6offset"         , )
         -- , ("Nohash_imm"        , )
-        -- , ("Postidx_imm8"      , )
-        -- , ("Postidx_reg"       , )
         -- , ("Rgpr"              , )
         ]
 
