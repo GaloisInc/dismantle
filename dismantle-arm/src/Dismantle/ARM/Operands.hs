@@ -41,6 +41,10 @@ module Dismantle.ARM.Operands (
   mkAddrMode3,
   addrMode3ToBits,
 
+  Am2OffsetReg,
+  mkAm2OffsetReg,
+  am2OffsetRegToBits,
+
   Am2OffsetImm,
   mkAm2OffsetImm,
   am2OffsetImmToBits,
@@ -243,6 +247,34 @@ am2OffsetImmToBits (Am2OffsetImm imm add) =
     insert am2OffsetImmAddField (if add then 1 else 0) $
     insert am2OffsetImmImmField imm 0
 
+am2OffsetRegAddField :: Field
+am2OffsetRegAddField = Field 1 12
+
+am2OffsetRegImmField :: Field
+am2OffsetRegImmField = Field 5 7
+
+am2OffsetRegTypeField :: Field
+am2OffsetRegTypeField = Field 2 5
+
+am2OffsetRegRegField :: Field
+am2OffsetRegRegField = Field 4 0
+
+mkAm2OffsetReg :: Word32 -> Am2OffsetReg
+mkAm2OffsetReg w = Am2OffsetReg (fromIntegral imm) (fromIntegral ty)
+                                (GPR $ fromIntegral reg) (add == 1)
+  where
+    add = extract am2OffsetRegAddField w
+    imm = extract am2OffsetRegImmField w
+    ty  = extract am2OffsetRegTypeField w
+    reg = extract am2OffsetRegRegField w
+
+am2OffsetRegToBits :: Am2OffsetReg -> Word32
+am2OffsetRegToBits (Am2OffsetReg imm ty (GPR reg) add) =
+    insert am2OffsetRegAddField (if add then 1 else 0) $
+    insert am2OffsetRegImmField imm $
+    insert am2OffsetRegTypeField ty $
+    insert am2OffsetRegRegField reg 0
+
 addrMode5AddField :: Field
 addrMode5AddField = Field 1 8
 
@@ -418,6 +450,15 @@ data ShiftImm = ShiftImm { shiftImmImmediate :: Word8
                          }
   deriving (Eq, Ord, Show)
 
+-- | An am2offset_reg operand with a register, immediate, and shift type
+-- (l/r). See also LDRBT in the ARM ARM and tgen.
+data Am2OffsetReg = Am2OffsetReg { am2OffsetRegImmediate :: Word8
+                                 , am2OffsetRegType      :: Word8
+                                 , am2OffsetRegReg       :: GPR
+                                 , am2OffsetRegAdd       :: Bool
+                                 }
+  deriving (Eq, Ord, Show)
+
 -- | An AddrMode5 memory reference
 data AddrMode5 = AddrMode5 { addrMode5Immediate :: Word8
                            , addrMode5Add       :: Bool
@@ -552,6 +593,20 @@ instance PP.Pretty Am2OffsetImm where
   pPrint m =
       let opStr = if am2OffsetImmAdd m then mempty else PP.char '-'
       in (opStr <> PP.pPrint (am2OffsetImmImmediate m))
+
+instance PP.Pretty Am2OffsetReg where
+  pPrint m =
+      let tyStr = if am2OffsetRegType m == 1 then "ASR" else "LSL"
+          -- See the ARM ARM on USAT for information on this
+          -- representation.
+          amtStr = if am2OffsetRegType m == 0
+                   then show $ am2OffsetRegImmediate m
+                   else if am2OffsetRegImmediate m == 0
+                        then "32"
+                        else show $ am2OffsetRegImmediate m
+          opStr = if am2OffsetRegAdd m then mempty else PP.char '-'
+      in (PP.pPrint (am2OffsetRegReg m) <> PP.char ',') PP.<+>
+         (PP.text tyStr PP.<+> PP.text amtStr)
 
 instance PP.Pretty AddrMode5 where
   pPrint m =
