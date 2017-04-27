@@ -109,6 +109,10 @@ import Dismantle.Tablegen.TH.Pretty
 newtype Bit = Bit { unBit :: Bool }
   deriving (Eq, Ord, Show)
 
+instance PP.Pretty Bit where
+  pPrint (Bit True) = PP.int 1
+  pPrint (Bit False) = PP.int 0
+
 mkBit :: Word32 -> Bit
 mkBit 0 = Bit False
 mkBit 1 = Bit True
@@ -122,6 +126,9 @@ bitToBits (Bit False) = 0
 newtype GPR = GPR { unGPR :: Word8 }
   deriving (Eq, Ord, Show)
 
+instance PP.Pretty GPR where
+  pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
+
 gpr :: Word8 -> GPR
 gpr = GPR
 
@@ -129,9 +136,27 @@ gpr = GPR
 newtype CoprocRegister = CoprocRegister { unCoprocRegister :: Word8 }
   deriving (Eq, Ord, Show)
 
+mkCoprocRegister :: Word32 -> CoprocRegister
+mkCoprocRegister w = CoprocRegister $ fromIntegral w
+
+coprocRegisterToBits :: CoprocRegister -> Word32
+coprocRegisterToBits (CoprocRegister i) = fromIntegral i
+
+instance PP.Pretty CoprocRegister where
+  pPrint (CoprocRegister r) = PP.char 'p' <> PP.pPrint r
+
 -- | Coprocessor operation opcode register by number
 newtype Opcode = Opcode { unOpcode :: Word8 }
   deriving (Eq, Ord, Show)
+
+mkOpcode :: Word32 -> Opcode
+mkOpcode w = Opcode $ fromIntegral w
+
+opcodeToBits :: Opcode -> Word32
+opcodeToBits (Opcode i) = fromIntegral i
+
+instance PP.Pretty Opcode where
+  pPrint (Opcode o) = PP.pPrint o
 
 -- | Double-precision register by number
 newtype DPR = DPR { unDPR :: Word8 }
@@ -140,12 +165,18 @@ newtype DPR = DPR { unDPR :: Word8 }
 dpr :: Word8 -> DPR
 dpr = DPR
 
+instance PP.Pretty DPR where
+  pPrint (DPR rno) = PP.char 'd' <> PP.int (fromIntegral rno)
+
 -- | 128-bit vector register by number
 newtype QPR = QPR { unQPR :: Word8 }
   deriving (Eq, Ord, Show)
 
 qpr :: Word8 -> QPR
 qpr = QPR
+
+instance PP.Pretty QPR where
+  pPrint (QPR rno) = PP.char 'q' <> PP.int (fromIntegral rno)
 
 -- | 256-bit vector register (128-bit register pair) by number (must be
 -- even)
@@ -155,9 +186,30 @@ newtype QQPR = QQPR { unQQPR :: Word8 }
 qqpr :: Word8 -> QQPR
 qqpr = QQPR
 
+instance PP.Pretty QQPR where
+  pPrint (QQPR rno) = PP.char 'q' <> PP.int (fromIntegral rno)
+
+-- | A binary field description
 data Field = Field { fieldBits :: Int
+                   -- ^ The number of bits in the field
                    , fieldOffset :: Int
+                   -- ^ The offset of the rightmost bit in the field,
+                   -- starting from zero
                    }
+
+-- | An AddrMode_Imm12 memory reference for a load or store instruction
+-- (with a 12-bit immediate)
+data AddrModeImm12 = AddrModeImm12 { addrModeImm12Register  :: GPR
+                                   , addrModeImm12Immediate :: Word8
+                                   , addrModeImm12Add       :: Bool
+                                   }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddrModeImm12 where
+  pPrint m =
+      let opStr = if addrModeImm12Add m then mempty else PP.char '-'
+      in (PP.pPrint (addrModeImm12Register m) <> PP.char ',') PP.<+>
+         (opStr <> PP.pPrint (addrModeImm12Immediate m))
 
 addrModeImm12RegField :: Field
 addrModeImm12RegField = Field 4 13
@@ -180,6 +232,19 @@ addrModeImm12ToBits (AddrModeImm12 (GPR r) imm add) =
     insert addrModeImm12RegField r $
     insert addrModeImm12AddField (if add then 1 else 0) $
     insert addrModeImm12ImmField imm 0
+
+-- | An AddrMode3 memory reference for a load or store instruction
+data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
+                           , addrMode3Immediate :: Word8
+                           , addrMode3Add       :: Bool
+                           }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddrMode3 where
+  pPrint m =
+      let opStr = if addrMode3Add m then mempty else PP.char '-'
+      in (PP.pPrint (addrMode3Register m) <> PP.char ',') PP.<+>
+         (opStr <> PP.pPrint (addrMode3Immediate m))
 
 addrMode3RegField :: Field
 addrMode3RegField = Field 4 9
@@ -206,6 +271,17 @@ addrMode3ToBits (AddrMode3 (GPR r) imm add) =
     -- LDRD etc. that use this operand type).
     insert (Field 1 13) 1 0
 
+-- | An am3Offset memory reference for a load or store instruction
+data AM3Offset = AM3Offset { am3OffsetImmediate :: Word8
+                           , am3OffsetAdd       :: Bool
+                           }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty AM3Offset where
+  pPrint m =
+      let opStr = if am3OffsetAdd m then mempty else PP.char '-'
+      in (opStr <> PP.pPrint (am3OffsetImmediate m))
+
 am3OffsetAddField :: Field
 am3OffsetAddField = Field 1 8
 
@@ -226,6 +302,25 @@ am3OffsetToBits (AM3Offset imm add) =
     -- etc. that use this operand type).
     insert (Field 1 9) 1 0
 
+-- | A shift_imm operand with a shift immediate and shift type (l/r).
+-- See also USAT in the ARM ARM and tgen.
+data ShiftImm = ShiftImm { shiftImmImmediate :: Word8
+                         , shiftImmType      :: Word8
+                         }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty ShiftImm where
+  pPrint m =
+      let tyStr = if shiftImmType m == 1 then "ASR" else "LSL"
+          -- See the ARM ARM on USAT for information on this
+          -- representation.
+          amtStr = if shiftImmType m == 0
+                   then show $ shiftImmImmediate m
+                   else if shiftImmImmediate m == 0
+                        then "32"
+                        else show $ shiftImmImmediate m
+      in (PP.text tyStr PP.<+> PP.text amtStr)
+
 shiftImmImmField :: Field
 shiftImmImmField = Field 5 0
 
@@ -242,6 +337,16 @@ shiftImmToBits :: ShiftImm -> Word32
 shiftImmToBits (ShiftImm imm ty) =
     insert shiftImmTypeField ty $
     insert shiftImmImmField imm 0
+
+data RegWithAdd = RegWithAdd { regWithAddReg :: GPR
+                             , regWithAddAdd :: Bool
+                             }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty RegWithAdd where
+  pPrint m =
+      let opStr = if regWithAddAdd m then mempty else PP.char '-'
+      in (opStr <> PP.pPrint (regWithAddReg m))
 
 regWithAddRegField :: Field
 regWithAddRegField = Field 4 0
@@ -260,6 +365,17 @@ regWithAddToBits (RegWithAdd (GPR reg) add) =
     insert regWithAddAddField (if add then 1 else 0) $
     insert regWithAddRegField reg 0
 
+-- | An Am2offset_imm memory reference
+data Am2OffsetImm = Am2OffsetImm { am2OffsetImmImmediate :: Word16
+                                 , am2OffsetImmAdd       :: Bool
+                                 }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty Am2OffsetImm where
+  pPrint m =
+      let opStr = if am2OffsetImmAdd m then mempty else PP.char '-'
+      in (opStr <> PP.pPrint (am2OffsetImmImmediate m))
+
 am2OffsetImmAddField :: Field
 am2OffsetImmAddField = Field 1 12
 
@@ -276,6 +392,29 @@ am2OffsetImmToBits :: Am2OffsetImm -> Word32
 am2OffsetImmToBits (Am2OffsetImm imm add) =
     insert am2OffsetImmAddField (if add then 1 else 0) $
     insert am2OffsetImmImmField imm 0
+
+-- | An am2offset_reg operand with a register, immediate, and shift type
+-- (l/r). See also LDRBT in the ARM ARM and tgen.
+data Am2OffsetReg = Am2OffsetReg { am2OffsetRegImmediate :: Word8
+                                 , am2OffsetRegType      :: Word8
+                                 , am2OffsetRegReg       :: GPR
+                                 , am2OffsetRegAdd       :: Bool
+                                 }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty Am2OffsetReg where
+  pPrint m =
+      let tyStr = if am2OffsetRegType m == 1 then "ASR" else "LSL"
+          -- See the ARM ARM on USAT for information on this
+          -- representation.
+          amtStr = if am2OffsetRegType m == 0
+                   then show $ am2OffsetRegImmediate m
+                   else if am2OffsetRegImmediate m == 0
+                        then "32"
+                        else show $ am2OffsetRegImmediate m
+          opStr = if am2OffsetRegAdd m then mempty else PP.char '-'
+      in (PP.pPrint (am2OffsetRegReg m) <> PP.char ',') PP.<+>
+         (PP.text tyStr PP.<+> PP.text amtStr)
 
 am2OffsetRegAddField :: Field
 am2OffsetRegAddField = Field 1 12
@@ -305,6 +444,17 @@ am2OffsetRegToBits (Am2OffsetReg imm ty (GPR reg) add) =
     insert am2OffsetRegTypeField ty $
     insert am2OffsetRegRegField reg 0
 
+-- | An AddrMode5 memory reference
+data AddrMode5 = AddrMode5 { addrMode5Immediate :: Word8
+                           , addrMode5Add       :: Bool
+                           }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddrMode5 where
+  pPrint m =
+      let opStr = if addrMode5Add m then mempty else PP.char '-'
+      in (opStr <> PP.pPrint (addrMode5Immediate m))
+
 addrMode5AddField :: Field
 addrMode5AddField = Field 1 8
 
@@ -325,6 +475,22 @@ addrMode5ToBits (AddrMode5 imm add) =
        -- Always set bits 12:9 to 1 (see the tgen data and ARM ARM for LDCL
        -- etc. that use this operand type).
        insert allOne (2 ^ 5 - 1) 0
+
+-- | An load/store memory reference for a preload (e.g. PLDW)
+-- instruction
+data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
+                           , ldstSoRegOffsetRegister :: GPR
+                           , ldstSoRegImmediate      :: Word8
+                           , ldstSoRegAdd            :: Bool
+                           }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty LdstSoReg where
+  pPrint m =
+      let opStr = if ldstSoRegAdd m then mempty else PP.char '-'
+      in (PP.pPrint (ldstSoRegBaseRegister m) <> PP.char ',') PP.<+>
+         (opStr <> ((PP.pPrint (ldstSoRegOffsetRegister m) <> PP.char ',') PP.<+>
+                    (PP.pPrint (ldstSoRegImmediate m))))
 
 ldstSoRegBaseRegField :: Field
 ldstSoRegBaseRegField = Field 4 13
@@ -356,6 +522,14 @@ ldstSoRegToBits (LdstSoReg (GPR baseR) (GPR offsetR) imm add) =
     insert ldstSoRegAddField (if add then 1 else 0) $
     insert ldstSoRegImmField imm 0
 
+-- | A twelve-bit immediate
+data Imm12 = Imm12 { unImm12 :: Integer
+                   }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm12 where
+  pPrint = PP.pPrint . unImm12
+
 imm12Field :: Field
 imm12Field = Field 12 0
 
@@ -367,6 +541,14 @@ mkImm12 w = Imm12 $ fromIntegral i
 imm12ToBits :: Imm12 -> Word32
 imm12ToBits (Imm12 i) =
     insert imm12Field (fromIntegral i) 0
+
+-- | A five-bit immediate
+data Imm5 = Imm5 { unImm5 :: Word8
+                 }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm5 where
+  pPrint = PP.pPrint . unImm5
 
 imm5Field :: Field
 imm5Field = Field 5 0
@@ -380,17 +562,13 @@ imm5ToBits :: Imm5 -> Word32
 imm5ToBits (Imm5 i) =
     insert imm5Field (fromIntegral i) 0
 
-mkCoprocRegister :: Word32 -> CoprocRegister
-mkCoprocRegister w = CoprocRegister $ fromIntegral w
+-- | A branch target
+data BranchTarget = BranchTarget { unBranchTarget :: Integer
+                                 }
+  deriving (Eq, Ord, Show)
 
-coprocRegisterToBits :: CoprocRegister -> Word32
-coprocRegisterToBits (CoprocRegister i) = fromIntegral i
-
-mkOpcode :: Word32 -> Opcode
-mkOpcode w = Opcode $ fromIntegral w
-
-opcodeToBits :: Opcode -> Word32
-opcodeToBits (Opcode i) = fromIntegral i
+instance PP.Pretty BranchTarget where
+  pPrint = PP.pPrint . unBranchTarget
 
 branchTargetField :: Field
 branchTargetField = Field 24 0
@@ -403,6 +581,14 @@ mkBranchTarget w = BranchTarget $ fromIntegral i
 branchTargetToBits :: BranchTarget -> Word32
 branchTargetToBits (BranchTarget i) =
     insert branchTargetField (fromIntegral i) 0
+
+-- | A branch-and-execute target
+data BranchExecuteTarget = BranchExecuteTarget { unBranchExecuteTarget :: Integer
+                                               }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty BranchExecuteTarget where
+    pPrint (BranchExecuteTarget t) = PP.pPrint t
 
 branchExecuteTargetField1 :: Field
 branchExecuteTargetField1 = Field 24 0
@@ -417,11 +603,27 @@ branchExecuteTargetToBits :: BranchExecuteTarget -> Word32
 branchExecuteTargetToBits (BranchExecuteTarget i) =
     insert branchExecuteTargetField1 (i `shiftR` 1) 0
 
+-- | A 16-bit immediate split into 12- and 4-bit chunks
+data Imm16 = Imm16 { unImm16 :: Integer
+                   }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm16 where
+  pPrint (Imm16 i) = PP.integer i
+
 mkImm16 :: Word32 -> Imm16
 mkImm16 = Imm16 . fromIntegral
 
 imm16ToBits :: Imm16 -> Word32
 imm16ToBits (Imm16 i) = fromIntegral i
+
+-- | A set-flags bit ('S' in the ARM ARM)
+data SBit = SBit { unSBit :: Word8
+                 }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty SBit where
+  pPrint = PP.pPrint . unSBit
 
 mkSBit :: Word32 -> SBit
 mkSBit = SBit . fromIntegral
@@ -429,11 +631,30 @@ mkSBit = SBit . fromIntegral
 sBitToBits :: SBit -> Word32
 sBitToBits (SBit i) = fromIntegral i
 
+-- | Four-bit condition flag sequence
+data Pred = Pred { unPred :: Word8
+                 }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty Pred where
+  pPrint = PP.pPrint . unPred
+
 mkPred :: Word32 -> Pred
 mkPred = Pred . fromIntegral
 
 predToBits :: Pred -> Word32
 predToBits (Pred p) = fromIntegral p
+
+-- | An ADR immediate offset and addition bit
+data AdrLabel = AdrLabel { adrLabelImm :: Imm12
+                         , adrLabelAdd :: Bool
+                         }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty AdrLabel where
+  pPrint (AdrLabel imm add) =
+      let opStr = if add then mempty else PP.char '-'
+      in opStr <> PP.pPrint imm
 
 addBitsField :: Field
 addBitsField = Field 2 12
@@ -456,6 +677,7 @@ adrLabelToBits (AdrLabel imm add) =
     in insert addBitsField addBits $
        imm12ToBits imm
 
+-- Utilities for dealing with Fields
 mkMask :: Field -> Word32
 mkMask (Field bits offset) = (2 ^ bits - 1) `shiftL` offset
 
@@ -465,220 +687,3 @@ insert (Field bits offset) src dest =
 
 extract :: Field -> Word32 -> Word32
 extract f val = (val .&. (mkMask f)) `shiftR` (fieldOffset f)
-
--- | An AddrMode3 memory reference for a load or store instruction
-data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
-                           , addrMode3Immediate :: Word8
-                           , addrMode3Add       :: Bool
-                           }
-  deriving (Eq, Ord, Show)
-
--- | An am3Offset memory reference for a load or store instruction
-data AM3Offset = AM3Offset { am3OffsetImmediate :: Word8
-                           , am3OffsetAdd       :: Bool
-                           }
-  deriving (Eq, Ord, Show)
-
--- | A shift_imm operand with a shift immediate and shift type (l/r).
--- See also USAT in the ARM ARM and tgen.
-data ShiftImm = ShiftImm { shiftImmImmediate :: Word8
-                         , shiftImmType      :: Word8
-                         }
-  deriving (Eq, Ord, Show)
-
--- | An am2offset_reg operand with a register, immediate, and shift type
--- (l/r). See also LDRBT in the ARM ARM and tgen.
-data Am2OffsetReg = Am2OffsetReg { am2OffsetRegImmediate :: Word8
-                                 , am2OffsetRegType      :: Word8
-                                 , am2OffsetRegReg       :: GPR
-                                 , am2OffsetRegAdd       :: Bool
-                                 }
-  deriving (Eq, Ord, Show)
-
--- | An AddrMode5 memory reference
-data AddrMode5 = AddrMode5 { addrMode5Immediate :: Word8
-                           , addrMode5Add       :: Bool
-                           }
-  deriving (Eq, Ord, Show)
-
--- | An Am2offset_imm memory reference
-data Am2OffsetImm = Am2OffsetImm { am2OffsetImmImmediate :: Word16
-                                 , am2OffsetImmAdd       :: Bool
-                                 }
-  deriving (Eq, Ord, Show)
-
--- | An load/store memory reference for a preload (e.g. PLDW)
--- instruction
-data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
-                           , ldstSoRegOffsetRegister :: GPR
-                           , ldstSoRegImmediate      :: Word8
-                           , ldstSoRegAdd            :: Bool
-                           }
-  deriving (Eq, Ord, Show)
-
-data RegWithAdd = RegWithAdd { regWithAddReg :: GPR
-                             , regWithAddAdd :: Bool
-                             }
-  deriving (Eq, Ord, Show)
-
--- | An AddrMode_Imm12 memory reference for a load or store instruction
--- (with a 12-bit immediate)
-data AddrModeImm12 = AddrModeImm12 { addrModeImm12Register  :: GPR
-                                   , addrModeImm12Immediate :: Word8
-                                   , addrModeImm12Add       :: Bool
-                                   }
-  deriving (Eq, Ord, Show)
-
--- | A twelve-bit immediate
-data Imm12 = Imm12 { unImm12 :: Integer
-                   }
-  deriving (Eq, Ord, Show)
-
--- | A five-bit immediate
-data Imm5 = Imm5 { unImm5 :: Word8
-                 }
-  deriving (Eq, Ord, Show)
-
--- | A branch target
-data BranchTarget = BranchTarget { unBranchTarget :: Integer
-                                 }
-  deriving (Eq, Ord, Show)
-
--- | A branch-and-execute target
-data BranchExecuteTarget = BranchExecuteTarget { unBranchExecuteTarget :: Integer
-                                               }
-  deriving (Eq, Ord, Show)
-
--- | A 16-bit immediate split into 12- and 4-bit chunks
-data Imm16 = Imm16 { unImm16 :: Integer
-                   }
-  deriving (Eq, Ord, Show)
-
--- | A set-flags bit ('S' in the ARM ARM)
-data SBit = SBit { unSBit :: Word8
-                 }
-  deriving (Eq, Ord, Show)
-
--- | An ADR immediate offset and addition bit
-data AdrLabel = AdrLabel { adrLabelImm :: Imm12
-                         , adrLabelAdd :: Bool
-                         }
-  deriving (Eq, Ord, Show)
-
--- | Four-bit condition flag sequence
-data Pred = Pred { unPred :: Word8
-                 }
-  deriving (Eq, Ord, Show)
-
-instance PP.Pretty Bit where
-  pPrint (Bit True) = PP.int 1
-  pPrint (Bit False) = PP.int 0
-
-instance PP.Pretty Imm16 where
-  pPrint (Imm16 i) = PP.integer i
-
-instance PP.Pretty CoprocRegister where
-  pPrint (CoprocRegister r) = PP.char 'p' <> PP.pPrint r
-
-instance PP.Pretty Opcode where
-  pPrint (Opcode o) = PP.pPrint o
-
-instance PP.Pretty GPR where
-  pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
-
-instance PP.Pretty DPR where
-  pPrint (DPR rno) = PP.char 'd' <> PP.int (fromIntegral rno)
-
-instance PP.Pretty QPR where
-  pPrint (QPR rno) = PP.char 'q' <> PP.int (fromIntegral rno)
-
-instance PP.Pretty QQPR where
-  pPrint (QQPR rno) = PP.char 'q' <> PP.int (fromIntegral rno)
-
-instance PP.Pretty Imm12 where
-  pPrint = PP.pPrint . unImm12
-
-instance PP.Pretty Imm5 where
-  pPrint = PP.pPrint . unImm5
-
-instance PP.Pretty BranchTarget where
-  pPrint = PP.pPrint . unBranchTarget
-
-instance PP.Pretty SBit where
-  pPrint = PP.pPrint . unSBit
-
-instance PP.Pretty Pred where
-  pPrint = PP.pPrint . unPred
-
-instance PP.Pretty AdrLabel where
-  pPrint (AdrLabel imm add) =
-      let opStr = if add then mempty else PP.char '-'
-      in opStr <> PP.pPrint imm
-
-instance PP.Pretty AddrMode3 where
-  pPrint m =
-      let opStr = if addrMode3Add m then mempty else PP.char '-'
-      in (PP.pPrint (addrMode3Register m) <> PP.char ',') PP.<+>
-         (opStr <> PP.pPrint (addrMode3Immediate m))
-
-instance PP.Pretty Am2OffsetImm where
-  pPrint m =
-      let opStr = if am2OffsetImmAdd m then mempty else PP.char '-'
-      in (opStr <> PP.pPrint (am2OffsetImmImmediate m))
-
-instance PP.Pretty Am2OffsetReg where
-  pPrint m =
-      let tyStr = if am2OffsetRegType m == 1 then "ASR" else "LSL"
-          -- See the ARM ARM on USAT for information on this
-          -- representation.
-          amtStr = if am2OffsetRegType m == 0
-                   then show $ am2OffsetRegImmediate m
-                   else if am2OffsetRegImmediate m == 0
-                        then "32"
-                        else show $ am2OffsetRegImmediate m
-          opStr = if am2OffsetRegAdd m then mempty else PP.char '-'
-      in (PP.pPrint (am2OffsetRegReg m) <> PP.char ',') PP.<+>
-         (PP.text tyStr PP.<+> PP.text amtStr)
-
-instance PP.Pretty AddrMode5 where
-  pPrint m =
-      let opStr = if addrMode5Add m then mempty else PP.char '-'
-      in (opStr <> PP.pPrint (addrMode5Immediate m))
-
-instance PP.Pretty ShiftImm where
-  pPrint m =
-      let tyStr = if shiftImmType m == 1 then "ASR" else "LSL"
-          -- See the ARM ARM on USAT for information on this
-          -- representation.
-          amtStr = if shiftImmType m == 0
-                   then show $ shiftImmImmediate m
-                   else if shiftImmImmediate m == 0
-                        then "32"
-                        else show $ shiftImmImmediate m
-      in (PP.text tyStr PP.<+> PP.text amtStr)
-
-instance PP.Pretty BranchExecuteTarget where
-    pPrint (BranchExecuteTarget t) = PP.pPrint t
-
-instance PP.Pretty LdstSoReg where
-  pPrint m =
-      let opStr = if ldstSoRegAdd m then mempty else PP.char '-'
-      in (PP.pPrint (ldstSoRegBaseRegister m) <> PP.char ',') PP.<+>
-         (opStr <> ((PP.pPrint (ldstSoRegOffsetRegister m) <> PP.char ',') PP.<+>
-                    (PP.pPrint (ldstSoRegImmediate m))))
-
-instance PP.Pretty AM3Offset where
-  pPrint m =
-      let opStr = if am3OffsetAdd m then mempty else PP.char '-'
-      in (opStr <> PP.pPrint (am3OffsetImmediate m))
-
-instance PP.Pretty RegWithAdd where
-  pPrint m =
-      let opStr = if regWithAddAdd m then mempty else PP.char '-'
-      in (opStr <> PP.pPrint (regWithAddReg m))
-
-instance PP.Pretty AddrModeImm12 where
-  pPrint m =
-      let opStr = if addrModeImm12Add m then mempty else PP.char '-'
-      in (PP.pPrint (addrModeImm12Register m) <> PP.char ',') PP.<+>
-         (opStr <> PP.pPrint (addrModeImm12Immediate m))
