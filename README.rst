@@ -1,6 +1,16 @@
 This is a collection of libraries implementing assemblers and disassemblers for
 several architectures based on LLVM TableGen data.
 
+Setup
+=====
+
+This package is supported on Ubuntu Xenial (16.04 LTS) and depends on
+the following packages:
+
+ * binutils-multiarch
+
+To configure your system to build this package, run `setup.sh`.
+
 Library Concept
 ===============
 
