@@ -102,6 +102,27 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Tablegen.TH.Pretty
 
+-- | A bit field description and functions for using it
+
+data Field = Field { fieldBits :: Int
+                   -- ^ The number of bits in the field
+                   , fieldOffset :: Int
+                   -- ^ The offset of the rightmost bit in the field,
+                   -- starting from zero
+                   }
+
+mkMask :: Field -> Word32
+mkMask (Field bits offset) = (2 ^ bits - 1) `shiftL` offset
+
+insert :: (Integral a) => Field -> a -> Word32 -> Word32
+insert (Field bits offset) src dest =
+    dest .|. (((fromIntegral src) .&. (2 ^ bits - 1)) `shiftL` offset)
+
+extract :: Field -> Word32 -> Word32
+extract f val = (val .&. (mkMask f)) `shiftR` (fieldOffset f)
+
+-- Operand data types
+
 newtype Bit = Bit { unBit :: Bool }
   deriving (Eq, Ord, Show)
 
@@ -184,14 +205,6 @@ qqpr = QQPR
 
 instance PP.Pretty QQPR where
   pPrint (QQPR rno) = PP.char 'q' <> PP.int (fromIntegral rno)
-
--- | A binary field description
-data Field = Field { fieldBits :: Int
-                   -- ^ The number of bits in the field
-                   , fieldOffset :: Int
-                   -- ^ The offset of the rightmost bit in the field,
-                   -- starting from zero
-                   }
 
 -- | An AddrMode_Imm12 memory reference for a load or store instruction
 -- (with a 12-bit immediate)
@@ -658,14 +671,3 @@ adrLabelToBits (AdrLabel imm add) =
                   else 0b1
     in insert addBitsField addBits $
        imm12ToBits imm
-
--- Utilities for dealing with Fields
-mkMask :: Field -> Word32
-mkMask (Field bits offset) = (2 ^ bits - 1) `shiftL` offset
-
-insert :: (Integral a) => Field -> a -> Word32 -> Word32
-insert (Field bits offset) src dest =
-    dest .|. (((fromIntegral src) .&. (2 ^ bits - 1)) `shiftL` offset)
-
-extract :: Field -> Word32 -> Word32
-extract f val = (val .&. (mkMask f)) `shiftR` (fieldOffset f)
