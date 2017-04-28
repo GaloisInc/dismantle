@@ -213,6 +213,10 @@ isa = ISA { isaName = "ARM"
     ignoredDef d = defName d `elem`
         [ "tInt_eh_sjlj_longjmp"
         , "tInt_WIN_eh_sjlj_longjmp"
+        , "ANDrr"
+        , "Bcc"
+        , "CDP2"
+        , "STC2_OFFSET"
         ]
 
     ignoredMetadataNames = S.fromList $ Metadata <$>
