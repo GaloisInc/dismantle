@@ -40,7 +40,8 @@ withInstructions dir con = do
   where
     disassembleFile f = do
       insns <- withDisassembledFile f $ \d -> do
-        T.forM (concatMap instructions (sections d)) $ \i -> return (con (insnAddress i) (insnBytes i) (insnText i))
+        T.forM (concatMap instructions (sections d)) $ \i ->
+            return (con (insnAddress i) (insnBytes i) (insnText i))
       return (f, insns)
 
 withDisassembledFile :: FilePath -> (Disassembly -> IO a) -> IO a
