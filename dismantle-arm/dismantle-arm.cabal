@@ -48,4 +48,5 @@ test-suite dismantle-arm-tests
                  bytestring,
                  text,
                  tasty,
-                 tasty-hunit
+                 tasty-hunit,
+                 megaparsec
