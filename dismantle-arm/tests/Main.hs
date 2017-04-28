@@ -12,7 +12,7 @@ import Dismantle.ARM as ARM
 
 main :: IO ()
 main = do
-  testsByFile <- withInstructions "tests/bin" mkTest
+  testsByFile <- withInstructions "arm-none-eabi-objdump" "tests/bin" mkTest
   let testCases = map (\(f, tests) -> T.testGroup f tests) testsByFile
   T.defaultMain (T.testGroup "ARM Tests" testCases)
 

@@ -30,21 +30,30 @@ import Prelude
 -- each data item is constructed by a callback called on one
 -- instruction disassembled by objdump.
 withInstructions :: FilePath
+                 -- ^ The path to the objdump executable to use for objdumping
+                 -> FilePath
                  -- ^ A directory containing executables (that can be objdumped)
                  -> (Word64 -> LBS.ByteString -> T.Text -> a)
                  -- ^ Turn a disassembled instruction into data
                  -> IO [(FilePath, [a])]
-withInstructions dir con = do
+withInstructions objdumpPath dir con = do
   files <- namesMatching (dir </> "*")
   mapM disassembleFile files
   where
     disassembleFile f = do
-      insns <- withDisassembledFile f $ \d -> do
-        T.forM (concatMap instructions (sections d)) $ \i -> return (con (insnAddress i) (insnBytes i) (insnText i))
+      insns <- withDisassembledFile objdumpPath f $ \d -> do
+        T.forM (concatMap instructions (sections d)) $ \i ->
+            return (con (insnAddress i) (insnBytes i) (insnText i))
       return (f, insns)
 
-withDisassembledFile :: FilePath -> (Disassembly -> IO a) -> IO a
-withDisassembledFile f k = do
+withDisassembledFile :: FilePath
+                     -- ^ The path to the objdump program to use for disassembly
+                     -> FilePath
+                     -- ^ The path to the file to disassemble
+                     -> (Disassembly -> IO a)
+                     -- ^ Handler for the resulting disassembly
+                     -> IO a
+withDisassembledFile objdumpPath f k = do
   (_, Just hout, _, ph) <- Proc.createProcess p1
   t <- T.hGetContents hout
   case parseObjdump f t of
@@ -56,7 +65,7 @@ withDisassembledFile f k = do
       _ <- Proc.waitForProcess ph
       return res
   where
-    p0 = Proc.proc "objdump" ["-d", f]
+    p0 = Proc.proc objdumpPath ["-d", f]
     p1 = p0 { Proc.std_out = Proc.CreatePipe
             }
 
