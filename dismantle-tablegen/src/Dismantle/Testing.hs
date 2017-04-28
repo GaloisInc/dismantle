@@ -9,20 +9,16 @@ module Dismantle.Testing (
   withDisassembledFile
   ) where
 
-import Control.Applicative
-import Control.Monad ( replicateM_, void )
+import Data.Word (Word64)
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.List.NonEmpty as NL
-import Data.Maybe ( catMaybes )
 import qualified Data.Text.Lazy as T
 import qualified Data.Text.Lazy.IO as T
 import qualified Data.Traversable as T
-import Data.Word ( Word8, Word64 )
 import System.FilePath.Glob ( namesMatching )
 import System.FilePath ( (</>) )
 import qualified System.Process as Proc
 import qualified Text.Megaparsec as P
-import Text.Read ( readMaybe )
+import System.IO (hClose)
 
 import Prelude
 
@@ -68,10 +64,12 @@ withDisassembledFile parser f k = do
   t <- T.hGetContents hout
   case P.runParser parser f t of
     Left err -> do
+      hClose hout
       _ <- Proc.waitForProcess ph
-      error (show err)
+      error $ P.parseErrorPretty err
     Right d -> do
       res <- k d
+      hClose hout
       _ <- Proc.waitForProcess ph
       return res
   where
