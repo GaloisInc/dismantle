@@ -29,9 +29,8 @@ mkTest _addr bytes txt = T.testCase (T.unpack txt) $ do
     Just i -> T.assertEqual "Reassembly" bytes (PPC.assembleInstruction i)
 
 p :: Parser Disassembly
-p = do
-  consumeHeader
-  Disassembly <$> P.sepEndBy parseSection P.space
+p =
+  consumeHeader *> (Disassembly <$> P.sepEndBy parseSection P.space) <* P.eof
 
 consumeLine :: Parser ()
 consumeLine = void (P.manyTill P.anyChar P.eol)
