@@ -36,4 +36,6 @@ test-suite dismantle-ppc-tests
                  bytestring,
                  text,
                  tasty,
-                 tasty-hunit
+                 tasty-hunit,
+                 megaparsec,
+                 filepath
