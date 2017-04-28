@@ -4,7 +4,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text.Lazy as T
 import Data.Word ( Word8, Word64 )
 import Text.Read ( readMaybe )
-import Control.Monad ( replicateM_, void )
+import Control.Monad ( replicateM, replicateM_, void )
 import Data.Maybe ( catMaybes )
 import qualified Test.Tasty as T
 import qualified Test.Tasty.HUnit as T
@@ -29,9 +29,8 @@ mkTest _addr bytes txt = T.testCase (T.unpack txt) $ do
     Just i -> T.assertEqual "Reassembly" bytes (ARM.assembleInstruction i)
 
 p :: Parser Disassembly
-p = do
-  consumeHeader
-  Disassembly <$> P.sepEndBy parseSection P.space
+p =
+  consumeHeader *> (Disassembly <$> P.manyTill parseSection P.eof)
 
 consumeLine :: Parser ()
 consumeLine = void (P.manyTill P.anyChar P.eol)
@@ -54,7 +53,7 @@ sectionNameChar = tryOne [ P.alphaNumChar
 -- names that are an offset from another symbol.
 symbolNameChar :: Parser Char
 symbolNameChar = tryOne [ P.alphaNumChar
-                        , P.oneOf ['@', '-', '_']
+                        , P.oneOf ['@', '-', '_', '.']
                         ]
 
 parseSection :: Parser Section
@@ -74,19 +73,21 @@ tryParseInstruction =
   tryOne [ parseInstruction
          , parseEllipses
          , parseFunctionHeading
+         , P.eol >> return Nothing
          ]
 
 parseEllipses :: Parser (Maybe a)
-parseEllipses = tryOne [ P.space >> P.string "..." >> P.eol >> P.eol >> return Nothing
-                       , P.space >> P.string "..." >> P.eol >> return Nothing
+parseEllipses = tryOne [ P.space >> P.string "..." >> P.eol >> return Nothing
                        ]
 
 parseInstruction :: Parser (Maybe Instruction)
 parseInstruction = do
+  P.skipSome (P.char ' ')
   addr <- parseAddress
   _ <- P.char ':'
   P.space
-  bytes <- P.endBy1 parseByte (P.char ' ')
+  bytes <- replicateM 4 parseByte
+  P.space
   txt <- T.pack <$> P.manyTill P.anyChar P.eol
   case isDataDirective txt of
     True -> return Nothing
@@ -97,7 +98,7 @@ parseInstruction = do
                                 }
 
 isDataDirective :: T.Text -> Bool
-isDataDirective t =  or [ T.pack ".long" `T.isInfixOf` t
+isDataDirective t =  or [ T.pack ".word" `T.isInfixOf` t
                         ]
 
 -- | These are the markers for where symbols point in the decoded
