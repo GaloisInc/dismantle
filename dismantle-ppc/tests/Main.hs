@@ -12,7 +12,7 @@ import Dismantle.PPC as PPC
 
 main :: IO ()
 main = do
-  testsByFile <- withInstructions "powerpc-linux-gnu-objdump" "tests/bin" mkTest
+  testsByFile <- withInstructions "tests/bin" mkTest
   let testCases = map (\(f, tests) -> T.testGroup f tests) testsByFile
   T.defaultMain (T.testGroup "PPC Tests" testCases)
 
