@@ -19,6 +19,7 @@ import qualified Data.Array as A
 import Data.Bits ( (.&.) )
 import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as M
+import Data.Maybe (catMaybes)
 import qualified Data.Set as S
 import qualified Data.Traversable as T
 import Data.Word ( Word8 )
@@ -67,11 +68,12 @@ lookupByte (ByteTrie a) b =
     Element e -> Right e
     NextTable t -> Left t
 
-data TrieError = OverlappingBitPattern [Pattern]
+data TrieError = OverlappingBitPattern [(Pattern, [String])]
                | InvalidPatternLength Pattern
   deriving (Eq, Show)
 
 data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern e)
+                             , tsPatternMnemonics :: !(M.Map Pattern String)
                              , tsCache :: !(M.Map (Int, S.Set Pattern) (ByteTrie e))
                              }
 
@@ -83,9 +85,9 @@ newtype TrieM e a = TrieM { unM :: St.StateT (TrieState e) (E.Except TrieError) 
             St.MonadState (TrieState e))
 
 -- | Construct a 'ByteTrie' from a list of mappings and a default element
-byteTrie :: e -> [(BS.ByteString, BS.ByteString, e)] -> Either TrieError (ByteTrie e)
+byteTrie :: e -> [(String, BS.ByteString, BS.ByteString, e)] -> Either TrieError (ByteTrie e)
 byteTrie defElt mappings =
-  mkTrie defElt (mapM_ (\(r, t, e) -> assertMapping r t e) mappings)
+  mkTrie defElt (mapM_ (\(n, r, t, e) -> assertMapping n r t e) mappings)
 
 -- | Construct a 'ByteTrie' through a monadic assertion-oriented interface.
 --
@@ -101,6 +103,7 @@ mkTrie defElt act =
   where
     s0 = TrieState { tsPatterns = M.empty
                    , tsCache = M.empty
+                   , tsPatternMnemonics = M.empty
                    }
 
 trieFromState :: e -> TrieM e (ByteTrie e)
@@ -146,8 +149,13 @@ makePayload defElt patterns byteIndex byte =
     _ | all ((> (byteIndex + 1)) . patternBytes) (M.keys matchingPatterns) -> do
         t <- buildTableLevel defElt matchingPatterns (byteIndex + 1)
         return (byte, NextTable t)
-      | otherwise ->
-        E.throwError (OverlappingBitPattern (map fst (M.toList matchingPatterns)))
+      | otherwise -> do
+        mapping <- St.gets tsPatternMnemonics
+
+        let pats = map fst (M.toList matchingPatterns)
+            mnemonics = catMaybes $ (flip M.lookup mapping) <$> pats
+
+        E.throwError (OverlappingBitPattern $ zip pats $ (:[]) <$> mnemonics)
   where
     matchingPatterns = M.filterWithKey (patternMatches byteIndex byte) patterns
 
@@ -185,15 +193,20 @@ of possibly-matching patterns.
 -- The bit pattern must have a length that is a multiple of 8.  This
 -- function can error out with a pure error ('TrieError') if an
 -- overlapping bit pattern is asserted.
-assertMapping :: BS.ByteString -> BS.ByteString -> a -> TrieM a ()
-assertMapping patReq patTrue val
+assertMapping :: String -> BS.ByteString -> BS.ByteString -> a -> TrieM a ()
+assertMapping mnemonic patReq patTrue val
   | BS.length patReq /= BS.length patTrue || BS.null patReq =
     E.throwError (InvalidPatternLength pat)
   | otherwise = do
       pats <- St.gets tsPatterns
       case M.lookup pat pats of
-        Just xist -> E.throwError (OverlappingBitPattern [pat])
+        Just _ -> do
+            -- Get the mnemonic already mapped to this pattern
+            Just oldMnemonic <- St.gets (M.lookup pat . tsPatternMnemonics)
+            E.throwError (OverlappingBitPattern [(pat, [mnemonic, oldMnemonic])])
         Nothing ->
-          St.modify' $ \s -> s { tsPatterns = M.insert pat val (tsPatterns s) }
+          St.modify' $ \s -> s { tsPatterns = M.insert pat val (tsPatterns s)
+                               , tsPatternMnemonics = M.insert pat mnemonic (tsPatternMnemonics s)
+                               }
   where
     pat = Pattern patReq patTrue

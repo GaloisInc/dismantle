@@ -137,7 +137,7 @@ mkParserExpr isa i
     -- don't have an unused bytestring parameter)
     e <- [| Just (Parser (\_ -> $(return con) $(return tag) Nil)) |]
     (requiredMaskE, trueMaskE) <- mkMaskByteStringExprs requiredMask trueMask
-    return $ TupE [requiredMaskE, trueMaskE, e]
+    return $ TupE [nameE, requiredMaskE, trueMaskE, e]
   | otherwise = do
     bsName <- newName "bytestring"
     wordName <- newName "w"
@@ -148,9 +148,10 @@ mkParserExpr isa i
                $(varP wordName) -> $(return insnCon)))
           |]
     (requiredMaskE, trueMaskE) <- mkMaskByteStringExprs requiredMask trueMask
-    return $ TupE [requiredMaskE, trueMaskE, e]
+    return $ TupE [nameE, requiredMaskE, trueMaskE, e]
   where
     (requiredMask, trueMask) = bitSpecAsBytes (idMask i)
+    nameE = LitE $ stringL $ idMnemonic i
     tag = ConE (mkName (toTypeName (idMnemonic i)))
     con = ConE 'Instruction
     addOperandExpr wordName od e =
