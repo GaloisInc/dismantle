@@ -211,36 +211,13 @@ isa = ISA { isaName = "ARM"
         ]
 
     ignoredDef d = defName d `elem`
-        [ "tInt_eh_sjlj_longjmp"
+        [
+        -- Thumb instructions not properly marked as such:
+          "tInt_eh_sjlj_longjmp"
         , "tInt_WIN_eh_sjlj_longjmp"
-        , "ANDrr"
-        , "ADDrr"
-        , "ORRrr"
-        , "SUBrr"
-        , "ADCrr"
-        , "SBCrr"
-        , "BICrr"
-        , "EORrr"
-        , "RSBrr"
-        , "RSCrr"
-        , "TSTrr"
-        , "CMPrr"
-        , "TEQrr"
-        , "CMNzrr"
-        , "CPS1p"
-        , "CPS2p"
-        , "Bcc"
-        , "CDP2"
-        , "STC2_OFFSET"
-        , "STC2_OPTION"
-        , "STC2_POST"
-        , "STC2_PRE"
-        , "STC2L_OFFSET"
-        , "STC2L_OPTION"
-        , "STC2L_POST"
-        , "STC2L_PRE"
-        , "BL_pred"
-        , "SETPAN"
+
+        -- Instructions with more generic alternatives
+        , "BX" -- see BX_pred
         ]
 
     ignoredMetadataNames = S.fromList $ Metadata <$>
