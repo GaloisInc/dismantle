@@ -117,11 +117,13 @@ bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroup
 -- | For a parsable instruction, return three expressions ready to be
 -- spliced into the AST:
 --
--- 1) The mask (as a bytestring) of required bits
+-- 1) The instruction mnemonic
 --
--- 2) The bits required to be 1 among the required bits
+-- 2) The mask (as a bytestring) of required bits
 --
--- 3) The actual parser function wrapped in a 'Parser' constructor to
+-- 3) The bits required to be 1 among the required bits
+--
+-- 4) The actual parser function wrapped in a 'Parser' constructor to
 -- existentially quantify out type parameters and shapes and whatnot.
 -- The parser is actually wrapped in a Just to satisfy the trie
 -- constructor.
