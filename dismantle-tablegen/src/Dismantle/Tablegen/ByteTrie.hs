@@ -16,7 +16,7 @@ import Control.DeepSeq
 import qualified Control.Monad.State.Strict as St
 import qualified Control.Monad.Except as E
 import qualified Data.Array as A
-import Data.Bits ( (.&.) )
+import Data.Bits ( (.&.), popCount )
 import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as M
 import Data.Maybe (catMaybes)
@@ -147,17 +147,52 @@ makePayload defElt patterns byteIndex byte =
     [] -> return (byte, Element defElt)
     [(_, elt)] -> return (byte, Element elt)
     _ | all ((> (byteIndex + 1)) . patternBytes) (M.keys matchingPatterns) -> do
-        t <- buildTableLevel defElt matchingPatterns (byteIndex + 1)
-        return (byte, NextTable t)
+          -- If there are more bytes available in the overlapping patterns, extend
+          -- the trie to inspect one more byte
+          t <- buildTableLevel defElt matchingPatterns (byteIndex + 1)
+          return (byte, NextTable t)
+      | Just mostSpecificElt <- findMostSpecificPatternElt matchingPatterns -> do
+          -- If there are no more bytes *and* one of the patterns is more specific
+          -- than all of the others, take the most specific pattern
+          return (byte, Element mostSpecificElt)
       | otherwise -> do
-        mapping <- St.gets tsPatternMnemonics
+          -- Otherwise, the patterns overlap and we have no way to choose a winner, so error out
+          mapping <- St.gets tsPatternMnemonics
 
-        let pats = map fst (M.toList matchingPatterns)
-            mnemonics = catMaybes $ (flip M.lookup mapping) <$> pats
+          let pats = map fst (M.toList matchingPatterns)
+              mnemonics = catMaybes $ (flip M.lookup mapping) <$> pats
 
-        E.throwError (OverlappingBitPattern $ zip pats $ (:[]) <$> mnemonics)
+          E.throwError (OverlappingBitPattern $ zip pats $ (:[]) <$> mnemonics)
   where
     matchingPatterns = M.filterWithKey (patternMatches byteIndex byte) patterns
+
+-- | Return the element associated with the most specific pattern in the given
+-- collection, if any.
+--
+-- A pattern is the most specific if its required bits are a strict superset of
+-- the required bits of the other patterns in the initial collection.
+--
+-- The required invariant for this function is that all of the patterns in the
+-- collection are actually congruent (i.e., *could* have all of their bits
+-- matching).
+findMostSpecificPatternElt :: M.Map Pattern e -> Maybe e
+findMostSpecificPatternElt = findMostSpecific [] . M.toList
+  where
+    findMostSpecific checked pats =
+      case pats of
+        [] -> Nothing
+        e@(pat, elt) : rest
+          | checkPatterns pat checked rest -> Just elt
+          | otherwise -> findMostSpecific (e:checked) rest
+    -- Return 'True' if the pattern @p@ is more specific than all of the
+    -- patterns in @checked@ and @rest@.
+    checkPatterns p checked rest =
+      all (isMoreSpecific p) checked && all (isMoreSpecific p) rest
+    -- Return 'True' if @target@ is more specific than @p@.
+    isMoreSpecific target (p, _) = requiredBitCount target > requiredBitCount p
+    requiredBitCount bs = sum [ popCount w
+                              | w <- BS.unpack (requiredMask bs)
+                              ]
 
 patternMatches :: Int -> Word8 -> Pattern -> e -> Bool
 patternMatches byteIndex byte (Pattern { requiredMask = req, trueMask = true }) _ =
