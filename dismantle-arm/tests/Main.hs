@@ -19,6 +19,15 @@ import Dismantle.Testing
 
 import qualified Dismantle.ARM as ARM
 
+showByte :: Word8 -> String
+showByte b =
+    let s = showIntAtBase 2 intToDigit b ""
+        padding = replicate (8 - length s) '0'
+    in padding <> s
+
+binaryRep :: LBS.ByteString -> String
+binaryRep bytes = intercalate "." $ showByte <$> LBS.unpack bytes
+
 main :: IO ()
 main = do
   testsByFile <- withInstructions p "tests/bin" mkTest
@@ -30,14 +39,10 @@ mkTest _addr bytes txt = T.testCase (T.unpack txt) $ do
   let (_consumed, minsn) = ARM.disassembleInstruction bytes
   case minsn of
     Nothing -> do
-        let msg = "Failed to disassemble " <> binaryRep
-            showByte b =
-                let s = showIntAtBase 2 intToDigit b ""
-                    padding = replicate (8 - length s) '0'
-                in padding <> s
-            binaryRep = intercalate "." $ showByte <$> LBS.unpack bytes
+        let msg = "Failed to disassemble " <> binaryRep bytes
         T.assertFailure msg
-    Just i -> T.assertEqual "Reassembly" bytes (ARM.assembleInstruction i)
+    Just i -> T.assertEqual "Reassembly"
+        (binaryRep bytes) (binaryRep $ ARM.assembleInstruction i)
 
 p :: Parser Disassembly
 p =
