@@ -1,5 +1,6 @@
 module Main ( main ) where
 
+import Data.Monoid ((<>))
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text.Lazy as T
 import Data.Word ( Word8, Word64 )
@@ -10,6 +11,9 @@ import qualified Test.Tasty as T
 import qualified Test.Tasty.HUnit as T
 import qualified Text.Megaparsec as P
 import qualified Data.List.NonEmpty as NL
+import Data.Char (intToDigit)
+import Numeric (showIntAtBase)
+import Data.List (intercalate)
 
 import Dismantle.Testing
 
@@ -25,7 +29,14 @@ mkTest :: Word64 -> LBS.ByteString -> T.Text -> T.TestTree
 mkTest _addr bytes txt = T.testCase (T.unpack txt) $ do
   let (_consumed, minsn) = ARM.disassembleInstruction bytes
   case minsn of
-    Nothing -> T.assertFailure ("Failed to disassemble " ++ show txt)
+    Nothing -> do
+        let msg = "Failed to disassemble " <> binaryRep
+            showByte b =
+                let s = showIntAtBase 2 intToDigit b ""
+                    padding = replicate (8 - length s) '0'
+                in padding <> s
+            binaryRep = intercalate "." $ showByte <$> LBS.unpack bytes
+        T.assertFailure msg
     Just i -> T.assertEqual "Reassembly" bytes (ARM.assembleInstruction i)
 
 p :: Parser Disassembly
