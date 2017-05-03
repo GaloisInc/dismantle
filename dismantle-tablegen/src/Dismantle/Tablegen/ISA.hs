@@ -64,7 +64,12 @@ data InstFieldDescriptor = SimpleDescriptor String
 -- | Information specific to an ISA that influences code generation
 data ISA =
   ISA { isaName :: String
-      , isaEndianness :: Endianness
+      , isaTgenEndianness :: Endianness
+      -- ^ The endianness of instruction bit patterns in the input LLVM
+      -- tgen specification
+      , isaInputEndianness :: Endianness
+      -- ^ The endianness of the input bytes when parsing an instruction
+      -- stream
       , isaInstructionFilter :: Def -> Bool
       -- ^ A function that should return True for the def if it is part
       -- of the ISA and False if not.
@@ -106,7 +111,8 @@ data ISA =
 
 thumb :: ISA
 thumb = ISA { isaName = "Thumb"
-            , isaEndianness = Little
+            , isaInputEndianness = Little
+            , isaTgenEndianness = Big
             , isaInstructionFilter = thumbFilter
             , isaPseudoInstruction = const False
             }
@@ -117,7 +123,8 @@ thumb = ISA { isaName = "Thumb"
 
 aarch64 :: ISA
 aarch64 = ISA { isaName = "AArch64"
-              , isaEndianness = Little
+              , isaInputEndianness = Big
+              , isaTgenEndianness = Big
               , isaInstructionFilter = aarch64Filter
               , isaPseudoInstruction = const False
               }
@@ -130,7 +137,8 @@ unadorned t = (Bang NoSourceUnpackedness NoSourceStrictness, t)
 
 mips :: ISA
 mips = ISA { isaName = "Mips"
-           , isaEndianness = Big
+           , isaInputEndianness = Big
+           , isaTgenEndianness = Big
            , isaInstructionFilter = mipsFilter
            , isaPseudoInstruction = const False
            }
@@ -166,7 +174,8 @@ avr = ISA { isaName = "AVR"
 
 sparc :: ISA
 sparc = ISA { isaName = "Sparc"
-            , isaEndianness = Big
+            , isaTgenEndianness = Big
+            , isaInputEndianness = Big
             , isaInstructionFilter = sparcFilter
             , isaPseudoInstruction = const False
             }

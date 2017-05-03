@@ -17,6 +17,7 @@ import qualified GHC.Err.Located as L
 import Control.Monad ( guard, when )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
+import Data.Monoid ((<>))
 import qualified Data.ByteString.Lazy as LBS
 import Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
@@ -36,6 +37,7 @@ import Dismantle.Tablegen.Parser.Types
 import Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Debug.Trace
+
 data Parser a = Parser (LBS.ByteString -> a)
 
 parseInstruction :: BT.ByteTrie (Maybe (Parser a)) -> LBS.ByteString -> (Int, Maybe a)
@@ -116,10 +118,13 @@ toTrieBit br =
 -- it isn't available, skip the 'Def'.  If it is available, call the
 -- continuation that will use it.
 withEncoding :: Endianness
+             -- ^ The tgen encoding endianness
+             -> Endianness
+             -- ^ The endianness expected by the input parser
              -> Def
              -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> [Maybe BitRef] -> [String] -> FM ())
              -> FM ()
-withEncoding endian def k =
+withEncoding tgenEndian inputEndian def k =
   case mvals of
     Just (outs, ins, mbits, endianBits, ordFlds) -> k outs ins mbits endianBits ordFlds
     Nothing -> return ()
@@ -136,7 +141,11 @@ withEncoding endian def k =
           orderedFieldDefs = mapMaybe (isOperandField fields) (defDecls def)
       Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
       Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
-      return (outs, ins, mbits, if endian == Big then toBigEndian mbits else mbits, orderedFieldDefs)
+      let endianBits =
+              if tgenEndian == inputEndian
+              then mbits
+              else swapEndianness mbits
+      return (outs, ins, mbits, endianBits, orderedFieldDefs)
     addFieldName br s =
       case br of
         Just (FieldBit n _) -> S.insert n s
@@ -147,11 +156,12 @@ withEncoding endian def k =
           | S.member n fieldNames -> Just n
         _ -> Nothing
 
--- | Take a list of bits in little endian order and convert it to big endian.
+-- | Take a list of bits in one endian order and convert it to the other
+-- endian order (e.g. big -> little).
 --
 -- Group into sub-lists of 8 and then reverse the sub lists.
-toBigEndian :: [Maybe BitRef] -> [Maybe BitRef]
-toBigEndian = concat . reverse . L.chunksOf 8
+swapEndianness :: [Maybe BitRef] -> [Maybe BitRef]
+swapEndianness = concat . reverse . L.chunksOf 8
 
 -- | Match operands in the operand lists to fields in the instruction based on
 -- their variable names.
@@ -271,9 +281,10 @@ toInstructionDescriptor :: ISA -> Def -> FM ()
 toInstructionDescriptor isa def = do
     when (isaInstructionFilter isa def) $ do
       CC.callCC $ \kexit -> do
-        withEncoding (isaEndianness isa)  def $ \outs ins mbits endianBits ordFlds -> do
-          (outOperands, inOperands) <- parseOperandsByName isa (defName def) (defMetadata def) outs ins mbits kexit
-          finishInstructionDescriptor isa def mbits endianBits inOperands outOperands
+        withEncoding (isaTgenEndianness isa) (isaInputEndianness isa) def $
+          \outs ins mbits endianBits ordFlds -> do
+            (outOperands, inOperands) <- parseOperandsByName isa (defName def) (defMetadata def) outs ins mbits kexit
+            finishInstructionDescriptor isa def mbits endianBits inOperands outOperands
 
 -- | With the difficult to compute information, finish building the
 -- 'InstructionDescriptor' if possible.  If not possible, log an error
