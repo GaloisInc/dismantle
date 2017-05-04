@@ -87,6 +87,7 @@ parseInstruction = do
   P.space
   bytes <- P.endBy1 parseByte (P.char ' ')
   txt <- T.pack <$> P.manyTill P.anyChar P.eol
+  P.optional P.eol
   case isDataDirective txt of
     True -> return Nothing
     False ->
