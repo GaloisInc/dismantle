@@ -49,4 +49,5 @@ test-suite dismantle-arm-tests
                  text,
                  tasty,
                  tasty-hunit,
-                 megaparsec
+                 megaparsec,
+                 pretty
