@@ -14,6 +14,7 @@ import qualified Data.List.NonEmpty as NL
 import Data.Char (intToDigit)
 import Numeric (showIntAtBase)
 import Data.List (intercalate)
+import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Testing
 
@@ -41,8 +42,10 @@ mkTest _addr bytes txt = T.testCase (T.unpack txt) $ do
     Nothing -> do
         let msg = "Failed to disassemble " <> binaryRep bytes
         T.assertFailure msg
-    Just i -> T.assertEqual "Reassembly"
-        (binaryRep bytes) (binaryRep $ ARM.assembleInstruction i)
+    Just i -> do
+        let pp = PP.render $ ARM.ppInstruction i
+        T.assertEqual ("Reassembly (parsed: " <> pp <> ")")
+          (binaryRep bytes) (binaryRep $ ARM.assembleInstruction i)
 
 p :: Parser Disassembly
 p =
