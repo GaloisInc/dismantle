@@ -144,6 +144,11 @@ newtype GPR = GPR { unGPR :: Word8 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR where
+  pPrint (GPR 11) = PP.text "fp"
+  pPrint (GPR 12) = PP.text "ip"
+  pPrint (GPR 13) = PP.text "sp"
+  pPrint (GPR 14) = PP.text "lr"
+  pPrint (GPR 15) = PP.text "pc"
   pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
 
 gpr :: Word8 -> GPR
@@ -209,7 +214,7 @@ instance PP.Pretty QQPR where
 -- | An AddrMode_Imm12 memory reference for a load or store instruction
 -- (with a 12-bit immediate)
 data AddrModeImm12 = AddrModeImm12 { addrModeImm12Register  :: GPR
-                                   , addrModeImm12Immediate :: Word8
+                                   , addrModeImm12Immediate :: Word16
                                    , addrModeImm12Add       :: Bool
                                    }
   deriving (Eq, Ord, Show)
@@ -632,7 +637,23 @@ data Pred = Pred { unPred :: Word8
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty Pred where
-  pPrint = PP.pPrint . unPred
+    -- See the ARM ARM DDI 0406C.b, A8.3 Conditional Execution
+    pPrint (Pred 0b0000) = PP.text "eq"
+    pPrint (Pred 0b0001) = PP.text "ne"
+    pPrint (Pred 0b0010) = PP.text "cs"
+    pPrint (Pred 0b0011) = PP.text "cc"
+    pPrint (Pred 0b0100) = PP.text "mi"
+    pPrint (Pred 0b0101) = PP.text "pl"
+    pPrint (Pred 0b0110) = PP.text "vs"
+    pPrint (Pred 0b0111) = PP.text "vc"
+    pPrint (Pred 0b1000) = PP.text "hi"
+    pPrint (Pred 0b1001) = PP.text "ls"
+    pPrint (Pred 0b1010) = PP.text "ge"
+    pPrint (Pred 0b1011) = PP.text "lt"
+    pPrint (Pred 0b1100) = PP.text "gt"
+    pPrint (Pred 0b1101) = PP.text "le"
+    pPrint (Pred 0b1110) = PP.text ""
+    pPrint _             = PP.text "<UND>"
 
 mkPred :: Word32 -> Pred
 mkPred = Pred . fromIntegral

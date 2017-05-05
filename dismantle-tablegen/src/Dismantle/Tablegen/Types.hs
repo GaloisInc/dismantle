@@ -1,18 +1,34 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveLift #-}
 module Dismantle.Tablegen.Types (
   InstructionDescriptor(..),
   OperandDescriptor(..),
   OperandType(..),
   RegisterClass(..),
-  ISADescriptor(..)
+  ISADescriptor(..),
+  IBit(..)
   ) where
 
 import GHC.Generics ( Generic )
 import Control.DeepSeq
 import Data.Word ( Word8 )
+import Language.Haskell.TH.Syntax (Lift)
 
 import qualified Dismantle.Tablegen.ByteTrie as BT
+import Dismantle.Tablegen.Parser.Types (OBit)
+
+-- | A bit position in an instruction.
+newtype IBit = IBit Int
+             deriving (Show, Read, Eq, Generic, NFData, Ord, Lift)
+
+instance Num IBit where
+    (IBit a) + (IBit b) = IBit $ a + b
+    (IBit a) * (IBit b) = IBit $ a * b
+    abs (IBit a) = IBit $ abs a
+    signum (IBit a) = IBit $ signum a
+    fromInteger = IBit . fromInteger
+    negate (IBit a) = IBit (negate a)
 
 -- | The type of data contained in a field operand.
 --
@@ -36,7 +52,7 @@ data OperandType = OperandType String
 -- register reference or an immediate)
 data OperandDescriptor =
   OperandDescriptor { opName :: String
-                    , opChunks :: [(Int, Word8, Word8)]
+                    , opChunks :: [(IBit, OBit, Word8)]
                     -- ^ (Bit in the instruction, bit in the operand, number of bits in chunk)
                     , opType :: !OperandType
                     }
@@ -53,9 +69,6 @@ instance NFData OperandDescriptor where
 -- definition
 data InstructionDescriptor =
   InstructionDescriptor { idMask :: [BT.Bit]
-                        -- ^ Endian-corrected bit mask
-                        , idMaskRaw :: [BT.Bit]
-                        -- ^ Raw bitmask with no endian correction
                         , idMnemonic :: String
                         , idInputOperands :: [OperandDescriptor]
                         , idOutputOperands :: [OperandDescriptor]

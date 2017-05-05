@@ -201,8 +201,8 @@ parseBitRef :: Parser BitRef
 parseBitRef =
   tryChoice [ ExpectedBit False <$ P.char '0'
             , ExpectedBit True <$ P.char '1'
-            , FieldBit <$> name <*> P.between (symbol "{") (symbol "}") (lexeme parseInt)
-            , FieldBit <$> name <*> pure 0
+            , FieldBit <$> name <*> (OBit <$> (P.between (symbol "{") (symbol "}") (lexeme parseInt)))
+            , FieldBit <$> name <*> pure (OBit 0)
            ]
 
 parseStringLiteral :: Parser String

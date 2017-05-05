@@ -30,7 +30,8 @@ fromWord32 = B.runPut . B.putWord32be
 
 isa :: ISA
 isa = ISA { isaName = "ARM"
-          , isaEndianness = Big
+          , isaTgenBitPreprocess = id
+          , isaInputEndianness = Big
           , isaInstructionFilter = armFilter
           , isaPseudoInstruction = armPseudo
           , isaOperandPayloadTypes = armOperandPayloadTypes

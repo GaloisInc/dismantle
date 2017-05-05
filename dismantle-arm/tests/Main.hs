@@ -14,6 +14,7 @@ import qualified Data.List.NonEmpty as NL
 import Data.Char (intToDigit)
 import Numeric (showIntAtBase)
 import Data.List (intercalate)
+import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Testing
 
@@ -41,8 +42,10 @@ mkTest _addr bytes txt = T.testCase (T.unpack txt) $ do
     Nothing -> do
         let msg = "Failed to disassemble " <> binaryRep bytes
         T.assertFailure msg
-    Just i -> T.assertEqual "Reassembly"
-        (binaryRep bytes) (binaryRep $ ARM.assembleInstruction i)
+    Just i -> do
+        let pp = PP.render $ ARM.ppInstruction i
+        T.assertEqual ("Reassembly (parsed: " <> pp <> ")")
+          (binaryRep bytes) (binaryRep $ ARM.assembleInstruction i)
 
 p :: Parser Disassembly
 p =
@@ -105,7 +108,7 @@ parseInstruction = do
   bytes <- replicateM 4 parseByte
   P.space
   txt <- T.pack <$> P.manyTill P.anyChar P.eol
-  case isDataDirective txt of
+  case isDataDirective txt || isUndefinedInstruction txt of
     True -> return Nothing
     False ->
       return $ Just Instruction { insnAddress = addr
@@ -116,6 +119,9 @@ parseInstruction = do
 isDataDirective :: T.Text -> Bool
 isDataDirective t =  or [ T.pack ".word" `T.isInfixOf` t
                         ]
+
+isUndefinedInstruction :: T.Text -> Bool
+isUndefinedInstruction t =  T.pack "UNDEFINED" `T.isInfixOf` t
 
 -- | These are the markers for where symbols point in the decoded
 -- stream.  Even stripped binaries tend to have at least a few (at the

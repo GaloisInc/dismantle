@@ -103,8 +103,8 @@ bitSpecAsBytes :: [BT.Bit] -> ([Word8], [Word8])
 bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroups)
   where
     byteGroups = L.chunksOf 8 bits
-    setRequiredBits byteBits = foldr setRequiredBit 0 (zip [0..] byteBits)
-    setTrueBits byteBits = foldr setTrueBit 0 (zip [0..] byteBits)
+    setRequiredBits byteBits = foldr setRequiredBit 0 (zip [7,6..0] byteBits)
+    setTrueBits byteBits = foldr setTrueBit 0 (zip [7,6..0] byteBits)
     setRequiredBit (ix, b) w =
       case b of
         BT.ExpectedBit _ -> w `setBit` ix

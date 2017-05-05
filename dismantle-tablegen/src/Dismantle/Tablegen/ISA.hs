@@ -51,7 +51,7 @@ data FormOverride = FormOverride [(String, InstFieldDescriptor)]
 
 data InstFieldDescriptor = SimpleDescriptor String
                          -- ^ A simple mapping to another string
-                         | ComplexDescriptor (NL.NonEmpty (String, Int))
+                         | ComplexDescriptor (NL.NonEmpty (String, OBit))
                          -- ^ A mapping to a set of strings that represent
                          -- chunks of the operand
                          | Ignore
@@ -64,7 +64,14 @@ data InstFieldDescriptor = SimpleDescriptor String
 -- | Information specific to an ISA that influences code generation
 data ISA =
   ISA { isaName :: String
-      , isaEndianness :: Endianness
+      , isaTgenBitPreprocess :: [Maybe BitRef] -> [Maybe BitRef]
+      -- ^ A function to preprocess the bit patterns found in the Tgen
+      -- data. This function is responsible for transforming "Inst" bit
+      -- pattern lists from the Tgen data so that they are ordered with
+      -- the most significant bit first in the list.
+      , isaInputEndianness :: Endianness
+      -- ^ The endianness of the input bytes when parsing an instruction
+      -- stream
       , isaInstructionFilter :: Def -> Bool
       -- ^ A function that should return True for the def if it is part
       -- of the ISA and False if not.
@@ -106,7 +113,8 @@ data ISA =
 
 thumb :: ISA
 thumb = ISA { isaName = "Thumb"
-            , isaEndianness = Little
+            , isaInputEndianness = Little
+            , isaTgenBitPreprocess = id
             , isaInstructionFilter = thumbFilter
             , isaPseudoInstruction = const False
             }
@@ -117,7 +125,8 @@ thumb = ISA { isaName = "Thumb"
 
 aarch64 :: ISA
 aarch64 = ISA { isaName = "AArch64"
-              , isaEndianness = Little
+              , isaInputEndianness = Big
+              , isaTgenBitPreprocess = id
               , isaInstructionFilter = aarch64Filter
               , isaPseudoInstruction = const False
               }
@@ -130,7 +139,8 @@ unadorned t = (Bang NoSourceUnpackedness NoSourceStrictness, t)
 
 mips :: ISA
 mips = ISA { isaName = "Mips"
-           , isaEndianness = Big
+           , isaInputEndianness = Big
+           , isaTgenBitPreprocess = id
            , isaInstructionFilter = mipsFilter
            , isaPseudoInstruction = const False
            }
@@ -141,6 +151,7 @@ mips = ISA { isaName = "Mips"
 
 avr :: ISA
 avr = ISA { isaName = "AVR"
+          , isaTgenBitPreprocess = id
           , isaInstructionFilter = avrFilter
           , isaPseudoInstruction = avrPsuedo
           }
@@ -166,7 +177,8 @@ avr = ISA { isaName = "AVR"
 
 sparc :: ISA
 sparc = ISA { isaName = "Sparc"
-            , isaEndianness = Big
+            , isaInputEndianness = Big
+            , isaTgenBitPreprocess = id
             , isaInstructionFilter = sparcFilter
             , isaPseudoInstruction = const False
             }

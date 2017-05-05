@@ -25,7 +25,7 @@ import qualified Data.List as L
 import qualified Data.List.NonEmpty as NL
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
-import Data.Maybe ( fromMaybe, mapMaybe )
+import Data.Maybe ( mapMaybe )
 import qualified Data.Set as S
 import Data.Word ( Word8 )
 import Text.Printf ( printf )
@@ -36,6 +36,7 @@ import Dismantle.Tablegen.Parser.Types
 import Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Debug.Trace
+
 data Parser a = Parser (LBS.ByteString -> a)
 
 parseInstruction :: BT.ByteTrie (Maybe (Parser a)) -> LBS.ByteString -> (Int, Maybe a)
@@ -115,28 +116,30 @@ toTrieBit br =
 -- | Try to extract the basic encoding information from the 'Def'.  If
 -- it isn't available, skip the 'Def'.  If it is available, call the
 -- continuation that will use it.
-withEncoding :: Endianness
+withEncoding :: ([Maybe BitRef] -> [Maybe BitRef])
+             -- ^ The tgen bit pattern transformation function
              -> Def
-             -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> [Maybe BitRef] -> [String] -> FM ())
+             -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> [String] -> FM ())
              -> FM ()
-withEncoding endian def k =
+withEncoding tgenBitTransform def k =
   case mvals of
-    Just (outs, ins, mbits, endianBits, ordFlds) -> k outs ins mbits endianBits ordFlds
+    Just (outs, ins, mbits, ordFlds) -> k outs ins mbits ordFlds
     Nothing -> return ()
   where
     mvals = do
-      Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
+      Named _ (FieldBits rawMbits) <- F.find (named "Inst") (defDecls def)
       -- Inst has all of the names of the fields embedded in the
       -- instruction.  We can collect all of those names into a set.
       -- Then we can filter *all* of the defs according to that set,
       -- maintaining the order of the fields.  We need to return that
       -- here so that we can map fields to DAG items, which tell us
       -- types and direction.
-      let fields = foldr addFieldName S.empty mbits
+      let mbits = tgenBitTransform rawMbits
+          fields = foldr addFieldName S.empty mbits
           orderedFieldDefs = mapMaybe (isOperandField fields) (defDecls def)
       Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
       Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
-      return (outs, ins, mbits, if endian == Big then toBigEndian mbits else mbits, orderedFieldDefs)
+      return (outs, ins, mbits, orderedFieldDefs)
     addFieldName br s =
       case br of
         Just (FieldBit n _) -> S.insert n s
@@ -146,12 +149,6 @@ withEncoding endian def k =
         Named n _
           | S.member n fieldNames -> Just n
         _ -> Nothing
-
--- | Take a list of bits in little endian order and convert it to big endian.
---
--- Group into sub-lists of 8 and then reverse the sub lists.
-toBigEndian :: [Maybe BitRef] -> [Maybe BitRef]
-toBigEndian = concat . reverse . L.chunksOf 8
 
 -- | Match operands in the operand lists to fields in the instruction based on
 -- their variable names.
@@ -172,20 +169,20 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
   return (outOps, inOps)
   where
     moverride = lookupFormOverride isa mnemonic metadata
+
     -- A map of field names (derived from the 'Inst' field of a
     -- definition) to pairs of (instructionIndex, operandIndex), where
     -- the instruction index is the bit number in the instruction and
     -- the operand index is the index into the operand of that bit.
-    operandBits :: M.Map (CI String) [(Int, Int)]
+    operandBits :: M.Map (CI String) [(IBit, OBit)]
     operandBits = indexFieldBits mbits
 
-    lookupFieldBits :: NL.NonEmpty (String, Int) -> Maybe [(Int, Int)]
+    lookupFieldBits :: NL.NonEmpty (String, OBit) -> Maybe [(IBit, OBit)]
     lookupFieldBits (F.toList -> fldNames) = concat <$> mapM lookupAndOffset fldNames
       where
         lookupAndOffset (fldName, offset) = do
           opBits <- M.lookup (CI.mk fldName) operandBits
-          return [ (insnIndex, opIndex + offset) | (insnIndex, opIndex) <- opBits ]
-
+          return [ (iBit, offset + oBit) | (iBit, oBit) <- opBits ]
 
     parseOperandList dagHead dagVal =
       case dagVal of
@@ -211,9 +208,9 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
                           St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
                           kexit ()
                         Just bitPositions -> do
-                          let arrVals :: [(Int, Word8)]
-                              arrVals = [ (fldIdx, fromIntegral bitNum)
-                                        | (bitNum, fldIdx) <- bitPositions
+                          let arrVals :: [(OBit, IBit)]
+                              arrVals = [ (opBit, iBit)
+                                        | (iBit, opBit) <- bitPositions
                                         ]
                               desc = OperandDescriptor { opName = var
                                                        , opType = OperandType klass
@@ -222,13 +219,14 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
                           return (desc : operands)
         _ -> L.error (printf "Unexpected variable reference in a dag for %s: %s" mnemonic (show arg))
 
-indexFieldBits :: [Maybe BitRef] -> M.Map (CI String) [(Int, Int)]
-indexFieldBits bits = F.foldl' addBit M.empty (zip [0..] bits)
+indexFieldBits :: [Maybe BitRef] -> M.Map (CI String) [(IBit, OBit)]
+indexFieldBits bits = F.foldl' addBit M.empty (zip bitPositionRange bits)
   where
-    addBit m (bitNum, mbit) =
+    bitPositionRange = IBit <$> reverse [0 .. length bits - 1]
+    addBit m (iBit, mbit) =
       case mbit of
-        Just (FieldBit fldName fldIdx) ->
-          M.insertWith (++) (CI.mk fldName) [(bitNum, fldIdx)] m
+        Just (FieldBit opFldName opBit) ->
+          M.insertWith (++) (CI.mk opFldName) [(iBit, opBit)] m
         _ -> m
 
 -- | Determine whether the named operand decoding behavior needs to be
@@ -245,15 +243,15 @@ indexFieldBits bits = F.foldl' addBit M.empty (zip [0..] bits)
 --   name in one chunk.
 -- * If it should be mapped to a set of chunks, return Just those
 --   chunks.
-lookupOperandOverride :: Maybe FormOverride -> String -> Maybe (NL.NonEmpty (String, Int))
-lookupOperandOverride Nothing varName = Just ((varName, 0) NL.:| [])
+lookupOperandOverride :: Maybe FormOverride -> String -> Maybe (NL.NonEmpty (String, OBit))
+lookupOperandOverride Nothing varName = Just ((varName, OBit 0) NL.:| [])
 lookupOperandOverride (Just (FormOverride pairs)) varName =
     case snd <$> filter ((== varName) . fst) pairs of
-        [] -> Just ((varName, 0) NL.:| [])
+        [] -> Just ((varName, OBit 0) NL.:| [])
         [e] ->
             case e of
                 Ignore                   -> Nothing
-                SimpleDescriptor var'    -> Just ((var', 0) NL.:| [])
+                SimpleDescriptor var'    -> Just ((var', OBit 0) NL.:| [])
                 ComplexDescriptor chunks -> Just chunks
         _ -> error ""
 
@@ -271,20 +269,20 @@ toInstructionDescriptor :: ISA -> Def -> FM ()
 toInstructionDescriptor isa def = do
     when (isaInstructionFilter isa def) $ do
       CC.callCC $ \kexit -> do
-        withEncoding (isaEndianness isa)  def $ \outs ins mbits endianBits ordFlds -> do
-          (outOperands, inOperands) <- parseOperandsByName isa (defName def) (defMetadata def) outs ins mbits kexit
-          finishInstructionDescriptor isa def mbits endianBits inOperands outOperands
+        withEncoding (isaTgenBitPreprocess isa) def $
+          \outs ins mbits _ordFlds -> do
+            (outOperands, inOperands) <- parseOperandsByName isa (defName def) (defMetadata def) outs ins mbits kexit
+            finishInstructionDescriptor isa def mbits inOperands outOperands
 
 -- | With the difficult to compute information, finish building the
 -- 'InstructionDescriptor' if possible.  If not possible, log an error
 -- and continue.
-finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [Maybe BitRef] -> [OperandDescriptor] -> [OperandDescriptor] -> FM ()
-finishInstructionDescriptor isa def mbits endianBits ins outs =
+finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [OperandDescriptor] -> [OperandDescriptor] -> FM ()
+finishInstructionDescriptor _isa def mbits ins outs =
   case mvals of
     Nothing -> return ()
     Just (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly) -> do
-      let i = InstructionDescriptor { idMask = map toTrieBit endianBits
-                                    , idMaskRaw = map toTrieBit mbits
+      let i = InstructionDescriptor { idMask = map toTrieBit mbits
                                     , idMnemonic = defName def
                                     , idNamespace = ns
                                     , idDecoderNamespace = decoderNs
@@ -300,11 +298,11 @@ finishInstructionDescriptor isa def mbits endianBits ins outs =
       St.modify $ \s -> s { stInsns = i : stInsns s }
   where
     mvals = do
-      Named _ (StringItem ns) <- F.find (named "Namespace") (defDecls def)
+      Named _ (StringItem ns)        <- F.find (named "Namespace") (defDecls def)
       Named _ (StringItem decoderNs) <- F.find (named "DecoderNamespace") (defDecls def)
-      Named _ (StringItem asmStr) <- F.find (named "AsmString") (defDecls def)
-      Named _ (BitItem b) <- F.find (named "isPseudo") (defDecls def)
-      Named _ (BitItem cgOnly) <- F.find (named "isCodeGenOnly") (defDecls def)
+      Named _ (StringItem asmStr)    <- F.find (named "AsmString") (defDecls def)
+      Named _ (BitItem b)            <- F.find (named "isPseudo") (defDecls def)
+      Named _ (BitItem cgOnly)       <- F.find (named "isCodeGenOnly") (defDecls def)
       Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
       return (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly)
 
@@ -312,20 +310,20 @@ finishInstructionDescriptor isa def mbits endianBits ins outs =
 --
 -- In most cases, this should be a single chunk.  In rare cases, there will be
 -- more.
-groupByChunk :: [(Int, Word8)] -> [(Int, Word8, Word8)]
+groupByChunk :: [(OBit, IBit)] -> [(IBit, OBit, Word8)]
 groupByChunk = reverse . map snd . foldr growOrAddChunk []
   where
     -- If the next entry is part of the current chunk, grow the chunk.
     -- Otherwise, begin a new chunk.
-    growOrAddChunk (fromIntegral -> operandIndex, fromIntegral -> insnIndex) acc =
+    growOrAddChunk (oBit, iBit) acc =
       case acc of
-        [] -> [(operandIndex, (insnIndex, operandIndex, 1))]
-        prev@(lastOpIndex, (chunkInsnIndex, chunkOpIndex, chunkLen)) : rest
-          | lastOpIndex == operandIndex + 1 || lastOpIndex == operandIndex - 1 ->
-            (operandIndex, (min chunkInsnIndex insnIndex, min chunkOpIndex operandIndex, chunkLen + 1)) : rest
+        [] -> [(oBit, (iBit, oBit, 1))]
+        prev@(lastOpBit, (chunkInsnIndex, chunkOpIndex, chunkLen)) : rest
+          | lastOpBit == oBit + 1 || lastOpBit == oBit - 1 ->
+            (oBit, (min chunkInsnIndex iBit, min chunkOpIndex oBit, chunkLen + 1)) : rest
           | otherwise ->
             -- New chunk
-            (operandIndex, (insnIndex, operandIndex, 1)) : prev : rest
+            (oBit, (iBit, oBit, 1)) : prev : rest
 
 {- Note [Operand Mapping]
 
