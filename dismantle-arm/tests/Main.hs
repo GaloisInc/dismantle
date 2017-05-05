@@ -108,7 +108,7 @@ parseInstruction = do
   bytes <- replicateM 4 parseByte
   P.space
   txt <- T.pack <$> P.manyTill P.anyChar P.eol
-  case isDataDirective txt of
+  case isDataDirective txt || isUndefinedInstruction txt of
     True -> return Nothing
     False ->
       return $ Just Instruction { insnAddress = addr
@@ -119,6 +119,9 @@ parseInstruction = do
 isDataDirective :: T.Text -> Bool
 isDataDirective t =  or [ T.pack ".word" `T.isInfixOf` t
                         ]
+
+isUndefinedInstruction :: T.Text -> Bool
+isUndefinedInstruction t =  T.pack "UNDEFINED" `T.isInfixOf` t
 
 -- | These are the markers for where symbols point in the decoded
 -- stream.  Even stripped binaries tend to have at least a few (at the
