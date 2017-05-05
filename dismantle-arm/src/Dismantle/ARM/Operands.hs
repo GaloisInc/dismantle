@@ -214,7 +214,7 @@ instance PP.Pretty QQPR where
 -- | An AddrMode_Imm12 memory reference for a load or store instruction
 -- (with a 12-bit immediate)
 data AddrModeImm12 = AddrModeImm12 { addrModeImm12Register  :: GPR
-                                   , addrModeImm12Immediate :: Word8
+                                   , addrModeImm12Immediate :: Word16
                                    , addrModeImm12Add       :: Bool
                                    }
   deriving (Eq, Ord, Show)
