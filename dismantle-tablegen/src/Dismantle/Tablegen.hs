@@ -17,6 +17,7 @@ import qualified GHC.Err.Located as L
 import Control.Monad ( guard, when )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
+import Data.Tuple (swap)
 import qualified Data.ByteString.Lazy as LBS
 import Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
@@ -209,9 +210,7 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
                           kexit ()
                         Just bitPositions -> do
                           let arrVals :: [(OBit, IBit)]
-                              arrVals = [ (opBit, iBit)
-                                        | (iBit, opBit) <- bitPositions
-                                        ]
+                              arrVals = swap <$> bitPositions
                               desc = OperandDescriptor { opName = var
                                                        , opType = OperandType klass
                                                        , opChunks = groupByChunk (L.sortOn snd arrVals)
