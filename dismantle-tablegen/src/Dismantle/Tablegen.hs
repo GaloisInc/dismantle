@@ -184,7 +184,6 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
           opBits <- M.lookup (CI.mk fldName) operandBits
           return [ (iBit, offset + oBit) | (iBit, oBit) <- opBits ]
 
-
     parseOperandList dagHead dagVal =
       case dagVal of
         VDag (DagArg (Identifier hd) _) args
