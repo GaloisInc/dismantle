@@ -127,8 +127,6 @@ withEncoding tgenBitTransform def k =
     Nothing -> return ()
   where
     mvals = do
-      -- XXX ISA-specific bit pattern pre-processing needs to happen
-      -- here
       Named _ (FieldBits rawMbits) <- F.find (named "Inst") (defDecls def)
       -- Inst has all of the names of the fields embedded in the
       -- instruction.  We can collect all of those names into a set.
