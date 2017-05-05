@@ -299,11 +299,11 @@ finishInstructionDescriptor _isa def mbits ins outs =
       St.modify $ \s -> s { stInsns = i : stInsns s }
   where
     mvals = do
-      Named _ (StringItem ns) <- F.find (named "Namespace") (defDecls def)
+      Named _ (StringItem ns)        <- F.find (named "Namespace") (defDecls def)
       Named _ (StringItem decoderNs) <- F.find (named "DecoderNamespace") (defDecls def)
-      Named _ (StringItem asmStr) <- F.find (named "AsmString") (defDecls def)
-      Named _ (BitItem b) <- F.find (named "isPseudo") (defDecls def)
-      Named _ (BitItem cgOnly) <- F.find (named "isCodeGenOnly") (defDecls def)
+      Named _ (StringItem asmStr)    <- F.find (named "AsmString") (defDecls def)
+      Named _ (BitItem b)            <- F.find (named "isPseudo") (defDecls def)
+      Named _ (BitItem cgOnly)       <- F.find (named "isCodeGenOnly") (defDecls def)
       Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
       return (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly)
 
