@@ -174,15 +174,15 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
     -- definition) to pairs of (instructionIndex, operandIndex), where
     -- the instruction index is the bit number in the instruction and
     -- the operand index is the index into the operand of that bit.
-    operandBits :: M.Map (CI String) [(Int, Int)]
+    operandBits :: M.Map (CI String) [(IBit, OBit)]
     operandBits = indexFieldBits mbits
 
-    lookupFieldBits :: NL.NonEmpty (String, Int) -> Maybe [(Int, Int)]
+    lookupFieldBits :: NL.NonEmpty (String, OBit) -> Maybe [(IBit, OBit)]
     lookupFieldBits (F.toList -> fldNames) = concat <$> mapM lookupAndOffset fldNames
       where
         lookupAndOffset (fldName, offset) = do
           opBits <- M.lookup (CI.mk fldName) operandBits
-          return [ (insnIndex, opIndex + offset) | (insnIndex, opIndex) <- opBits ]
+          return [ (iBit, offset + oBit) | (iBit, oBit) <- opBits ]
 
 
     parseOperandList dagHead dagVal =
@@ -209,9 +209,9 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
                           St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
                           kexit ()
                         Just bitPositions -> do
-                          let arrVals :: [(Int, Word8)]
-                              arrVals = [ (fldIdx, fromIntegral bitNum)
-                                        | (bitNum, fldIdx) <- bitPositions
+                          let arrVals :: [(OBit, IBit)]
+                              arrVals = [ (opBit, iBit)
+                                        | (iBit, opBit) <- bitPositions
                                         ]
                               desc = OperandDescriptor { opName = var
                                                        , opType = OperandType klass
@@ -220,14 +220,14 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
                           return (desc : operands)
         _ -> L.error (printf "Unexpected variable reference in a dag for %s: %s" mnemonic (show arg))
 
-indexFieldBits :: [Maybe BitRef] -> M.Map (CI String) [(Int, Int)]
+indexFieldBits :: [Maybe BitRef] -> M.Map (CI String) [(IBit, OBit)]
 indexFieldBits bits = F.foldl' addBit M.empty (zip bitPositionRange bits)
   where
-    bitPositionRange = reverse [0 .. length bits - 1]
-    addBit m (bitNum, mbit) =
+    bitPositionRange = IBit <$> reverse [0 .. length bits - 1]
+    addBit m (iBit, mbit) =
       case mbit of
-        Just (FieldBit fldName fldIdx) ->
-          M.insertWith (++) (CI.mk fldName) [(bitNum, fldIdx)] m
+        Just (FieldBit opFldName opBit) ->
+          M.insertWith (++) (CI.mk opFldName) [(iBit, opBit)] m
         _ -> m
 
 -- | Determine whether the named operand decoding behavior needs to be
@@ -244,15 +244,15 @@ indexFieldBits bits = F.foldl' addBit M.empty (zip bitPositionRange bits)
 --   name in one chunk.
 -- * If it should be mapped to a set of chunks, return Just those
 --   chunks.
-lookupOperandOverride :: Maybe FormOverride -> String -> Maybe (NL.NonEmpty (String, Int))
-lookupOperandOverride Nothing varName = Just ((varName, 0) NL.:| [])
+lookupOperandOverride :: Maybe FormOverride -> String -> Maybe (NL.NonEmpty (String, OBit))
+lookupOperandOverride Nothing varName = Just ((varName, OBit 0) NL.:| [])
 lookupOperandOverride (Just (FormOverride pairs)) varName =
     case snd <$> filter ((== varName) . fst) pairs of
-        [] -> Just ((varName, 0) NL.:| [])
+        [] -> Just ((varName, OBit 0) NL.:| [])
         [e] ->
             case e of
                 Ignore                   -> Nothing
-                SimpleDescriptor var'    -> Just ((var', 0) NL.:| [])
+                SimpleDescriptor var'    -> Just ((var', OBit 0) NL.:| [])
                 ComplexDescriptor chunks -> Just chunks
         _ -> error ""
 
@@ -311,20 +311,20 @@ finishInstructionDescriptor _isa def mbits ins outs =
 --
 -- In most cases, this should be a single chunk.  In rare cases, there will be
 -- more.
-groupByChunk :: [(Int, Word8)] -> [(Int, Word8, Word8)]
+groupByChunk :: [(OBit, IBit)] -> [(IBit, OBit, Word8)]
 groupByChunk = reverse . map snd . foldr growOrAddChunk []
   where
     -- If the next entry is part of the current chunk, grow the chunk.
     -- Otherwise, begin a new chunk.
-    growOrAddChunk (fromIntegral -> operandIndex, fromIntegral -> insnIndex) acc =
+    growOrAddChunk (oBit, iBit) acc =
       case acc of
-        [] -> [(operandIndex, (insnIndex, operandIndex, 1))]
-        prev@(lastOpIndex, (chunkInsnIndex, chunkOpIndex, chunkLen)) : rest
-          | lastOpIndex == operandIndex + 1 || lastOpIndex == operandIndex - 1 ->
-            (operandIndex, (min chunkInsnIndex insnIndex, min chunkOpIndex operandIndex, chunkLen + 1)) : rest
+        [] -> [(oBit, (iBit, oBit, 1))]
+        prev@(lastOpBit, (chunkInsnIndex, chunkOpIndex, chunkLen)) : rest
+          | lastOpBit == oBit + 1 || lastOpBit == oBit - 1 ->
+            (oBit, (min chunkInsnIndex iBit, min chunkOpIndex oBit, chunkLen + 1)) : rest
           | otherwise ->
             -- New chunk
-            (operandIndex, (insnIndex, operandIndex, 1)) : prev : rest
+            (oBit, (iBit, oBit, 1)) : prev : rest
 
 {- Note [Operand Mapping]
 

@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveLift #-}
 -- | This module contains low-level types used by the parser.
 --
 -- It is intended that users never see these types.  Instead, users
@@ -12,6 +13,7 @@ module Dismantle.Tablegen.Parser.Types (
   Metadata(..),
   Named(..),
   BitRef(..),
+  OBit(..),
   DeclItem(..),
   DeclType(..),
   DagArg(..),
@@ -20,6 +22,7 @@ module Dismantle.Tablegen.Parser.Types (
   SimpleValue(..)
   ) where
 
+import Language.Haskell.TH.Syntax (Lift)
 import GHC.Generics (Generic)
 import Control.DeepSeq
 
@@ -85,8 +88,20 @@ data DagArg = DagArg SimpleValue (Maybe VarName)
 data VarName = VarName String
   deriving (Show, Generic, NFData, Eq)
 
+-- | A bit position in an operand.
+newtype OBit = OBit Int
+             deriving (Show, Generic, NFData, Eq, Ord, Lift)
+
+instance Num OBit where
+    (OBit a) + (OBit b) = OBit $ a + b
+    (OBit a) * (OBit b) = OBit $ a * b
+    abs (OBit a) = OBit $ abs a
+    signum (OBit a) = OBit $ signum a
+    fromInteger = OBit . fromInteger
+    negate (OBit a) = OBit (negate a)
+
 data BitRef = ExpectedBit !Bool
-            | FieldBit String Int
+            | FieldBit String OBit
             | FieldVarRef String
             deriving (Show, Generic, NFData, Eq)
 

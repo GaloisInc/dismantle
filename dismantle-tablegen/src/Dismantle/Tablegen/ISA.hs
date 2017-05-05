@@ -51,7 +51,7 @@ data FormOverride = FormOverride [(String, InstFieldDescriptor)]
 
 data InstFieldDescriptor = SimpleDescriptor String
                          -- ^ A simple mapping to another string
-                         | ComplexDescriptor (NL.NonEmpty (String, Int))
+                         | ComplexDescriptor (NL.NonEmpty (String, OBit))
                          -- ^ A mapping to a set of strings that represent
                          -- chunks of the operand
                          | Ignore
