@@ -16,7 +16,7 @@ import Language.Haskell.TH.Syntax
 
 import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Types
-import Dismantle.Tablegen.Parser.Types (defName)
+import Dismantle.Tablegen.Parser.Types ( defMetadata, defName, Metadata(..) )
 import qualified Dismantle.PPC.Operands as PPC
 
 asWord32 :: LBS.ByteString -> Word32
@@ -48,69 +48,18 @@ isa = ISA { isaName = "PPC"
 
     ppcFilter d = hasNamedString "Namespace" "PPC" d &&
                   hasNamedString "DecoderNamespace" "" d &&
+                  not (Metadata "Pseudo" `elem` defMetadata d) &&
                   L.last (defName d) /= '8'
 
-    ppcPseudo i = idPseudo i ||
-                  idMnemonic i `elem` [ "LI" -- li rD,val == addi rD,0,val
-                                      , "LIS" -- ~same
-                                      , "BDNZ" -- subsumed by gBC... maybe just BC?
-                                      , "BDNZm"
-                                      , "BDNZp"
-                                      , "BDZ"
-                                      , "BDZm"
-                                      , "BDZp"
-                                      , "BDZL"
-                                      , "BDZLm"
-                                      , "BDZLp"
-                                      , "BDZA"
-                                      , "BDZAm"
-                                      , "BDZAp"
-                                      , "BDNZLA"
-                                      , "BDZLA"
-                                      , "BDZLAm"
-                                      , "BDZLAp"
-                                      , "BDNZLAm"
-                                      , "BDNZLAp"
-                                      , "BDNZA"
-                                      , "BDNZAm"
-                                      , "BDNZAp"
-                                      , "BDNZL"
-                                      , "BDNZLm"
-                                      , "BDNZLp"
-                                      , "BDNZLR"
-                                      , "BDNZLRm"
-                                      , "BDNZLRp"
-                                      , "BDZLR"
-                                      , "BDZLRm"
-                                      , "BDZLRp"
-                                      , "BLR"
-                                      , "BLRm"
-                                      , "BLRp"
-                                      , "BDNZLRL"
-                                      , "BDNZLRLm"
-                                      , "BDNZLRLp"
-                                      , "BDZLRL"
-                                      , "BDZLRLm"
-                                      , "BDZLRLp"
-                                      , "BLRL"
-                                      , "BLRLm"
-                                      , "BLRLp"
-                                      , "BCTR"
-                                      , "BCTRL"
-                                      , "TLBSX2"
-                                      , "TLBRE2"
-                                      , "TLBWE2"
-                                      , "TLBLD"
-                                      , "MFLR"
-                                      , "MFXER"
-                                      , "MFCTR"
-                                      , "MTLR"
-                                      , "MTXER"
-                                      , "MTCTR"
-                                      , "EnforceIEIO"
-                                      , "NOP" -- encoded as OR r, 0?  maybe even or r0 r0
-                                      , "TRAP" -- encoded as TW (trap word) some constant
-                                      ]
+    ppcPseudo = idPseudo
+
+{-
+
+fcmpu
+mffs
+cmplwi
+
+-}
 
 ppcFormOverrides :: [(String, FormOverride)]
 ppcFormOverrides = [ ("BForm", ppcBForm)
@@ -120,10 +69,14 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                    , ("DForm_base", ppcDForm)
                    , ("DForm_1", ppcDForm)
                    , ("DForm_2", ppcDForm)
+                   , ("DForm_2_r0", ppcDForm_2_r0)
                    , ("DForm_3", ppcDForm)
                    , ("DForm_4", ppcDForm_4)
                    , ("DForm_5", ppcDForm_5)
+                   , ("DSForm_1", ppcDSForm)
+                   , ("DSS_Form", ppcDSSForm)
                    , ("IForm", ppcIForm)
+                   , ("MForm_1", ppcMForm)
                    , ("VXForm_1", ppcVXForm)
                    , ("VXForm_2", ppcVXForm)
                    , ("VXForm_3", ppcVXForm)
@@ -149,6 +102,7 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                    , ("XForm_18", ppcXForm)
                    , ("XForm_19", ppcXForm)
                    , ("XForm_26", ppcXForm)
+                   , ("XForm_28", ppcXForm)
                    , ("XForm_tlbws", ppcXForm)
                    , ("XForm_base_r3xo", ppcXForm)
                    , ("XOForm_1", ppcXOForm)
@@ -163,6 +117,7 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                    , ("X_RD5_XO5_RS5", ppcRD5Form)
                    , ("XX2_RD5_XO5_RS6", ppcRD5Form)
                    , ("VXForm_RD5_XO5_RS5", ppcVXForm_RD5)
+                   , ("DQ_RD6_RS5_DQ12", ppcDSForm)
                    ]
   where
     ppcBForm = FormOverride [ ("dst", SimpleDescriptor "BD")
@@ -179,6 +134,10 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                             , ("rD", SimpleDescriptor "A")
                             ]
 
+    ppcDForm_2_r0 = FormOverride [ ("rD", SimpleDescriptor "A")
+                                 , ("imm", SimpleDescriptor "B")
+                                 ]
+
     ppcDForm_4 = FormOverride [ ("dst", SimpleDescriptor "B")
                               , ("src1", SimpleDescriptor "A")
                               , ("src2", SimpleDescriptor "C")
@@ -189,7 +148,23 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                               , ("rA", SimpleDescriptor "RA")
                               ]
 
+    ppcDSForm = FormOverride [ ("rS", SimpleDescriptor "RST")
+                             , ("dst", SimpleDescriptor "DS_RA")
+                             ]
+
+    ppcDSSForm = FormOverride [ ("rA", SimpleDescriptor "A")
+                              , ("rB", SimpleDescriptor "B")
+                              ]
+
     ppcIForm = FormOverride [ ("dst", SimpleDescriptor "LI")
+                            , ("func", SimpleDescriptor "LI")
+                            ]
+
+    ppcMForm = FormOverride [ ("SH", SimpleDescriptor "RB")
+                            , ("rA", SimpleDescriptor "RA")
+                            , ("rB", SimpleDescriptor "RB")
+                            , ("rSi", SimpleDescriptor "RS")
+                            , ("rS", SimpleDescriptor "RS")
                             ]
 
     ppcVXForm = FormOverride [ ("vD", SimpleDescriptor "VD")
@@ -215,6 +190,11 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                             , ("RTS", SimpleDescriptor "RST")
                             , ("frD", SimpleDescriptor "RST")
                             , ("frB", SimpleDescriptor "B")
+                            , ("frS", SimpleDescriptor "RST")
+                            , ("dst", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
+                            , ("src", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
+                            , ("SH", SimpleDescriptor "B")
+                            , ("rD", SimpleDescriptor "RST")
                             ]
 
     ppcXForm_8 = FormOverride [ ("rS", SimpleDescriptor "RST")
