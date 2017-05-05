@@ -144,6 +144,11 @@ newtype GPR = GPR { unGPR :: Word8 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR where
+  pPrint (GPR 11) = PP.text "fp"
+  pPrint (GPR 12) = PP.text "ip"
+  pPrint (GPR 13) = PP.text "sp"
+  pPrint (GPR 14) = PP.text "lr"
+  pPrint (GPR 15) = PP.text "pc"
   pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
 
 gpr :: Word8 -> GPR
