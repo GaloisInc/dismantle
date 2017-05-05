@@ -318,7 +318,8 @@ groupByChunk = reverse . map snd . foldr growOrAddChunk []
       case acc of
         [] -> [(oBit, (iBit, oBit, 1))]
         prev@(lastOpBit, (chunkInsnIndex, chunkOpIndex, chunkLen)) : rest
-          | lastOpBit == oBit + 1 || lastOpBit == oBit - 1 ->
+          | ((lastOpBit == oBit + 1) && (chunkInsnIndex == iBit + 1)) ||
+            ((lastOpBit == oBit - 1) && (chunkInsnIndex == iBit - 1)) ->
             (oBit, (min chunkInsnIndex iBit, min chunkOpIndex oBit, chunkLen + 1)) : rest
           | otherwise ->
             -- New chunk
