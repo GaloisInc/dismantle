@@ -64,9 +64,11 @@ data InstFieldDescriptor = SimpleDescriptor String
 -- | Information specific to an ISA that influences code generation
 data ISA =
   ISA { isaName :: String
-      , isaTgenEndianness :: Endianness
-      -- ^ The endianness of instruction bit patterns in the input LLVM
-      -- tgen specification
+      , isaTgenBitPreprocess :: [Maybe BitRef] -> [Maybe BitRef]
+      -- ^ A function to preprocess the bit patterns found in the Tgen
+      -- data. This function is responsible for transforming "Inst" bit
+      -- pattern lists from the Tgen data so that they are ordered with
+      -- the most significant bit first in the list.
       , isaInputEndianness :: Endianness
       -- ^ The endianness of the input bytes when parsing an instruction
       -- stream
@@ -112,7 +114,7 @@ data ISA =
 thumb :: ISA
 thumb = ISA { isaName = "Thumb"
             , isaInputEndianness = Little
-            , isaTgenEndianness = Big
+            , isaTgenBitPreprocess = id
             , isaInstructionFilter = thumbFilter
             , isaPseudoInstruction = const False
             }
@@ -124,7 +126,7 @@ thumb = ISA { isaName = "Thumb"
 aarch64 :: ISA
 aarch64 = ISA { isaName = "AArch64"
               , isaInputEndianness = Big
-              , isaTgenEndianness = Big
+              , isaTgenBitPreprocess = id
               , isaInstructionFilter = aarch64Filter
               , isaPseudoInstruction = const False
               }
@@ -138,7 +140,7 @@ unadorned t = (Bang NoSourceUnpackedness NoSourceStrictness, t)
 mips :: ISA
 mips = ISA { isaName = "Mips"
            , isaInputEndianness = Big
-           , isaTgenEndianness = Big
+           , isaTgenBitPreprocess = id
            , isaInstructionFilter = mipsFilter
            , isaPseudoInstruction = const False
            }
@@ -149,6 +151,7 @@ mips = ISA { isaName = "Mips"
 
 avr :: ISA
 avr = ISA { isaName = "AVR"
+          , isaTgenBitPreprocess = id
           , isaInstructionFilter = avrFilter
           , isaPseudoInstruction = avrPsuedo
           }
@@ -174,8 +177,8 @@ avr = ISA { isaName = "AVR"
 
 sparc :: ISA
 sparc = ISA { isaName = "Sparc"
-            , isaTgenEndianness = Big
             , isaInputEndianness = Big
+            , isaTgenBitPreprocess = id
             , isaInstructionFilter = sparcFilter
             , isaPseudoInstruction = const False
             }

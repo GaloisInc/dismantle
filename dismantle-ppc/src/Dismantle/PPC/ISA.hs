@@ -28,7 +28,7 @@ fromWord32 = B.runPut . B.putWord32be
 isa :: ISA
 isa = ISA { isaName = "PPC"
           , isaInputEndianness = Big
-          , isaTgenEndianness = Little
+          , isaTgenBitPreprocess = L.reverse
           , isaInstructionFilter = ppcFilter
           , isaPseudoInstruction = ppcPseudo
           , isaOperandPayloadTypes = ppcOperandPayloadTypes

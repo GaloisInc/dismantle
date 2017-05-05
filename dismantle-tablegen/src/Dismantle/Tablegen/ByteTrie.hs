@@ -23,6 +23,7 @@ import Data.Maybe (catMaybes)
 import qualified Data.Set as S
 import qualified Data.Traversable as T
 import Data.Word ( Word8 )
+import Data.Monoid ((<>))
 
 import Prelude
 

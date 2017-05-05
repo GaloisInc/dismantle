@@ -17,7 +17,6 @@ import qualified GHC.Err.Located as L
 import Control.Monad ( guard, when )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
-import Data.Monoid ((<>))
 import qualified Data.ByteString.Lazy as LBS
 import Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
@@ -26,7 +25,7 @@ import qualified Data.List as L
 import qualified Data.List.NonEmpty as NL
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
-import Data.Maybe ( fromMaybe, mapMaybe )
+import Data.Maybe ( mapMaybe )
 import qualified Data.Set as S
 import Data.Word ( Word8 )
 import Text.Printf ( printf )
@@ -117,35 +116,32 @@ toTrieBit br =
 -- | Try to extract the basic encoding information from the 'Def'.  If
 -- it isn't available, skip the 'Def'.  If it is available, call the
 -- continuation that will use it.
-withEncoding :: Endianness
-             -- ^ The tgen encoding endianness
-             -> Endianness
-             -- ^ The endianness expected by the input parser
+withEncoding :: ([Maybe BitRef] -> [Maybe BitRef])
+             -- ^ The tgen bit pattern transformation function
              -> Def
-             -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> [Maybe BitRef] -> [String] -> FM ())
+             -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> [String] -> FM ())
              -> FM ()
-withEncoding tgenEndian inputEndian def k =
+withEncoding tgenBitTransform def k =
   case mvals of
-    Just (outs, ins, mbits, endianBits, ordFlds) -> k outs ins mbits endianBits ordFlds
+    Just (outs, ins, mbits, ordFlds) -> k outs ins mbits ordFlds
     Nothing -> return ()
   where
     mvals = do
-      Named _ (FieldBits mbits) <- F.find (named "Inst") (defDecls def)
+      -- XXX ISA-specific bit pattern pre-processing needs to happen
+      -- here
+      Named _ (FieldBits rawMbits) <- F.find (named "Inst") (defDecls def)
       -- Inst has all of the names of the fields embedded in the
       -- instruction.  We can collect all of those names into a set.
       -- Then we can filter *all* of the defs according to that set,
       -- maintaining the order of the fields.  We need to return that
       -- here so that we can map fields to DAG items, which tell us
       -- types and direction.
-      let fields = foldr addFieldName S.empty mbits
+      let mbits = tgenBitTransform rawMbits
+          fields = foldr addFieldName S.empty mbits
           orderedFieldDefs = mapMaybe (isOperandField fields) (defDecls def)
       Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
       Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
-      let endianBits =
-              if tgenEndian == inputEndian
-              then mbits
-              else swapEndianness mbits
-      return (outs, ins, mbits, endianBits, orderedFieldDefs)
+      return (outs, ins, mbits, orderedFieldDefs)
     addFieldName br s =
       case br of
         Just (FieldBit n _) -> S.insert n s
@@ -155,13 +151,6 @@ withEncoding tgenEndian inputEndian def k =
         Named n _
           | S.member n fieldNames -> Just n
         _ -> Nothing
-
--- | Take a list of bits in one endian order and convert it to the other
--- endian order (e.g. big -> little).
---
--- Group into sub-lists of 8 and then reverse the sub lists.
-swapEndianness :: [Maybe BitRef] -> [Maybe BitRef]
-swapEndianness = concat . reverse . L.chunksOf 8
 
 -- | Match operands in the operand lists to fields in the instruction based on
 -- their variable names.
@@ -182,6 +171,7 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
   return (outOps, inOps)
   where
     moverride = lookupFormOverride isa mnemonic metadata
+
     -- A map of field names (derived from the 'Inst' field of a
     -- definition) to pairs of (instructionIndex, operandIndex), where
     -- the instruction index is the bit number in the instruction and
@@ -233,8 +223,9 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
         _ -> L.error (printf "Unexpected variable reference in a dag for %s: %s" mnemonic (show arg))
 
 indexFieldBits :: [Maybe BitRef] -> M.Map (CI String) [(Int, Int)]
-indexFieldBits bits = F.foldl' addBit M.empty (zip [0..] bits)
+indexFieldBits bits = F.foldl' addBit M.empty (zip bitPositionRange bits)
   where
+    bitPositionRange = reverse [0 .. length bits - 1]
     addBit m (bitNum, mbit) =
       case mbit of
         Just (FieldBit fldName fldIdx) ->
@@ -281,21 +272,20 @@ toInstructionDescriptor :: ISA -> Def -> FM ()
 toInstructionDescriptor isa def = do
     when (isaInstructionFilter isa def) $ do
       CC.callCC $ \kexit -> do
-        withEncoding (isaTgenEndianness isa) (isaInputEndianness isa) def $
-          \outs ins mbits endianBits ordFlds -> do
+        withEncoding (isaTgenBitPreprocess isa) def $
+          \outs ins mbits _ordFlds -> do
             (outOperands, inOperands) <- parseOperandsByName isa (defName def) (defMetadata def) outs ins mbits kexit
-            finishInstructionDescriptor isa def mbits endianBits inOperands outOperands
+            finishInstructionDescriptor isa def mbits inOperands outOperands
 
 -- | With the difficult to compute information, finish building the
 -- 'InstructionDescriptor' if possible.  If not possible, log an error
 -- and continue.
-finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [Maybe BitRef] -> [OperandDescriptor] -> [OperandDescriptor] -> FM ()
-finishInstructionDescriptor isa def mbits endianBits ins outs =
+finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [OperandDescriptor] -> [OperandDescriptor] -> FM ()
+finishInstructionDescriptor _isa def mbits ins outs =
   case mvals of
     Nothing -> return ()
     Just (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly) -> do
-      let i = InstructionDescriptor { idMask = map toTrieBit endianBits
-                                    , idMaskRaw = map toTrieBit mbits
+      let i = InstructionDescriptor { idMask = map toTrieBit mbits
                                     , idMnemonic = defName def
                                     , idNamespace = ns
                                     , idDecoderNamespace = decoderNs

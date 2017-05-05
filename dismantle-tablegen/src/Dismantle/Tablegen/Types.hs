@@ -53,9 +53,6 @@ instance NFData OperandDescriptor where
 -- definition
 data InstructionDescriptor =
   InstructionDescriptor { idMask :: [BT.Bit]
-                        -- ^ Endian-corrected bit mask
-                        , idMaskRaw :: [BT.Bit]
-                        -- ^ Raw bitmask with no endian correction
                         , idMnemonic :: String
                         , idInputOperands :: [OperandDescriptor]
                         , idOutputOperands :: [OperandDescriptor]
