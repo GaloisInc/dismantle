@@ -288,6 +288,7 @@ addrMode3ToBits (AddrMode3 (GPR r) imm add) =
 -- | An am3Offset memory reference for a load or store instruction
 data AM3Offset = AM3Offset { am3OffsetImmediate :: Word8
                            , am3OffsetAdd       :: Bool
+                           , am3OffsetOther     :: Bool
                            }
   deriving (Eq, Ord, Show)
 
@@ -299,22 +300,24 @@ instance PP.Pretty AM3Offset where
 am3OffsetAddField :: Field
 am3OffsetAddField = Field 1 8
 
+am3OffsetOtherField :: Field
+am3OffsetOtherField = Field 1 9
+
 am3OffsetImmField :: Field
 am3OffsetImmField = Field 8 0
 
 mkAM3Offset :: Word32 -> AM3Offset
-mkAM3Offset w = AM3Offset (fromIntegral imm) (add == 1)
+mkAM3Offset w = AM3Offset (fromIntegral imm) (add == 1) (other == 1)
   where
     add = extract am3OffsetAddField w
     imm = extract am3OffsetImmField w
+    other = extract am3OffsetOtherField w
 
 am3OffsetToBits :: AM3Offset -> Word32
-am3OffsetToBits (AM3Offset imm add) =
+am3OffsetToBits (AM3Offset imm add other) =
     insert am3OffsetAddField (if add then 1 else 0) $
-    insert am3OffsetImmField imm $
-    -- Always set bit position 9 (see the tgen data and ARM ARM for STRD
-    -- etc. that use this operand type).
-    insert (Field 1 9) 1 0
+    insert am3OffsetOtherField (if other then 1 else 0) $
+    insert am3OffsetImmField imm 0
 
 -- | A shift_imm operand with a shift immediate and shift type (l/r).
 -- See also USAT in the ARM ARM and tgen.
