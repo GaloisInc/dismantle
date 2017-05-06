@@ -58,6 +58,7 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                    , ("BForm_1", ppcBForm)
                    , ("BForm_2", ppcBForm)
                    , ("BForm_3", ppcBForm)
+                   , ("BForm_4", ppcBForm)
                    , ("DForm_base", ppcDForm)
                    , ("DForm_1", ppcDForm)
                    , ("DForm_2", ppcDForm)
@@ -67,8 +68,12 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                    , ("DForm_5", ppcDForm_5)
                    , ("DSForm_1", ppcDSForm)
                    , ("DSS_Form", ppcDSSForm)
+                   , ("DCB_Form", ppcDCBForm)
+                   , ("DCB_Form_hint", ppcDCBForm)
+                   , ("EVXForm_D", ppcEVXForm)
                    , ("IForm", ppcIForm)
                    , ("MForm_1", ppcMForm)
+                   , ("MDForm_1", ppcMDForm)
                    , ("VXForm_1", ppcVXForm)
                    , ("VXForm_2", ppcVXForm)
                    , ("VXForm_3", ppcVXForm)
@@ -97,7 +102,12 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                    , ("XForm_28", ppcXForm)
                    , ("XForm_42", ppcXForm_42)
                    , ("XForm_tlbws", ppcXForm)
+                   , ("XForm_icbt", ppcXForm_icbt)
                    , ("XForm_base_r3xo", ppcXForm)
+                   , ("XFXForm_1", ppcXFXForm)
+                   , ("XFXForm_3p", ppcXFXForm)
+                   , ("XFXForm_5a", ppcXFXForm_5a)
+                   , ("XLForm_S", ppcXLForm)
                    , ("XOForm_1", ppcXOForm)
                    , ("XSForm_1", ppcXSForm)
                    , ("XX1Form", ppcXXForm)
@@ -125,6 +135,7 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                             , ("to", SimpleDescriptor "A")
                             , ("rA", SimpleDescriptor "B")
                             , ("rD", SimpleDescriptor "A")
+                            , ("sym", SimpleDescriptor "C")
                             ]
 
     ppcDForm_2_r0 = FormOverride [ ("rD", SimpleDescriptor "A")
@@ -145,11 +156,22 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                               ]
 
     ppcDSForm = FormOverride [ ("rS", SimpleDescriptor "RST")
+                             , ("vD", SimpleDescriptor "RST")
+                             , ("rD", SimpleDescriptor "RST")
+                             , ("vS", SimpleDescriptor "RST")
                              , ("dst", SimpleDescriptor "DS_RA")
+                             , ("src", SimpleDescriptor "DS_RA")
+                             , ("addr", SimpleDescriptor "DS_RA")
                              ]
+
+    ppcDCBForm = FormOverride [ ("dst", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
+                              ]
 
     ppcDSSForm = FormOverride [ ("rA", SimpleDescriptor "A")
                               , ("rB", SimpleDescriptor "B")
+                              ]
+
+    ppcEVXForm = FormOverride [ ("dst", SimpleDescriptor "D")
                               ]
 
     ppcIForm = FormOverride [ ("dst", SimpleDescriptor "LI")
@@ -163,6 +185,11 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                             , ("rS", SimpleDescriptor "RS")
                             ]
 
+    ppcMDForm = FormOverride [ ("rA", SimpleDescriptor "RA")
+                             , ("rS", SimpleDescriptor "RS")
+                             , ("rSi", SimpleDescriptor "RS")
+                             ]
+
     ppcVXForm = FormOverride [ ("vD", SimpleDescriptor "VD")
                              , ("vB", SimpleDescriptor "VB")
                              , ("rA", SimpleDescriptor "VA")
@@ -171,28 +198,37 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                              , ("SIMM", SimpleDescriptor "IMM")
                              ]
 
+    ppcXForm_icbt = FormOverride [ ("src", ComplexDescriptor (("RB", 0) NL.:| [("RA", 5)]))
+                                 ]
+
     ppcXForm = FormOverride [ ("rA", SimpleDescriptor "A")
+                            , ("vA", SimpleDescriptor "A")
+                            , ("frA", SimpleDescriptor "A")
                             , ("rB", SimpleDescriptor "B")
-                            , ("rS", SimpleDescriptor "RST")
                             , ("RB", SimpleDescriptor "B")
+                            , ("vB", SimpleDescriptor "B")
+                            , ("frB", SimpleDescriptor "B")
+                            , ("SH", SimpleDescriptor "B")
+                            , ("FC", SimpleDescriptor "B")
+                            , ("rS", SimpleDescriptor "RST")
                             , ("RS", SimpleDescriptor "RST")
                             , ("vT", SimpleDescriptor "RST")
-                            , ("vB", SimpleDescriptor "B")
-                            , ("vA", SimpleDescriptor "A")
-                            , ("VB", SimpleDescriptor "FRB")
-                            , ("VA", SimpleDescriptor "FRA")
-                            , ("crD", SimpleDescriptor "BF")
+                            , ("vD", SimpleDescriptor "RST")
                             , ("to", SimpleDescriptor "RST")
                             , ("RTS", SimpleDescriptor "RST")
                             , ("frD", SimpleDescriptor "RST")
-                            , ("frB", SimpleDescriptor "B")
                             , ("frS", SimpleDescriptor "RST")
+                            , ("rD", SimpleDescriptor "RST")
+                            , ("RT", SimpleDescriptor "RST")
+                            , ("VA", SimpleDescriptor "FRA")
+                            , ("fA", SimpleDescriptor "FRA")
+                            , ("VB", SimpleDescriptor "FRB")
+                            , ("fB", SimpleDescriptor "FRB")
+                            , ("crD", SimpleDescriptor "BF")
                             , ("dst", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
                             , ("src", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
-                            , ("SH", SimpleDescriptor "B")
-                            , ("rD", SimpleDescriptor "RST")
-                            , ("fA", SimpleDescriptor "FRA")
-                            , ("fB", SimpleDescriptor "FRB")
+                            , ("addr", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
+                            , ("ptr", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
                             ]
 
     ppcXForm_8 = FormOverride [ ("rS", SimpleDescriptor "RST")
@@ -207,10 +243,22 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
     ppcXForm_42 = FormOverride [ ("rT", SimpleDescriptor "RST")
                                ]
 
+    ppcXLForm = FormOverride [ ("imm", SimpleDescriptor "S")
+                             ]
+
     ppcXOForm = FormOverride [ ("rT", SimpleDescriptor "RT")
                              , ("rB", SimpleDescriptor "RB")
                              , ("rA", SimpleDescriptor "RA")
                              ]
+
+    ppcXFXForm = FormOverride [ ("rS", SimpleDescriptor "RT")
+                              , ("rD", SimpleDescriptor "RT")
+                              , ("imm", SimpleDescriptor "Entry")
+                              , ("dmy", SimpleDescriptor "Entry")
+                              ]
+
+    ppcXFXForm_5a = FormOverride [ ("rT", SimpleDescriptor "ST")
+                                 ]
 
     ppcXSForm = FormOverride [ ("rA", SimpleDescriptor "A")
                              , ("rS", SimpleDescriptor "RS")
@@ -222,6 +270,8 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                              , ("crD", SimpleDescriptor "CR")
                              , ("XTi", SimpleDescriptor "XT")
                              , ("dst", SimpleDescriptor "B")
+                             , ("src", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
+                             , ("rA", SimpleDescriptor "A")
                              ]
 
     ppcVXForm_RD5 = FormOverride [ ("vB", SimpleDescriptor "VB")
@@ -280,6 +330,7 @@ ppcOperandPayloadTypes =
   , ("U6imm", unsignedImmediate 6)
   , ("U7imm", unsignedImmediate 7)
   , ("U8imm", unsignedImmediate 8)
+  , ("U10imm", unsignedImmediate 10)
   , ("U16imm", unsignedImmediate 16)
   , ("U16imm64", unsignedImmediate 16)
   , ("Memrr", mem)
