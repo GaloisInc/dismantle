@@ -53,14 +53,6 @@ isa = ISA { isaName = "PPC"
 
     ppcPseudo = idPseudo
 
-{-
-
-fcmpu
-mffs
-cmplwi
-
--}
-
 ppcFormOverrides :: [(String, FormOverride)]
 ppcFormOverrides = [ ("BForm", ppcBForm)
                    , ("BForm_1", ppcBForm)
@@ -103,6 +95,7 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                    , ("XForm_19", ppcXForm)
                    , ("XForm_26", ppcXForm)
                    , ("XForm_28", ppcXForm)
+                   , ("XForm_42", ppcXForm_42)
                    , ("XForm_tlbws", ppcXForm)
                    , ("XForm_base_r3xo", ppcXForm)
                    , ("XOForm_1", ppcXOForm)
@@ -146,6 +139,9 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
     ppcDForm_5 = FormOverride [ ("imm", SimpleDescriptor "I")
                               , ("crD", SimpleDescriptor "BF")
                               , ("rA", SimpleDescriptor "RA")
+                              , ("src2", SimpleDescriptor "I")
+                              , ("dst", SimpleDescriptor "BF")
+                              , ("src1", SimpleDescriptor "RA")
                               ]
 
     ppcDSForm = FormOverride [ ("rS", SimpleDescriptor "RST")
@@ -195,6 +191,8 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                             , ("src", ComplexDescriptor (("B", 0) NL.:| [("A", 5)]))
                             , ("SH", SimpleDescriptor "B")
                             , ("rD", SimpleDescriptor "RST")
+                            , ("fA", SimpleDescriptor "FRA")
+                            , ("fB", SimpleDescriptor "FRB")
                             ]
 
     ppcXForm_8 = FormOverride [ ("rS", SimpleDescriptor "RST")
@@ -204,6 +202,9 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
     ppcXForm_16 = FormOverride [ ("rA", SimpleDescriptor "RA")
                                , ("rB", SimpleDescriptor "RB")
                                , ("crD", SimpleDescriptor "BF")
+                               ]
+
+    ppcXForm_42 = FormOverride [ ("rT", SimpleDescriptor "RST")
                                ]
 
     ppcXOForm = FormOverride [ ("rT", SimpleDescriptor "RT")
