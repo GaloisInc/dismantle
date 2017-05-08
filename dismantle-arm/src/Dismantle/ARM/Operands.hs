@@ -463,6 +463,7 @@ am2OffsetRegToBits (Am2OffsetReg imm ty (GPR reg) add) =
 
 -- | An AddrMode5 memory reference
 data AddrMode5 = AddrMode5 { addrMode5Immediate :: Word8
+                           , addrMode5Reg       :: Word8
                            , addrMode5Add       :: Bool
                            }
   deriving (Eq, Ord, Show)
@@ -475,23 +476,24 @@ instance PP.Pretty AddrMode5 where
 addrMode5AddField :: Field
 addrMode5AddField = Field 1 8
 
+addrMode5RegField :: Field
+addrMode5RegField = Field 4 9
+
 addrMode5ImmField :: Field
 addrMode5ImmField = Field 8 0
 
 mkAddrMode5 :: Word32 -> AddrMode5
-mkAddrMode5 w = AddrMode5 (fromIntegral imm) (add == 1)
+mkAddrMode5 w = AddrMode5 (fromIntegral imm) (fromIntegral reg) (add == 1)
   where
     add = extract addrMode5AddField w
     imm = extract addrMode5ImmField w
+    reg = extract addrMode5RegField w
 
 addrMode5ToBits :: AddrMode5 -> Word32
-addrMode5ToBits (AddrMode5 imm add) =
-    let allOne = Field 4 9
-    in insert addrMode5AddField (if add then 1 else 0) $
-       insert addrMode5ImmField imm $
-       -- Always set bits 12:9 to 1 (see the tgen data and ARM ARM for LDCL
-       -- etc. that use this operand type).
-       insert allOne (2 ^ 5 - 1) 0
+addrMode5ToBits (AddrMode5 imm reg add) =
+    insert addrMode5AddField (if add then 1 else 0) $
+    insert addrMode5ImmField imm $
+    insert addrMode5RegField reg 0
 
 -- | An load/store memory reference for a preload (e.g. PLDW)
 -- instruction
