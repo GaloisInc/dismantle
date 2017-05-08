@@ -14,6 +14,8 @@ import Data.Word ( Word8, Word32 )
 import qualified Test.Tasty as T
 import qualified Test.Tasty.QuickCheck as T
 
+import Dismantle.Tablegen.Types (IBit(..))
+import Dismantle.Tablegen.Parser.Types (OBit(..))
 import Dismantle.Tablegen.TH.Bits
 
 import Prelude
@@ -39,7 +41,7 @@ prop_roundtripChunking = T.testProperty "roundtripChunking" p
                      ]
       in assembleBits 0 operands == w .&. mask
 
-data NonOverlappingChunks (n :: Nat) = NOC [[(Int, Word8, Word8)]]
+data NonOverlappingChunks (n :: Nat) = NOC [[(IBit, OBit, Word8)]]
   deriving (Show)
 
 instance (KnownNat n) => T.Arbitrary (NonOverlappingChunks n) where
@@ -52,7 +54,7 @@ mkNonOverlappingChunks proxy (max 4 -> sz) = do
   where
     nBits = fromIntegral $ natVal proxy
 
-genChunk :: Int -> [[(Int, Word8, Word8)]] -> Int -> T.Gen [[(Int, Word8, Word8)]]
+genChunk :: Int -> [[(IBit, OBit, Word8)]] -> Int -> T.Gen [[(IBit, OBit, Word8)]]
 genChunk nBits acc _chunkNum = do
   let highestBit = highestClaimedBitNumber acc
   case highestBit >= nBits of
@@ -64,7 +66,7 @@ genChunk nBits acc _chunkNum = do
       case contiguousChunk of
         True -> do
           chunkSize <- T.choose (2, 5)
-          return ([(highestBit + gap, 0, chunkSize)] : acc)
+          return ([(IBit (highestBit + gap), OBit 0, chunkSize)] : acc)
         False -> do
           -- Make a simple discontinuous chunk with a 1 bit gap between the
           -- (swapped) chunks.  Chunk 2 preceeds chunk1 in the instruction
@@ -72,22 +74,23 @@ genChunk nBits acc _chunkNum = do
           chunkSize2 <- T.choose (1, 3)
           let start1 = highestBit + gap
               start2 = start1 + fromIntegral chunkSize1 + 1
-          return ([(start1, chunkSize2, chunkSize1), (start2, 0, chunkSize2)] : acc)
+          return ([ (IBit start1, OBit chunkSize2, chunkSize1)
+                  , (IBit start2, OBit 0, fromIntegral chunkSize2)] : acc)
 
 
-highestClaimedBitNumber :: [[(Int, Word8, Word8)]] -> Int
+highestClaimedBitNumber :: [[(IBit, OBit, Word8)]] -> Int
 highestClaimedBitNumber = F.foldl' goOp 0
   where
     goOp bitNo op = F.foldl' goChunk bitNo op
-    goChunk bitNo (ix, _, len) = max bitNo (ix + fromIntegral len)
+    goChunk bitNo (IBit ix, _, len) = max bitNo (ix + fromIntegral len)
 
 -- | Compute a mask based on an operand description that has zeros for all of
 -- the bits not covered by operands
-requiredBitMask :: (Bits w, Num w) => [[(Int, Word8, Word8)]] -> w
+requiredBitMask :: (Bits w, Num w) => [[(IBit, OBit, Word8)]] -> w
 requiredBitMask = F.foldl' setOperandBits 0
   where
     setOperandBits = F.foldl' setChunkBits
-    setChunkBits w (i, _, sz) = go w i sz
+    setChunkBits w (IBit i, _, sz) = go w i sz
     go w i sz
       | sz == 0 = w
       | otherwise = go (w `setBit` i) (i + 1) (sz - 1)
