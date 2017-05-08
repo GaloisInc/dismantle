@@ -333,10 +333,10 @@ ppcOperandPayloadTypes =
   , ("U10imm", unsignedImmediate 10)
   , ("U16imm", unsignedImmediate 16)
   , ("U16imm64", unsignedImmediate 16)
-  , ("Memrr", mem)
-  , ("Memri", mem)
-  , ("Memrix", mem)
-  , ("Memrix16", mem)
+  , ("Memrr", memRR)
+  , ("Memri", memRI)
+  , ("Memrix", memRIX)
+  , ("Memrix16", memRIX)
   , ("Pred", gpRegister)
   , ("Vrrc", vecRegister)
   , ("Vsfrc", vecRegister) -- floating point vec?
@@ -378,7 +378,15 @@ ppcOperandPayloadTypes =
                                  , opConE = Just (conE 'PPC.VR)
                                  , opWordE = Just [| fromIntegral . PPC.unVR |]
                                  }
-    mem = OperandPayload { opTypeName = ''PPC.Mem
-                         , opConE = Just (varE 'PPC.mkMem)
-                         , opWordE = Just (varE 'PPC.memToBits)
+    memRI = OperandPayload { opTypeName = ''PPC.MemRI
+                         , opConE = Just (varE 'PPC.mkMemRI)
+                         , opWordE = Just (varE 'PPC.memRIToBits)
                          }
+    memRIX = OperandPayload { opTypeName = ''PPC.MemRIX
+                         , opConE = Just (varE 'PPC.mkMemRIX)
+                         , opWordE = Just (varE 'PPC.memRIXToBits)
+                         }
+    memRR = OperandPayload { opTypeName = ''PPC.MemRR
+                           , opConE = Just (varE 'PPC.mkMemRR)
+                           , opWordE = Just (varE 'PPC.memRRToBits)
+                           }
