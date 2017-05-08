@@ -10,6 +10,7 @@ import qualified Data.Text.Lazy as T
 import qualified Test.Tasty as T
 import qualified Test.Tasty.HUnit as T
 import qualified Text.Megaparsec as P
+import Text.Printf ( printf )
 
 import Dismantle.Testing
 
@@ -26,7 +27,17 @@ mkTest _addr bytes txt = T.testCase (T.unpack txt) $ do
   let (_consumed, minsn) = PPC.disassembleInstruction bytes
   case minsn of
     Nothing -> T.assertFailure ("Failed to disassemble " ++ show txt)
-    Just i -> T.assertEqual "Reassembly" bytes (PPC.assembleInstruction i)
+    Just i ->
+      let msg = printf "Reassembly of %s" (show (PPC.ppInstruction i))
+      in T.assertEqual msg bytes (PPC.assembleInstruction i)
+
+{-
+
+FIXME: Add a test suite that accepts an assembly string and compares the values
+of disassembled operands to expected values.  This will help keep operand
+encoding/decoding debugging simple.
+
+-}
 
 p :: Parser Disassembly
 p =
