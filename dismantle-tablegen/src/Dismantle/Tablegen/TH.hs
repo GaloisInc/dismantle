@@ -14,6 +14,7 @@ module Dismantle.Tablegen.TH (
 import GHC.TypeLits ( Symbol )
 
 import Data.Bits
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as UBS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Char ( toUpper )
@@ -73,19 +74,26 @@ mkParser isa desc isaValName path = do
   -- Build up a table of AST fragments that are parser expressions.
   -- They are associated with the bit masks required to build the
   -- trie.  The trie is constructed at run time for now.
-  parseExprs <- mapM (mkParserExpr isa) (parsableInstructions isa desc)
-  trie <- [|
-           let parserData = $(return (ListE parseExprs))
-           in case BT.byteTrie Nothing parserData of
-             Left err -> error ("Error while building parse tables for embedded data: " ++ show err)
-             Right tbl -> tbl
-
-           |]
-  parser <- [| parseInstruction $(return trie) |]
-  parserTy <- [t| LBS.ByteString -> (Int, Maybe $(conT (mkName "Instruction"))) |]
-  return [ SigD parserName parserTy
-         , ValD (VarP parserName) (NormalB parser) []
-         ]
+  parserData <- mapM (mkTrieInput isa) (parsableInstructions isa desc)
+  let (trieInputs, decls) = unzip parserData
+  case BT.byteTrie Nothing trieInputs of
+    Left err -> reportError ("Error while building parse tables: " ++ show err) >> return []
+    Right bt0 -> do
+      let (parseTableBytes, parseTableSize, parseTableStartIndex) = BT.unsafeByteTrieParseTableBytes bt0
+          payloads0 :: [Maybe Name]
+          payloads0 = BT.unsafeByteTriePayloads bt0
+          toParserExpr Nothing = [| Nothing |]
+          toParserExpr (Just name) = [| Just $(varE name) |]
+          parseTableExprPayloads :: [Q Exp]
+          parseTableExprPayloads = map toParserExpr payloads0
+      trie <- [|
+                 let parseTableLit = $(litE (stringPrimL parseTableBytes))
+                     payloads = $(listE parseTableExprPayloads)
+                 in BT.unsafeFromAddr payloads parseTableLit $(lift parseTableSize) $(lift parseTableStartIndex)
+               |]
+      parser <- [| parseInstruction $(return trie) |]
+      parserTy <- [t| LBS.ByteString -> (Int, Maybe $(conT (mkName "Instruction"))) |]
+      return (decls ++ [ SigD parserName parserTy, ValD (VarP parserName) (NormalB parser) []])
 
 parserName :: Name
 parserName = mkName "disassembleInstruction"
@@ -114,6 +122,17 @@ bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroup
         BT.ExpectedBit True -> w `setBit` ix
         _ -> w
 
+-- | Note that the 'Maybe Name' is always a 'Just' value.
+mkTrieInput :: ISA -> InstructionDescriptor -> Q ((String, BS.ByteString, BS.ByteString, Maybe Name), Dec)
+mkTrieInput isa i = do
+  pname <- newName ("insnParser" ++ mnemonic)
+  let pexp = mkParserExpr isa i
+  pdec <- valD (varP pname) (normalB pexp) []
+  return ((mnemonic, BS.pack requiredMask, BS.pack trueMask, Just pname), pdec)
+  where
+    mnemonic = idMnemonic i
+    (requiredMask, trueMask) = bitSpecAsBytes (idMask i)
+
 -- | For a parsable instruction, return three expressions ready to be
 -- spliced into the AST:
 --
@@ -137,23 +156,17 @@ mkParserExpr isa i
   | null (canonicalOperands i) = do
     -- If we have no operands, make a much simpler constructor (so we
     -- don't have an unused bytestring parameter)
-    e <- [| Just (Parser (\_ -> $(return con) $(return tag) Nil)) |]
-    (requiredMaskE, trueMaskE) <- mkMaskByteStringExprs requiredMask trueMask
-    return $ TupE [nameE, requiredMaskE, trueMaskE, e]
+    [| Parser (\_ -> $(return con) $(return tag) Nil) |]
   | otherwise = do
     bsName <- newName "bytestring"
     wordName <- newName "w"
     opList <- F.foldrM (addOperandExpr wordName) (ConE 'Nil) (canonicalOperands i)
     let insnCon = con `AppE` tag `AppE` opList
-    e <- [| Just (Parser (\ $(varP bsName) ->
-             case $(varE (isaInsnWordFromBytes isa)) $(varE bsName) of
-               $(varP wordName) -> $(return insnCon)))
-          |]
-    (requiredMaskE, trueMaskE) <- mkMaskByteStringExprs requiredMask trueMask
-    return $ TupE [nameE, requiredMaskE, trueMaskE, e]
+    [| Parser (\ $(varP bsName) ->
+                 case $(varE (isaInsnWordFromBytes isa)) $(varE bsName) of
+                   $(varP wordName) -> $(return insnCon))
+     |]
   where
-    (requiredMask, trueMask) = bitSpecAsBytes (idMask i)
-    nameE = LitE $ stringL $ idMnemonic i
     tag = ConE (mkName (toTypeName (idMnemonic i)))
     con = ConE 'Instruction
     addOperandExpr wordName od e =
@@ -167,15 +180,6 @@ mkParserExpr isa i
       in case opConE operandPayload of
          Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(lift (opChunks od))) :> $(return e) |]
          Just conExp -> [| $(return operandCon) ($(conExp) (fieldFromWord $(varE wordName) $(lift (opChunks od)))) :> $(return e) |]
-
--- | Convert the bytestrings representing the required bits and true bits masks into TH expressions.
---
--- The TH expressions are of type 'ByteString'
-mkMaskByteStringExprs :: [Word8] -> [Word8] -> Q (Exp, Exp)
-mkMaskByteStringExprs requiredMask trueMask = do
-  requiredMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length requiredMask)))) $(litE (stringPrimL requiredMask))) |]
-  trueMaskE <- [| unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (stringPrimL trueMask))) |]
-  return (requiredMaskE, trueMaskE)
 
 unparserName :: Name
 unparserName = mkName "assembleInstruction"

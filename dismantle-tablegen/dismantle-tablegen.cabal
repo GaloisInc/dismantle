@@ -25,6 +25,7 @@ library
                    Dismantle.Tablegen.Parser.Types
                    Dismantle.Testing
   build-depends:       base >=4.8 && <4.10,
+                       ghc-prim,
                        template-haskell,
                        bytestring,
                        binary,
@@ -40,6 +41,7 @@ library
                        containers >= 0.5 && < 0.6,
                        zlib >= 0.6 && < 0.7,
                        text >= 1 && < 2,
+                       vector,
                        megaparsec >= 5 && < 6,
                        mtl >= 2 && < 3
   hs-source-dirs:      src
