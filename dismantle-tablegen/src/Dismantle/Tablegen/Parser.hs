@@ -208,20 +208,35 @@ parseBitRef =
 parseStringLiteral :: Parser String
 parseStringLiteral =
   tryChoice [ parseMultilineStringLiteral
-            , P.between (symbol "\"") (symbol "\"") (P.many (P.satisfy (/='"'))) >>= internString
+            , P.between (symbol "\"") (symbol "\"") (P.many (P.satisfy (flip notElem "\"\n"))) >>= internString
             ]
 
 -- Multiline literals start with double quote followed by newline, and
--- contain lines until a line starts with a double quote.
+-- contain lines until a line starts with optional whitespace followed
+-- by a double quote.
 parseMultilineStringLiteral :: Parser String
-parseMultilineStringLiteral = do
-  _ <- P.char '"'
-  _ <- P.eol
-  lineStrs <- P.manyTill parseLine parseMultilineLiteralEnd
-  return (unlines lineStrs)
-  where
-    parseLine = P.manyTill P.anyChar P.eol
-    parseMultilineLiteralEnd = P.char '"'
+parseMultilineStringLiteral =
+    tryChoice [ variant1
+              , variant2
+              ]
+    where
+      variant1 = do
+        _ <- P.char '"'
+        _ <- P.someTill (P.satisfy (/= '"')) P.eol
+        lineStrs <- P.manyTill parseLine (P.try parseMultilineLiteralEnd)
+        return (unlines lineStrs)
+        where
+          parseLine = P.manyTill P.anyChar P.eol
+          parseMultilineLiteralEnd = P.manyTill (P.satisfy (flip notElem "\"\n")) (P.char '"')
+
+      variant2 = do
+        _ <- P.char '"'
+        _ <- P.eol
+        lineStrs <- P.manyTill parseLine (P.try parseMultilineLiteralEnd)
+        return (unlines lineStrs)
+        where
+          parseLine = P.manyTill P.anyChar P.eol
+          parseMultilineLiteralEnd = P.space >> P.char '"'
 
 -- This is tricky -- we have to be careful parsing names.  If we use
 -- the 'lexeme' approach, parsing the last one consumes the newline at
