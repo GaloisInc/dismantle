@@ -42,107 +42,107 @@ isa = ISA { isaName = "ARM"
           , isaFormOverrides = overrides
           }
   where
-    gpRegister = OperandPayload { opTypeName = ''ARM.GPR
+    gpRegister = OperandPayload { opTypeT = [t| ARM.GPR |]
                                 , opConE = Just (varE 'ARM.gpr)
                                 , opWordE = Just [| fromIntegral . ARM.unGPR |]
                                 }
-    qpRegister = OperandPayload { opTypeName = ''ARM.QPR
+    qpRegister = OperandPayload { opTypeT = [t| ARM.QPR |]
                                 , opConE = Just (varE 'ARM.qpr)
                                 , opWordE = Just [| fromIntegral . ARM.unQPR |]
                                 }
-    qqpRegister = OperandPayload { opTypeName = ''ARM.QQPR
+    qqpRegister = OperandPayload { opTypeT = [t| ARM.QQPR |]
                                  , opConE = Just (varE 'ARM.unQQPR)
                                  , opWordE = Just [| fromIntegral . ARM.unQQPR |]
                                  }
-    dpRegister = OperandPayload { opTypeName = ''ARM.DPR
+    dpRegister = OperandPayload { opTypeT = [t| ARM.DPR |]
                                 , opConE = Just (varE 'ARM.dpr)
                                 , opWordE = Just [| fromIntegral . ARM.unDPR |]
                                 }
-    addrMode3 = OperandPayload { opTypeName = ''ARM.AddrMode3
+    addrMode3 = OperandPayload { opTypeT = [t| ARM.AddrMode3 |]
                                , opConE = Just (varE 'ARM.mkAddrMode3)
                                , opWordE = Just (varE 'ARM.addrMode3ToBits)
                                }
-    addrMode3Offset = OperandPayload { opTypeName = ''ARM.AM3Offset
+    addrMode3Offset = OperandPayload { opTypeT = [t| ARM.AM3Offset |]
                                      , opConE = Just (varE 'ARM.mkAM3Offset)
                                      , opWordE = Just (varE 'ARM.am3OffsetToBits)
                                      }
-    addrMode5 = OperandPayload { opTypeName = ''ARM.AddrMode5
+    addrMode5 = OperandPayload { opTypeT = [t| ARM.AddrMode5 |]
                                , opConE = Just (varE 'ARM.mkAddrMode5)
                                , opWordE = Just (varE 'ARM.addrMode5ToBits)
                                }
-    addrModeImm12 = OperandPayload { opTypeName = ''ARM.AddrModeImm12
+    addrModeImm12 = OperandPayload { opTypeT = [t| ARM.AddrModeImm12 |]
                                    , opConE = Just (varE 'ARM.mkAddrModeImm12)
                                    , opWordE = Just (varE 'ARM.addrModeImm12ToBits)
                                    }
-    imm12 = OperandPayload { opTypeName = ''ARM.Imm12
+    imm12 = OperandPayload { opTypeT = [t| ARM.Imm12 |]
                            , opConE = Just (varE 'ARM.mkImm12)
                            , opWordE = Just (varE 'ARM.imm12ToBits)
                            }
-    imm5 = OperandPayload { opTypeName = ''ARM.Imm5
+    imm5 = OperandPayload { opTypeT = [t| ARM.Imm5 |]
                           , opConE = Just (varE 'ARM.mkImm5)
                           , opWordE = Just (varE 'ARM.imm5ToBits)
                           }
-    imm16 = OperandPayload { opTypeName = ''ARM.Imm16
+    imm16 = OperandPayload { opTypeT = [t| ARM.Imm16 |]
                            , opConE = Just (varE 'ARM.mkImm16)
                            , opWordE = Just (varE 'ARM.imm16ToBits)
                            }
-    predOperand = OperandPayload { opTypeName = ''ARM.Pred
+    predOperand = OperandPayload { opTypeT = [t| ARM.Pred |]
                                  , opConE = Just (varE 'ARM.mkPred)
                                  , opWordE = Just (varE 'ARM.predToBits)
                                  }
-    adrLabelOperand = OperandPayload { opTypeName = ''ARM.AdrLabel
+    adrLabelOperand = OperandPayload { opTypeT = [t| ARM.AdrLabel |]
                                      , opConE = Just (varE 'ARM.mkAdrLabel)
                                      , opWordE = Just (varE 'ARM.adrLabelToBits)
                                      }
-    branchTarget = OperandPayload { opTypeName = ''ARM.BranchTarget
+    branchTarget = OperandPayload { opTypeT = [t| ARM.BranchTarget |]
                                   , opConE = Just (varE 'ARM.mkBranchTarget)
                                   , opWordE = Just (varE 'ARM.branchTargetToBits)
                                   }
-    branchExecuteTarget = OperandPayload { opTypeName = ''ARM.BranchExecuteTarget
+    branchExecuteTarget = OperandPayload { opTypeT = [t| ARM.BranchExecuteTarget |]
                                          , opConE = Just (varE 'ARM.mkBranchExecuteTarget)
                                          , opWordE = Just (varE 'ARM.branchExecuteTargetToBits)
                                          }
-    coprocRegister = OperandPayload { opTypeName = ''ARM.CoprocRegister
+    coprocRegister = OperandPayload { opTypeT = [t| ARM.CoprocRegister |]
                                     , opConE = Just (varE 'ARM.mkCoprocRegister)
                                     , opWordE = Just (varE 'ARM.coprocRegisterToBits)
                                     }
-    opcodeOperand = OperandPayload { opTypeName = ''ARM.Opcode
+    opcodeOperand = OperandPayload { opTypeT = [t| ARM.Opcode |]
                                    , opConE = Just (varE 'ARM.mkOpcode)
                                    , opWordE = Just (varE 'ARM.opcodeToBits)
                                    }
-    word8Operand = OperandPayload { opTypeName = ''Word8
+    word8Operand = OperandPayload { opTypeT = [t| Word8 |]
                                   , opConE = Nothing
                                   , opWordE = Just [| fromIntegral |]
                                   }
-    word16Operand = OperandPayload { opTypeName = ''Word16
+    word16Operand = OperandPayload { opTypeT = [t| Word16 |]
                                    , opConE = Nothing
                                    , opWordE = Just [| fromIntegral |]
                                    }
-    word24Operand = OperandPayload { opTypeName = ''Word32
+    word24Operand = OperandPayload { opTypeT = [t| Word32 |]
                                    , opConE = Nothing
                                    , opWordE = Nothing
                                    }
-    ldstSoRegOperand = OperandPayload { opTypeName = ''ARM.LdstSoReg
+    ldstSoRegOperand = OperandPayload { opTypeT = [t| ARM.LdstSoReg |]
                                       , opConE = Just (varE 'ARM.mkLdstSoSreg)
                                       , opWordE = Just (varE 'ARM.ldstSoRegToBits)
                                       }
-    shiftImm = OperandPayload { opTypeName = ''ARM.ShiftImm
+    shiftImm = OperandPayload { opTypeT = [t| ARM.ShiftImm |]
                               , opConE = Just (varE 'ARM.mkShiftImm)
                               , opWordE = Just (varE 'ARM.shiftImmToBits)
                               }
-    bit = OperandPayload { opTypeName = ''ARM.Bit
+    bit = OperandPayload { opTypeT = [t| ARM.Bit |]
                          , opConE = Just (varE 'ARM.mkBit)
                          , opWordE = Just (varE 'ARM.bitToBits)
                          }
-    am2OffsetImm = OperandPayload { opTypeName = ''ARM.Am2OffsetImm
+    am2OffsetImm = OperandPayload { opTypeT = [t| ARM.Am2OffsetImm |]
                                   , opConE = Just (varE 'ARM.mkAm2OffsetImm)
                                   , opWordE = Just (varE 'ARM.am2OffsetImmToBits)
                                   }
-    am2OffsetReg = OperandPayload { opTypeName = ''ARM.Am2OffsetReg
+    am2OffsetReg = OperandPayload { opTypeT = [t| ARM.Am2OffsetReg |]
                                   , opConE = Just (varE 'ARM.mkAm2OffsetReg)
                                   , opWordE = Just (varE 'ARM.am2OffsetRegToBits)
                                   }
-    regWithAdd = OperandPayload { opTypeName = ''ARM.RegWithAdd
+    regWithAdd = OperandPayload { opTypeT = [t| ARM.RegWithAdd |]
                                 , opConE = Just (varE 'ARM.mkRegWithAdd)
                                 , opWordE = Just (varE 'ARM.regWithAddToBits)
                                 }
