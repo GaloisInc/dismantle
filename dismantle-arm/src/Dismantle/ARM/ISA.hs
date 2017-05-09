@@ -239,6 +239,8 @@ isa = ISA { isaName = "ARM"
         , ("DB_UPD",         FormOverride [("wb", Ignore)])
         , ("IA_UPD",         FormOverride [("wb", Ignore)])
         , ("IB_UPD",         FormOverride [("wb", Ignore)])
+        , ("MRC",            FormOverride [("Rt", Ignore)])
+        , ("MRC2",           FormOverride [("Rt", Ignore)])
         , ("N3SHA3Op",       FormOverride [("src", Ignore)])
         , ("SMLAL",          FormOverride [("RLo", Ignore), ("RHi", Ignore)])
         , ("STMIA_UPD",      FormOverride [("wb", Ignore)])
@@ -261,4 +263,6 @@ isa = ISA { isaName = "ARM"
         , ("_POST_REG",      FormOverride [("Rn_wb", Ignore)])
         , ("_PRE_IMM",       FormOverride [("Rn_wb", Ignore)])
         , ("_PRE_REG",       FormOverride [("Rn_wb", Ignore)])
+        , ("MRSbanked",      FormOverride [("banked", Ignore)])
+        , ("MSRbanked",      FormOverride [("banked", Ignore)])
         ]
