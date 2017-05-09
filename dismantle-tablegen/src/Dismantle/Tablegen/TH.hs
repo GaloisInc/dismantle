@@ -286,19 +286,21 @@ opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
 --
 -- String -> (String, Q Type)
 mkOperandType :: ISA -> ISADescriptor -> Q [Dec]
-mkOperandType isa desc =
+mkOperandType isa desc = do
+  cons <- mapM (mkOperandCon isa) (isaOperands desc)
   return [ DataD [] operandTypeName [] (Just ksig) cons []
          , StandaloneDerivD [] (ConT ''Show `AppT` (ConT operandTypeName `AppT` VarT (mkName "tp")))
          ]
   where
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
-    cons = map (mkOperandCon isa) (isaOperands desc)
 
-mkOperandCon :: ISA -> OperandType -> Con
-mkOperandCon isa (OperandType (toTypeName -> name)) = GadtC [n] [argTy] ty
+mkOperandCon :: ISA -> OperandType -> Q Con
+mkOperandCon isa (OperandType (toTypeName -> name)) = do
+  argBaseTy <- opTypeT payloadDesc
+  let argTy = (Bang SourceUnpack SourceStrict, argBaseTy)
+  return $ GadtC [n] [argTy] ty
   where
     Just payloadDesc = lookup name (isaOperandPayloadTypes isa)
-    argTy = (Bang SourceUnpack SourceStrict, ConT (opTypeName payloadDesc))
     n = mkName name
     ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
 

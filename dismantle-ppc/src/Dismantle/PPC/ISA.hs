@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Dismantle.PPC.ISA (
   isa
@@ -298,12 +299,11 @@ ppcOperandPayloadTypes =
   , ("Directbrtarget", absoluteAddress)
   , ("Calltarget", relativeOffset)
   , ("Abscalltarget", absoluteAddress)
-  , ("Ptr_rc_nor0", gpRegister) -- fixme
-  , ("Tlscall", gpRegister) -- fixme
-  , ("Tlscall32", gpRegister) --fixme
-  , ("Spe8dis", gpRegister) -- fixme
-  , ("Spe2dis", gpRegister)
-  , ("Spe4dis", gpRegister)
+  , ("Tlscall", relativeOffset)
+  , ("Tlscall32", relativeOffset)
+  , ("Spe8dis", speDIS8)
+  , ("Spe4dis", speDIS4)
+  , ("Spe2dis", speDIS2)
   , ("Crbitm", conditionRegister)  -- these two are very odd, must investigate
   , ("Crbitrc", conditionRegister)
   , ("Crrc", conditionRegister) -- 4 bit
@@ -344,49 +344,64 @@ ppcOperandPayloadTypes =
   , ("Vssrc", vecRegister) -- ??
   ]
   where
-    absoluteAddress = OperandPayload { opTypeName = ''Word64
-                                     , opConE = Nothing
-                                     , opWordE = Just [| fromIntegral |]
+    absoluteAddress = OperandPayload { opTypeT = [t| PPC.AbsBranchTarget |]
+                                     , opConE = Just (varE 'PPC.mkAbsBranchTarget)
+                                     , opWordE = Just (varE 'PPC.absBranchTargetToBits)
                                      }
-    relativeOffset = OperandPayload { opTypeName = ''Int64
-                                    , opConE = Nothing
-                                    , opWordE = Just [| fromIntegral |]
+    relativeOffset = OperandPayload { opTypeT = [t| PPC.BranchTarget |]
+                                    , opConE = Just (varE 'PPC.mkBranchTarget)
+                                    , opWordE = Just (varE 'PPC.branchTargetToBits)
                                     }
-    gpRegister = OperandPayload { opTypeName = ''PPC.GPR
+    gpRegister = OperandPayload { opTypeT = [t| PPC.GPR |]
                                 , opConE = Just (conE 'PPC.GPR)
                                 , opWordE = Just [| fromIntegral . PPC.unGPR |]
                                 }
-    conditionRegister = OperandPayload { opTypeName = ''PPC.CR
+    conditionRegister = OperandPayload { opTypeT = [t| PPC.CR |]
                                        , opConE = Just (conE 'PPC.CR)
                                        , opWordE = Just [| fromIntegral . PPC.unCR |]
                                        }
-    floatRegister = OperandPayload { opTypeName = ''PPC.FR
+    floatRegister = OperandPayload { opTypeT = [t| PPC.FR |]
                                    , opConE = Just (conE 'PPC.FR)
                                    , opWordE = Just [| fromIntegral . PPC.unFR |]
                                    }
     signedImmediate :: Word8 -> OperandPayload
-    signedImmediate _n = OperandPayload { opTypeName = ''Int64
+    signedImmediate _n = OperandPayload { opTypeT = [t| Int64 |]
                                         , opConE = Nothing
                                         , opWordE = Just [| fromIntegral |]
                                         }
     unsignedImmediate :: Word8 -> OperandPayload
-    unsignedImmediate _n = OperandPayload { opTypeName = ''Word64
+    unsignedImmediate _n = OperandPayload { opTypeT = [t| Word64 |]
                                           , opConE = Nothing
                                           , opWordE = Just [| fromIntegral |]
                                           }
-    vecRegister = OperandPayload { opTypeName = ''PPC.VR
+    vecRegister = OperandPayload { opTypeT = [t| PPC.VR |]
                                  , opConE = Just (conE 'PPC.VR)
                                  , opWordE = Just [| fromIntegral . PPC.unVR |]
                                  }
-    memRI = OperandPayload { opTypeName = ''PPC.MemRI
+    memRI = OperandPayload { opTypeT = [t| PPC.MemRI |]
                          , opConE = Just (varE 'PPC.mkMemRI)
                          , opWordE = Just (varE 'PPC.memRIToBits)
                          }
-    memRIX = OperandPayload { opTypeName = ''PPC.MemRIX
+    memRIX = OperandPayload { opTypeT = [t| PPC.MemRIX |]
                          , opConE = Just (varE 'PPC.mkMemRIX)
                          , opWordE = Just (varE 'PPC.memRIXToBits)
                          }
-    memRR = OperandPayload { opTypeName = ''PPC.MemRR
+    memRR = OperandPayload { opTypeT = [t| PPC.MemRR |]
                            , opConE = Just (varE 'PPC.mkMemRR)
                            , opWordE = Just (varE 'PPC.memRRToBits)
                            }
+
+    speDIS2 = OperandPayload { opTypeT = [t| PPC.SPEDis 2 |]
+                             , opConE = Just (varE 'PPC.mkSPEDis)
+                             , opWordE = Just (varE 'PPC.speDisToBits)
+                             }
+
+    speDIS4 = OperandPayload { opTypeT = [t| PPC.SPEDis 4 |]
+                             , opConE = Just (varE 'PPC.mkSPEDis)
+                             , opWordE = Just (varE 'PPC.speDisToBits)
+                             }
+
+    speDIS8 = OperandPayload { opTypeT = [t| PPC.SPEDis 8 |]
+                             , opConE = Just (varE 'PPC.mkSPEDis)
+                             , opWordE = Just (varE 'PPC.speDisToBits)
+                             }

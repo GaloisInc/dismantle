@@ -34,7 +34,7 @@ data Endianness = Little | Big
 -- This lets each ISA have its own special types for e.g., registers
 -- and immediates.
 data OperandPayload =
-  OperandPayload { opTypeName :: Name
+  OperandPayload { opTypeT :: TypeQ
                    -- ^ The name of the type to use for the payload
                  , opConE :: Maybe ExpQ
                  -- ^ The expression to construct the operand from a Word
