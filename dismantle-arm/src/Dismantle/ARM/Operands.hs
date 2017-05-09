@@ -91,7 +91,11 @@ module Dismantle.ARM.Operands (
 
   Pred,
   mkPred,
-  predToBits
+  predToBits,
+
+  MSRMask,
+  mkMSRMask,
+  msrMaskToBits
   ) where
 
 import Data.Bits
@@ -621,6 +625,31 @@ mkBranchExecuteTarget w = BranchExecuteTarget $ fromIntegral $ w `shiftL` 1
 branchExecuteTargetToBits :: BranchExecuteTarget -> Word32
 branchExecuteTargetToBits (BranchExecuteTarget i) =
     insert branchExecuteTargetField1 (i `shiftR` 1) 0
+
+data MSRMask = MSRMask { msrMaskWriteBit :: Word8
+                       , msrMaskImmediate :: Word8
+                       }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty MSRMask where
+    pPrint (MSRMask _ _) = PP.text "<todo>"
+
+msrMaskWriteField :: Field
+msrMaskWriteField = Field 1 4
+
+msrMaskImmField :: Field
+msrMaskImmField = Field 4 0
+
+mkMSRMask :: Word32 -> MSRMask
+mkMSRMask w = MSRMask (fromIntegral wr) (fromIntegral imm)
+    where
+    wr = extract msrMaskWriteField w
+    imm = extract msrMaskImmField w
+
+msrMaskToBits :: MSRMask -> Word32
+msrMaskToBits (MSRMask wr i) =
+    insert msrMaskWriteField wr $
+    insert msrMaskImmField i 0
 
 -- | A 16-bit immediate split into 12- and 4-bit chunks
 data Imm16 = Imm16 { unImm16 :: Integer

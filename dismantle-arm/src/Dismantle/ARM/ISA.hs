@@ -146,6 +146,10 @@ isa = ISA { isaName = "ARM"
                                 , opConE = Just (varE 'ARM.mkRegWithAdd)
                                 , opWordE = Just (varE 'ARM.regWithAddToBits)
                                 }
+    msrMask = OperandPayload { opTypeT = [t| ARM.MSRMask |]
+                             , opConE = Just (varE 'ARM.mkMSRMask)
+                             , opWordE = Just (varE 'ARM.msrMaskToBits)
+                             }
 
     armOperandPayloadTypes =
         [ ("Addr_offset_none"  , gpRegister)
@@ -177,12 +181,16 @@ isa = ISA { isaName = "ARM"
         , ("Imm0_65535"        , imm16)
         , ("Imm0_7"            , opcodeOperand)
         , ("Imm0_239"          , word8Operand)
+        , ("Imm0_65535_expr"   , word16Operand)
+        , ("Imm1_16"           , word8Operand)
         , ("Imm1_32"           , imm5)
         , ("Imm24b"            , word24Operand)
         , ("Imod_op"           , word8Operand)
+        , ("Instsyncb_opt"     , word8Operand)
         , ("Ldst_so_reg"       , ldstSoRegOperand)
         , ("Memb_opt"          , word8Operand)
         , ("Mod_imm"           , imm12)
+        , ("Msr_mask"          , msrMask)
         , ("P_imm"             , coprocRegister)
         , ("Pkh_asr_amt"       , word8Operand)
         , ("Pkh_lsl_amt"       , word8Operand)
@@ -196,8 +204,17 @@ isa = ISA { isaName = "ARM"
         , ("Rot_imm"           , word8Operand)
         , ("Setend_op"         , bit)
         , ("Shift_imm"         , shiftImm)
+        -- This operand type is only used for the MOVsi def, which is a
+        -- pseudo-instruction for various other types of operations (see
+        -- the ARM ARM A8.8.105 MOV (shifted register)).
+        , ("Shift_so_reg_imm"  , word16Operand)
+        -- This operand type is only used for the MOVsr def, which is a
+        -- pseudo-instruction for various other types of operations (see
+        -- the ARM ARM A8.8.105 MOV (shifted register)).
+        , ("Shift_so_reg_reg"  , word16Operand)
         , ("So_reg_imm"        , imm12)
         , ("So_reg_reg"        , imm12)
+        , ("TcGPR"             , gpRegister)
         ]
 
     armFilter = hasNamedString "Namespace" "ARM" &&&
