@@ -30,6 +30,7 @@ import Data.Maybe ( mapMaybe )
 import qualified Data.Set as S
 import Data.Word ( Word8 )
 import Text.Printf ( printf )
+import Data.Monoid ((<>))
 
 import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Parser ( parseTablegen )
@@ -114,10 +115,16 @@ toTrieBit br =
     Just (ExpectedBit b) -> BT.ExpectedBit b
     _ -> BT.Any
 
+unpOperandTy :: String
+unpOperandTy = "__unpredictable"
+
+unpOperandName :: String
+unpOperandName = "__unpredictable"
+
 -- | Try to extract the basic encoding information from the 'Def'.  If
 -- it isn't available, skip the 'Def'.  If it is available, call the
 -- continuation that will use it.
-withEncoding :: ([Maybe BitRef] -> [Maybe BitRef])
+withEncoding :: (forall a. [a] -> [a])
              -- ^ The tgen bit pattern transformation function
              -> Def
              -> (SimpleValue -> SimpleValue -> [Maybe BitRef] -> [String] -> FM ())
@@ -138,13 +145,47 @@ withEncoding tgenBitTransform def k =
       let mbits = tgenBitTransform rawMbits
           fields = foldr addFieldName S.empty mbits
           orderedFieldDefs = mapMaybe (isOperandField fields) (defDecls def)
+
       Named _ (DagItem outs) <- F.find (named "OutOperandList") (defDecls def)
       Named _ (DagItem ins) <- F.find (named "InOperandList") (defDecls def)
-      return (outs, ins, mbits, orderedFieldDefs)
+
+      -- Does the def provide an Unpredictable bit pattern? If
+      -- so, modify the instruction bit pattern so that the bits
+      -- corresponding to the Unpredictable bits are associated with
+      -- an unpredictable input operand. Then, add that operand to the
+      -- input operands list.
+      let (ins', mbits') = case F.find (named "Unpredictable") (defDecls def) of
+            Just (Named _ (FieldBits rawUnpBits)) ->
+                let unpBits = tgenBitTransform rawUnpBits
+                    newOperand = DagArg (Identifier (unpOperandTy <> ":$" <> unpOperandName)) Nothing
+                    newMbits = flip map (zip3 [31,30..0] mbits unpBits) $ \(pos, iBit, unpBit) ->
+                        -- If the unpBit is zero, fall back to the iBit pattern entry
+                        case unpBit of
+                            Just (ExpectedBit True) ->
+                                -- Is the instruction bit in this
+                                -- position a fixed bit? If so, replace
+                                -- it with an operand bit reference.
+                                case iBit of
+                                    Just (ExpectedBit _) -> Just $ FieldBit unpOperandName (OBit pos)
+                                    Nothing              -> Just $ FieldBit unpOperandName (OBit pos)
+                                    _                    -> iBit
+                            _ -> iBit
+
+                    newIns = case ins of
+                        VDag a as -> VDag a (newOperand:as)
+                        _ -> error $ "Unexpected ins: " <> show ins
+                in (newIns, newMbits)
+
+            Nothing -> (ins, mbits)
+            Just v -> error $ "Unexpected 'Unpredictable' item type: " <> show v
+
+      return (outs, ins', mbits', orderedFieldDefs)
+
     addFieldName br s =
       case br of
         Just (FieldBit n _) -> S.insert n s
         _ -> s
+
     isOperandField fieldNames f =
       case f of
         Named n _
@@ -169,7 +210,14 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
   inOps <- parseOperandList "ins" ins
   return (outOps, inOps)
   where
-    moverride = lookupFormOverride isa mnemonic metadata
+    origOverride = lookupFormOverride isa mnemonic metadata
+
+    -- Modify the override spec: always install an Ignore directive for
+    -- the "Unpredictable" operand.
+    unpIgnore = (unpOperandName, Ignore)
+    moverride = case origOverride of
+        Nothing                -> Just $ FormOverride [unpIgnore]
+        Just (FormOverride os) -> Just $ FormOverride (unpIgnore:os)
 
     -- A map of field names (derived from the 'Inst' field of a
     -- definition) to pairs of (instructionIndex, operandIndex), where
