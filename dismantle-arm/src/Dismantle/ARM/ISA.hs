@@ -146,6 +146,10 @@ isa = ISA { isaName = "ARM"
                                 , opConE = Just (varE 'ARM.mkRegWithAdd)
                                 , opWordE = Just (varE 'ARM.regWithAddToBits)
                                 }
+    msrMask = OperandPayload { opTypeT = [t| ARM.MSRMask |]
+                             , opConE = Just (varE 'ARM.mkMSRMask)
+                             , opWordE = Just (varE 'ARM.msrMaskToBits)
+                             }
 
     armOperandPayloadTypes =
         [ ("Addr_offset_none"  , gpRegister)
@@ -177,12 +181,16 @@ isa = ISA { isaName = "ARM"
         , ("Imm0_65535"        , imm16)
         , ("Imm0_7"            , opcodeOperand)
         , ("Imm0_239"          , word8Operand)
+        , ("Imm0_65535_expr"   , word16Operand)
+        , ("Imm1_16"           , word8Operand)
         , ("Imm1_32"           , imm5)
         , ("Imm24b"            , word24Operand)
         , ("Imod_op"           , word8Operand)
+        , ("Instsyncb_opt"     , word8Operand)
         , ("Ldst_so_reg"       , ldstSoRegOperand)
         , ("Memb_opt"          , word8Operand)
         , ("Mod_imm"           , imm12)
+        , ("Msr_mask"          , msrMask)
         , ("P_imm"             , coprocRegister)
         , ("Pkh_asr_amt"       , word8Operand)
         , ("Pkh_lsl_amt"       , word8Operand)
@@ -196,8 +204,17 @@ isa = ISA { isaName = "ARM"
         , ("Rot_imm"           , word8Operand)
         , ("Setend_op"         , bit)
         , ("Shift_imm"         , shiftImm)
+        -- This operand type is only used for the MOVsi def, which is a
+        -- pseudo-instruction for various other types of operations (see
+        -- the ARM ARM A8.8.105 MOV (shifted register)).
+        , ("Shift_so_reg_imm"  , word16Operand)
+        -- This operand type is only used for the MOVsr def, which is a
+        -- pseudo-instruction for various other types of operations (see
+        -- the ARM ARM A8.8.105 MOV (shifted register)).
+        , ("Shift_so_reg_reg"  , word16Operand)
         , ("So_reg_imm"        , imm12)
         , ("So_reg_reg"        , imm12)
+        , ("TcGPR"             , gpRegister)
         ]
 
     armFilter = hasNamedString "Namespace" "ARM" &&&
@@ -244,17 +261,37 @@ isa = ISA { isaName = "ARM"
         , ("MRC2",           FormOverride [("Rt", Ignore)])
         , ("N3SHA3Op",       FormOverride [("src", Ignore)])
         , ("SMLAL",          FormOverride [("RLo", Ignore), ("RHi", Ignore)])
+        , ("MOVTi16",        FormOverride [("src", Ignore)])
         , ("STMIA_UPD",      FormOverride [("wb", Ignore)])
         , ("STMIB_UPD",      FormOverride [("wb", Ignore)])
         , ("STRBT_POST_IMM", FormOverride [("Rn_wb", Ignore)])
         , ("STRBT_POST_REG", FormOverride [("Rn_wb", Ignore)])
+        , ("LDRBT_POST_IMM", FormOverride [("Rn_wb", Ignore)])
+        , ("LDRBT_POST_REG", FormOverride [("Rn_wb", Ignore)])
+        , ("LDRT_POST_IMM",  FormOverride [("Rn_wb", Ignore)])
+        , ("LDRT_POST_REG",  FormOverride [("Rn_wb", Ignore)])
         , ("STRD",           FormOverride [("Rt2", Ignore)])
         , ("STRD_POST",      FormOverride [("Rt2", Ignore), ("Rn_wb", Ignore)])
         , ("STRD_PRE",       FormOverride [("Rt2", Ignore), ("Rn_wb", Ignore)])
+        , ("LDRD",           FormOverride [("Rt2", Ignore)])
+        , ("LDRD_POST",      FormOverride [("Rt2", Ignore), ("Rn_wb", Ignore)])
+        , ("LDRD_PRE",       FormOverride [("Rt2", Ignore), ("Rn_wb", Ignore)])
         , ("STRHTi",         FormOverride [("base_wb", Ignore)])
         , ("STRHTr",         FormOverride [("base_wb", Ignore)])
+        , ("LDRHTi",         FormOverride [("base_wb", Ignore)])
+        , ("LDRHTr",         FormOverride [("base_wb", Ignore)])
+        , ("LDRSBTi",        FormOverride [("base_wb", Ignore)])
+        , ("LDRSBTr",        FormOverride [("base_wb", Ignore)])
+        , ("LDRSHTi",        FormOverride [("base_wb", Ignore)])
+        , ("LDRSHTr",        FormOverride [("base_wb", Ignore)])
+        , ("LDRSB_POST",     FormOverride [("Rn_wb", Ignore)])
+        , ("LDRSB_PRE",      FormOverride [("Rn_wb", Ignore)])
+        , ("LDRSH_POST",     FormOverride [("Rn_wb", Ignore)])
+        , ("LDRSH_PRE",      FormOverride [("Rn_wb", Ignore)])
         , ("STRH_POST",      FormOverride [("Rn_wb", Ignore)])
         , ("STRH_PRE",       FormOverride [("Rn_wb", Ignore)])
+        , ("LDRH_POST",      FormOverride [("Rn_wb", Ignore)])
+        , ("LDRH_PRE",       FormOverride [("Rn_wb", Ignore)])
         , ("STRT_POST_IMM" , FormOverride [("Rn_wb", Ignore)])
         , ("STRT_POST_REG" , FormOverride [("Rn_wb", Ignore)])
         , ("UMAAL",          FormOverride [("RLo", Ignore), ("RHi", Ignore)])
