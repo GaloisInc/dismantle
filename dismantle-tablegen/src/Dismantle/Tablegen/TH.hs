@@ -173,7 +173,7 @@ mkParserExpr isa i
     addOperandExpr wordName od e =
       let OperandType tyname = opType od
           otyname = toTypeName tyname
-          err = error ("No operand descriptor payload for operand type: " ++ otyname)
+          err = error ("No operand descriptor payload for operand type: " ++ tyname)
           operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           operandCon = ConE (mkName otyname)
           -- FIXME: Need to write some helpers to handle making the
@@ -210,7 +210,7 @@ mkAsmCase isa i = do
     addOperand op (pat, operands) = do
       let OperandType tyname = opType op
           otyname = toTypeName tyname
-          err = error ("No operand descriptor payload for operand type: " ++ otyname)
+          err = error ("No operand descriptor payload for operand type: " ++ tyname)
           operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           opToBits = fromMaybe [| id |] (opWordE operandPayload)
       chunks <- lift (opChunks op)
@@ -296,13 +296,14 @@ mkOperandType isa desc = do
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
 
 mkOperandCon :: ISA -> OperandType -> Q Con
-mkOperandCon isa (OperandType (toTypeName -> name)) = do
+mkOperandCon isa (OperandType origName) = do
   argBaseTy <- opTypeT payloadDesc
   let argTy = (Bang SourceUnpack SourceStrict, argBaseTy)
   return $ GadtC [n] [argTy] ty
   where
+    name = toTypeName origName
     payloadDesc = case lookup name (isaOperandPayloadTypes isa) of
-        Nothing -> error ("No operand descriptor payload for operand type: " <> name)
+        Nothing -> error ("No operand descriptor payload for operand type: " <> origName)
         Just pd -> pd
     n = mkName name
     ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
