@@ -1,20 +1,27 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Dismantle.PPC.ISA (
   isa
   ) where
 
+import GHC.TypeLits
+
 import qualified Data.Binary.Get as B
 import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
-import Data.Int ( Int64 )
+import Data.Int ( Int16, Int64 )
 import qualified Data.List.NonEmpty as NL
 import qualified Data.List as L
+import Data.Proxy ( Proxy(..) )
 import Data.Word ( Word8, Word32, Word64 )
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
 
+import qualified Data.Int.Indexed as I
+import qualified Data.Word.Indexed as I
 import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Types
 import Dismantle.Tablegen.Parser.Types ( defMetadata, defName, Metadata(..) )
@@ -314,25 +321,31 @@ ppcOperandPayloadTypes =
     -- These two variants are special for instructions that treat r0 specially
   , ("Gprc_nor0", gpRegister)
   , ("G8rc_nox0", gpRegister)
-  , ("I1imm", signedImmediate 1)
-  , ("I32imm", signedImmediate 32)
-  , ("S16imm", signedImmediate 16)
-  , ("S16imm64", signedImmediate 16)
-  , ("S17imm", signedImmediate 17)
-  , ("S17imm64", signedImmediate 17)
-  , ("S5imm", signedImmediate 5)
+  , ("I1imm", signedImmediate (Proxy :: Proxy 1))
+  , ("I32imm", signedImmediate (Proxy :: Proxy 32)) -- fixme
+  , ("S16imm", s16Imm)
+  , ("S16imm64", s16Imm)
+  -- The s17imm types are actually stored as 16 bits in the instruction.  They
+  -- are also rendered in 16 bit form in assembly.  Their *interpretation* is as
+  -- if they were shifted left by 4 bits and then sign extended.
+  --
+  -- We keep them in their simplified form here; the semantics will have to
+  -- account for the shifting.
+  , ("S17imm", s16Imm)
+  , ("S17imm64", s16Imm)
+  , ("S5imm", signedImmediate (Proxy :: Proxy 5))
   , ("Tlsreg", gpRegister)
   , ("Tlsreg32", gpRegister)
-  , ("U1imm", unsignedImmediate 1)
-  , ("U2imm", unsignedImmediate 2)
-  , ("U4imm", unsignedImmediate 4)
-  , ("U5imm", unsignedImmediate 5)
-  , ("U6imm", unsignedImmediate 6)
-  , ("U7imm", unsignedImmediate 7)
-  , ("U8imm", unsignedImmediate 8)
-  , ("U10imm", unsignedImmediate 10)
-  , ("U16imm", unsignedImmediate 16)
-  , ("U16imm64", unsignedImmediate 16)
+  , ("U1imm", unsignedImmediate (Proxy :: Proxy 1))
+  , ("U2imm", unsignedImmediate (Proxy :: Proxy 2))
+  , ("U4imm", unsignedImmediate (Proxy :: Proxy 4))
+  , ("U5imm", unsignedImmediate (Proxy :: Proxy 5))
+  , ("U6imm", unsignedImmediate (Proxy :: Proxy 6))
+  , ("U7imm", unsignedImmediate (Proxy :: Proxy 7))
+  , ("U8imm", unsignedImmediate (Proxy :: Proxy 8))
+  , ("U10imm", unsignedImmediate (Proxy :: Proxy 10))
+  , ("U16imm", unsignedImmediate (Proxy :: Proxy 16)) -- fixme
+  , ("U16imm64", unsignedImmediate (Proxy :: Proxy 16)) -- fixme
   , ("Memrr", memRR)
   , ("Memri", memRI)
   , ("Memrix", memRIX)
@@ -364,16 +377,22 @@ ppcOperandPayloadTypes =
                                    , opConE = Just (conE 'PPC.FR)
                                    , opWordE = Just [| fromIntegral . PPC.unFR |]
                                    }
-    signedImmediate :: Word8 -> OperandPayload
-    signedImmediate _n = OperandPayload { opTypeT = [t| Int64 |]
-                                        , opConE = Nothing
-                                        , opWordE = Just [| fromIntegral |]
-                                        }
-    unsignedImmediate :: Word8 -> OperandPayload
-    unsignedImmediate _n = OperandPayload { opTypeT = [t| Word64 |]
-                                          , opConE = Nothing
-                                          , opWordE = Just [| fromIntegral |]
-                                          }
+
+    s16Imm = OperandPayload { opTypeT = [t| Int16 |]
+                            , opConE = Nothing
+                            , opWordE = Just [| truncBits 16 |]
+                            }
+
+    signedImmediate :: forall (n :: Nat) . (KnownNat n) => Proxy n -> OperandPayload
+    signedImmediate p = OperandPayload { opTypeT = [t| I.I $(return (LitT (NumTyLit (natVal p)))) |]
+                                       , opConE = Just [| I.I |]
+                                       , opWordE = Just [| PPC.signedImmediateToWord32 |]
+                                       }
+    unsignedImmediate :: forall (n :: Nat) . (KnownNat n) => Proxy n -> OperandPayload
+    unsignedImmediate p = OperandPayload { opTypeT = [t| I.W $(return (LitT (NumTyLit (natVal p)))) |]
+                                         , opConE = Just [| I.W |]
+                                         , opWordE = Just [| fromIntegral . I.unW |]
+                                         }
     vecRegister = OperandPayload { opTypeT = [t| PPC.VR |]
                                  , opConE = Just (conE 'PPC.VR)
                                  , opWordE = Just [| fromIntegral . PPC.unVR |]

@@ -1,5 +1,7 @@
 module Main ( main ) where
 
+import Control.Monad ( unless )
+import Data.Char ( isSpace )
 import Data.Word ( Word64 )
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text.Lazy as T
@@ -23,9 +25,25 @@ mkTest _addr bytes txt = T.testCase (T.unpack txt) $ do
   let (_consumed, minsn) = PPC.disassembleInstruction bytes
   case minsn of
     Nothing -> T.assertFailure ("Failed to disassemble " ++ show txt)
-    Just i ->
-      let msg = printf "Reassembly of %s" (show (PPC.ppInstruction i))
-      in T.assertEqual msg bytes (PPC.assembleInstruction i)
+    Just i -> do
+      let assembleMsg = printf "Reassembly of %s (actual is %s)" (show (PPC.ppInstruction i)) (T.unpack txt)
+      T.assertEqual assembleMsg bytes (PPC.assembleInstruction i)
+      unless (skipPrettyCheck txt) $ do
+        T.assertEqual "pretty" (normalizeText txt) (normalizeText (T.pack (show (PPC.ppInstruction i))))
+
+normalizeText :: T.Text -> T.Text
+normalizeText = T.filter (not . isSpace)
+
+-- | We want to skip some of these tests because they rely on things we just
+-- can't support in this context.  For example, IP-relative jumps refer to
+-- symbol names that we just can't get here.
+skipPrettyCheck :: T.Text -> Bool
+skipPrettyCheck t = or [ T.pack "<" `T.isInfixOf` t
+                       -- The OR instruction is aliased to MR if the destination
+                       -- is the same as the second register.  We don't have a
+                       -- definition for MR, so we skip validating it
+                       , T.pack "mrr" `T.isPrefixOf` t
+                       ]
 
 {-
 

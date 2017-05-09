@@ -24,19 +24,22 @@ module Dismantle.PPC.Operands (
   memRRToBits,
   SPEDis(..),
   mkSPEDis,
-  speDisToBits
+  speDisToBits,
+  truncBits,
+  signedImmediateToWord32
   ) where
 
 import GHC.TypeLits
 
 import Data.Bits
-import Data.Int ( Int32 )
+import Data.Int ( Int16, Int32 )
 import Data.Monoid
 import Data.Proxy ( Proxy(..) )
 import Data.Word ( Word8, Word16, Word32 )
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
+import qualified Data.Int.Indexed as I
 import Dismantle.Tablegen.TH.Pretty ()
 
 newtype CR = CR { unCR :: Word8 }
@@ -131,7 +134,7 @@ memRRToBits m =
 -- The reference is an address stored in a general-purpose register
 -- plus an optional constant displacement.  The low 16 bits are the
 -- displacement, while the top 5 bits are the register reference.
-data MemRI = MemRI (Maybe GPR) Word16
+data MemRI = MemRI (Maybe GPR) Int16
   deriving (Eq, Ord, Show)
 
 mkMemRI :: Word32 -> MemRI
@@ -147,14 +150,19 @@ mkMemRI w
 memRIToBits :: MemRI -> Word32
 memRIToBits (MemRI mreg disp) =
   case mreg of
-    Just (GPR r) -> (fromIntegral r `shiftL` 16) .|. fromIntegral disp
-    Nothing -> fromIntegral disp
+    Just (GPR r) -> (fromIntegral r `shiftL` 16) .|. (fromIntegral disp .&. dispMask)
+    Nothing -> fromIntegral disp .&. dispMask
+  where
+    -- When we extend the 'Int16' to a 'Word32', it gets sign extended (which
+    -- can set the high bits of the word).  We need to mask the 'Word32' so that
+    -- only the actually relevant bits are preserved.
+    dispMask = (1 `shiftL` 16) - 1
 
 -- | This operand is just like 'MemRI', but the displacement is concatenated on
 -- the right by two zeros
 --
 -- Note that the low two bits of the Word16 must be 0
-data MemRIX = MemRIX (Maybe GPR) Word16
+data MemRIX = MemRIX (Maybe GPR) Int16
   deriving (Eq, Ord, Show)
 
 mkMemRIX :: Word32 -> MemRIX
@@ -170,14 +178,29 @@ mkMemRIX w
 memRIXToBits :: MemRIX -> Word32
 memRIXToBits (MemRIX mr disp) =
   case mr of
-    Just (GPR r) -> (fromIntegral r `shiftL` 16) .|. fromIntegral (disp `shiftR` 2)
-    Nothing -> fromIntegral (disp `shiftR` 2)
+    Just (GPR r) -> (fromIntegral r `shiftL` 16) .|. (fromIntegral (disp `shiftR` 2) .&. dispMask)
+    Nothing -> fromIntegral (disp `shiftR` 2) .&. dispMask
+  where
+    dispMask = onesMask 16
+
+-- | Make a mask of @n@ bits set to true
+onesMask :: (Bits w, Num w) => Int -> w
+onesMask n = (1 `shiftL` n) - 1
+
+signedImmediateToWord32 :: forall (n :: Nat) . (KnownNat n) => I.I n -> Word32
+signedImmediateToWord32 i@(I.I w) =
+  fromIntegral w .&. onesMask nBits
+  where
+    nBits = I.width i
+
+truncBits :: (Bits w, Integral w) => Int -> w -> Word32
+truncBits nBits w = onesMask nBits .&. fromIntegral w
 
 instance PP.Pretty GPR where
   pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
 
 instance PP.Pretty CR where
-  pPrint (CR rno) = PP.char 'c' <> PP.int (fromIntegral rno)
+  pPrint (CR rno) = PP.char 'c' <> PP.char 'r' <> PP.int (fromIntegral rno)
 
 instance PP.Pretty FR where
   pPrint (FR rno) = PP.char 'f' <> PP.int (fromIntegral rno)
