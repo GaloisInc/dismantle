@@ -8,6 +8,7 @@ import qualified Data.Text.Lazy as T
 import qualified Test.Tasty as T
 import qualified Test.Tasty.HUnit as T
 import Text.Printf ( printf )
+import qualified Text.RE.TDFA as RE
 
 import Dismantle.Testing
 import Parser ( p )
@@ -42,8 +43,14 @@ skipPrettyCheck t = or [ T.pack "<" `T.isInfixOf` t
                        -- The OR instruction is aliased to MR if the destination
                        -- is the same as the second register.  We don't have a
                        -- definition for MR, so we skip validating it
-                       , T.pack "mrr" `T.isPrefixOf` t
+                       , t RE.=~ rx "^[[:space:]]*mr"
                        ]
+
+rx :: String -> RE.RE
+rx s =
+  case RE.compileRegex s of
+    Nothing -> error ("Invalid regex: " ++ s)
+    Just r -> r
 
 {-
 

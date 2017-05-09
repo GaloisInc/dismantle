@@ -39,4 +39,5 @@ test-suite dismantle-ppc-tests
                  tasty,
                  tasty-hunit,
                  megaparsec,
+                 regex >= 1 && < 2,
                  filepath
