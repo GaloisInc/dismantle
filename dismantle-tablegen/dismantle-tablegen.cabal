@@ -24,6 +24,8 @@ library
                    Dismantle.Tablegen.Parser
                    Dismantle.Tablegen.Parser.Types
                    Dismantle.Testing
+                   Data.Int.Indexed
+                   Data.Word.Indexed
   build-depends:       base >=4.8 && <4.10,
                        ghc-prim,
                        template-haskell,
