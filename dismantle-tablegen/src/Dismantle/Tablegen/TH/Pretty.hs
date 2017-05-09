@@ -8,7 +8,7 @@ module Dismantle.Tablegen.TH.Pretty (
   ) where
 
 import Data.Char ( isAlpha )
-import Data.Int ( Int32, Int64 )
+import Data.Int ( Int16, Int32, Int64 )
 import Data.Word ( Word8, Word16, Word32, Word64 )
 import qualified Data.Map as M
 import Data.Monoid
@@ -67,6 +67,9 @@ formatUnbracketedVar fmt operands varName =
         case M.lookup (reverse varName) operands of
           Nothing -> PP.text ("[UndefinedVar: " ++ reverse varName ++ "]") <> PP.char c <> format rest operands
           Just s -> s <> PP.char c <> format rest operands
+
+instance PP.Pretty Int16 where
+  pPrint = PP.integer . fromIntegral
 
 instance PP.Pretty Int32 where
   pPrint = PP.integer . fromIntegral
