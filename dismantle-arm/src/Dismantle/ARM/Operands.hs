@@ -255,6 +255,7 @@ addrModeImm12ToBits (AddrModeImm12 (GPR r) imm add) =
 data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
                            , addrMode3Immediate :: Word8
                            , addrMode3Add       :: Bool
+                           , addrMode3Other     :: Word8
                            }
   deriving (Eq, Ord, Show)
 
@@ -270,24 +271,26 @@ addrMode3RegField = Field 4 9
 addrMode3AddField :: Field
 addrMode3AddField = Field 1 8
 
+addrMode3OtherField :: Field
+addrMode3OtherField = Field 1 13
+
 addrMode3ImmField :: Field
 addrMode3ImmField = Field 8 0
 
 mkAddrMode3 :: Word32 -> AddrMode3
-mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (fromIntegral imm) (add == 1)
+mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (fromIntegral imm) (add == 1) (fromIntegral other)
   where
     reg = extract addrMode3RegField w
     add = extract addrMode3AddField w
     imm = extract addrMode3ImmField w
+    other = extract addrMode3OtherField w
 
 addrMode3ToBits :: AddrMode3 -> Word32
-addrMode3ToBits (AddrMode3 (GPR r) imm add) =
+addrMode3ToBits (AddrMode3 (GPR r) imm add other) =
     insert addrMode3RegField r $
     insert addrMode3AddField (if add then 1 else 0) $
     insert addrMode3ImmField imm $
-    -- Always set bit position 13 (see the tgen data and ARM ARM for
-    -- LDRD etc. that use this operand type).
-    insert (Field 1 13) 1 0
+    insert addrMode3OtherField other 0
 
 -- | An am3Offset memory reference for a load or store instruction
 data AM3Offset = AM3Offset { am3OffsetImmediate :: Word8
