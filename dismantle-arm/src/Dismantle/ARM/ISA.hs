@@ -176,6 +176,7 @@ isa = ISA { isaName = "ARM"
         , ("Imm0_31"           , imm5)
         , ("Imm0_65535"        , imm16)
         , ("Imm0_7"            , opcodeOperand)
+        , ("Imm0_239"          , word8Operand)
         , ("Imm1_32"           , imm5)
         , ("Imm24b"            , word24Operand)
         , ("Imod_op"           , word8Operand)
