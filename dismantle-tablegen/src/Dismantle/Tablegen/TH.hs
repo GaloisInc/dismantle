@@ -13,6 +13,7 @@ module Dismantle.Tablegen.TH (
 
 import GHC.TypeLits ( Symbol )
 
+import Data.Monoid ((<>))
 import Data.Bits
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as UBS
@@ -300,7 +301,9 @@ mkOperandCon isa (OperandType (toTypeName -> name)) = do
   let argTy = (Bang SourceUnpack SourceStrict, argBaseTy)
   return $ GadtC [n] [argTy] ty
   where
-    Just payloadDesc = lookup name (isaOperandPayloadTypes isa)
+    payloadDesc = case lookup name (isaOperandPayloadTypes isa) of
+        Nothing -> error ("No operand descriptor payload for operand type: " <> name)
+        Just pd -> pd
     n = mkName name
     ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
 
