@@ -30,6 +30,7 @@ test-suite dismantle-ppc-tests
   ghc-options: -Wall
   hs-source-dirs: tests
   main-is: Main.hs
+  other-modules: Parser
   build-depends: base,
                  dismantle-tablegen,
                  dismantle-ppc,
