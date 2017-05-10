@@ -312,7 +312,7 @@ ppcOperandPayloadTypes =
   , ("Spe4dis", speDIS4)
   , ("Spe2dis", speDIS2)
   , ("Crbitm", conditionRegister)  -- these two are very odd, must investigate
-  , ("Crbitrc", conditionRegister)
+  , ("Crbitrc", crbitrc)
   , ("Crrc", conditionRegister) -- 4 bit
   , ("F4rc", floatRegister)
   , ("F8rc", floatRegister)
@@ -373,6 +373,10 @@ ppcOperandPayloadTypes =
                                        , opConE = Just (conE 'PPC.CR)
                                        , opWordE = Just [| fromIntegral . PPC.unCR |]
                                        }
+    crbitrc = OperandPayload { opTypeT = [t| PPC.CRBitRC |]
+                             , opConE = Just [| PPC.CRBitRC |]
+                             , opWordE = Just [| fromIntegral . PPC.unCRBitRC |]
+                             }
     floatRegister = OperandPayload { opTypeT = [t| PPC.FR |]
                                    , opConE = Just (conE 'PPC.FR)
                                    , opWordE = Just [| fromIntegral . PPC.unFR |]

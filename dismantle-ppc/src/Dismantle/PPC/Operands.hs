@@ -5,6 +5,7 @@
 module Dismantle.PPC.Operands (
   GPR(..),
   CR(..),
+  CRBitRC(..),
   FR(..),
   VR(..),
   BranchTarget(..),
@@ -42,7 +43,11 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 import qualified Data.Int.Indexed as I
 import Dismantle.Tablegen.TH.Pretty ()
 
+-- | Condition register fields
 newtype CR = CR { unCR :: Word8 }
+  deriving (Eq, Ord, Show)
+
+newtype CRBitRC = CRBitRC { unCRBitRC :: Word8 }
   deriving (Eq, Ord, Show)
 
 -- | Floating-point register by number
@@ -201,6 +206,17 @@ instance PP.Pretty GPR where
 
 instance PP.Pretty CR where
   pPrint (CR rno) = PP.char 'c' <> PP.char 'r' <> PP.int (fromIntegral rno)
+
+instance PP.Pretty CRBitRC where
+  pPrint (CRBitRC n) =
+    let (crno, kno) = fromIntegral n `divMod` 4
+        kstr = case kno of
+          0 -> "lt"
+          1 -> "gt"
+          2 -> "eq"
+          3 -> "so"
+          _ -> error ("Invalid CRBitRC kind: " ++ show kno)
+    in PP.text "4*cr" <> PP.int crno <> PP.char '+' <> PP.text kstr
 
 instance PP.Pretty FR where
   pPrint (FR rno) = PP.char 'f' <> PP.int (fromIntegral rno)
