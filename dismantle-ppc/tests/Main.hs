@@ -82,6 +82,11 @@ ignoreRegex = rx (L.intercalate "|" rxes)
            , "^[[:space:]]*crset[[:space:]]"
            -- CRNOT is an alias for CRNOR
            , "^[[:space:]]*crnot[[:space:]]"
+
+           -- FIXME: The following two instructions have incorrect operand specs
+           -- in the tablegen data.  Investigate upstream
+           , "^[[:space:]]*mtfsb0[[:space:]]"
+           , "^[[:space:]]*mtfsb1[[:space:]]"
            ]
 
 rx :: String -> RE.RE
