@@ -2,6 +2,7 @@ module Main ( main ) where
 
 import Control.Monad ( unless )
 import Data.Char ( isSpace )
+import qualified Data.List as L
 import Data.Word ( Word64 )
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text.Lazy as T
@@ -39,15 +40,27 @@ normalizeText = T.filter (not . isSpace)
 -- can't support in this context.  For example, IP-relative jumps refer to
 -- symbol names that we just can't get here.
 skipPrettyCheck :: T.Text -> Bool
-skipPrettyCheck t = or [ T.pack "<" `T.isInfixOf` t
-                       -- The OR instruction is aliased to MR if the destination
-                       -- is the same as the second register.  We don't have a
-                       -- definition for MR, so we skip validating it
-                       , t RE.=~ rx "^[[:space:]]*mr"
-                       -- clrlwi is a specialized form of rlwinm, but we don't
-                       -- have a definition for it.
-                       , t RE.=~ rx "^[[:space:]]*clrlwi"
-                       ]
+skipPrettyCheck t = t RE.=~ ignoreRegex
+
+-- | A regular expression matching any instruction that we shouldn't test for
+-- pretty printing accuracy.
+ignoreRegex :: RE.RE
+ignoreRegex = rx (L.intercalate "|" rxes)
+  where
+    rxes = [ -- IP-relative addressing references names in <>, and we can't
+             -- match those correctly yet
+             "<"
+           -- The OR instruction is aliased to MR if the destination
+           -- is the same as the second register.  We don't have a
+           -- definition for MR, so we skip validating it
+           , "^[[:space:]]*mr\\.?[[:space:]]"
+           -- CLRLWI is a specialized form of RLWINM, but we don't have a def
+           -- for it
+           , "^[[:space:]]*clrlwi[[:space:]]"
+           -- NOT is rendered as NOR with three operands, but we don't have a
+           -- NOT def
+           , "^[[:space:]]*not[[:space:]]"
+           ]
 
 rx :: String -> RE.RE
 rx s =
