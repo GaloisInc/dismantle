@@ -39,7 +39,7 @@ sectionNameChar = tryOne [ P.alphaNumChar
 -- names that are an offset from another symbol.
 symbolNameChar :: Parser Char
 symbolNameChar = tryOne [ P.alphaNumChar
-                        , P.oneOf ['@', '-', '_']
+                        , P.oneOf ['@', '-', '_', '.']
                         ]
 
 parseSection :: Parser Section
