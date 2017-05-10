@@ -1,0 +1,30 @@
+sudo: false
+language: c
+cache:
+  directories:
+    - $HOME/.stack
+
+
+before_install:
+# Download and unpack the stack executable
+- mkdir -p ~/.local/bin
+- export PATH=$HOME/.local/bin:$PATH
+- travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+- export PATH=/opt/ghc/$GHCVER/bin:$PATH
+
+addons:
+  apt:
+    sources:
+      - hvr-ghc
+    packages:
+      - binutils-multiarch
+      - ghc-8.0.2
+
+
+matrix:
+  include:
+    - env: TEST_ARCH=tablegen
+    - env: TEST_ARCH=ppc
+
+script:
+  - ./scripts/test.sh $TEST_ARCH
