@@ -60,6 +60,28 @@ ignoreRegex = rx (L.intercalate "|" rxes)
            -- NOT is rendered as NOR with three operands, but we don't have a
            -- NOT def
            , "^[[:space:]]*not[[:space:]]"
+           -- We render two extra zero operands with MTFSF compared to objdump
+           , "^[[:space:]]*mtfsf[[:space:]]"
+           -- CRCL is an alias for CRXOR
+           , "^[[:space:]]*crcl[[:space:]]"
+           -- Objdump renders CMPWI without its first operand if it is cr0
+           , "^[[:space:]]*cmpwi[[:space:]]"
+           --  ROTLWI is an alias for RLWINM
+           , "^[[:space:]]*rotlwi[[:space:]]"
+           -- CRCLR is an alias of CRXOR
+           , "^[[:space:]]*crclr[[:space:]]"
+           -- BLELR is an alias of BCL
+           , "^[[:space:]]*blelr[[:space:]]"
+           -- BEQLR is an alias of BCL
+           , "^[[:space:]]*beqlr[[:space:]]"
+           -- BNELR is an alias for BCL
+           , "^[[:space:]]*bnelr[[:space:]]"
+           -- BLTLR is an alias for BCL
+           , "^[[:space:]]*bltlr[[:space:]]"
+           -- CRSET is an alias for CREQV
+           , "^[[:space:]]*crset[[:space:]]"
+           -- CRNOT is an alias for CRNOR
+           , "^[[:space:]]*crnot[[:space:]]"
            ]
 
 rx :: String -> RE.RE
