@@ -52,11 +52,3 @@ rx s =
     Nothing -> error ("Invalid regex: " ++ s)
     Just r -> r
 
-{-
-
-FIXME: Add a test suite that accepts an assembly string and compares the values
-of disassembled operands to expected values.  This will help keep operand
-encoding/decoding debugging simple.
-
--}
-
