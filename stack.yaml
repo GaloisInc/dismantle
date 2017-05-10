@@ -33,6 +33,7 @@ extra-deps:
 - unbounded-delays-0.1.0.9
 - parsec-3.1.11
 - regex-base-0.93.2
+- regex-1.0.0.0
 - old-locale-1.0.0.7
 - old-time-1.1.0.3
 - polyparse-1.12
