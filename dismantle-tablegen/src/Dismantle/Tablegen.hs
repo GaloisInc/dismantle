@@ -172,7 +172,17 @@ withEncoding tgenBitTransform def k =
                             _ -> iBit
 
                     newIns = case ins of
-                        VDag a as -> VDag a (newOperand:as)
+                        VDag a as ->
+                            -- Only add the operand to the operand list
+                            -- if we actually referenced any of its bits
+                            -- in the modified bit pattern. Otherwise
+                            -- we'll get an unused operand error.
+                            let isUnpBit (Just (FieldBit n _))
+                                  | n == unpOperandName = True
+                                isUnpBit _ = False
+                            in if any isUnpBit newMbits
+                               then VDag a (newOperand:as)
+                               else ins
                         _ -> error $ "Unexpected ins: " <> show ins
                 in (newIns, newMbits)
 
@@ -210,14 +220,7 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
   inOps <- parseOperandList "ins" ins
   return (outOps, inOps)
   where
-    origOverride = lookupFormOverride isa mnemonic metadata
-
-    -- Modify the override spec: always install an Ignore directive for
-    -- the "Unpredictable" operand.
-    unpIgnore = (unpOperandName, Ignore)
-    moverride = case origOverride of
-        Nothing                -> Just $ FormOverride [unpIgnore]
-        Just (FormOverride os) -> Just $ FormOverride (unpIgnore:os)
+    moverride = lookupFormOverride isa mnemonic metadata
 
     -- A map of field names (derived from the 'Inst' field of a
     -- definition) to pairs of (instructionIndex, operandIndex), where
