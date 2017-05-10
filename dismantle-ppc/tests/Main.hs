@@ -44,6 +44,9 @@ skipPrettyCheck t = or [ T.pack "<" `T.isInfixOf` t
                        -- is the same as the second register.  We don't have a
                        -- definition for MR, so we skip validating it
                        , t RE.=~ rx "^[[:space:]]*mr"
+                       -- clrlwi is a specialized form of rlwinm, but we don't
+                       -- have a definition for it.
+                       , t RE.=~ rx "^[[:space:]]*clrlwi"
                        ]
 
 rx :: String -> RE.RE
