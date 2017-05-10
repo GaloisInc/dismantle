@@ -219,7 +219,7 @@ isa = ISA { isaName = "ARM"
         , ("So_reg_imm"        , imm12)
         , ("So_reg_reg"        , imm12)
         , ("TcGPR"             , gpRegister)
-        , ("__unpredictable"   , word32Operand)
+        , ("Unpredictable"   , word32Operand)
         ]
 
     armFilter = hasNamedString "Namespace" "ARM" &&&

@@ -116,10 +116,10 @@ toTrieBit br =
     _ -> BT.Any
 
 unpOperandTy :: String
-unpOperandTy = "__unpredictable"
+unpOperandTy = "unpredictable"
 
 unpOperandName :: String
-unpOperandName = "__unpredictable"
+unpOperandName = "unpredictable"
 
 -- | Try to extract the basic encoding information from the 'Def'.  If
 -- it isn't available, skip the 'Def'.  If it is available, call the
