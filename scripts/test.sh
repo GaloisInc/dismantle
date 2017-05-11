@@ -18,6 +18,9 @@ case $ARCH in
         # the nice side effect of being much faster.
         stack build dismantle-ppc --system-ghc --test --test-arguments='--hide-successes' | cat -
         ;;
+    arm)
+        stack build dismantle-arm --system-ghc --test --test-arguments='--hide-successes' | cat -
+        ;;
     *)
         echo "Unrecognized TEST_ARCH=${ARCH}"
         ;;

@@ -5,6 +5,7 @@ extra-package-dbs: []
 packages:
 - dismantle-tablegen/
 - dismantle-ppc/
+- dismantle-arm/
 extra-deps:
 - QuickCheck-2.9.2
 - ansi-terminal-0.6.2.3
