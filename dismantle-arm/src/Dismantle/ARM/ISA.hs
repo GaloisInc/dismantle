@@ -122,6 +122,10 @@ isa = ISA { isaName = "ARM"
                                    , opConE = Nothing
                                    , opWordE = Nothing
                                    }
+    word32Operand = OperandPayload { opTypeT = [t| Word32 |]
+                                   , opConE = Nothing
+                                   , opWordE = Nothing
+                                   }
     ldstSoRegOperand = OperandPayload { opTypeT = [t| ARM.LdstSoReg |]
                                       , opConE = Just (varE 'ARM.mkLdstSoSreg)
                                       , opWordE = Just (varE 'ARM.ldstSoRegToBits)
@@ -215,6 +219,7 @@ isa = ISA { isaName = "ARM"
         , ("So_reg_imm"        , imm12)
         , ("So_reg_reg"        , imm12)
         , ("TcGPR"             , gpRegister)
+        , ("Unpredictable"   , word32Operand)
         ]
 
     armFilter = hasNamedString "Namespace" "ARM" &&&
@@ -237,6 +242,7 @@ isa = ISA { isaName = "ARM"
 
         -- Instructions with more generic alternatives
         , "BX" -- see BX_pred
+        , "TSTrr" -- See TSTrsi
         ]
 
     ignoredMetadataNames = S.fromList $ Metadata <$>

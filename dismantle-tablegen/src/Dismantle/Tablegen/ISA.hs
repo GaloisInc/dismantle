@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE RankNTypes #-}
 module Dismantle.Tablegen.ISA (
   ISA(..),
   OperandPayload(..),
@@ -64,7 +65,7 @@ data InstFieldDescriptor = SimpleDescriptor String
 -- | Information specific to an ISA that influences code generation
 data ISA =
   ISA { isaName :: String
-      , isaTgenBitPreprocess :: [Maybe BitRef] -> [Maybe BitRef]
+      , isaTgenBitPreprocess :: forall a. [a] -> [a]
       -- ^ A function to preprocess the bit patterns found in the Tgen
       -- data. This function is responsible for transforming "Inst" bit
       -- pattern lists from the Tgen data so that they are ordered with
