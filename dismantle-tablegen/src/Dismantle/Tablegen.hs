@@ -115,9 +115,17 @@ toTrieBit br =
     Just (ExpectedBit b) -> BT.ExpectedBit b
     _ -> BT.Any
 
+-- | The operand type of the "unpredictable" operand. This is used
+-- internally to synthesize an operand referring to any bits in the
+-- instruction bit pattern that are also marked as "unpredictable" in
+-- the tgen input data. We do this because such bits may not be set to
+-- the expected values, but should still be permitted to match in the
+-- parser. We also need to parse these bits using an operand so that
+-- they are preserved in the reassembled version of such instructions.
 unpOperandTy :: String
 unpOperandTy = "unpredictable"
 
+-- | The operand name of the "unpredictable" operand.
 unpOperandName :: String
 unpOperandName = "unpredictable"
 
@@ -154,40 +162,7 @@ withEncoding tgenBitTransform def k =
       -- corresponding to the Unpredictable bits are associated with
       -- an unpredictable input operand. Then, add that operand to the
       -- input operands list.
-      let (ins', mbits') = case F.find (named "Unpredictable") (defDecls def) of
-            Just (Named _ (FieldBits rawUnpBits)) ->
-                let unpBits = tgenBitTransform rawUnpBits
-                    newOperand = DagArg (Identifier (unpOperandTy <> ":$" <> unpOperandName)) Nothing
-                    newMbits = flip map (zip3 [31,30..0] mbits unpBits) $ \(pos, iBit, unpBit) ->
-                        -- If the unpBit is zero, fall back to the iBit pattern entry
-                        case unpBit of
-                            Just (ExpectedBit True) ->
-                                -- Is the instruction bit in this
-                                -- position a fixed bit? If so, replace
-                                -- it with an operand bit reference.
-                                case iBit of
-                                    Just (ExpectedBit _) -> Just $ FieldBit unpOperandName (OBit pos)
-                                    Nothing              -> Just $ FieldBit unpOperandName (OBit pos)
-                                    _                    -> iBit
-                            _ -> iBit
-
-                    newIns = case ins of
-                        VDag a as ->
-                            -- Only add the operand to the operand list
-                            -- if we actually referenced any of its bits
-                            -- in the modified bit pattern. Otherwise
-                            -- we'll get an unused operand error.
-                            let isUnpBit (Just (FieldBit n _))
-                                  | n == unpOperandName = True
-                                isUnpBit _ = False
-                            in if any isUnpBit newMbits
-                               then VDag a (newOperand:as)
-                               else ins
-                        _ -> error $ "Unexpected ins: " <> show ins
-                in (newIns, newMbits)
-
-            Nothing -> (ins, mbits)
-            Just v -> error $ "Unexpected 'Unpredictable' item type: " <> show v
+      let (ins', mbits') = collectUnpredictableBits tgenBitTransform def ins mbits
 
       return (outs, ins', mbits', orderedFieldDefs)
 
@@ -201,6 +176,77 @@ withEncoding tgenBitTransform def k =
         Named n _
           | S.member n fieldNames -> Just n
         _ -> Nothing
+
+-- | Given a def and its input operand list and instruction bit
+-- pattern, determine whether the def specifies that any of the
+-- instruction's bits are Unpredictable. If so, collect those bits
+-- into an "Unpredictable" operand, add that operand to the input
+-- operand list, and then modify the instruction bit pattern so that
+-- unpredictable bits are not fixed but instead refer to the relevant
+-- bits in the Unpredictable operand. Return the (potentially) modified
+-- input operand list and instruction bit pattern.
+--
+-- If this function determines that an Unpredictable operand is
+-- necessary, the ISA will be required to provide an operand payload
+-- type associated with the operand name 'unpOperandName'.
+collectUnpredictableBits :: (forall a. [a] -> [a])
+                         -- ^ The ISA's bit pattern transformation
+                         -- function.
+                         -> Def
+                         -- ^ The def.
+                         -> SimpleValue
+                         -- ^ The input operand list.
+                         -> [Maybe BitRef]
+                         -- ^ The original instruction bit
+                         -- pattern, already transformed with
+                         -- isaTgenBitPreprocess.
+                         -> (SimpleValue, [Maybe BitRef])
+collectUnpredictableBits tgenBitTransform def ins mbits =
+    case F.find (named "Unpredictable") (defDecls def) of
+        Just (Named _ (FieldBits rawUnpBits)) ->
+            let unpBits = tgenBitTransform rawUnpBits
+                newOperand = DagArg (Identifier (unpOperandTy <> ":$" <> unpOperandName)) Nothing
+                newMbits = flip map (zip3 [31,30..0] mbits unpBits) $ \(pos, iBit, unpBit) ->
+                    -- If the unpBit is zero, fall back to the iBit pattern entry
+                    case unpBit of
+                        Just (ExpectedBit True) ->
+                            -- Is the instruction bit in this position
+                            -- a fixed bit? If so, replace it with an
+                            -- operand bit reference.
+                            case iBit of
+                                Just (ExpectedBit _) -> Just $ FieldBit unpOperandName (OBit pos)
+                                Nothing              -> Just $ FieldBit unpOperandName (OBit pos)
+                                -- Note that if the instruction bit
+                                -- pattern referenced another operand,
+                                -- we'll let that original operand
+                                -- bit reference stand here by just
+                                -- returning the original instruction
+                                -- bit entry. This is probably bad
+                                -- since such a situation means we have
+                                -- real operand bits that are marked as
+                                -- Unpredictable. But we do this to be
+                                -- conservative and assume that the tgen
+                                -- data won't do such a thing.
+                                _                    -> iBit
+                        _ -> iBit
+
+                newIns = case ins of
+                    VDag a as ->
+                        -- Only add the operand to the operand list if
+                        -- we actually referenced any of its bits in the
+                        -- modified bit pattern. Otherwise we'll get an
+                        -- unused operand error.
+                        let isUnpBit (Just (FieldBit n _))
+                              | n == unpOperandName = True
+                            isUnpBit _ = False
+                        in if any isUnpBit newMbits
+                           then VDag a (newOperand:as)
+                           else ins
+                    _ -> error $ "Unexpected ins: " <> show ins
+            in (newIns, newMbits)
+
+        Nothing -> (ins, mbits)
+        Just v -> error $ "Unexpected 'Unpredictable' item type: " <> show v
 
 -- | Match operands in the operand lists to fields in the instruction based on
 -- their variable names.
