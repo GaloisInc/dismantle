@@ -239,7 +239,7 @@ instance PP.Pretty MemRIX where
 instance PP.Pretty MemRR where
   pPrint (MemRR mra rb) =
     case mra of
-      Nothing -> PP.pPrint rb
+      Nothing -> PP.text "0, " <> PP.pPrint rb
       Just ra -> PP.pPrint ra <> PP.text ", " <> PP.pPrint rb
 
 instance (KnownNat s) => PP.Pretty (SPEDis s) where
