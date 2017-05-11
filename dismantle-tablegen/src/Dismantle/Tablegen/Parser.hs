@@ -123,15 +123,15 @@ parseKnownDeclItem :: DeclType -> Parser DeclItem
 parseKnownDeclItem dt =
   case dt of
     TGBit -> tryChoice [ BitItem <$> parseBit
-                       , ExprItem <$> parseSimpleValue
+                       , ExprItem <$> parseSimpleValue NoEmbeddedStrings
                        ]
     TGString ->
-      tryChoice [ StringItem <$> lexeme parseStringLiteral
-                , ExprItem <$> parseSimpleValue
+      tryChoice [ StringItem <$> lexeme (parseStringLiteral WithEmbeddedStrings)
+                , ExprItem <$> parseSimpleValue NoEmbeddedStrings
                 ]
     TGInt ->
       tryChoice [ IntItem <$> lexeme parseInt
-                , ExprItem <$> parseSimpleValue
+                , ExprItem <$> parseSimpleValue NoEmbeddedStrings
                 ]
     TGFieldBits _ ->
       FieldBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseUnknownBit) (symbol ","))
@@ -143,42 +143,45 @@ parseKnownDeclItem dt =
     TGList dt' ->
       tryChoice [ ListItem <$> P.between (symbol "[") (symbol "]") (P.sepBy (lexeme (parseKnownDeclItem dt')) (symbol ","))
                 , ClassItem <$> lexeme name
-                , ExprItem <$> parseSimpleValue
+                , ExprItem <$> parseSimpleValue NoEmbeddedStrings
                 ]
     TGClass _ ->
       tryChoice [ ClassItem <$> lexeme name
-                , ExprItem <$> parseSimpleValue
+                , ExprItem <$> parseSimpleValue NoEmbeddedStrings
                 ]
 
 parseDAGItem :: Parser DeclItem
 parseDAGItem =
   tryChoice [ DagItem <$> Identifier <$> name
-            , DagItem <$> parseSimpleValue
+            , DagItem <$> parseSimpleValue NoEmbeddedStrings
             ]
 
 parseDagArg :: Parser DagArg
 parseDagArg =
   tryChoice [ DagVarRef <$> parseVarRef
-            , DagArg <$> parseSimpleValue <*> P.optional (P.char ':' *> parseVarRef)
+            , DagArg <$> parseSimpleValue NoEmbeddedStrings <*> P.optional (P.char ':' *> parseVarRef)
             ]
 
 parseVarRef :: Parser VarName
 parseVarRef = VarName <$> (P.char '$' *> name)
 
-parseSimpleValue :: Parser SimpleValue
-parseSimpleValue =
+data MultilineParseConfig = NoEmbeddedStrings
+                          | WithEmbeddedStrings
+
+parseSimpleValue :: MultilineParseConfig -> Parser SimpleValue
+parseSimpleValue cfg =
   tryChoice [ Identifier <$> name
             , VNum <$> parseInt
             , VUnset <$ P.char '?'
-            , VString <$> parseStringLiteral
-            , VList <$> between (symbol "[") (symbol "]") (P.sepBy1 parseSimpleValue (symbol ","))
+            , VString <$> parseStringLiteral cfg
+            , VList <$> between (symbol "[") (symbol "]") (P.sepBy1 (parseSimpleValue NoEmbeddedStrings) (symbol ","))
                     <*> P.optional parseType
-            , VSequence <$> between (symbol "{") (symbol "}") (P.sepBy1 parseSimpleValue (symbol ","))
-            , VAnonRecord <$> name <*> between (symbol "<") (symbol ">") (P.sepBy1 parseSimpleValue (symbol ","))
+            , VSequence <$> between (symbol "{") (symbol "}") (P.sepBy1 (parseSimpleValue NoEmbeddedStrings) (symbol ","))
+            , VAnonRecord <$> name <*> between (symbol "<") (symbol ">") (P.sepBy1 (parseSimpleValue NoEmbeddedStrings) (symbol ","))
             , id <$> between (symbol "(") (symbol ")") (VDag <$> parseDagArg <*> P.sepBy parseDagArg (symbol ","))
             , VBang <$> parseBangOperator
                     <*> P.optional parseType
-                    <*> between (symbol "(") (symbol ")") (P.sepBy1 parseSimpleValue (symbol ","))
+                    <*> between (symbol "(") (symbol ")") (P.sepBy1 (parseSimpleValue NoEmbeddedStrings) (symbol ","))
             ]
 
 parseType :: Parser String
@@ -205,38 +208,48 @@ parseBitRef =
             , FieldBit <$> name <*> pure (OBit 0)
            ]
 
-parseStringLiteral :: Parser String
-parseStringLiteral =
-  tryChoice [ parseMultilineStringLiteral
+parseStringLiteral :: MultilineParseConfig -> Parser String
+parseStringLiteral cfg =
+  tryChoice [ parseMultilineStringLiteral cfg
             , P.between (symbol "\"") (symbol "\"") (P.many (P.satisfy (flip notElem "\"\n"))) >>= internString
             ]
 
 -- Multiline literals start with double quote followed by newline, and
 -- contain lines until a line starts with optional whitespace followed
 -- by a double quote.
-parseMultilineStringLiteral :: Parser String
-parseMultilineStringLiteral =
-    tryChoice [ variant1
-              , variant2
-              ]
+--
+-- The contents of a multi-line literal can many of:
+--
+-- 1) A quoted string literal
+--
+-- 2) Any other character besides '"'
+parseMultilineStringLiteral :: MultilineParseConfig -> Parser String
+parseMultilineStringLiteral cfg = do
+    _ <- P.char '"'
+    pfx <- P.manyTill (P.satisfy (`notElem` "\"\n")) P.eol
+    -- After this, we are in a state machine where we just match a quoted
+    -- string literal and normal characters (including newlines).  The
+    -- quoted string literals cannot contain newlines.  If we find a single
+    -- quote with no matching end quote on the same line, that is the end of
+    -- the string.
+    s <- goChar []
+    return (pfx ++ "\n" ++ s)
     where
-      variant1 = do
-        _ <- P.char '"'
-        _ <- P.someTill (P.satisfy (/= '"')) P.eol
-        lineStrs <- P.manyTill parseLine (P.try parseMultilineLiteralEnd)
-        return (unlines lineStrs)
-        where
-          parseLine = P.manyTill P.anyChar P.eol
-          parseMultilineLiteralEnd = P.manyTill (P.satisfy (flip notElem "\"\n")) (P.char '"')
-
-      variant2 = do
-        _ <- P.char '"'
-        _ <- P.eol
-        lineStrs <- P.manyTill parseLine (P.try parseMultilineLiteralEnd)
-        return (unlines lineStrs)
-        where
-          parseLine = P.manyTill P.anyChar P.eol
-          parseMultilineLiteralEnd = P.space >> P.char '"'
+      goChar :: [String] -> Parser String
+      goChar acc = do
+        let parseSingleLineQuotedString = Just <$> P.between (P.char '"') (P.char '"') (P.many (P.satisfy (`notElem` "\"\n")))
+            parseAnyButQuote = (Just . (:[])) <$> P.satisfy (`notElem` "\"")
+            parseOnlyQuote = Nothing <$ P.char '"'
+            curParser = case cfg of
+              NoEmbeddedStrings -> tryChoice [ parseAnyButQuote, parseOnlyQuote ]
+              WithEmbeddedStrings -> tryChoice [ parseSingleLineQuotedString
+                                               , parseAnyButQuote
+                                               , parseOnlyQuote
+                                               ]
+        elt <- curParser
+        case elt of
+          Nothing -> return (concat (reverse acc))
+          Just s -> goChar (s : acc)
 
 -- This is tricky -- we have to be careful parsing names.  If we use
 -- the 'lexeme' approach, parsing the last one consumes the newline at
