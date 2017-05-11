@@ -45,9 +45,5 @@ test-suite dismantle-arm-tests
   build-depends: base,
                  dismantle-tablegen,
                  dismantle-arm,
-                 bytestring,
-                 text,
                  tasty,
-                 tasty-hunit,
-                 megaparsec,
-                 pretty
+                 regex >= 1 && < 2

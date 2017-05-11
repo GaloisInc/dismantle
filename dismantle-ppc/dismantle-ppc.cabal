@@ -30,14 +30,8 @@ test-suite dismantle-ppc-tests
   ghc-options: -Wall
   hs-source-dirs: tests
   main-is: Main.hs
-  other-modules: Parser
   build-depends: base,
                  dismantle-tablegen,
                  dismantle-ppc,
-                 bytestring,
-                 text,
                  tasty,
-                 tasty-hunit,
-                 megaparsec,
-                 regex >= 1 && < 2,
-                 filepath
+                 regex >= 1 && < 2
