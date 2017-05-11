@@ -68,6 +68,7 @@ parseEllipses = tryOne [ P.space >> P.string "..." >> P.eol >> P.eol >> return N
 
 parseInstruction :: Parser (Maybe Instruction)
 parseInstruction = do
+  _ <- P.many (P.char ' ')
   addr <- parseAddress
   _ <- P.char ':'
   P.space
