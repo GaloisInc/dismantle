@@ -68,6 +68,8 @@ ignoreRegex = rx (L.intercalate "|" rxes)
            , "^[[:space:]]*cmpwi[[:space:]]"
            --  ROTLWI is an alias for RLWINM
            , "^[[:space:]]*rotlwi[[:space:]]"
+           -- ROTLW is an alias for RLWNM
+           , "^[[:space:]]*rotlw[[:space:]]"
            -- CRCLR is an alias of CRXOR
            , "^[[:space:]]*crclr[[:space:]]"
            -- BLELR is an alias of BCL
@@ -82,6 +84,11 @@ ignoreRegex = rx (L.intercalate "|" rxes)
            , "^[[:space:]]*crset[[:space:]]"
            -- CRNOT is an alias for CRNOR
            , "^[[:space:]]*crnot[[:space:]]"
+           -- LWSYNC is an alias for SYNC 1
+           , "^[[:space:]]*lwsync"
+           -- MFTBU and MFTB have implicit operands that our pretty printer
+           -- shows, but objdump does not.
+           , "^[[:space:]]*mftbu?[[:space:]]"
 
            -- FIXME: The following two instructions have incorrect operand specs
            -- in the tablegen data.  Investigate upstream
