@@ -25,6 +25,7 @@ matrix:
   include:
     - env: TEST_ARCH=tablegen
     - env: TEST_ARCH=ppc
+    - env: TEST_ARCH=arm
 
 script:
   - ./scripts/test.sh $TEST_ARCH
