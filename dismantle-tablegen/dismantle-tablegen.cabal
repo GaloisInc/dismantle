@@ -71,6 +71,7 @@ test-suite dismantle-tests
                  tasty >= 0.10 && < 0.12,
                  tasty-hunit,
                  tasty-quickcheck >= 0.8 && < 0.9,
+                 regex >= 1 && < 2,
                  filemanip,
                  directory,
                  filepath

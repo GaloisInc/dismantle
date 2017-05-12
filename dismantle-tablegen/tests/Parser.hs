@@ -7,12 +7,14 @@ import Data.Monoid ((<>))
 import qualified Data.Text.Lazy.IO as TL
 import qualified Test.Tasty as T
 import qualified Test.Tasty.HUnit as T
+import qualified Text.RE.TDFA as RE
 import qualified System.FilePath.Glob as G
 import System.Directory (canonicalizePath)
 import System.Exit (die)
 import System.FilePath (takeFileName)
 
 import qualified Dismantle.Tablegen as D
+import qualified Dismantle.Tablegen.Parser.Types as D
 
 parserTests :: IO T.TestTree
 parserTests = do
@@ -50,12 +52,15 @@ findTgenFiles = do
 mkTest :: FilePath -> T.TestTree
 mkTest p = T.testCase (takeFileName p) $ do
   t <- TL.readFile p
+  re <- RE.compileRegex "^def "
+  let expectedDefCount = RE.countMatches (t RE.*=~ re)
   case D.parseTablegen p t of
     Left err ->
         let msg = "Error parsing " <> show p <> ": " <> show err
         in T.assertFailure msg
-    Right rs ->
+    Right rs -> do
         rs `deepseq` return ()
+        T.assertEqual "Number of defs" expectedDefCount (length (D.tblDefs rs))
 
 {-
 
