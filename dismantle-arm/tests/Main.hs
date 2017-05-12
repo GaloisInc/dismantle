@@ -1,5 +1,6 @@
 module Main ( main ) where
 
+import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Text.RE.TDFA as RE
 
@@ -12,7 +13,7 @@ arm = ATC { archName = "arm"
           , disassemble = ARM.disassembleInstruction
           , assemble = ARM.assembleInstruction
           , prettyPrint = ARM.ppInstruction
-          , expectFailure = Nothing
+          , expectFailure = Just expectedFailures
           , skipPrettyCheck = Just (rx ".*")
           }
 
@@ -26,3 +27,10 @@ rx s =
   case RE.compileRegex s of
     Nothing -> error ("Invalid regex: " ++ s)
     Just r -> r
+
+expectedFailures :: RE.RE
+expectedFailures = rx (L.intercalate "|" rxes)
+  where
+    rxes = [ -- The tablegen data for MVNpl is currently incorrect w.r.t. unpredictable bits
+             "^[[:space:]]*mvnpl"
+           ]
