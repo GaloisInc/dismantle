@@ -62,12 +62,3 @@ mkTest p = T.testCase (takeFileName p) $ do
         rs `deepseq` return ()
         T.assertEqual "Number of defs" expectedDefCount (length (D.tblDefs rs))
 
-{-
-
-Next, compute instruction operand patterns and use them to generate
-ADTs for instruction patterns.  Include a separate enumeration for the
-actual opcodes for each instruction of those forms.  Those functions
-will have to take in formatting functions as a parameter.
-
-
--}
