@@ -12,11 +12,11 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules: Dismantle.Tablegen
+  exposed-modules: Dismantle.Instruction
+                   Dismantle.Tablegen
                    Dismantle.Tablegen.ISA
                    Dismantle.Tablegen.ByteTrie
                    Dismantle.Tablegen.Combinators
-                   Dismantle.Tablegen.Instruction
                    Dismantle.Tablegen.TH
                    Dismantle.Tablegen.TH.Bits
                    Dismantle.Tablegen.TH.Pretty

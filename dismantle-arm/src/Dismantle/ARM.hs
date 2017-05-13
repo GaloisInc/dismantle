@@ -17,7 +17,7 @@ module Dismantle.ARM (
   )where
 
 import Dismantle.ARM.ISA ( isa )
+import Dismantle.Instruction
 import Dismantle.Tablegen.TH ( genISA )
-import Dismantle.Tablegen.Instruction
 
 $(genISA isa 'isa "data/ARM.tgen")

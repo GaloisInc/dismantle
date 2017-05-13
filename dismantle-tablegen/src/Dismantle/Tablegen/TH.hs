@@ -29,9 +29,9 @@ import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
 import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
+import Dismantle.Instruction
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
-import Dismantle.Tablegen.Instruction
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 

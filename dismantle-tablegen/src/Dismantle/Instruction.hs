@@ -4,7 +4,7 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
-module Dismantle.Tablegen.Instruction (
+module Dismantle.Instruction (
   OperandList(..),
   GenericInstruction(..),
   Annotated(..),

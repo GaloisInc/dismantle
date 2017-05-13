@@ -17,9 +17,9 @@ module Dismantle.PPC (
   ppInstruction
   )where
 
+import Dismantle.Instruction
 import Dismantle.PPC.Operands
 import Dismantle.PPC.ISA ( isa )
 import Dismantle.Tablegen.TH ( genISA )
-import Dismantle.Tablegen.Instruction
 
 $(genISA isa 'isa "data/PPC.tgen")
