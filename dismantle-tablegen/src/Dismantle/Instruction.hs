@@ -8,10 +8,15 @@ module Dismantle.Instruction (
   OperandList(..),
   GenericInstruction(..),
   Annotated(..),
+  SomeOpcode(..),
   mapOpcode,
   traverseOpcode,
   mapOperandList
   ) where
+
+import qualified Data.Type.Equality as E
+
+import Data.EnumF ( EnumF(..) )
 
 -- | A wrapper to allow operands to be easily annotated with arbitrary
 -- data (of kind '*' for now).
@@ -68,13 +73,13 @@ mapOperandList f l =
     Nil -> Nil
     e :> rest -> f e :> mapOperandList f rest
 
--- | Replace the opcode of the instruction with another opcode that expects an
--- operand list of the same shape
+-- | Map over opcodes in a shape-preserving way
 mapOpcode :: (forall (sh :: [k]) . c o sh -> c o sh) -> GenericInstruction c o -> GenericInstruction c o
 mapOpcode f i =
   case i of
     Instruction op ops -> Instruction (f op) ops
 
+-- | Map over opcodes while preserving the shape of the operand list, allowing effects
 traverseOpcode :: (Applicative t)
                => (forall (sh :: [k]) . c o sh -> t (c o sh))
                -> GenericInstruction c o
@@ -82,3 +87,18 @@ traverseOpcode :: (Applicative t)
 traverseOpcode f i =
   case i of
     Instruction op ops -> Instruction <$> f op <*> pure ops
+
+-- | A wrapper around an opcode tag that hides the shape parameter.
+--
+-- This allows opcodes to be stored heterogeneously in data structures.  Pattern
+-- matching on them and using 'E.testEquality' allows the shape to be recovered.
+data SomeOpcode (c :: (k -> *) -> [k] -> *) o = forall sh . SomeOpcode (c o sh)
+
+instance (E.TestEquality (c o)) => Eq (SomeOpcode c o) where
+  SomeOpcode o1 == SomeOpcode o2 =
+    case E.testEquality o1 o2 of
+      Just E.Refl -> True
+      Nothing -> False
+
+instance (E.TestEquality (c o), EnumF (c o)) => Ord (SomeOpcode c o) where
+  SomeOpcode o1 `compare` SomeOpcode o2 = enumF o1 `compare` enumF o2
