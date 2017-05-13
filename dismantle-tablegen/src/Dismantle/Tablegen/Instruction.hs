@@ -8,6 +8,8 @@ module Dismantle.Tablegen.Instruction (
   OperandList(..),
   GenericInstruction(..),
   Annotated(..),
+  mapOpcode,
+  traverseOpcode,
   mapOperandList
   ) where
 
@@ -65,3 +67,18 @@ mapOperandList f l =
   case l of
     Nil -> Nil
     e :> rest -> f e :> mapOperandList f rest
+
+-- | Replace the opcode of the instruction with another opcode that expects an
+-- operand list of the same shape
+mapOpcode :: (forall (sh :: [k]) . c o sh -> c o sh) -> GenericInstruction c o -> GenericInstruction c o
+mapOpcode f i =
+  case i of
+    Instruction op ops -> Instruction (f op) ops
+
+traverseOpcode :: (Applicative t)
+               => (forall (sh :: [k]) . c o sh -> t (c o sh))
+               -> GenericInstruction c o
+               -> t (GenericInstruction c o)
+traverseOpcode f i =
+  case i of
+    Instruction op ops -> Instruction <$> f op <*> pure ops
