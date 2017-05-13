@@ -13,6 +13,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules: Dismantle.Instruction
+                   Dismantle.Instruction.Random
                    Dismantle.Tablegen
                    Dismantle.Tablegen.ISA
                    Dismantle.Tablegen.ByteTrie
@@ -38,11 +39,12 @@ library
                        process,
                        located-base,
                        array,
+                       mwc-random >= 0.13 && < 0.14,
                        case-insensitive >= 1 && < 2,
                        filemanip,
                        filepath,
                        split >= 0.2 && < 0.3,
-                       containers >= 0.5 && < 0.6,
+                       containers >= 0.5.8 && < 0.6,
                        zlib >= 0.6 && < 0.7,
                        text >= 1 && < 2,
                        vector,
