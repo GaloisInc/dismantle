@@ -1,13 +1,17 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Dismantle.Instruction (
   OperandList(..),
   GenericInstruction(..),
   Annotated(..),
+  OpcodeConstraints,
   SomeOpcode(..),
   mapOpcode,
   traverseOpcode,
@@ -15,8 +19,10 @@ module Dismantle.Instruction (
   ) where
 
 import qualified Data.Type.Equality as E
+import Data.Typeable ( Typeable )
 
 import Data.EnumF ( EnumF(..) )
+import Data.ShowF ( ShowF(..) )
 
 -- | A wrapper to allow operands to be easily annotated with arbitrary
 -- data (of kind '*' for now).
@@ -88,11 +94,20 @@ traverseOpcode f i =
   case i of
     Instruction op ops -> Instruction <$> f op <*> pure ops
 
+type OpcodeConstraints c o = (E.TestEquality (c o),
+                              ShowF (c o),
+                              EnumF (c o),
+                              Typeable c,
+                              Typeable o)
+
 -- | A wrapper around an opcode tag that hides the shape parameter.
 --
 -- This allows opcodes to be stored heterogeneously in data structures.  Pattern
 -- matching on them and using 'E.testEquality' allows the shape to be recovered.
-data SomeOpcode (c :: (k -> *) -> [k] -> *) o = forall sh . SomeOpcode (c o sh)
+data SomeOpcode (c :: (k -> *) -> [k] -> *) (o :: k -> *) = forall (sh :: [k]) . SomeOpcode (c o sh)
+
+instance (ShowF (c o)) => Show (SomeOpcode c o) where
+  show (SomeOpcode o) = showF o
 
 instance (E.TestEquality (c o)) => Eq (SomeOpcode c o) where
   SomeOpcode o1 == SomeOpcode o2 =

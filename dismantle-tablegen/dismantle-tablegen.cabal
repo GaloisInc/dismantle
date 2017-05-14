@@ -27,6 +27,7 @@ library
                    Dismantle.Testing
                    Dismantle.Testing.Parser
                    Data.EnumF
+                   Data.ShowF
                    Data.Int.Indexed
                    Data.Word.Indexed
   build-depends:       base >=4.8 && <4.10,
@@ -44,7 +45,7 @@ library
                        filemanip,
                        filepath,
                        split >= 0.2 && < 0.3,
-                       containers >= 0.5.8 && < 0.6,
+                       containers,
                        zlib >= 0.6 && < 0.7,
                        text >= 1 && < 2,
                        vector,

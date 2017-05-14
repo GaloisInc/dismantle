@@ -30,8 +30,7 @@ replaceOpcode g os o = do
     0 -> return o
     len -> do
       ix <- R.uniformR (0, len - 1) g
-      let Just o' = Seq.lookup ix available
-      return o'
+      return $! available `Seq.index` ix
   where
     eligible = congruentF o
     available = F.foldl' (checkCompatibleOpcode os) Seq.empty eligible
