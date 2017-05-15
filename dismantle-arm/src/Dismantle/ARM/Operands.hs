@@ -115,6 +115,14 @@ data Field = Field { fieldBits :: Int
                    -- starting from zero
                    }
 
+addBitToSign :: (Num a) => Word32 -> a
+addBitToSign 1 = fromIntegral 1
+addBitToSign 0 = fromIntegral (-1)
+addBitToSign v = error $ "Invalid add bit value (word): " <> show v
+
+addBitFromNum :: (Ord a, Num a) => a -> Word32
+addBitFromNum v = if v < 0 then 0 else 1
+
 mkMask :: Field -> Word32
 mkMask (Field bits offset) = (2 ^ bits - 1) `shiftL` offset
 
@@ -214,16 +222,14 @@ instance PP.Pretty QQPR where
 -- | An AddrMode_Imm12 memory reference for a load or store instruction
 -- (with a 12-bit immediate)
 data AddrModeImm12 = AddrModeImm12 { addrModeImm12Register  :: GPR
-                                   , addrModeImm12Immediate :: Word16
-                                   , addrModeImm12Add       :: Word8
+                                   , addrModeImm12Immediate :: Integer
                                    }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddrModeImm12 where
   pPrint m =
-      let opStr = if addrModeImm12Add m == 1 then mempty else PP.char '-'
-      in (PP.pPrint (addrModeImm12Register m) <> PP.char ',') PP.<+>
-         (opStr <> PP.pPrint (addrModeImm12Immediate m))
+      (PP.pPrint (addrModeImm12Register m) <> PP.char ',') PP.<+>
+      (PP.pPrint (addrModeImm12Immediate m))
 
 addrModeImm12RegField :: Field
 addrModeImm12RegField = Field 4 13
@@ -235,17 +241,17 @@ addrModeImm12ImmField :: Field
 addrModeImm12ImmField = Field 12 0
 
 mkAddrModeImm12 :: Word32 -> AddrModeImm12
-mkAddrModeImm12 w = AddrModeImm12 (GPR $ fromIntegral reg) (fromIntegral imm) (fromIntegral add)
+mkAddrModeImm12 w = AddrModeImm12 (GPR $ fromIntegral reg) (addBitToSign add * fromIntegral imm)
   where
     reg = extract addrModeImm12RegField w
     add = extract addrModeImm12AddField w
     imm = extract addrModeImm12ImmField w
 
 addrModeImm12ToBits :: AddrModeImm12 -> Word32
-addrModeImm12ToBits (AddrModeImm12 (GPR r) imm add) =
+addrModeImm12ToBits (AddrModeImm12 (GPR r) imm) =
     insert addrModeImm12RegField r $
-    insert addrModeImm12AddField add $
-    insert addrModeImm12ImmField imm 0
+    insert addrModeImm12AddField (addBitFromNum imm) $
+    insert addrModeImm12ImmField (abs imm) 0
 
 -- | An AddrMode3 memory reference for a load or store instruction
 data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
