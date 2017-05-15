@@ -560,7 +560,7 @@ data Imm12 = Imm12 { unImm12 :: Integer
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm12 where
-  pPrint = PP.pPrint . unImm12
+  pPrint v = PP.text "#" <> (PP.pPrint $ unImm12 v)
 
 imm12Field :: Field
 imm12Field = Field 12 0
