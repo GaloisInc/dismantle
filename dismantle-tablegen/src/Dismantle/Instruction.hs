@@ -13,6 +13,7 @@ module Dismantle.Instruction (
   Annotated(..),
   OpcodeConstraints,
   SomeOpcode(..),
+  operandListLength,
   mapOpcode,
   traverseOpcode,
   mapOperandList
@@ -98,6 +99,13 @@ mapOperandList f l =
   case l of
     Nil -> Nil
     e :> rest -> f e :> mapOperandList f rest
+
+-- | Return the number of operands in an operand list.
+--
+-- O(n)
+operandListLength :: OperandList a sh -> Int
+operandListLength Nil = 0
+operandListLength (_ :> rest) = 1 + operandListLength rest
 
 -- | Map over opcodes in a shape-preserving way
 mapOpcode :: (forall (sh :: [k]) . c o sh -> c o sh) -> GenericInstruction c o -> GenericInstruction c o
