@@ -2,6 +2,8 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
 module Dismantle.Instruction.Random (
+  ArbitraryF(..),
+  Arbitrary(..),
   RandomizableOpcode,
   randomInstruction,
   randomizeOperand,
@@ -19,9 +21,20 @@ import qualified Dismantle.Instruction as I
 
 type RandomizableOpcode c o = (E.TestEquality (c o), EnumF (c o))
 
+class ArbitraryF a where
+  withArbitraryF :: R.GenIO -> (a tp -> IO b) -> IO b
+
+class Arbitrary a where
+  arbitrary :: R.GenIO -> IO a
+
 -- | Generate a random instruction
-randomInstruction :: IO (I.GenericInstruction c o)
-randomInstruction = undefined
+randomInstruction :: (ArbitraryF (c o))
+                  => R.GenIO
+                  -> (R.GenIO -> c o sh -> IO (I.OperandList o sh))
+                  -> IO (I.GenericInstruction c o)
+randomInstruction gen mkOps =
+  withArbitraryF gen $ \opcode -> do
+    I.Instruction opcode <$> mkOps gen opcode
 
 -- | Given a set of allowed opcodes, select a random one that matches the shape
 -- of the input opcode and return it.
