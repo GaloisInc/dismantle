@@ -255,17 +255,15 @@ addrModeImm12ToBits (AddrModeImm12 (GPR r) imm) =
 
 -- | An AddrMode3 memory reference for a load or store instruction
 data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
-                           , addrMode3Immediate :: Word8
-                           , addrMode3Add       :: Word8
+                           , addrMode3Immediate :: Integer
                            , addrMode3Other     :: Word8
                            }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddrMode3 where
   pPrint m =
-      let opStr = if addrMode3Add m == 1 then mempty else PP.char '-'
-      in (PP.pPrint (addrMode3Register m) <> PP.char ',') PP.<+>
-         (opStr <> PP.pPrint (addrMode3Immediate m))
+      (PP.pPrint (addrMode3Register m) <> PP.char ',') PP.<+>
+      (PP.pPrint (addrMode3Immediate m))
 
 addrMode3RegField :: Field
 addrMode3RegField = Field 4 9
@@ -280,7 +278,7 @@ addrMode3ImmField :: Field
 addrMode3ImmField = Field 8 0
 
 mkAddrMode3 :: Word32 -> AddrMode3
-mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (fromIntegral imm) (fromIntegral add) (fromIntegral other)
+mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (addBitToSign add * fromIntegral imm) (fromIntegral other)
   where
     reg = extract addrMode3RegField w
     add = extract addrMode3AddField w
@@ -288,23 +286,20 @@ mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (fromIntegral imm) (fromInteg
     other = extract addrMode3OtherField w
 
 addrMode3ToBits :: AddrMode3 -> Word32
-addrMode3ToBits (AddrMode3 (GPR r) imm add other) =
+addrMode3ToBits (AddrMode3 (GPR r) imm other) =
     insert addrMode3RegField r $
-    insert addrMode3AddField add $
-    insert addrMode3ImmField imm $
+    insert addrMode3AddField (addBitFromNum imm) $
+    insert addrMode3ImmField (abs imm) $
     insert addrMode3OtherField other 0
 
 -- | An am3Offset memory reference for a load or store instruction
-data AM3Offset = AM3Offset { am3OffsetImmediate :: Word8
-                           , am3OffsetAdd       :: Word8
+data AM3Offset = AM3Offset { am3OffsetImmediate :: Integer
                            , am3OffsetOther     :: Word8
                            }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AM3Offset where
-  pPrint m =
-      let opStr = if am3OffsetAdd m == 1 then mempty else PP.char '-'
-      in (opStr <> PP.pPrint (am3OffsetImmediate m))
+  pPrint m = PP.pPrint (am3OffsetImmediate m)
 
 am3OffsetAddField :: Field
 am3OffsetAddField = Field 1 8
@@ -316,17 +311,17 @@ am3OffsetImmField :: Field
 am3OffsetImmField = Field 8 0
 
 mkAM3Offset :: Word32 -> AM3Offset
-mkAM3Offset w = AM3Offset (fromIntegral imm) (fromIntegral add) (fromIntegral other)
+mkAM3Offset w = AM3Offset (addBitToSign add * fromIntegral imm) (fromIntegral other)
   where
     add = extract am3OffsetAddField w
     imm = extract am3OffsetImmField w
     other = extract am3OffsetOtherField w
 
 am3OffsetToBits :: AM3Offset -> Word32
-am3OffsetToBits (AM3Offset imm add other) =
-    insert am3OffsetAddField add $
+am3OffsetToBits (AM3Offset imm other) =
+    insert am3OffsetAddField (addBitFromNum imm) $
     insert am3OffsetOtherField other $
-    insert am3OffsetImmField imm 0
+    insert am3OffsetImmField (abs imm) 0
 
 -- | A shift_imm operand with a shift immediate and shift type (l/r).
 -- See also USAT in the ARM ARM and tgen.
