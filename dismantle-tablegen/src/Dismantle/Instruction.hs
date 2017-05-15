@@ -13,10 +13,11 @@ module Dismantle.Instruction (
   Annotated(..),
   OpcodeConstraints,
   SomeOpcode(..),
-  operandListLength,
   mapOpcode,
   traverseOpcode,
-  mapOperandList
+  operandListLength,
+  mapOperandList,
+  traverseOperandList
   ) where
 
 import qualified Data.Type.Equality as E
@@ -99,6 +100,12 @@ mapOperandList f l =
   case l of
     Nil -> Nil
     e :> rest -> f e :> mapOperandList f rest
+
+traverseOperandList :: (Applicative t) => (forall tp . a tp -> t (b tp)) -> OperandList a sh -> t (OperandList b sh)
+traverseOperandList f l =
+  case l of
+    Nil -> pure Nil
+    e :> rest -> (:>) <$> f e <*> traverseOperandList f rest
 
 -- | Return the number of operands in an operand list.
 --
