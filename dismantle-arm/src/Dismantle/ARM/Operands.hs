@@ -21,6 +21,10 @@ module Dismantle.ARM.Operands (
   mkBit,
   bitToBits,
 
+  SBit,
+  mkSBit,
+  sBitToBits,
+
   CoprocRegister,
   mkCoprocRegister,
   coprocRegisterToBits,
@@ -146,6 +150,20 @@ mkBit v = Bit $ fromIntegral v
 
 bitToBits :: Bit -> Word32
 bitToBits (Bit v) = fromIntegral v
+
+newtype SBit = SBit { unSBit :: Word8 }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty SBit where
+  pPrint (SBit 1) = PP.text "S"
+  pPrint (SBit 0) = PP.text ""
+  pPrint (SBit v) = error $ "Invalid SBit value: " <> show v
+
+mkSBit :: Word32 -> SBit
+mkSBit v = SBit $ fromIntegral v
+
+sBitToBits :: SBit -> Word32
+sBitToBits (SBit v) = fromIntegral v
 
 -- | General-purpose register by number
 newtype GPR = GPR { unGPR :: Word8 }

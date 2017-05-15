@@ -138,6 +138,10 @@ isa = ISA { isaName = "ARM"
                          , opConE = Just (varE 'ARM.mkBit)
                          , opWordE = Just (varE 'ARM.bitToBits)
                          }
+    sBit = OperandPayload { opTypeT = [t| ARM.SBit |]
+                          , opConE = Just (varE 'ARM.mkSBit)
+                          , opWordE = Just (varE 'ARM.sBitToBits)
+                          }
     am2OffsetImm = OperandPayload { opTypeT = [t| ARM.Am2OffsetImm |]
                                   , opConE = Just (varE 'ARM.mkAm2OffsetImm)
                                   , opWordE = Just (varE 'ARM.am2OffsetImmToBits)
@@ -172,7 +176,7 @@ isa = ISA { isaName = "ARM"
         , ("Arm_br_target"     , branchTarget)
         , ("Bf_inv_mask_imm"   , word16Operand)
         , ("C_imm"             , coprocRegister)
-        , ("Cc_out"            , bit)
+        , ("Cc_out"            , sBit)
         , ("Coproc_option_imm" , word8Operand)
         , ("Dpr"               , dpRegister)
         , ("GPR"               , gpRegister)
