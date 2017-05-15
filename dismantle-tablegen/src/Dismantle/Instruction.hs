@@ -72,6 +72,26 @@ data OperandList :: (k -> *) -> [k] -> * where
 
 infixr 5 :>
 
+instance (E.TestEquality o) => E.TestEquality (OperandList o) where
+  testEquality Nil Nil = Just E.Refl
+  testEquality (i1 :> rest1) (i2 :> rest2) =
+    case E.testEquality i1 i2 of
+      Just E.Refl ->
+        case E.testEquality rest1 rest2 of
+          Just E.Refl -> Just E.Refl
+          Nothing -> Nothing
+      Nothing -> Nothing
+  testEquality _ _ = Nothing
+
+instance (E.TestEquality (c o), E.TestEquality o) => Eq (GenericInstruction c o) where
+  Instruction o1 ops1 == Instruction o2 ops2 =
+    case E.testEquality o1 o2 of
+      Nothing -> False
+      Just E.Refl ->
+        case E.testEquality ops1 ops2 of
+          Nothing -> False
+          Just E.Refl -> True
+
 -- | A type parameterized map
 mapOperandList :: (forall tp . a tp -> b tp) -> OperandList a sh -> OperandList b sh
 mapOperandList f l =
