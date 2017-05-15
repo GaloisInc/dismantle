@@ -17,7 +17,9 @@ module Dismantle.Instruction (
   traverseOpcode,
   operandListLength,
   mapOperandList,
-  traverseOperandList
+  mapOperandListIndexed,
+  traverseOperandList,
+  traverseOperandListIndexed
   ) where
 
 import qualified Data.Type.Equality as E
@@ -101,11 +103,34 @@ mapOperandList f l =
     Nil -> Nil
     e :> rest -> f e :> mapOperandList f rest
 
+mapOperandListIndexed :: (forall tp . Int -> a tp -> b tp) -> OperandList a sh -> OperandList b sh
+mapOperandListIndexed f l = mapOperandListIndexed_ 0 f l
+
+mapOperandListIndexed_ :: Int -> (forall tp . Int -> a tp -> b tp) -> OperandList a sh -> OperandList b sh
+mapOperandListIndexed_ ix f l =
+  case l of
+    Nil -> Nil
+    e :> rest -> f ix e :> mapOperandListIndexed_ (ix + 1) f rest
+
 traverseOperandList :: (Applicative t) => (forall tp . a tp -> t (b tp)) -> OperandList a sh -> t (OperandList b sh)
 traverseOperandList f l =
   case l of
     Nil -> pure Nil
     e :> rest -> (:>) <$> f e <*> traverseOperandList f rest
+
+traverseOperandListIndexed :: (Applicative t) => (forall tp . Int -> a tp -> t (b tp)) -> OperandList a sh -> t (OperandList b sh)
+traverseOperandListIndexed f l = traverseOperandListIndexed_ 0 f l
+
+traverseOperandListIndexed_ :: (Applicative t)
+                            => Int
+                            -> (forall tp . Int -> a tp -> t (b tp))
+                            -> OperandList a sh
+                            -> t (OperandList b sh)
+traverseOperandListIndexed_ ix f l =
+  case l of
+    Nil -> pure Nil
+    e :> rest -> (:>) <$> f ix e <*> traverseOperandListIndexed_ (ix + 1) f rest
+
 
 -- | Return the number of operands in an operand list.
 --
