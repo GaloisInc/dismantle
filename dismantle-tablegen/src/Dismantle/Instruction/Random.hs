@@ -1,8 +1,11 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE RankNTypes #-}
 module Dismantle.Instruction.Random (
+  RandomizableOpcode,
   randomInstruction,
-  replaceOpcode
+  randomizeOperand,
+  randomizeOpcode
   ) where
 
 import qualified Data.Foldable as F
@@ -42,3 +45,23 @@ checkCompatibleOpcode s acc o =
   case S.member (I.SomeOpcode o) s of
     True -> acc Seq.|> o
     False -> acc
+
+randomizeOpcode :: (RandomizableOpcode c o)
+                => R.GenIO
+                -> S.Set (I.SomeOpcode c o)
+                -> I.GenericInstruction c o
+                -> IO (I.GenericInstruction c o)
+randomizeOpcode gen os = I.traverseOpcode (replaceOpcode gen os)
+
+randomizeOperand :: R.GenIO
+                 -> (forall sh . R.GenIO -> o sh -> IO (o sh))
+                 -> I.GenericInstruction c o
+                 -> IO (I.GenericInstruction c o)
+randomizeOperand gen f (I.Instruction op os) = do
+  updateAt <- R.uniformR (0, (I.operandListLength os - 1)) gen
+  os' <- I.traverseOperandListIndexed (f' updateAt gen) os
+  return (I.Instruction op os')
+  where
+    f' target g ix o
+      | ix == target = f g o
+      | otherwise = return o
