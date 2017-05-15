@@ -17,6 +17,10 @@ module Dismantle.ARM.Operands (
   qqpr,
   unQQPR,
 
+  Reglist,
+  mkRegList,
+  regListToBits,
+
   Bit,
   mkBit,
   bitToBits,
@@ -103,6 +107,7 @@ module Dismantle.ARM.Operands (
   ) where
 
 import Data.Bits
+import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.Word ( Word8, Word16, Word32 )
 
@@ -165,11 +170,32 @@ mkSBit v = SBit $ fromIntegral v
 sBitToBits :: SBit -> Word32
 sBitToBits (SBit v) = fromIntegral v
 
+data Reglist = Reglist { unReglist :: Word16 }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty Reglist where
+  pPrint (Reglist bits) =
+      let positions :: [Int]
+          positions = [0..15]
+          members = catMaybes $ regMember <$> positions
+          regMember rn = if (((bits `shiftR` rn) .&. 0b1) == 0b1)
+                         then Just rn
+                         else Nothing
+          regs = GPR <$> fromIntegral <$> members
+      in PP.braces (PP.hsep $ PP.punctuate (PP.text ",") (PP.pPrint <$> regs))
+
+mkRegList :: Word32 -> Reglist
+mkRegList v = Reglist $ fromIntegral v
+
+regListToBits :: Reglist -> Word32
+regListToBits (Reglist v) = fromIntegral v
+
 -- | General-purpose register by number
 newtype GPR = GPR { unGPR :: Word8 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR where
+  pPrint (GPR 10) = PP.text "sl"
   pPrint (GPR 11) = PP.text "fp"
   pPrint (GPR 12) = PP.text "ip"
   pPrint (GPR 13) = PP.text "sp"

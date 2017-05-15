@@ -118,6 +118,10 @@ isa = ISA { isaName = "ARM"
                                    , opConE = Nothing
                                    , opWordE = Just [| fromIntegral |]
                                    }
+    reglistOperand = OperandPayload { opTypeT = [t| ARM.Reglist |]
+                                    , opConE = Just (varE 'ARM.mkRegList)
+                                    , opWordE = Just (varE 'ARM.regListToBits)
+                                    }
     word24Operand = OperandPayload { opTypeT = [t| Word32 |]
                                    , opConE = Nothing
                                    , opWordE = Nothing
@@ -208,7 +212,7 @@ isa = ISA { isaName = "ARM"
         , ("Pred"              , predOperand)
         , ("Qpr"               , qpRegister)
         , ("Qqpr"              , qqpRegister)
-        , ("Reglist"           , word16Operand)
+        , ("Reglist"           , reglistOperand)
         , ("Rot_imm"           , word8Operand)
         , ("Setend_op"         , bit)
         , ("Shift_imm"         , shiftImm)
