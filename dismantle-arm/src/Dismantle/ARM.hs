@@ -12,6 +12,7 @@ module Dismantle.ARM (
   Annotated(..),
   Operand(..),
   Opcode(..),
+  mkPred,
   disassembleInstruction,
   assembleInstruction,
   ppInstruction
@@ -20,5 +21,6 @@ module Dismantle.ARM (
 import Dismantle.ARM.ISA ( isa )
 import Dismantle.Instruction
 import Dismantle.Tablegen.TH ( genISA )
+import Dismantle.ARM.Operands (mkPred)
 
 $(genISA isa 'isa "data/ARM.tgen")
