@@ -5,7 +5,9 @@
 module Dismantle.Arbitrary (
   Gen,
   Arbitrary(..),
-  uniformR
+  uniformR,
+  withGen,
+  createGen
   ) where
 
 import GHC.TypeLits
@@ -45,3 +47,9 @@ instance Arbitrary Int16 where
 
 instance Arbitrary Word16 where
   arbitrary (Gen g) = R.uniformR (0, maxBound :: Word16) g
+
+withGen :: (Gen -> IO a) -> IO a
+withGen k = R.withSystemRandom $ \g -> k (Gen g)
+
+createGen :: IO Gen
+createGen = Gen <$> R.createSystemRandom
