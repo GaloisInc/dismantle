@@ -420,7 +420,11 @@ decodeImmShift ty imm =
 instance PP.Pretty ShiftImm where
   pPrint m =
       let (ty, amt) = decodeImmShift (shiftImmType m) (shiftImmImmediate m)
-      in (PP.pPrint ty PP.<+> PP.text ("#" <> show amt))
+          addAmt = if ty == RRX && amt == 1
+                   then id
+                   else (PP.<+> PP.text ("#" <> show amt))
+
+      in (addAmt $ PP.pPrint ty)
 
 shiftImmImmField :: Field
 shiftImmImmField = Field 5 0
@@ -502,17 +506,13 @@ data Am2OffsetReg = Am2OffsetReg { am2OffsetRegImmediate :: Word8
 
 instance PP.Pretty Am2OffsetReg where
   pPrint m =
-      let tyStr = if am2OffsetRegType m == 1 then "ASR" else "LSL"
-          -- See the ARM ARM on USAT for information on this
-          -- representation.
-          amtStr = if am2OffsetRegType m == 0
-                   then show $ am2OffsetRegImmediate m
-                   else if am2OffsetRegImmediate m == 0
-                        then "32"
-                        else show $ am2OffsetRegImmediate m
+      let (t, imm) = decodeImmShift (am2OffsetRegType m) (am2OffsetRegImmediate m)
+          addAmt = if t == RRX && imm == 1
+                   then id
+                   else (PP.<+> PP.text ("#" <> show imm))
           opStr = if am2OffsetRegAdd m == 1 then mempty else PP.char '-'
-      in (PP.pPrint (am2OffsetRegReg m) <> PP.char ',') PP.<+>
-         (PP.text tyStr PP.<+> PP.text amtStr)
+      in (opStr <> PP.pPrint (am2OffsetRegReg m) <> PP.char ',') PP.<+>
+         (addAmt $ PP.pPrint t)
 
 am2OffsetRegAddField :: Field
 am2OffsetRegAddField = Field 1 12
@@ -800,8 +800,11 @@ data SoRegImm = SoRegImm { soRegImmImmediate :: Word8
 instance PP.Pretty SoRegImm where
     pPrint (SoRegImm imm reg ty) =
         let (t, amt) = decodeImmShift ty imm
+            addAmt = if t == RRX && amt == 1
+                     then id
+                     else (PP.<+> PP.text ("#" <> show amt))
         in PP.pPrint reg <> (PP.text "," PP.<+>
-           (PP.pPrint t PP.<+> PP.text ("#" <> show amt)))
+           (addAmt $ PP.pPrint t))
 
 soRegImmImmField :: Field
 soRegImmImmField = Field 5 7
