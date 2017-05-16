@@ -160,7 +160,7 @@ newtype SBit = SBit { unSBit :: Word8 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty SBit where
-  pPrint (SBit 1) = PP.text "S"
+  pPrint (SBit 1) = PP.text "s"
   pPrint (SBit 0) = PP.text ""
   pPrint (SBit v) = error $ "Invalid SBit value: " <> show v
 
