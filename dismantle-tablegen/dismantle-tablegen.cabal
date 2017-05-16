@@ -12,7 +12,8 @@ extra-source-files:  ChangeLog.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules: Dismantle.Instruction
+  exposed-modules: Dismantle.Arbitrary
+                   Dismantle.Instruction
                    Dismantle.Instruction.Random
                    Dismantle.Tablegen
                    Dismantle.Tablegen.ISA

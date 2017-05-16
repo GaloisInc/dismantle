@@ -23,4 +23,4 @@ import Dismantle.Instruction
 import Dismantle.Tablegen.TH ( genISA )
 import Dismantle.ARM.Operands (mkPred)
 
-$(genISA isa 'isa "data/ARM.tgen")
+$(genISA isa "data/ARM.tgen")

@@ -8,7 +8,8 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ViewPatterns #-}
 module Dismantle.Tablegen.TH (
-  genISA
+  genISA,
+  genISARandomHelpers
   ) where
 
 import GHC.TypeLits ( Symbol )
@@ -34,14 +35,16 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Data.EnumF ( EnumF(..) )
 import Data.ShowF ( ShowF(..) )
+import Dismantle.Arbitrary as A
 import Dismantle.Instruction
+import Dismantle.Instruction.Random ( arbitraryOperandList )
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
-genISA :: ISA -> Name -> FilePath -> DecsQ
-genISA isa isaValName path = do
+genISA :: ISA -> FilePath -> DecsQ
+genISA isa path = do
   desc <- runIO $ loadISA isa path
   case isaErrors desc of
     [] -> return ()
@@ -50,7 +53,7 @@ genISA isa isaValName path = do
   opcodeType <- mkOpcodeType desc
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
-  parserDef <- mkParser isa desc isaValName path
+  parserDef <- mkParser isa desc path
   asmDef <- mkAssembler isa desc
   return $ concat [ operandType
                   , opcodeType
@@ -74,8 +77,8 @@ opcodeTypeName = mkName "Opcode"
 operandTypeName :: Name
 operandTypeName = mkName "Operand"
 
-mkParser :: ISA -> ISADescriptor -> Name -> FilePath -> Q [Dec]
-mkParser isa desc isaValName path = do
+mkParser :: ISA -> ISADescriptor -> FilePath -> Q [Dec]
+mkParser isa desc path = do
   qAddDependentFile path
   -- Build up a table of AST fragments that are parser expressions.
   -- They are associated with the bit masks required to build the
@@ -274,6 +277,31 @@ mkOpcodeType isa = do
     shapeVarName = mkName "sh"
     tyVars = [PlainTV opVarName, PlainTV shapeVarName]
     cons = map mkOpcodeCon (isaInstructions isa)
+
+genISARandomHelpers :: ISA -> FilePath -> Q [Dec]
+genISARandomHelpers isa path = do
+  desc <- runIO $ loadISA isa path
+  genName <- newName "gen"
+  opcodeName <- newName "opcode"
+  let caseBody = caseE (varE opcodeName) (map (mkOpListCase genName) (isaInstructions desc))
+  let funcName = mkName "mkOperandList"
+  sig <- sigD funcName [t| A.Gen -> $(conT opcodeTypeName) $(varT (mkName "o")) $(varT (mkName "sh")) -> IO (OperandList $(varT (mkName "o")) $(varT (mkName "sh"))) |]
+  f <- funD funcName [clause [varP genName, varP opcodeName] (normalB caseBody) []]
+  arbitraryInstances <- mapM mkArbitraryOperandInstance (isaOperands desc)
+  return (sig : f : arbitraryInstances)
+  where
+    mkOpListCase genName i =
+      let conName = mkName (toTypeName (idMnemonic i))
+      in match (conP conName []) (normalB [| arbitraryOperandList $(varE genName) |]) []
+
+    mkArbitraryOperandInstance (OperandType origOperandName) = do
+      let symbol = toTypeName origOperandName
+          name = mkName symbol
+      genName <- newName "gen"
+      let ty = [t| A.Arbitrary ($(conT operandTypeName) $(litT (strTyLit symbol))) |]
+          body = [| $(conE name) <$> A.arbitrary $(varE genName) |]
+          fun = funD 'A.arbitrary [clause [varP genName] (normalB body) []]
+      instanceD (return []) ty [fun]
 
 mkEnumFInstance :: ISADescriptor -> Q Dec
 mkEnumFInstance desc = do

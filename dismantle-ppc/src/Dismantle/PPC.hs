@@ -23,4 +23,4 @@ import Dismantle.PPC.Operands
 import Dismantle.PPC.ISA ( isa )
 import Dismantle.Tablegen.TH ( genISA )
 
-$(genISA isa 'isa "data/PPC.tgen")
+$(genISA isa "data/PPC.tgen")

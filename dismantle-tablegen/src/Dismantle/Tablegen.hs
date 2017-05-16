@@ -302,7 +302,6 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
                           -- If we can't do a direct mapping and no override applies, we
                           -- have failed and need to record an error for this opcode
                           traceM (printf "Failed to find field bits for %s in opcode definition %s" var mnemonic)
-                          traceM (printf "  overrides were %s" (show overrides))
                           St.modify $ \s -> s { stErrors = (mnemonic, var) : stErrors s }
                           kexit ()
                         Just bitPositions -> do
