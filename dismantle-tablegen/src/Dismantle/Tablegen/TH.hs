@@ -8,7 +8,8 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ViewPatterns #-}
 module Dismantle.Tablegen.TH (
-  genISA
+  genISA,
+  genISARandomHelpers
   ) where
 
 import GHC.TypeLits ( Symbol )
@@ -30,11 +31,13 @@ import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
 import System.IO.Unsafe ( unsafePerformIO )
+import qualified System.Random.MWC as R
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Data.EnumF ( EnumF(..) )
 import Data.ShowF ( ShowF(..) )
 import Dismantle.Instruction
+import Dismantle.Instruction.Random ( arbitraryOperandList )
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
@@ -274,6 +277,21 @@ mkOpcodeType isa = do
     shapeVarName = mkName "sh"
     tyVars = [PlainTV opVarName, PlainTV shapeVarName]
     cons = map mkOpcodeCon (isaInstructions isa)
+
+genISARandomHelpers :: ISA -> FilePath -> Q [Dec]
+genISARandomHelpers isa path = do
+  desc <- runIO $ loadISA isa path
+  genName <- newName "gen"
+  opcodeName <- newName "opcode"
+  let caseBody = caseE (varE opcodeName) (map (mkOpListCase genName) (isaInstructions desc))
+  let funcName = mkName "mkOperandList"
+  sig <- sigD funcName [t| R.GenIO -> $(conT opcodeTypeName) $(varT (mkName "o")) $(varT (mkName "sh")) -> IO (OperandList $(varT (mkName "o")) $(varT (mkName "sh"))) |]
+  f <- funD funcName [clause [varP genName, varP opcodeName] (normalB caseBody) []]
+  return [sig, f]
+  where
+    mkOpListCase genName i =
+      let conName = mkName (toTypeName (idMnemonic i))
+      in match (conP conName []) (normalB [| arbitraryOperandList $(varE genName) |]) []
 
 mkEnumFInstance :: ISADescriptor -> Q Dec
 mkEnumFInstance desc = do
