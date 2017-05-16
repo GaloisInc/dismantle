@@ -6,7 +6,6 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 module Dismantle.Instruction.Random (
-  ArbitraryF(..),
   Arbitrary(..),
   RandomizableOpcode,
   randomInstruction,
@@ -35,20 +34,19 @@ instance (Arbitrary (f tp), ArbitraryOperandList f tps) => ArbitraryOperandList 
 
 type RandomizableOpcode c o = (E.TestEquality (c o), EnumF (c o))
 
-class ArbitraryF a where
-  withArbitraryF :: R.GenIO -> (forall tp . a tp -> IO b) -> IO b
-
 class Arbitrary a where
   arbitrary :: R.GenIO -> IO a
 
 -- | Generate a random instruction
-randomInstruction :: (ArbitraryF (c o))
-                  => R.GenIO
+randomInstruction :: R.GenIO
+                  -> S.Set (I.SomeOpcode c o)
                   -> (forall sh . R.GenIO -> c o sh -> IO (I.OperandList o sh))
                   -> IO (I.GenericInstruction c o)
-randomInstruction gen mkOps =
-  withArbitraryF gen $ \opcode -> do
-    I.Instruction opcode <$> mkOps gen opcode
+randomInstruction gen pool mkOps = do
+  ix <- R.uniformR (0, S.size pool - 1) gen
+  let sop = S.elemAt ix pool
+  case sop of
+    I.SomeOpcode opcode -> I.Instruction opcode <$> mkOps gen opcode
 
 -- | Given a set of allowed opcodes, select a random one that matches the shape
 -- of the input opcode and return it.
