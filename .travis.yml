@@ -28,4 +28,4 @@ matrix:
     - env: TEST_ARCH=arm
 
 script:
-  - ./scripts/test.sh $TEST_ARCH
+  - travis_wait ./scripts/test.sh $TEST_ARCH
