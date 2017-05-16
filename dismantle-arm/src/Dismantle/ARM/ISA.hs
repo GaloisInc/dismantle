@@ -162,6 +162,14 @@ isa = ISA { isaName = "ARM"
                              , opConE = Just (varE 'ARM.mkMSRMask)
                              , opWordE = Just (varE 'ARM.msrMaskToBits)
                              }
+    soRegImm = OperandPayload { opTypeT = [t| ARM.SoRegImm |]
+                              , opConE = Just (varE 'ARM.mkSoRegImm)
+                              , opWordE = Just (varE 'ARM.soRegImmToBits)
+                              }
+    soRegReg = OperandPayload { opTypeT = [t| ARM.SoRegReg |]
+                              , opConE = Just (varE 'ARM.mkSoRegReg)
+                              , opWordE = Just (varE 'ARM.soRegRegToBits)
+                              }
 
     armOperandPayloadTypes =
         [ ("Addr_offset_none"  , gpRegister)
@@ -224,8 +232,8 @@ isa = ISA { isaName = "ARM"
         -- pseudo-instruction for various other types of operations (see
         -- the ARM ARM A8.8.105 MOV (shifted register)).
         , ("Shift_so_reg_reg"  , word16Operand)
-        , ("So_reg_imm"        , imm12)
-        , ("So_reg_reg"        , imm12)
+        , ("So_reg_imm"        , soRegImm)
+        , ("So_reg_reg"        , soRegReg)
         , ("TcGPR"             , gpRegister)
         , ("Unpredictable"   , word32Operand)
         ]

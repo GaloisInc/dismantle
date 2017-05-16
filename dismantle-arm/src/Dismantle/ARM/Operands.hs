@@ -103,7 +103,15 @@ module Dismantle.ARM.Operands (
 
   MSRMask,
   mkMSRMask,
-  msrMaskToBits
+  msrMaskToBits,
+
+  SoRegImm,
+  mkSoRegImm,
+  soRegImmToBits,
+
+  SoRegReg,
+  mkSoRegReg,
+  soRegRegToBits
   ) where
 
 import Data.Bits
@@ -160,7 +168,7 @@ newtype SBit = SBit { unSBit :: Word8 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty SBit where
-  pPrint (SBit 1) = PP.text "S"
+  pPrint (SBit 1) = PP.text "s"
   pPrint (SBit 0) = PP.text ""
   pPrint (SBit v) = error $ "Invalid SBit value: " <> show v
 
@@ -369,6 +377,25 @@ am3OffsetToBits (AM3Offset imm other) =
     insert am3OffsetOtherField other $
     insert am3OffsetImmField (abs imm) 0
 
+data ShiftType = LSL | LSR | ASR | ROR | RRX
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty ShiftType where
+    pPrint LSL = PP.text "lsl"
+    pPrint LSR = PP.text "lsr"
+    pPrint ASR = PP.text "asr"
+    pPrint ROR = PP.text "ror"
+    pPrint RRX = PP.text "rrx"
+
+decodeShiftType :: (Show a, Num a, Eq a) => a -> ShiftType
+decodeShiftType v =
+    case v of
+        0b00 -> LSL
+        0b01 -> LSR
+        0b10 -> ASR
+        0b11 -> ROR
+        _    -> error $ "Invalid shift type bits: " <> show v
+
 -- | A shift_imm operand with a shift immediate and shift type (l/r).
 -- See also USAT in the ARM ARM and tgen.
 data ShiftImm = ShiftImm { shiftImmImmediate :: Word8
@@ -376,17 +403,24 @@ data ShiftImm = ShiftImm { shiftImmImmediate :: Word8
                          }
   deriving (Eq, Ord, Show)
 
+-- See ARM ARM A8.4.3, "Pseudocode details of instruction-specified
+-- shifts and rotates"
+decodeImmShift :: (Show a, Num a, Eq a, Num b, Eq b) => a -> b -> (ShiftType, b)
+decodeImmShift ty imm =
+    case decodeShiftType ty of
+        LSL -> (LSL, imm)
+        LSR -> (LSR, if imm == 0 then 32 else imm)
+        ASR -> (ASR, if imm == 0 then 32 else imm)
+        ROR ->
+            if imm == 0
+            then (RRX, 1)
+            else (ROR, imm)
+        _   -> error $ "Invalid shift type bits: " <> show ty
+
 instance PP.Pretty ShiftImm where
   pPrint m =
-      let tyStr = if shiftImmType m == 1 then "ASR" else "LSL"
-          -- See the ARM ARM on USAT for information on this
-          -- representation.
-          amtStr = if shiftImmType m == 0
-                   then show $ shiftImmImmediate m
-                   else if shiftImmImmediate m == 0
-                        then "32"
-                        else show $ shiftImmImmediate m
-      in (PP.text tyStr PP.<+> PP.text amtStr)
+      let (ty, amt) = decodeImmShift (shiftImmType m) (shiftImmImmediate m)
+      in (PP.pPrint ty PP.<+> PP.text ("#" <> show amt))
 
 shiftImmImmField :: Field
 shiftImmImmField = Field 5 0
@@ -756,3 +790,70 @@ adrLabelToBits :: AdrLabel -> Word32
 adrLabelToBits (AdrLabel imm) =
     insert addBitsField (if imm < 0 then 0b1 else 0b10) $
     insert adrLabelImmField (abs imm) 0
+
+data SoRegImm = SoRegImm { soRegImmImmediate :: Word8
+                         , soRegImmReg       :: GPR
+                         , soRegImmShiftType :: Word8
+                         }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty SoRegImm where
+    pPrint (SoRegImm imm reg ty) =
+        let (t, amt) = decodeImmShift ty imm
+        in PP.pPrint reg <> (PP.text "," PP.<+>
+           (PP.pPrint t PP.<+> PP.text ("#" <> show amt)))
+
+soRegImmImmField :: Field
+soRegImmImmField = Field 5 7
+
+soRegImmRegField :: Field
+soRegImmRegField = Field 4 0
+
+soRegImmShiftTypeField :: Field
+soRegImmShiftTypeField = Field 2 5
+
+mkSoRegImm :: Word32 -> SoRegImm
+mkSoRegImm w = SoRegImm (fromIntegral imm) (GPR $ fromIntegral reg) (fromIntegral ty)
+  where
+    imm = extract soRegImmImmField w
+    ty  = extract soRegImmShiftTypeField w
+    reg = extract soRegImmRegField w
+
+soRegImmToBits :: SoRegImm -> Word32
+soRegImmToBits (SoRegImm imm (GPR reg) ty) =
+    insert soRegImmImmField imm $
+    insert soRegImmShiftTypeField ty $
+    insert soRegImmRegField reg 0
+
+data SoRegReg = SoRegReg { soRegRegReg1      :: GPR
+                         , soRegRegReg2      :: GPR
+                         , soRegRegShiftType :: Word8
+                         }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty SoRegReg where
+    pPrint (SoRegReg reg1 reg2 ty) =
+        let t = decodeShiftType ty
+        in PP.pPrint reg1 <> (PP.text "," PP.<+> PP.pPrint t PP.<+> (PP.pPrint reg2))
+
+soRegRegReg2Field :: Field
+soRegRegReg2Field = Field 4 8
+
+soRegRegReg1Field :: Field
+soRegRegReg1Field = Field 4 0
+
+soRegRegShiftTypeField :: Field
+soRegRegShiftTypeField = Field 2 5
+
+mkSoRegReg :: Word32 -> SoRegReg
+mkSoRegReg w = SoRegReg (GPR $ fromIntegral reg1) (GPR $ fromIntegral reg2) (fromIntegral ty)
+  where
+    ty   = extract soRegRegShiftTypeField w
+    reg1 = extract soRegRegReg1Field w
+    reg2 = extract soRegRegReg2Field w
+
+soRegRegToBits :: SoRegReg -> Word32
+soRegRegToBits (SoRegReg (GPR reg1) (GPR reg2) ty) =
+    insert soRegRegShiftTypeField ty $
+    insert soRegRegReg1Field reg1 $
+    insert soRegRegReg2Field reg2 0
