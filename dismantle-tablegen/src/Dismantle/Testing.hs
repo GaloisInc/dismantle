@@ -1,5 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE OverloadedStrings #-}
 -- | Provide some tools for testing disassemblers
 module Dismantle.Testing (
   ArchTestConfig(..),
@@ -91,10 +92,12 @@ insnTestCase disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unpack txt) $
 
 -- | Normalize the textual representation of instructions so that we can compare
 -- objdump output against pretty printer output.
---
--- Right now, this just removes all of the whitespace.
 normalizeText :: TL.Text -> TL.Text
-normalizeText = TL.filter (not . isSpace)
+normalizeText =
+    -- Then remove whitespace
+    TL.filter (not . isSpace) .
+    -- First, trim any trailing comments
+    (fst . TL.breakOn ";")
 
 -- | Given an architecture-specific configuration and a directory containing
 -- binaries, run @objdump@ on each binary and then try to disassemble and
