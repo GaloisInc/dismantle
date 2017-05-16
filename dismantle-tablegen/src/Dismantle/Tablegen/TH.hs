@@ -43,8 +43,8 @@ import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
-genISA :: ISA -> Name -> FilePath -> DecsQ
-genISA isa isaValName path = do
+genISA :: ISA -> FilePath -> DecsQ
+genISA isa path = do
   desc <- runIO $ loadISA isa path
   case isaErrors desc of
     [] -> return ()
@@ -53,7 +53,7 @@ genISA isa isaValName path = do
   opcodeType <- mkOpcodeType desc
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
-  parserDef <- mkParser isa desc isaValName path
+  parserDef <- mkParser isa desc path
   asmDef <- mkAssembler isa desc
   return $ concat [ operandType
                   , opcodeType
@@ -77,8 +77,8 @@ opcodeTypeName = mkName "Opcode"
 operandTypeName :: Name
 operandTypeName = mkName "Operand"
 
-mkParser :: ISA -> ISADescriptor -> Name -> FilePath -> Q [Dec]
-mkParser isa desc isaValName path = do
+mkParser :: ISA -> ISADescriptor -> FilePath -> Q [Dec]
+mkParser isa desc path = do
   qAddDependentFile path
   -- Build up a table of AST fragments that are parser expressions.
   -- They are associated with the bit masks required to build the
