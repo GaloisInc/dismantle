@@ -272,8 +272,10 @@ data AddrModeImm12 = AddrModeImm12 { addrModeImm12Register  :: GPR
 
 instance PP.Pretty AddrModeImm12 where
   pPrint m =
-      (PP.pPrint (addrModeImm12Register m) <> PP.char ',') PP.<+>
-      (PP.pPrint (addrModeImm12Immediate m))
+      let suf = if addrModeImm12Immediate m == 0
+                then mempty
+                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeImm12Immediate m))
+      in PP.brackets $ PP.pPrint (addrModeImm12Register m) <> suf
 
 addrModeImm12RegField :: Field
 addrModeImm12RegField = Field 4 13
