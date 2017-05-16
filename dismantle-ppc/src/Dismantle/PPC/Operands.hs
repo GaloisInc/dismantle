@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_HADDOCK not-home #-}
@@ -42,6 +43,7 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import qualified Data.Int.Indexed as I
 import Dismantle.Tablegen.TH.Pretty ()
+import qualified Dismantle.Arbitrary as A
 
 -- | Condition register fields
 newtype CR = CR { unCR :: Word8 }
@@ -64,10 +66,16 @@ newtype VR = VR { unVR :: Word8 }
 
 -- | An offset in a branch instruction that is added to the current IP to get
 -- the real destination.
+--
+-- These only actually store 24 bits with (plus two zeros implicitly
+-- concatenated on the right)
 newtype BranchTarget = BT { unCT :: Int32 }
   deriving (Eq, Ord, Show)
 
 -- | An absolute address of a call target (probably only useful in 32 bit applications)
+--
+-- These only actually store 24 bits with (plus two zeros implicitly
+-- concatenated on the right)
 newtype AbsBranchTarget = ABT { unACT :: Word32 }
   deriving (Eq, Ord, Show)
 
@@ -253,3 +261,72 @@ instance PP.Pretty AbsBranchTarget where
 
 instance PP.Pretty BranchTarget where
   pPrint (BT i) = PP.pPrint i
+
+-- | FIXME: Is this right?  It might need to be 0-7... unless it is bit
+-- addressed.
+instance A.Arbitrary CR where
+  arbitrary g = CR <$> A.uniformR (0, 31) g
+
+instance A.Arbitrary CRBitRC where
+  arbitrary g = CRBitRC <$> A.uniformR (0, 31) g
+
+instance A.Arbitrary FR where
+  arbitrary g = FR <$> A.uniformR (0, 31) g
+
+instance A.Arbitrary GPR where
+  arbitrary g = GPR <$> A.uniformR (0, 31) g
+
+instance A.Arbitrary VR where
+  arbitrary g = VR <$> A.uniformR (0, 31) g
+
+instance A.Arbitrary AbsBranchTarget where
+  arbitrary g = ABT <$> A.uniformR (0, maxVal) g
+    where
+      maxVal = (1 `shiftL` 24) - 1
+
+instance A.Arbitrary BranchTarget where
+  arbitrary g = BT <$> A.uniformR (-maxVal, maxVal) g
+    where
+      maxVal = ((1 `shiftL` 24) - 1) `div` 2
+
+instance A.Arbitrary MemRR where
+  arbitrary g = do
+    ano <- A.uniformR (0, 31) g
+    case ano of
+      0 -> MemRR Nothing <$> A.arbitrary g
+      _ -> MemRR (Just (GPR ano)) <$> A.arbitrary g
+
+instance A.Arbitrary MemRI where
+  arbitrary g = do
+    ano <- A.uniformR (0, 31) g
+    case ano of
+      0 -> MemRI Nothing <$> A.arbitrary g
+      _ -> MemRI (Just (GPR ano)) <$> A.arbitrary g
+
+instance A.Arbitrary MemRIX where
+  arbitrary g = do
+    ano <- A.uniformR (0, 31) g
+    case ano of
+      0 -> MemRIX Nothing <$> A.arbitrary g
+      _ -> MemRIX (Just (GPR ano)) <$> A.arbitrary g
+
+instance A.Arbitrary (SPEDis 2) where
+  arbitrary g = do
+    ano <- A.uniformR (0, 31) g
+    case ano of
+      0 -> SPEDis Nothing <$> A.arbitrary g
+      _ -> SPEDis (Just (GPR ano)) <$> A.arbitrary g
+
+instance A.Arbitrary (SPEDis 4) where
+  arbitrary g = do
+    ano <- A.uniformR (0, 31) g
+    case ano of
+      0 -> SPEDis Nothing <$> A.arbitrary g
+      _ -> SPEDis (Just (GPR ano)) <$> A.arbitrary g
+
+instance A.Arbitrary (SPEDis 8) where
+  arbitrary g = do
+    ano <- A.uniformR (0, 31) g
+    case ano of
+      0 -> SPEDis Nothing <$> A.arbitrary g
+      _ -> SPEDis (Just (GPR ano)) <$> A.arbitrary g

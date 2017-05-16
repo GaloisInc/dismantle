@@ -31,11 +31,11 @@ import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
 import System.IO.Unsafe ( unsafePerformIO )
-import qualified System.Random.MWC as R
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Data.EnumF ( EnumF(..) )
 import Data.ShowF ( ShowF(..) )
+import Dismantle.Arbitrary as A
 import Dismantle.Instruction
 import Dismantle.Instruction.Random ( arbitraryOperandList )
 import Dismantle.Tablegen
@@ -285,13 +285,23 @@ genISARandomHelpers isa path = do
   opcodeName <- newName "opcode"
   let caseBody = caseE (varE opcodeName) (map (mkOpListCase genName) (isaInstructions desc))
   let funcName = mkName "mkOperandList"
-  sig <- sigD funcName [t| R.GenIO -> $(conT opcodeTypeName) $(varT (mkName "o")) $(varT (mkName "sh")) -> IO (OperandList $(varT (mkName "o")) $(varT (mkName "sh"))) |]
+  sig <- sigD funcName [t| A.Gen -> $(conT opcodeTypeName) $(varT (mkName "o")) $(varT (mkName "sh")) -> IO (OperandList $(varT (mkName "o")) $(varT (mkName "sh"))) |]
   f <- funD funcName [clause [varP genName, varP opcodeName] (normalB caseBody) []]
-  return [sig, f]
+  arbitraryInstances <- mapM mkArbitraryOperandInstance (isaOperands desc)
+  return (sig : f : arbitraryInstances)
   where
     mkOpListCase genName i =
       let conName = mkName (toTypeName (idMnemonic i))
       in match (conP conName []) (normalB [| arbitraryOperandList $(varE genName) |]) []
+
+    mkArbitraryOperandInstance (OperandType origOperandName) = do
+      let symbol = toTypeName origOperandName
+          name = mkName symbol
+      genName <- newName "gen"
+      let ty = [t| A.Arbitrary ($(conT operandTypeName) $(litT (strTyLit symbol))) |]
+          body = [| $(conE name) <$> A.arbitrary $(varE genName) |]
+          fun = funD 'A.arbitrary [clause [varP genName] (normalB body) []]
+      instanceD (return []) ty [fun]
 
 mkEnumFInstance :: ISADescriptor -> Q Dec
 mkEnumFInstance desc = do
