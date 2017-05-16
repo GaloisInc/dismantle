@@ -1,5 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE OverloadedStrings #-}
 -- | Provide some tools for testing disassemblers
 module Dismantle.Testing (
   ArchTestConfig(..),
@@ -86,15 +87,17 @@ insnTestCase disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unpack txt) $
       let roundtripMsg = printf "Roundtrip %s (parsed as %s):\n\tOriginal Bytes:%s\n\tReassembled As:%s" (show txt) (show (pp i)) (binaryRep bytes) (binaryRep (asm i))
       T.assertBool roundtripMsg (bytes == asm i)
       unless (maybe False (txt RE.=~) skipPrettyRE) $ do
-        let prettyMsg = printf "Pretty Printing comparing original '%s' against pretty printed '%s'" (TL.unpack txt) (show (pp i))
+        let prettyMsg = printf "Pretty Printing comparison failed.\n\tExpected: '%s'\n\tActual:   '%s'" (TL.unpack txt) (show (pp i))
         T.assertBool prettyMsg (normalizeText txt == normalizeText (TL.pack (show (pp i))))
 
 -- | Normalize the textual representation of instructions so that we can compare
 -- objdump output against pretty printer output.
---
--- Right now, this just removes all of the whitespace.
 normalizeText :: TL.Text -> TL.Text
-normalizeText = TL.filter (not . isSpace)
+normalizeText =
+    -- Then remove whitespace
+    TL.filter (not . isSpace) .
+    -- First, trim any trailing comments
+    (fst . TL.breakOn ";")
 
 -- | Given an architecture-specific configuration and a directory containing
 -- binaries, run @objdump@ on each binary and then try to disassemble and
