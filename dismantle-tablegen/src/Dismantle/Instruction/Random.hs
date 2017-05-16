@@ -1,13 +1,18 @@
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeOperators #-}
 module Dismantle.Instruction.Random (
   ArbitraryF(..),
   Arbitrary(..),
   RandomizableOpcode,
   randomInstruction,
   randomizeOperand,
-  randomizeOpcode
+  randomizeOpcode,
+  ArbitraryOperandList(..)
   ) where
 
 import qualified Data.Foldable as F
@@ -19,10 +24,19 @@ import qualified System.Random.MWC as R
 import Data.EnumF ( EnumF(..) )
 import qualified Dismantle.Instruction as I
 
+class ArbitraryOperandList f (tps :: [k]) where
+  arbitraryOperandList :: R.GenIO -> IO (I.OperandList f tps)
+
+instance ArbitraryOperandList f '[] where
+  arbitraryOperandList _gen = return I.Nil
+
+instance (Arbitrary (f tp), ArbitraryOperandList f tps) => ArbitraryOperandList f (tp ': tps) where
+  arbitraryOperandList gen = (I.:>) <$> arbitrary gen <*> arbitraryOperandList gen
+
 type RandomizableOpcode c o = (E.TestEquality (c o), EnumF (c o))
 
 class ArbitraryF a where
-  withArbitraryF :: R.GenIO -> (a tp -> IO b) -> IO b
+  withArbitraryF :: R.GenIO -> (forall tp . a tp -> IO b) -> IO b
 
 class Arbitrary a where
   arbitrary :: R.GenIO -> IO a
@@ -30,7 +44,7 @@ class Arbitrary a where
 -- | Generate a random instruction
 randomInstruction :: (ArbitraryF (c o))
                   => R.GenIO
-                  -> (R.GenIO -> c o sh -> IO (I.OperandList o sh))
+                  -> (forall sh . R.GenIO -> c o sh -> IO (I.OperandList o sh))
                   -> IO (I.GenericInstruction c o)
 randomInstruction gen mkOps =
   withArbitraryF gen $ \opcode -> do
@@ -40,6 +54,9 @@ randomInstruction gen mkOps =
 -- of the input opcode and return it.
 --
 -- If there are no opcodes in the set with a matching shape, the opcode itself is returned.
+--
+-- FIXME: Switch to return Nothing if there are no alternate opcodes available?
+-- Using `MaybeT IO` would work with `traverseOpcode`
 replaceOpcode :: (RandomizableOpcode c o) => R.GenIO -> S.Set (I.SomeOpcode c o) -> c o sh -> IO (c o sh)
 replaceOpcode g os o = do
   case Seq.length available of

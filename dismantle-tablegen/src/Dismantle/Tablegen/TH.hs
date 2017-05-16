@@ -22,6 +22,9 @@ import Data.Char ( toUpper )
 import qualified Data.Foldable as F
 import qualified Data.List.Split as L
 import Data.Maybe ( fromMaybe )
+import qualified Data.Map.Strict as M
+import qualified Data.Set as S
+import qualified Data.Type.Equality as E
 import Data.Word ( Word8 )
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
@@ -29,6 +32,8 @@ import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
 import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
+import Data.EnumF ( EnumF(..) )
+import Data.ShowF ( ShowF(..) )
 import Dismantle.Instruction
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
@@ -252,15 +257,78 @@ mkInstructionAliases =
           (ConT ''Annotated `AppT` VarT annotVar `AppT` ConT operandTypeName)
 
 mkOpcodeType :: ISADescriptor -> Q [Dec]
-mkOpcodeType isa =
+mkOpcodeType isa = do
+  enumf <- mkEnumFInstance isa
+  showf <- mkShowFInstance
+  teq <- mkTestEqualityInstance isa
   return [ DataD [] opcodeTypeName tyVars Nothing cons []
          , StandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
+         , StandaloneDerivD [] (ConT ''Eq `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
+         , StandaloneDerivD [] (ConT ''Ord `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
+         , showf
+         , teq
+         , enumf
          ]
   where
     opVarName = mkName "o"
     shapeVarName = mkName "sh"
     tyVars = [PlainTV opVarName, PlainTV shapeVarName]
     cons = map mkOpcodeCon (isaInstructions isa)
+
+mkEnumFInstance :: ISADescriptor -> Q Dec
+mkEnumFInstance desc = do
+  enumfTy <- [t| EnumF ($(conT opcodeTypeName) $(conT operandTypeName)) |]
+  enumfArgName <- newName "o"
+  let enumfCase = caseE (varE enumfArgName) (zipWith mkEnumFMatch [0..] (isaInstructions desc))
+  enumfDec <- funD 'enumF [clause [varP enumfArgName] (normalB enumfCase) []]
+
+  let congruentfCase = caseE (varE enumfArgName) [ mkCongruentFCase elt eltsList
+                                                 | (_shape, elts) <- M.toList congruenceClasses
+                                                 , let eltsList = F.toList elts
+                                                 , elt <- eltsList
+                                                 ]
+  congruentfDec <- funD 'congruentF [clause [varP enumfArgName] (normalB congruentfCase) []]
+  return (InstanceD Nothing [] enumfTy [enumfDec, congruentfDec])
+  where
+    congruenceClasses :: M.Map [OperandType] (S.Set Name)
+    congruenceClasses = F.foldl' classifyInstruction M.empty (isaInstructions desc)
+
+    classifyInstruction m i =
+      let conName = mkName (toTypeName (idMnemonic i))
+      in M.insertWith S.union (instructionShape i) (S.singleton conName) m
+
+    mkEnumFMatch i insn = do
+      let conName = mkName (toTypeName (idMnemonic insn))
+      match (conP conName []) (normalB (litE (integerL i))) []
+
+    mkCongruentFCase eltName eltNames =
+      match (conP eltName []) (normalB [| S.fromList $(listE (map conE eltNames)) |]) []
+
+instructionShape :: InstructionDescriptor -> [OperandType]
+instructionShape i = [ opType op | op <- canonicalOperands i ]
+
+-- | Create a 'E.TestEquality' instance for the opcode type
+mkTestEqualityInstance :: ISADescriptor -> Q Dec
+mkTestEqualityInstance desc = do
+  operandTyVar <- newName "o"
+  testEqTy <- [t| E.TestEquality ($(conT opcodeTypeName) ($(varT operandTyVar))) |]
+  let clauses = map mkTestEqualityCase (isaInstructions desc)
+  let fallthrough = clause [wildP, wildP] (normalB [| Nothing |]) []
+  dec <- funD 'E.testEquality (clauses ++ [fallthrough])
+  return (InstanceD Nothing [] testEqTy [dec])
+  where
+    mkTestEqualityCase i = do
+      let conName = mkName (toTypeName (idMnemonic i))
+      clause [conP conName [], conP conName []] (normalB [| Just E.Refl |]) []
+
+-- | Create an instance of 'ShowF' for the opcode type
+mkShowFInstance :: Q Dec
+mkShowFInstance = do
+  [showf] <- [d|
+             instance ShowF ($(conT opcodeTypeName) $(conT operandTypeName)) where
+               showF = show
+             |]
+  return showf
 
 mkOpcodeCon :: InstructionDescriptor -> Con
 mkOpcodeCon i = GadtC [n] [] ty
