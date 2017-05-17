@@ -311,14 +311,27 @@ addrModeImm12ToBits (AddrModeImm12 (GPR r) imm) =
 -- | An AddrMode3 memory reference for a load or store instruction
 data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
                            , addrMode3Immediate :: Integer
-                           , addrMode3Other     :: Word8
+                           , addrMode3Type      :: Word8
                            }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddrMode3 where
   pPrint m =
-      (PP.pPrint (addrMode3Register m) <> PP.char ',') PP.<+>
-      (PP.pPrint (addrMode3Immediate m))
+      case addrMode3Type m of
+          0 ->
+              -- Interpret the low four bits of the immediate field as a
+              -- register number (see bit 21 of LDRH variants, or bit 13
+              -- of this operand)
+              let r2 = GPR $ 0xf .&. (fromIntegral $ addrMode3Immediate m)
+              in PP.brackets $
+                 PP.pPrint (addrMode3Register m) <> (PP.char ',' PP.<+> PP.pPrint r2)
+          1 ->
+              -- Interpet all bits of the immediate as an immediate
+              let addImm = if addrMode3Immediate m == 0
+                           then id
+                           else (<> (PP.char ',' PP.<+> (PP.char '#' <> (PP.pPrint (addrMode3Immediate m)))))
+              in PP.brackets $ addImm $ PP.pPrint (addrMode3Register m)
+          v -> error $ "Invalid type value for AddrMode3: " <> show v
 
 addrMode3RegField :: Field
 addrMode3RegField = Field 4 9
@@ -326,26 +339,26 @@ addrMode3RegField = Field 4 9
 addrMode3AddField :: Field
 addrMode3AddField = Field 1 8
 
-addrMode3OtherField :: Field
-addrMode3OtherField = Field 1 13
+addrMode3TypeField :: Field
+addrMode3TypeField = Field 1 13
 
 addrMode3ImmField :: Field
 addrMode3ImmField = Field 8 0
 
 mkAddrMode3 :: Word32 -> AddrMode3
-mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (addBitToSign add * fromIntegral imm) (fromIntegral other)
+mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (addBitToSign add * fromIntegral imm) (fromIntegral ty)
   where
     reg = extract addrMode3RegField w
     add = extract addrMode3AddField w
     imm = extract addrMode3ImmField w
-    other = extract addrMode3OtherField w
+    ty  = extract addrMode3TypeField w
 
 addrMode3ToBits :: AddrMode3 -> Word32
 addrMode3ToBits (AddrMode3 (GPR r) imm other) =
     insert addrMode3RegField r $
     insert addrMode3AddField (addBitFromNum imm) $
     insert addrMode3ImmField (abs imm) $
-    insert addrMode3OtherField other 0
+    insert addrMode3TypeField other 0
 
 -- | An am3Offset memory reference for a load or store instruction
 data AM3Offset = AM3Offset { am3OffsetImmediate :: Integer
