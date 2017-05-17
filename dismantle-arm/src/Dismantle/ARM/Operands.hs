@@ -511,9 +511,12 @@ instance PP.Pretty Am2OffsetReg where
           addAmt = if t == RRX && imm == 1
                    then id
                    else (PP.<+> PP.text ("#" <> show imm))
+          maybePrint = if imm == 0
+                       then const mempty
+                       else id
           opStr = if am2OffsetRegAdd m == 1 then mempty else PP.char '-'
-      in (opStr <> PP.pPrint (am2OffsetRegReg m) <> PP.char ',') PP.<+>
-         (addAmt $ PP.pPrint t)
+      in (opStr <> PP.pPrint (am2OffsetRegReg m) <>
+         (maybePrint $ addAmt $ PP.char ',' PP.<+> PP.pPrint t))
 
 am2OffsetRegAddField :: Field
 am2OffsetRegAddField = Field 1 12
@@ -816,8 +819,11 @@ instance PP.Pretty SoRegImm where
             addAmt = if t == RRX && amt == 1
                      then id
                      else (PP.<+> PP.text ("#" <> show amt))
-        in PP.pPrint reg <> (PP.text "," PP.<+>
-           (addAmt $ PP.pPrint t))
+            maybePrint = if imm == 0
+                         then const mempty
+                         else id
+        in PP.pPrint reg <>
+           (maybePrint $ addAmt $ PP.text "," PP.<+> PP.pPrint t)
 
 soRegImmImmField :: Field
 soRegImmImmField = Field 5 7
