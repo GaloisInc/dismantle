@@ -3,6 +3,8 @@ module Main ( main ) where
 import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Text.RE.TDFA as RE
+import Data.Monoid ((<>))
+import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Testing
 
@@ -27,6 +29,51 @@ rx s =
   case RE.compileRegex s of
     Nothing -> error ("Invalid regex: " ++ s)
     Just r -> r
+
+skipPretty :: RE.RE
+skipPretty = rx (L.intercalate "|" rxes)
+  where
+    rxes = others <> (matchInstruction <$> skipped)
+
+    others = [ -- We need to ignore "add" instructions when they mention
+               -- the PC since objdump disassembles those as "add" but
+               -- we disassemble them as the (admittedly nicer) "adr".
+               "add[[:space:]]..,[[:space:]]pc"
+             ]
+
+    skipped = [
+              -- We ignore branching instructions because objdump
+              -- resolves the branch targets and we can't, so we can
+              -- never match objdump's output.
+                "bls"
+              , "bl"
+              , "b"
+
+              -- These get represented as load/store multiple with sp
+              -- mutation; push and pop are not even mentioned in the
+              -- Tgen data.
+              , "push"
+              , "pop"
+
+              -- These are equivalent to MOV but we don't format
+              -- them that way. (See the ARM ARM, A8.8.105 MOV
+              -- (shifted register), table: MOV (shifted register)
+              -- equivalences). These are canonical forms, but they're
+              -- marked as pseudo-instructions in the Tgen and we use
+              -- the MOV representation while objdump uses the ones
+              -- below.
+              , "asrs?"
+              , "lsls?"
+              , "lsrs?"
+              , "rors?"
+              , "rrxs?"
+
+              ]
+
+    matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> "[[:space:]])"
+
+    conditions = "(" <> (concat $ L.intersperse "|"
+                  (PP.render <$> PP.pPrint <$> ARM.mkPred <$> [0..13])) <> ")?"
 
 expectedFailures :: RE.RE
 expectedFailures = rx (L.intercalate "|" rxes)
