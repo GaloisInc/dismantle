@@ -819,7 +819,7 @@ instance PP.Pretty SoRegImm where
             addAmt = if t == RRX && amt == 1
                      then id
                      else (PP.<+> PP.text ("#" <> show amt))
-            maybePrint = if imm == 0
+            maybePrint = if amt == 0
                          then const mempty
                          else id
         in PP.pPrint reg <>
