@@ -81,9 +81,9 @@ module Dismantle.ARM.Operands (
   mkBranchExecuteTarget,
   branchExecuteTargetToBits,
 
-  Imm12,
-  mkImm12,
-  imm12ToBits,
+  ModImm,
+  mkModImm,
+  modImmToBits,
 
   Imm5,
   mkImm5,
@@ -118,6 +118,7 @@ import Data.Bits
 import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.Word ( Word8, Word16, Word32 )
+import Data.Int (Int32)
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
@@ -583,9 +584,11 @@ data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
 
 instance PP.Pretty LdstSoReg where
   pPrint m =
-      (PP.pPrint (ldstSoRegBaseRegister m) <> PP.char ',') PP.<+>
-      ((PP.pPrint (ldstSoRegOffsetRegister m) <> PP.char ',') PP.<+>
-       (PP.pPrint (ldstSoRegImmediate m)))
+      let addImm = if ldstSoRegImmediate m == 0
+                   then id
+                   else (<> (PP.char ',' PP.<+> (PP.pPrint (ldstSoRegImmediate m))))
+      in (PP.pPrint (ldstSoRegBaseRegister m) <> PP.char ',') PP.<+>
+         (addImm (PP.pPrint (ldstSoRegOffsetRegister m)))
 
 ldstSoRegBaseRegField :: Field
 ldstSoRegBaseRegField = Field 4 13
@@ -617,24 +620,34 @@ ldstSoRegToBits (LdstSoReg (GPR baseR) (GPR offsetR) imm) =
     insert ldstSoRegImmField (abs imm) 0
 
 -- | A twelve-bit immediate
-data Imm12 = Imm12 { unImm12 :: Integer
-                   }
+data ModImm = ModImm { modImmRecoveredValue :: Int32
+                     , modImmOrigImmediate  :: Word8
+                     , modImmOrigRotate     :: Word8
+                     }
   deriving (Eq, Ord, Show)
 
-instance PP.Pretty Imm12 where
-  pPrint v = PP.text "#" <> (PP.pPrint $ unImm12 v)
+instance PP.Pretty ModImm where
+  pPrint (ModImm val _ _) = PP.text "#" <> (PP.pPrint val)
 
-imm12Field :: Field
-imm12Field = Field 12 0
+modImmImmField :: Field
+modImmImmField = Field 8 0
 
-mkImm12 :: Word32 -> Imm12
-mkImm12 w = Imm12 $ fromIntegral i
+modImmRotField :: Field
+modImmRotField = Field 4 8
+
+-- See the ARM ARM, A5.2.4, Modified immediate constants in ARM
+-- instructions
+mkModImm :: Word32 -> ModImm
+mkModImm w = ModImm (fromIntegral val) (fromIntegral imm) (fromIntegral rot)
   where
-    i = extract imm12Field w
+    val = fromIntegral (imm `rotateR` ((fromIntegral rot) * 2))
+    imm = extract modImmImmField w
+    rot = extract modImmRotField w
 
-imm12ToBits :: Imm12 -> Word32
-imm12ToBits (Imm12 i) =
-    insert imm12Field (fromIntegral i) 0
+modImmToBits :: ModImm -> Word32
+modImmToBits (ModImm _ imm rot) =
+    insert modImmImmField imm $
+    insert modImmRotField rot 0
 
 -- | A five-bit immediate
 data Imm5 = Imm5 { unImm5 :: Word8

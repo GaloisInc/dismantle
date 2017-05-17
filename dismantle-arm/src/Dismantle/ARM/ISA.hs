@@ -74,10 +74,10 @@ isa = ISA { isaName = "ARM"
                                    , opConE = Just (varE 'ARM.mkAddrModeImm12)
                                    , opWordE = Just (varE 'ARM.addrModeImm12ToBits)
                                    }
-    imm12 = OperandPayload { opTypeT = [t| ARM.Imm12 |]
-                           , opConE = Just (varE 'ARM.mkImm12)
-                           , opWordE = Just (varE 'ARM.imm12ToBits)
-                           }
+    modImm = OperandPayload { opTypeT = [t| ARM.ModImm |]
+                            , opConE = Just (varE 'ARM.mkModImm)
+                            , opWordE = Just (varE 'ARM.modImmToBits)
+                            }
     imm5 = OperandPayload { opTypeT = [t| ARM.Imm5 |]
                           , opConE = Just (varE 'ARM.mkImm5)
                           , opWordE = Just (varE 'ARM.imm5ToBits)
@@ -209,7 +209,7 @@ isa = ISA { isaName = "ARM"
         , ("Instsyncb_opt"     , word8Operand)
         , ("Ldst_so_reg"       , ldstSoRegOperand)
         , ("Memb_opt"          , word8Operand)
-        , ("Mod_imm"           , imm12)
+        , ("Mod_imm"           , modImm)
         , ("Msr_mask"          , msrMask)
         , ("P_imm"             , coprocRegister)
         , ("Pkh_asr_amt"       , word8Operand)
