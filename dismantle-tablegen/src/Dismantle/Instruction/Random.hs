@@ -10,6 +10,7 @@ module Dismantle.Instruction.Random (
   randomInstruction,
   randomizeOperand,
   randomizeOpcode,
+  ArbitraryOperands(..),
   ArbitraryOperandList(..)
   ) where
 
@@ -33,16 +34,21 @@ instance (A.Arbitrary (f tp), ArbitraryOperandList f tps) => ArbitraryOperandLis
 
 type RandomizableOpcode c o = (E.TestEquality (c o), EnumF (c o))
 
+class ArbitraryOperands c o where
+  arbitraryOperands :: A.Gen -> c o sh -> IO (I.OperandList o sh)
+
 -- | Generate a random instruction
-randomInstruction :: A.Gen
+randomInstruction :: (ArbitraryOperands c o)
+                  => A.Gen
                   -> S.Set (I.SomeOpcode c o)
-                  -> (forall sh . A.Gen -> c o sh -> IO (I.OperandList o sh))
-                  -> IO (I.GenericInstruction c o)
-randomInstruction gen pool mkOps = do
-  ix <- A.uniformR (0, S.size pool - 1) gen
-  let sop = S.elemAt ix pool
-  case sop of
-    I.SomeOpcode opcode -> I.Instruction opcode <$> mkOps gen opcode
+                  -> IO (Maybe (I.GenericInstruction c o))
+randomInstruction gen pool
+  | S.null pool = return Nothing
+  | otherwise = do
+     ix <- A.uniformR (0, S.size pool - 1) gen
+     let sop = S.elemAt ix pool
+     case sop of
+       I.SomeOpcode opcode -> Just <$> I.Instruction opcode <$> arbitraryOperands gen opcode
 
 -- | Given a set of allowed opcodes, select a random one that matches the shape
 -- of the input opcode and return it.

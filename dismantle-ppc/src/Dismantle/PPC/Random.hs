@@ -1,10 +1,10 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
-module Dismantle.PPC.Random (
-  mkOperandList
-  ) where
+module Dismantle.PPC.Random () where
 
 import Dismantle.PPC
 import Dismantle.PPC.ISA ( isa )

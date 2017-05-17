@@ -37,7 +37,7 @@ import Data.EnumF ( EnumF(..) )
 import Data.ShowF ( ShowF(..) )
 import Dismantle.Arbitrary as A
 import Dismantle.Instruction
-import Dismantle.Instruction.Random ( arbitraryOperandList )
+import Dismantle.Instruction.Random ( ArbitraryOperands(..), arbitraryOperandList )
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
@@ -284,11 +284,10 @@ genISARandomHelpers isa path = do
   genName <- newName "gen"
   opcodeName <- newName "opcode"
   let caseBody = caseE (varE opcodeName) (map (mkOpListCase genName) (isaInstructions desc))
-  let funcName = mkName "mkOperandList"
-  sig <- sigD funcName [t| A.Gen -> $(conT opcodeTypeName) $(varT (mkName "o")) $(varT (mkName "sh")) -> IO (OperandList $(varT (mkName "o")) $(varT (mkName "sh"))) |]
-  f <- funD funcName [clause [varP genName, varP opcodeName] (normalB caseBody) []]
+  let f = funD 'arbitraryOperands [clause [varP genName, varP opcodeName] (normalB caseBody) []]
+  aoInst <- instanceD (return []) [t| ArbitraryOperands $(conT opcodeTypeName) $(conT operandTypeName) |] [f]
   arbitraryInstances <- mapM mkArbitraryOperandInstance (isaOperands desc)
-  return (sig : f : arbitraryInstances)
+  return (aoInst : arbitraryInstances)
   where
     mkOpListCase genName i =
       let conName = mkName (toTypeName (idMnemonic i))
