@@ -373,7 +373,10 @@ data AM3Offset = AM3Offset { am3OffsetImmediate :: Integer
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AM3Offset where
-  pPrint m = PP.pPrint (am3OffsetImmediate m)
+  pPrint m =
+      let r = GPR $ 0xf .&. (fromIntegral $ abs i)
+          i = am3OffsetImmediate m
+      in (if i < 0 then PP.char '-' else mempty) <> PP.pPrint r
 
 am3OffsetAddField :: Field
 am3OffsetAddField = Field 1 8
