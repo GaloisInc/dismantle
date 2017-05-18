@@ -68,6 +68,9 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "rors?"
               , "rrxs?"
 
+              -- Ignored because the Tgen format string uses "stm" for
+              -- this instruction and objdump uses "stmia".
+              , "stmia"
               ]
 
     matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> "[[:space:]])"
