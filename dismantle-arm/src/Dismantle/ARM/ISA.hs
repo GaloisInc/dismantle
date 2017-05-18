@@ -263,6 +263,7 @@ isa = ISA { isaName = "ARM"
         -- Instructions with more generic alternatives
         , "BX" -- see BX_pred
         , "TSTrr" -- See TSTrsi
+        , "SETPAN"
         ]
 
     ignoredMetadataNames = S.fromList $ Metadata <$>
