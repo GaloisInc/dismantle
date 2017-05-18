@@ -71,6 +71,17 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- Ignored because the Tgen format string uses "stm" for
               -- this instruction and objdump uses "stmia".
               , "stmia"
+
+              -- Ignored because the Tgen format string uses "ldm" for
+              -- this instruction and objdump uses "ldmfd".
+              , "ldmfd"
+
+              -- Ignored because the Tgen format string for these
+              -- reference an implied operand that isn't mentioned
+              -- in the bit patterns, so it's impossible for us to
+              -- pretty-print these.
+              , "ldrdeq"
+              , "strdeq"
               ]
 
     matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> "[[:space:]])"
