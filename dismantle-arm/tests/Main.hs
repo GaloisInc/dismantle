@@ -82,6 +82,12 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- pretty-print these.
               , "ldrdeq"
               , "strdeq"
+
+              -- Ignored because we don't have enough context to format
+              -- the arguments correctly.
+              , "stcl"
+              , "ldrsht"
+              , "ldcl"
               ]
 
     matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> "[[:space:]])"
