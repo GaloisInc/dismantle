@@ -643,7 +643,30 @@ data ModImm = ModImm { modImmRecoveredValue :: Int32
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty ModImm where
-  pPrint (ModImm val _ _) = PP.text "#" <> (PP.pPrint val)
+  pPrint (ModImm val imm rot) =
+      -- See objump, opcodes/arm-dis.c, print_insn_arm, case 'o'.
+      let imm32 :: Word32
+          imm32 = fromIntegral imm
+
+          rotate = 2 * fromIntegral rot
+
+          a = (((imm32 `shiftL` (32 - rotate))
+              .|. (imm32 `shiftR` rotate)) .&. 0xffffffff)
+
+          -- If there is another encoding with a smaller rotate, the
+          -- rotate should be specified directly.
+          smallerRotates = filter isSmallerRotate [0,2..30]
+
+          isSmallerRotate i =
+                ((a `shiftL` i) .|. (a `shiftR` (32 - i))) <= 0xff
+
+          smallestRotate = case smallerRotates of
+              (e:_) -> e
+              _     -> rotate
+
+      in if smallestRotate /= rotate
+         then PP.text "#" <> (PP.pPrint imm) <> (PP.text "," PP.<+> PP.pPrint rotate)
+         else PP.text "#" <> (PP.pPrint val)
 
 modImmImmField :: Field
 modImmImmField = Field 8 0
