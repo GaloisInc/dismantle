@@ -33,7 +33,7 @@ arm = ATC { archName = "arm"
           , assemble = ARM.assembleInstruction
           , prettyPrint = ARM.ppInstruction
           , expectFailure = Just expectedFailures
-          , skipPrettyCheck = Just (rx ".*")
+          , skipPrettyCheck = Just skipPretty
           , ignoreAddresses = ignored
           , normalizePretty = normalize
           }
