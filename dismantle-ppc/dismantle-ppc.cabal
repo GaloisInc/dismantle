@@ -35,4 +35,5 @@ test-suite dismantle-ppc-tests
                  dismantle-tablegen,
                  dismantle-ppc,
                  tasty,
-                 regex >= 1 && < 2
+                 regex >= 1 && < 2,
+                 text

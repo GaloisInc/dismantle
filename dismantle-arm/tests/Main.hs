@@ -1,7 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main ( main ) where
 
+import Data.Char (isSpace)
 import qualified Data.List as L
 import qualified Test.Tasty as T
+import qualified Data.Text.Lazy as TL
 import qualified Text.RE.TDFA as RE
 import Data.Monoid ((<>))
 import qualified Text.PrettyPrint.HughesPJClass as PP
@@ -32,12 +35,22 @@ arm = ATC { archName = "arm"
           , expectFailure = Just expectedFailures
           , skipPrettyCheck = Just (rx ".*")
           , ignoreAddresses = ignored
+          , normalizePretty = normalize
           }
 
 main :: IO ()
 main = do
   tg <- binaryTestSuite arm "tests/bin"
   T.defaultMain tg
+
+normalize :: TL.Text -> TL.Text
+normalize =
+    -- Then remove whitespace
+    TL.filter (not . isSpace) .
+    -- Remove square brackets and "#"
+    TL.filter (flip notElem ("[]#"::String)) .
+    -- First, trim any trailing comments
+    (fst . TL.breakOn ";")
 
 rx :: String -> RE.RE
 rx s =

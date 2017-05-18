@@ -11,7 +11,7 @@ module Dismantle.Testing (
   ) where
 
 import Control.Monad ( unless )
-import Data.Char ( intToDigit, isSpace )
+import Data.Char ( intToDigit )
 import Data.Maybe ( catMaybes )
 import Data.Word ( Word8, Word64 )
 import qualified Data.ByteString.Lazy as LBS
@@ -62,6 +62,12 @@ data ArchTestConfig = forall i .
       -- is typically used when we know that some locations contain data
       -- bytes and we don't want to test instruction parses of those
       -- bytes.
+      , normalizePretty :: TL.Text -> TL.Text
+      -- ^ A function to normalize a pretty-printed instruction to a
+      -- form suitable for comparison. This typically needs to remove
+      -- whitespace and special characters whose presence confounds
+      -- pretty-print comparisons but is otherwise unimportant for
+      -- comparison purposes.
       }
 
 addressIsIgnored :: ArchTestConfig -> FilePath -> Word64 -> Bool
@@ -91,21 +97,23 @@ mkTestCase cfg file addr bytes txt
               , prettyPrint = pp
               , skipPrettyCheck = skipPPRE
               , expectFailure = expectFailureRE
+              , normalizePretty = norm
               } ->
-            let tc = insnTestCase disasm assm pp skipPPRE bytes txt
+            let tc = insnTestCase norm disasm assm pp skipPPRE bytes txt
             in Just $ case maybe False (txt RE.=~) expectFailureRE of
               False -> tc
               True -> T.expectFail tc
     | otherwise = Nothing
 
-insnTestCase :: (LBS.ByteString -> (Int, Maybe i))
+insnTestCase :: (TL.Text -> TL.Text)
+             -> (LBS.ByteString -> (Int, Maybe i))
              -> (i -> LBS.ByteString)
              -> (i -> PP.Doc)
              -> Maybe RE.RE
              -> LBS.ByteString
              -> TL.Text
              -> T.TestTree
-insnTestCase disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unpack txt) $ do
+insnTestCase normalize disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unpack txt) $ do
   let (_consumed, minsn) = disasm bytes
   case minsn of
     Nothing -> T.assertFailure (printf "Failed to disassemble %s (%s)" (binaryRep bytes) (TL.unpack txt))
@@ -114,16 +122,7 @@ insnTestCase disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unpack txt) $
       T.assertBool roundtripMsg (bytes == asm i)
       unless (maybe False (txt RE.=~) skipPrettyRE) $ do
         let prettyMsg = printf "Pretty Printing comparison failed.\n\tExpected: '%s'\n\tActual:   '%s'" (TL.unpack txt) (show (pp i))
-        T.assertBool prettyMsg (normalizeText txt == normalizeText (TL.pack (show (pp i))))
-
--- | Normalize the textual representation of instructions so that we can compare
--- objdump output against pretty printer output.
-normalizeText :: TL.Text -> TL.Text
-normalizeText =
-    -- Then remove whitespace
-    TL.filter (not . isSpace) .
-    -- First, trim any trailing comments
-    (fst . TL.breakOn ";")
+        T.assertBool prettyMsg (normalize txt == normalize (TL.pack (show (pp i))))
 
 -- | Given an architecture-specific configuration and a directory containing
 -- binaries, run @objdump@ on each binary and then try to disassemble and

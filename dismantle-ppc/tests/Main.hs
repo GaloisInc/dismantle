@@ -1,7 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main ( main ) where
 
+import Data.Char (isSpace)
 import qualified Data.List as L
 import qualified Test.Tasty as T
+import qualified Data.Text.Lazy as TL
 import qualified Text.RE.TDFA as RE
 
 import Dismantle.Testing
@@ -16,12 +19,20 @@ ppc = ATC { archName = "ppc"
           , expectFailure = Nothing
           , skipPrettyCheck = Just skipPrettyRE
           , ignoreAddresses = []
+          , normalizePretty = normalize
           }
 
 main :: IO ()
 main = do
   tg <- binaryTestSuite ppc "tests/bin"
   T.defaultMain tg
+
+normalize :: TL.Text -> TL.Text
+normalize =
+    -- Then remove whitespace
+    TL.filter (not . isSpace) .
+    -- First, trim any trailing comments
+    (fst . TL.breakOn ";")
 
 -- | A regular expression matching any instruction that we shouldn't test for
 -- pretty printing accuracy.
