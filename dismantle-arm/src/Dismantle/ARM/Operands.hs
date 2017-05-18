@@ -45,6 +45,10 @@ module Dismantle.ARM.Operands (
   mkRegWithAdd,
   regWithAddToBits,
 
+  SvcOperand,
+  mkSvcOperand,
+  svcOperandToBits,
+
   AddrMode3,
   mkAddrMode3,
   addrMode3ToBits,
@@ -119,6 +123,8 @@ import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.Word ( Word8, Word16, Word32 )
 import Data.Int (Int32)
+
+import Numeric (showHex)
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
@@ -456,6 +462,21 @@ shiftImmToBits :: ShiftImm -> Word32
 shiftImmToBits (ShiftImm imm ty) =
     insert shiftImmTypeField ty $
     insert shiftImmImmField imm 0
+
+data SvcOperand = SvcOperand Word32
+                deriving (Eq, Ord, Show)
+
+instance PP.Pretty SvcOperand where
+    pPrint (SvcOperand v) =
+        let s = showHex v ""
+            padding = replicate (8 - length s) '0'
+        in PP.text $ if v < 0 then "-" else "" <> "0x" <> padding <> s
+
+mkSvcOperand :: Word32 -> SvcOperand
+mkSvcOperand = SvcOperand . fromIntegral
+
+svcOperandToBits :: SvcOperand -> Word32
+svcOperandToBits (SvcOperand v) = v
 
 data RegWithAdd = RegWithAdd { regWithAddReg :: GPR
                              , regWithAddAdd :: Word8

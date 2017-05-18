@@ -170,6 +170,10 @@ isa = ISA { isaName = "ARM"
                               , opConE = Just (varE 'ARM.mkSoRegReg)
                               , opWordE = Just (varE 'ARM.soRegRegToBits)
                               }
+    svcOperand = OperandPayload { opTypeT = [t| ARM.SvcOperand |]
+                                , opConE = Just (varE 'ARM.mkSvcOperand)
+                                , opWordE = Just (varE 'ARM.svcOperandToBits)
+                                }
 
     armOperandPayloadTypes =
         [ ("Addr_offset_none"  , gpRegister)
@@ -204,7 +208,7 @@ isa = ISA { isaName = "ARM"
         , ("Imm0_65535_expr"   , word16Operand)
         , ("Imm1_16"           , word8Operand)
         , ("Imm1_32"           , imm5)
-        , ("Imm24b"            , word24Operand)
+        , ("Imm24b"            , svcOperand)
         , ("Imod_op"           , word8Operand)
         , ("Instsyncb_opt"     , word8Operand)
         , ("Ldst_so_reg"       , ldstSoRegOperand)
