@@ -15,6 +15,7 @@ ppc = ATC { archName = "ppc"
           , prettyPrint = PPC.ppInstruction
           , expectFailure = Nothing
           , skipPrettyCheck = Just skipPrettyRE
+          , ignoreAddresses = []
           }
 
 main :: IO ()

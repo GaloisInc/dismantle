@@ -5,10 +5,24 @@ import qualified Test.Tasty as T
 import qualified Text.RE.TDFA as RE
 import Data.Monoid ((<>))
 import qualified Text.PrettyPrint.HughesPJClass as PP
+import Data.Word (Word64)
 
 import Dismantle.Testing
 
 import qualified Dismantle.ARM as ARM
+
+ignored :: [(FilePath, [Word64])]
+ignored =
+    [ ("tests/bin/ls"
+      , [ 0x1e198
+        -- This address is ignored because objdump considers this byte
+        -- sequence to be a 'tst' instruction, but that is incorrect.
+        -- The ARM ARM specifies this as an MRS instruction. We parse it
+        -- correctly.
+        -- 1e198:       01010101        tsteq   r1, r1, lsl #2
+        ]
+      )
+    ]
 
 arm :: ArchTestConfig
 arm = ATC { archName = "arm"
@@ -17,6 +31,7 @@ arm = ATC { archName = "arm"
           , prettyPrint = ARM.ppInstruction
           , expectFailure = Just expectedFailures
           , skipPrettyCheck = Just (rx ".*")
+          , ignoreAddresses = ignored
           }
 
 main :: IO ()

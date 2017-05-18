@@ -12,6 +12,7 @@ module Dismantle.Testing (
 
 import Control.Monad ( unless )
 import Data.Char ( intToDigit, isSpace )
+import Data.Maybe ( catMaybes )
 import Data.Word ( Word8, Word64 )
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List as L
@@ -56,21 +57,46 @@ data ArchTestConfig = forall i .
       -- printer is not compared against the original text provided by objdump.
       , archName :: String
       -- ^ A name for the ISA to appear in test output
+      , ignoreAddresses :: [(FilePath, [Word64])]
+      -- ^ A list of files and addresses in those files to ignore. This
+      -- is typically used when we know that some locations contain data
+      -- bytes and we don't want to test instruction parses of those
+      -- bytes.
       }
 
-mkTestCase :: ArchTestConfig -> Word64 -> LBS.ByteString -> TL.Text -> T.TestTree
-mkTestCase cfg _addr bytes txt =
-  case cfg of
-    ATC { disassemble = disasm
-        , assemble = assm
-        , prettyPrint = pp
-        , skipPrettyCheck = skipPPRE
-        , expectFailure = expectFailureRE
-        } ->
-      let tc = insnTestCase disasm assm pp skipPPRE bytes txt
-      in case maybe False (txt RE.=~) expectFailureRE of
-        False -> tc
-        True -> T.expectFail tc
+addressIsIgnored :: ArchTestConfig -> FilePath -> Word64 -> Bool
+addressIsIgnored atc file addr =
+    case lookup file (ignoreAddresses atc) of
+        Nothing -> False
+        Just addrs -> addr `elem` addrs
+
+-- | Build a test case for parsing and pretty printing for the specified
+-- input. If this test case should be skipped, return Nothing.
+mkTestCase :: ArchTestConfig
+           -- ^ The testing configuration to use.
+           -> FilePath
+           -- ^ The path to the file being read.
+           -> Word64
+           -- ^ The address of the instruction being parsed.
+           -> LBS.ByteString
+           -- ^ The instruction byte sequence.
+           -> TL.Text
+           -- ^ The objdump pretty-print output for this instruction.
+           -> Maybe T.TestTree
+mkTestCase cfg file addr bytes txt
+    | not $ addressIsIgnored cfg file addr =
+        case cfg of
+          ATC { disassemble = disasm
+              , assemble = assm
+              , prettyPrint = pp
+              , skipPrettyCheck = skipPPRE
+              , expectFailure = expectFailureRE
+              } ->
+            let tc = insnTestCase disasm assm pp skipPPRE bytes txt
+            in Just $ case maybe False (txt RE.=~) expectFailureRE of
+              False -> tc
+              True -> T.expectFail tc
+    | otherwise = Nothing
 
 insnTestCase :: (LBS.ByteString -> (Int, Maybe i))
              -> (i -> LBS.ByteString)
@@ -109,8 +135,18 @@ normalizeText =
 binaryTestSuite :: ArchTestConfig -> FilePath -> IO T.TestTree
 binaryTestSuite atc dir = do
   testsByFile <- withInstructions objdumpParser dir (mkTestCase atc)
-  let testCases = map (\(f, tests) -> T.testGroup f tests) testsByFile
-  return (T.testGroup (archName atc) testCases)
+
+  -- Filter out the Nothing test cases for each file, since those were
+  -- ignored by the ArchTestConfig. If no tests remain for a given file
+  -- (admittedly very unlikely), just skip that file when building
+  -- testGroups.
+  let mTestCases = flip map testsByFile $ \(f, mTests) ->
+        let tests = catMaybes mTests
+        in if null tests
+           then Nothing
+           else Just $ T.testGroup f tests
+
+  return (T.testGroup (archName atc) (catMaybes mTestCases))
 
 -- | Convert a directory of executables into a list of data, where
 -- each data item is constructed by a callback called on one
@@ -119,7 +155,7 @@ withInstructions :: Parser Disassembly
                  -- ^ The parser to use to parse the objdump output
                  -> FilePath
                  -- ^ A directory containing executables (that can be objdumped)
-                 -> (Word64 -> LBS.ByteString -> TL.Text -> a)
+                 -> (FilePath -> Word64 -> LBS.ByteString -> TL.Text -> a)
                  -- ^ Turn a disassembled instruction into data
                  -> IO [(FilePath, [a])]
 withInstructions parser dir con = do
@@ -129,7 +165,7 @@ withInstructions parser dir con = do
     disassembleFile f = do
       insns <- withDisassembledFile parser f $ \d -> do
         T.forM (concatMap instructions (sections d)) $ \i ->
-            return (con (insnAddress i) (insnBytes i) (insnText i))
+            return (con f (insnAddress i) (insnBytes i) (insnText i))
       return (f, insns)
 
 withDisassembledFile :: Parser Disassembly -> FilePath -> (Disassembly -> IO a) -> IO a
