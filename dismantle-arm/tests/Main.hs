@@ -75,6 +75,39 @@ ignored =
         , 0x17ca88
         , 0x18cab8
         , 0x18cec8
+
+        -- These addresses are considered 'sbc' instructions by objdump,
+        -- but we disassemble them as 'adrpc' legally.
+        , 0x1b7d8
+        , 0x3c9f0
+        , 0x9a928
+        , 0xb7098
+        , 0xea738
+        , 0x1319e8
+        , 0x14d0f0
+        , 0x181308
+
+        -- These addresses are considered to be 'and' instructions by
+        -- objdump, but we disassemble them as 'adr'. objdump is wrong.
+        , 0x20270
+        , 0x20720
+        , 0x20748
+        , 0x20fa0
+        , 0x9d298
+        , 0x9d2a0
+        , 0x133ea8
+        , 0x133ee8
+
+        -- Objdump claims "strdvc" but the Tgen says otherwise for that
+        -- instruction.
+        , 0x9a930
+        , 0xea740
+        , 0x131778
+        , 0x1812f8
+
+        -- This location is handled properly by our library, but our
+        -- pretty-print for it is nicer than objdump.
+        , 0xb0ec
         ]
       )
     ]

@@ -320,8 +320,9 @@ addrModeImm12ToBits (AddrModeImm12 (GPR r) imm) =
 
 -- | An AddrMode3 memory reference for a load or store instruction
 data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
-                           , addrMode3Immediate :: Integer
+                           , addrMode3Immediate :: Word8
                            , addrMode3Type      :: Word8
+                           , addrMode3Add       :: Word8
                            }
   deriving (Eq, Ord, Show)
 
@@ -333,13 +334,15 @@ instance PP.Pretty AddrMode3 where
               -- register number (see bit 21 of LDRH variants, or bit 13
               -- of this operand)
               let r2 = GPR $ 0xf .&. (fromIntegral $ addrMode3Immediate m)
+                  s = if addrMode3Add m == 0 then "-" else ""
               in PP.brackets $
-                 PP.pPrint (addrMode3Register m) <> (PP.char ',' PP.<+> PP.pPrint r2)
+                 PP.pPrint (addrMode3Register m) <> (PP.char ',' PP.<+> (PP.text s <> PP.pPrint r2))
           1 ->
               -- Interpet all bits of the immediate as an immediate
               let addImm = if addrMode3Immediate m == 0
                            then id
-                           else (<> (PP.char ',' PP.<+> (PP.char '#' <> (PP.pPrint (addrMode3Immediate m)))))
+                           else (<> (PP.char ',' PP.<+> (PP.char '#' <> PP.text s <> (PP.pPrint (addrMode3Immediate m)))))
+                  s = if addrMode3Add m == 0 then "-" else ""
               in PP.brackets $ addImm $ PP.pPrint (addrMode3Register m)
           v -> error $ "Invalid type value for AddrMode3: " <> show v
 
@@ -356,7 +359,7 @@ addrMode3ImmField :: Field
 addrMode3ImmField = Field 8 0
 
 mkAddrMode3 :: Word32 -> AddrMode3
-mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (addBitToSign add * fromIntegral imm) (fromIntegral ty)
+mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (fromIntegral imm) (fromIntegral ty) (fromIntegral add)
   where
     reg = extract addrMode3RegField w
     add = extract addrMode3AddField w
@@ -364,23 +367,24 @@ mkAddrMode3 w = AddrMode3 (GPR $ fromIntegral reg) (addBitToSign add * fromInteg
     ty  = extract addrMode3TypeField w
 
 addrMode3ToBits :: AddrMode3 -> Word32
-addrMode3ToBits (AddrMode3 (GPR r) imm other) =
+addrMode3ToBits (AddrMode3 (GPR r) imm ty add) =
     insert addrMode3RegField r $
-    insert addrMode3AddField (addBitFromNum imm) $
-    insert addrMode3ImmField (abs imm) $
-    insert addrMode3TypeField other 0
+    insert addrMode3AddField add $
+    insert addrMode3ImmField imm $
+    insert addrMode3TypeField ty 0
 
 -- | An am3Offset memory reference for a load or store instruction
-data AM3Offset = AM3Offset { am3OffsetImmediate :: Integer
+data AM3Offset = AM3Offset { am3OffsetImmediate :: Word8
                            , am3OffsetOther     :: Word8
+                           , am3OffsetAdd       :: Word8
                            }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AM3Offset where
   pPrint m =
-      let r = GPR $ 0xf .&. (fromIntegral $ abs i)
+      let r = GPR $ 0xf .&. (fromIntegral i)
           i = am3OffsetImmediate m
-      in (if i < 0 then PP.char '-' else mempty) <> PP.pPrint r
+      in (if am3OffsetAdd m == 0 then PP.char '-' else mempty) <> PP.pPrint r
 
 am3OffsetAddField :: Field
 am3OffsetAddField = Field 1 8
@@ -392,17 +396,17 @@ am3OffsetImmField :: Field
 am3OffsetImmField = Field 8 0
 
 mkAM3Offset :: Word32 -> AM3Offset
-mkAM3Offset w = AM3Offset (addBitToSign add * fromIntegral imm) (fromIntegral other)
+mkAM3Offset w = AM3Offset (fromIntegral imm) (fromIntegral other) (fromIntegral add)
   where
     add = extract am3OffsetAddField w
     imm = extract am3OffsetImmField w
     other = extract am3OffsetOtherField w
 
 am3OffsetToBits :: AM3Offset -> Word32
-am3OffsetToBits (AM3Offset imm other) =
-    insert am3OffsetAddField (addBitFromNum imm) $
+am3OffsetToBits (AM3Offset imm other add) =
+    insert am3OffsetAddField add $
     insert am3OffsetOtherField other $
-    insert am3OffsetImmField (abs imm) 0
+    insert am3OffsetImmField imm 0
 
 data ShiftType = LSL | LSR | ASR | ROR | RRX
                deriving (Eq, Ord, Show)
@@ -876,29 +880,30 @@ predToBits :: Pred -> Word32
 predToBits (Pred p) = fromIntegral p
 
 -- | An ADR immediate offset and addition bit
-data AdrLabel = AdrLabel { adrLabelImm :: Integer
+data AdrLabel = AdrLabel { adrLabelImm :: Word16
+                         , adrLabelOther :: Word8
                          }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AdrLabel where
-  pPrint (AdrLabel imm) = PP.pPrint imm
+  pPrint (AdrLabel imm _) = PP.pPrint imm
 
-addBitsField :: Field
-addBitsField = Field 2 12
+otherBitsField :: Field
+otherBitsField = Field 2 12
 
 adrLabelImmField :: Field
 adrLabelImmField = Field 12 0
 
 mkAdrLabel :: Word32 -> AdrLabel
-mkAdrLabel w = AdrLabel ((if addBits == 0b10 then 1 else (-1)) * fromIntegral i)
+mkAdrLabel w = AdrLabel (fromIntegral i) (fromIntegral otherBits)
   where
     i = extract adrLabelImmField w
-    addBits = extract addBitsField w
+    otherBits = extract otherBitsField w
 
 adrLabelToBits :: AdrLabel -> Word32
-adrLabelToBits (AdrLabel imm) =
-    insert addBitsField (if imm < 0 then 0b1 else 0b10) $
-    insert adrLabelImmField (abs imm) 0
+adrLabelToBits (AdrLabel imm other) =
+    insert otherBitsField other $
+    insert adrLabelImmField imm 0
 
 data SoRegImm = SoRegImm { soRegImmImmediate :: Word8
                          , soRegImmReg       :: GPR
