@@ -76,6 +76,12 @@ data OperandList :: (k -> *) -> [k] -> * where
 
 infixr 5 :>
 
+instance (ShowF o) => ShowF (OperandList o) where
+  showF l =
+    case l of
+      Nil -> "Nil"
+      (elt :> rest) -> showF elt ++ " :> " ++ showF rest
+
 instance (E.TestEquality o) => E.TestEquality (OperandList o) where
   testEquality Nil Nil = Just E.Refl
   testEquality (i1 :> rest1) (i2 :> rest2) =
@@ -95,6 +101,14 @@ instance (E.TestEquality (c o), E.TestEquality o) => Eq (GenericInstruction c o)
         case E.testEquality ops1 ops2 of
           Nothing -> False
           Just E.Refl -> True
+
+instance (ShowF (c o), ShowF o) => Show (GenericInstruction c o) where
+  show (Instruction opcode operands) =
+    concat [ "Instruction "
+           , showF opcode
+           , " "
+           , showF operands
+           ]
 
 -- | A type parameterized map
 mapOperandList :: (forall tp . a tp -> b tp) -> OperandList a sh -> OperandList b sh
