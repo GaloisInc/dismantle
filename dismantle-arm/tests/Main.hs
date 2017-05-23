@@ -63,10 +63,12 @@ skipPretty = rx (L.intercalate "|" rxes)
   where
     rxes = others <> (matchInstruction <$> skipped)
 
-    others = [ -- We need to ignore "add" instructions when they mention
-               -- the PC since objdump disassembles those as "add" but
-               -- we disassemble them as the (admittedly nicer) "adr".
+    others = [ -- We need to ignore these instructions when they mention
+               -- the PC since objdump disassembles those as "add" etc.
+               -- but we disassemble them as the (admittedly nicer)
+               -- "adr".
                "add[[:space:]]..,[[:space:]]pc"
+             , "sub[[:space:]]..,[[:space:]]pc"
              ]
 
     skipped = [
@@ -110,12 +112,23 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- pretty-print these.
               , "ldrdeq"
               , "strdeq"
+              , "mcr2"
+              , "mrc2"
+              , "strd"
+              , "strb"
 
               -- Ignored because we don't have enough context to format
               -- the arguments correctly.
               , "stcl"
               , "ldrsht"
               , "ldcl"
+              , "mcr"
+              , "blx"
+              , "cdp"
+              , "stc"
+
+              -- We show nop as "mov r0, r0"
+              , "nop"
               ]
 
     matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> "[[:space:]])"
