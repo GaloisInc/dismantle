@@ -41,6 +41,10 @@ module Dismantle.ARM.Operands (
   mkShiftImm,
   shiftImmToBits,
 
+  Imm8S4,
+  mkImm8s4,
+  imm8s4ToBits,
+
   RegWithAdd,
   mkRegWithAdd,
   regWithAddToBits,
@@ -232,7 +236,7 @@ coprocRegisterToBits :: CoprocRegister -> Word32
 coprocRegisterToBits (CoprocRegister i) = fromIntegral i
 
 instance PP.Pretty CoprocRegister where
-  pPrint (CoprocRegister r) = PP.char 'p' <> PP.pPrint r
+  pPrint (CoprocRegister r) = PP.text "cr" <> PP.pPrint r
 
 -- | Coprocessor operation opcode register by number
 newtype Opcode = Opcode { unOpcode :: Word8 }
@@ -419,6 +423,25 @@ decodeShiftType v =
         0b11 -> ROR
         _    -> error $ "Invalid shift type bits: " <> show v
 
+data Imm8S4 = Imm8S4 { imm8s4Immediate :: Integer
+                     }
+    deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm8S4 where
+    pPrint (Imm8S4 i) = PP.char '#' <> PP.pPrint i
+
+mkImm8s4 :: Word32 -> Imm8S4
+mkImm8s4 w = Imm8S4 imm
+  where
+    add = extract (Field 1 8) w
+    imm8 = extract (Field 8 0) w
+    imm = addBitToSign add * (fromIntegral $ imm8 `shiftL` 2)
+
+imm8s4ToBits :: Imm8S4 -> Word32
+imm8s4ToBits (Imm8S4 imm) =
+    insert (Field 1 8) (addBitFromNum imm) $
+    insert (Field 8 0) (abs imm `shiftR` 2) 0
+
 -- | A shift_imm operand with a shift immediate and shift type (l/r).
 -- See also USAT in the ARM ARM and tgen.
 data ShiftImm = ShiftImm { shiftImmImmediate :: Word8
@@ -585,12 +608,13 @@ am2OffsetRegToBits (Am2OffsetReg imm ty (GPR reg) add) =
 
 -- | An AddrMode5 memory reference
 data AddrMode5 = AddrMode5 { addrMode5Immediate :: Integer
-                           , addrMode5Reg       :: Word8
+                           , addrMode5Reg       :: GPR
                            }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddrMode5 where
-  pPrint m = PP.pPrint (addrMode5Immediate m)
+  pPrint m = PP.brackets $
+      PP.pPrint (addrMode5Reg m) <> (PP.char ',' PP.<+> (PP.char '#' <> PP.pPrint (addrMode5Immediate m)))
 
 addrMode5AddField :: Field
 addrMode5AddField = Field 1 8
@@ -602,16 +626,16 @@ addrMode5ImmField :: Field
 addrMode5ImmField = Field 8 0
 
 mkAddrMode5 :: Word32 -> AddrMode5
-mkAddrMode5 w = AddrMode5 (addBitToSign add * fromIntegral imm) (fromIntegral reg)
+mkAddrMode5 w = AddrMode5 (addBitToSign add * fromIntegral imm) (GPR $ fromIntegral reg)
   where
     add = extract addrMode5AddField w
-    imm = extract addrMode5ImmField w
+    imm = (extract addrMode5ImmField w) `shiftL` 2
     reg = extract addrMode5RegField w
 
 addrMode5ToBits :: AddrMode5 -> Word32
-addrMode5ToBits (AddrMode5 imm reg) =
+addrMode5ToBits (AddrMode5 imm (GPR reg)) =
     insert addrMode5AddField (addBitFromNum imm) $
-    insert addrMode5ImmField (abs imm) $
+    insert addrMode5ImmField ((abs imm) `shiftR` 2) $
     insert addrMode5RegField reg 0
 
 -- | An load/store memory reference for a preload (e.g. PLDW)
@@ -772,18 +796,15 @@ data BranchExecuteTarget = BranchExecuteTarget { unBranchExecuteTarget :: Intege
 instance PP.Pretty BranchExecuteTarget where
     pPrint (BranchExecuteTarget t) = PP.pPrint t
 
-branchExecuteTargetField1 :: Field
-branchExecuteTargetField1 = Field 24 0
-
-branchExecuteTargetField2 :: Field
-branchExecuteTargetField2 = Field 1 24
+branchExecuteTargetField :: Field
+branchExecuteTargetField = Field 25 0
 
 mkBranchExecuteTarget :: Word32 -> BranchExecuteTarget
 mkBranchExecuteTarget w = BranchExecuteTarget $ fromIntegral $ w `shiftL` 1
 
 branchExecuteTargetToBits :: BranchExecuteTarget -> Word32
 branchExecuteTargetToBits (BranchExecuteTarget i) =
-    insert branchExecuteTargetField1 (i `shiftR` 1) 0
+    insert branchExecuteTargetField (((fromIntegral i)::Word32) `shiftR` 1) 0
 
 data MSRMask = MSRMask { msrMaskWriteBit :: Word8
                        , msrMaskImmediate :: Word8

@@ -25,6 +25,58 @@ ignored =
         -- 1e198:       01010101        tsteq   r1, r1, lsl #2
         ]
       )
+    , ("tests/bin/libfftw3.so.3.4.4"
+      , [
+        -- These addresses are ignored because objdump considers them to
+        -- be 'cmn' instructions but that is clearly wrong in the ARM
+        -- ARM.
+          0x9a948
+        , 0xea750
+        , 0x131780
+        , 0x181300
+
+        -- These addresses all use the same non-instruction byte
+        -- sequence: 0x3c182b51. objdump claims this disassembles to
+        -- ldccc, but none of the ARM ARM patterns for LDC match this
+        -- sequence.
+        , 0x36408
+        , 0x372e8
+        , 0x37718
+        , 0x37b48
+        , 0x5a498
+        , 0x5a4e8
+        , 0x5b220
+        , 0x5b698
+        , 0x7b520
+        , 0x7b570
+        , 0x7c298
+        , 0x7c728
+        , 0xb07f0
+        , 0xb0c38
+        , 0xb0cb8
+        , 0xb1978
+        , 0xb19c0
+        , 0xd41d0
+        , 0xd4690
+        , 0xd5820
+        , 0xe6cb8
+        , 0xe7180
+        , 0xe82f8
+        , 0xf5ee0
+        , 0xf6358
+        , 0xf63a0
+        , 0xf6f78
+        , 0xf6fa8
+        , 0x1488d0
+        , 0x148d20
+        , 0x168d40
+        , 0x169df8
+        , 0x17ba78
+        , 0x17ca88
+        , 0x18cab8
+        , 0x18cec8
+        ]
+      )
     ]
 
 arm :: ArchTestConfig
@@ -93,6 +145,7 @@ skipPretty = rx (L.intercalate "|" rxes)
 
               -- Objdump knows about these but Tgen doesn't.
               , "cfldr64"
+              , "cfldr32"
               , "cfstrs"
 
               -- These instructions are ones that the ISA specifically
@@ -117,6 +170,10 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- this instruction and objdump uses "stmia".
               , "stmia"
 
+              -- Ignored because the Tgen pretty-print format string has
+              -- mistakes.
+              , "pkhtb"
+
               -- Ignored because the Tgen format string uses "ldm" for
               -- this instruction and objdump uses "ldmfd".
               , "ldmfd"
@@ -127,6 +184,7 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- pretty-print these.
               , "ldrdeq"
               , "strdeq"
+              , "mrc"
               , "mcr2"
               , "mrc2"
               , "strd"
@@ -142,6 +200,7 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "blx"
               , "cdp"
               , "stc"
+              , "stc2l"
 
               -- We show nop as "mov r0, r0"
               , "nop"
