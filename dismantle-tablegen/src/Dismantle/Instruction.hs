@@ -106,8 +106,9 @@ instance (ShowF (c o), ShowF o) => Show (GenericInstruction c o) where
   show (Instruction opcode operands) =
     concat [ "Instruction "
            , showF opcode
-           , " "
+           , " ("
            , showF operands
+           , ")"
            ]
 
 -- | A type parameterized map
