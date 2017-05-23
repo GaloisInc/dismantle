@@ -63,12 +63,18 @@ skipPretty = rx (L.intercalate "|" rxes)
   where
     rxes = others <> (matchInstruction <$> skipped)
 
-    others = [ -- We need to ignore these instructions when they mention
-               -- the PC since objdump disassembles those as "add" etc.
-               -- but we disassemble them as the (admittedly nicer)
-               -- "adr".
+    others = [
+             -- We need to ignore these instructions when they mention
+             -- the PC since objdump disassembles those as "add" etc.
+             -- but we disassemble them as the (admittedly nicer) "adr".
                "add[[:space:]]..,[[:space:]]pc"
              , "sub[[:space:]]..,[[:space:]]pc"
+
+             -- Any objdump output line with the word "illegal"
+             -- (usually "illegal reg") is definitely a line we should
+             -- ignore. It's probably a data byte sequence being
+             -- parsed as an instruction.
+             , "illegal"
              ]
 
     skipped = [
@@ -84,6 +90,15 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- Tgen data.
               , "push"
               , "pop"
+
+              -- Objdump knows about these but Tgen doesn't.
+              , "cfldr64"
+              , "cfstrs"
+
+              -- These instructions are ones that the ISA specifically
+              -- ignores right now.
+              , "fldmdbx"
+              , "vstr"
 
               -- These are equivalent to MOV but we don't format
               -- them that way. (See the ARM ARM, A8.8.105 MOV
@@ -116,6 +131,7 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "mrc2"
               , "strd"
               , "strb"
+              , "ldrd"
 
               -- Ignored because we don't have enough context to format
               -- the arguments correctly.
