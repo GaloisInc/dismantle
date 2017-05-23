@@ -174,6 +174,10 @@ isa = ISA { isaName = "ARM"
                                 , opConE = Just (varE 'ARM.mkSvcOperand)
                                 , opWordE = Just (varE 'ARM.svcOperandToBits)
                                 }
+    imm8s4 = OperandPayload { opTypeT = [t| ARM.Imm8S4 |]
+                            , opConE = Just (varE 'ARM.mkImm8s4)
+                            , opWordE = Just (varE 'ARM.imm8s4ToBits)
+                            }
 
     armOperandPayloadTypes =
         [ ("Addr_offset_none"  , gpRegister)
@@ -215,15 +219,16 @@ isa = ISA { isaName = "ARM"
         , ("Memb_opt"          , word8Operand)
         , ("Mod_imm"           , modImm)
         , ("Msr_mask"          , msrMask)
-        , ("P_imm"             , coprocRegister)
+        , ("P_imm"             , word8Operand)
         , ("Pkh_asr_amt"       , word8Operand)
         , ("Pkh_lsl_amt"       , word8Operand)
         , ("Postidx_imm8"      , addrMode3Offset)
-        , ("Postidx_imm8s4"    , word8Operand)
+        , ("Postidx_imm8s4"    , imm8s4)
         , ("Postidx_reg"       , regWithAdd)
         , ("Pred"              , predOperand)
         , ("Qpr"               , qpRegister)
         , ("Qqpr"              , qqpRegister)
+        , ("GPRwithAPSR"       , gpRegister)
         , ("Reglist"           , reglistOperand)
         , ("Rot_imm"           , word8Operand)
         , ("Setend_op"         , bit)
@@ -284,8 +289,6 @@ isa = ISA { isaName = "ARM"
         , ("DB_UPD",         FormOverride [("wb", Ignore)])
         , ("IA_UPD",         FormOverride [("wb", Ignore)])
         , ("IB_UPD",         FormOverride [("wb", Ignore)])
-        , ("MRC",            FormOverride [("Rt", Ignore)])
-        , ("MRC2",           FormOverride [("Rt", Ignore)])
         , ("N3SHA3Op",       FormOverride [("src", Ignore)])
         , ("SMLAL",          FormOverride [("RLo", Ignore), ("RHi", Ignore)])
         , ("MOVTi16",        FormOverride [("src", Ignore)])
