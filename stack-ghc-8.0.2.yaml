@@ -6,7 +6,26 @@ packages:
 - dismantle-tablegen/
 - dismantle-ppc/
 - dismantle-arm/
+- deps/parameterized-utils
 extra-deps:
+- hashtables-1.2.1.1
+- lens-4.15.3
+- th-abstraction-0.2.3.0
+- Cabal-1.24.2.0
+- base-orphans-0.6
+- bifunctors-5.4.2
+- cabal-doctest-1.0.2
+- comonad-5.0.1
+- contravariant-1.4
+- distributive-0.5.2
+- free-4.12.4
+- kan-extensions-5.0.2
+- parallel-3.2.1.1
+- profunctors-5.2
+- reflection-2.1.2
+- semigroupoids-5.2
+- semigroups-0.18.3
+- void-0.7.2
 - QuickCheck-2.9.2
 - ansi-terminal-0.6.2.3
 - ansi-wl-pprint-0.6.7.3
