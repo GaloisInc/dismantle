@@ -4,6 +4,13 @@ cache:
   directories:
     - $HOME/.stack
 
+# Handle submodules manually, since we have to clone from https urls instead of git urls
+git:
+    submodules: false
+# Use sed to replace the SSH URL with the public URL, then initialize submodules
+before_install:
+    - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+    - git submodule update --init
 
 before_install:
 # Download and unpack the stack executable
