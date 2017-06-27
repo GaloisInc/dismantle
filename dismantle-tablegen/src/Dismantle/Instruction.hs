@@ -26,7 +26,7 @@ import qualified Data.Type.Equality as E
 import Data.Typeable ( Typeable )
 
 import Data.EnumF ( EnumF(..) )
-import Data.ShowF ( ShowF(..) )
+import Data.Parameterized.Classes ( ShowF(..) )
 
 -- | A wrapper to allow operands to be easily annotated with arbitrary
 -- data (of kind '*' for now).

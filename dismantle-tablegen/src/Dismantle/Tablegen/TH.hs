@@ -34,7 +34,7 @@ import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Data.EnumF ( EnumF(..) )
-import Data.ShowF ( ShowF(..) )
+import Data.Parameterized.Classes ( ShowF(..) )
 import Dismantle.Arbitrary as A
 import Dismantle.Instruction
 import Dismantle.Instruction.Random ( ArbitraryOperands(..), arbitraryOperandList )
