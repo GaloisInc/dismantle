@@ -63,6 +63,15 @@ Dumping Splices
   The ``-ddump-splices`` flag tells ghc to dump the code it generates (before type checking) to disk.
   The file will have the extension ``.dump-splices``.
   It can be hard to read, but it is much better than guessing.
+  
+  For example, if using Stack you can generate the splices for PPC using
+  
+      stack clean dismantle-ppc
+      stack build dismantle-ppc --ghc-options=-ddump-splices
+      
+  and then find them with
+  
+      find .stack-work -name '*.dump-splices'
 
 Minimize TH
   TH is really horrible in many ways, so try to implement as much as possible in normal functions
