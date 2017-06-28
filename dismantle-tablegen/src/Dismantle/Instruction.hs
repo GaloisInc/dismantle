@@ -76,11 +76,11 @@ data OperandList :: (k -> *) -> [k] -> * where
 
 infixr 5 :>
 
-instance (ShowF o) => ShowF (OperandList o) where
-  showF l =
-    case l of
-      Nil -> "Nil"
-      (elt :> rest) -> showF elt ++ " :> " ++ showF rest
+instance (ShowF o) => Show (OperandList o sh) where
+  show Nil = "Nil"
+  show (elt :> rest) = showF elt ++ " :> " ++ show rest
+
+instance (ShowF o) => ShowF (OperandList o)
 
 instance (E.TestEquality o) => E.TestEquality (OperandList o) where
   testEquality Nil Nil = Just E.Refl
