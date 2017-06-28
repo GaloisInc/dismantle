@@ -32,6 +32,8 @@ instance ArbitraryOperandList f '[] where
 instance (A.Arbitrary (f tp), ArbitraryOperandList f tps) => ArbitraryOperandList f (tp ': tps) where
   arbitraryOperandList gen = (I.:>) <$> A.arbitrary gen <*> arbitraryOperandList gen
 
+-- | The @c@ here is the opcode type or tag type, called @t@ in
+-- 'Dismantle.Instruction'.
 type RandomizableOpcode c o = (E.TestEquality (c o), EnumF (c o))
 
 class ArbitraryOperands c o where
@@ -45,8 +47,7 @@ randomInstruction :: (ArbitraryOperands c o)
 randomInstruction gen pool
   | S.null pool = return Nothing
   | otherwise = do
-     ix <- A.uniformR (0, S.size pool - 1) gen
-     let sop = S.elemAt ix pool
+     sop <- A.choose gen pool
      case sop of
        I.SomeOpcode opcode -> Just <$> I.Instruction opcode <$> arbitraryOperands gen opcode
 

@@ -5,6 +5,8 @@
 module Dismantle.Arbitrary (
   Gen,
   Arbitrary(..),
+  choose,
+  uniform,
   uniformR,
   withGen,
   createGen
@@ -14,6 +16,7 @@ import GHC.TypeLits
 import Data.Bits
 import Data.Int ( Int16 )
 import Data.Proxy ( Proxy(..) )
+import qualified Data.Set as S
 import Data.Word ( Word16 )
 
 import qualified Data.Int.Indexed as I
@@ -28,8 +31,19 @@ newtype Gen = Gen R.GenIO
 class Arbitrary a where
   arbitrary :: Gen -> IO a
 
+-- | Choose uniformly from a range, /inclusive/ of endpoints.
 uniformR :: (R.Variate a) => (a, a) -> Gen -> IO a
 uniformR r (Gen g) = R.uniformR r g
+
+-- | Choose uniformly from a all elements of a type.
+uniform :: (R.Variate a) => Gen -> IO a
+uniform (Gen g) = R.uniform g
+
+-- | Choose uniformly from a set.
+choose :: Gen -> S.Set a -> IO a
+choose gen pool = do
+  ix <- uniformR (0, S.size pool - 1) gen
+  return $ S.elemAt ix pool
 
 instance forall n . (KnownNat n) => Arbitrary (W.W n) where
   arbitrary (Gen g) = W.W <$> R.uniformR (0, (1 `shiftL` nBits) - 1) g
