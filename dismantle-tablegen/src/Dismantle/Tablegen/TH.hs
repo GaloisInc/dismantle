@@ -33,8 +33,8 @@ import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
 import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
-import Data.EnumF ( EnumF(..) )
-import Data.Parameterized.Classes ( ShowF(..) )
+import Data.EnumF ( EnumF(..), enumCompareF )
+import Data.Parameterized.Classes ( OrdF(..), ShowF(..) )
 import Dismantle.Arbitrary as A
 import Dismantle.Instruction
 import Dismantle.Instruction.Random ( ArbitraryOperands(..), arbitraryOperandList )
@@ -263,12 +263,14 @@ mkOpcodeType :: ISADescriptor -> Q [Dec]
 mkOpcodeType isa = do
   enumf <- mkEnumFInstance isa
   showf <- mkShowFInstance
+  ordf <- mkOrdFInstance
   teq <- mkTestEqualityInstance isa
   return [ DataD [] opcodeTypeName tyVars Nothing cons []
          , StandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
          , StandaloneDerivD [] (ConT ''Eq `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
          , StandaloneDerivD [] (ConT ''Ord `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
          , showf
+         , ordf
          , teq
          , enumf
          ]
@@ -347,6 +349,14 @@ mkTestEqualityInstance desc = do
     mkTestEqualityCase i = do
       let conName = mkName (toTypeName (idMnemonic i))
       clause [conP conName [], conP conName []] (normalB [| Just E.Refl |]) []
+
+mkOrdFInstance :: Q Dec
+mkOrdFInstance = do
+  [ordf] <- [d|
+            instance OrdF ($(conT opcodeTypeName) $(conT operandTypeName)) where
+              compareF = enumCompareF
+            |]
+  return ordf
 
 -- | Create an instance of 'ShowF' for the opcode type
 mkShowFInstance :: Q Dec
