@@ -262,7 +262,7 @@ mkInstructionAliases =
 mkOpcodeType :: ISADescriptor -> Q [Dec]
 mkOpcodeType isa = do
   enumf <- mkEnumFInstance isa
-  showf <- mkShowFInstance
+  showf <- mkOpcodeShowFInstance
   ordf <- mkOrdFInstance
   teq <- mkTestEqualityInstance isa
   return [ DataD [] opcodeTypeName tyVars Nothing cons []
@@ -350,6 +350,7 @@ mkTestEqualityInstance desc = do
       let conName = mkName (toTypeName (idMnemonic i))
       clause [conP conName [], conP conName []] (normalB [| Just E.Refl |]) []
 
+-- | Create an instance of 'OrdF' for the opcode type
 mkOrdFInstance :: Q Dec
 mkOrdFInstance = do
   [ordf] <- [d|
@@ -359,8 +360,8 @@ mkOrdFInstance = do
   return ordf
 
 -- | Create an instance of 'ShowF' for the opcode type
-mkShowFInstance :: Q Dec
-mkShowFInstance = do
+mkOpcodeShowFInstance :: Q Dec
+mkOpcodeShowFInstance = do
   [showf] <- [d|
              instance ShowF ($(conT opcodeTypeName) $(conT operandTypeName)) where
                showF = show
@@ -394,8 +395,10 @@ opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
 mkOperandType :: ISA -> ISADescriptor -> Q [Dec]
 mkOperandType isa desc = do
   cons <- mapM (mkOperandCon isa) (isaOperands desc)
+  showf <- mkOperandShowFInstance
   return [ DataD [] operandTypeName [] (Just ksig) cons []
          , StandaloneDerivD [] (ConT ''Show `AppT` (ConT operandTypeName `AppT` VarT (mkName "tp")))
+         , showf
          ]
   where
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
@@ -412,6 +415,15 @@ mkOperandCon isa (OperandType origName) = do
         Just pd -> pd
     n = mkName name
     ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
+
+-- | Create an instance of 'ShowF' for the operand type
+mkOperandShowFInstance :: Q Dec
+mkOperandShowFInstance = do
+  [showf] <- [d|
+             instance ShowF ($(conT operandTypeName)) where
+               showF = show
+             |]
+  return showf
 
 toTypeName :: String -> String
 toTypeName s =
