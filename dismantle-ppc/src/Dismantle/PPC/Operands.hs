@@ -5,8 +5,11 @@
 {-# OPTIONS_HADDOCK not-home #-}
 module Dismantle.PPC.Operands (
   GPR(..),
-  CR(..),
+  CRBitM(..),
+  mkCRBitM,
+  crbitmToBits,
   CRBitRC(..),
+  CRRC(..),
   FR(..),
   VR(..),
   BranchTarget(..),
@@ -45,11 +48,33 @@ import qualified Data.Int.Indexed as I
 import Dismantle.Tablegen.TH.Pretty ()
 import qualified Dismantle.Arbitrary as A
 
--- | Condition register fields
-newtype CR = CR { unCR :: Word8 }
+-- | Condition register field selector, alternate form
+--
+-- This selects one of the eight 4-bit fields in the condition register. The
+-- index is stored here as a normal integer, but is encoded in the instruction
+-- as the 8-bit value @0x80 >> idx@, such that exactly the (8 - idx)th bit is
+-- set.
+newtype CRBitM = CRBitM { unCRBitM :: Word8 }
   deriving (Eq, Ord, Show)
 
+mkCRBitM :: Word32 -> CRBitM
+mkCRBitM = CRBitM . fromIntegral . (7 -) . countTrailingZeros
+
+crbitmToBits :: CRBitM -> Word32
+crbitmToBits = shiftR 0x80 . fromIntegral . unCRBitM
+
+-- | Condition register bit selector
+--
+-- This selects a single bit from the 32-bit condition register. It is stored as
+-- a normal 5-bit integer.
 newtype CRBitRC = CRBitRC { unCRBitRC :: Word8 }
+  deriving (Eq, Ord, Show)
+
+-- | Condition register field selector, primary form
+--
+-- This selects one of the eight 4-bit fields in the condition register. The
+-- index is stored as a normal 3-bit integer.
+newtype CRRC = CRRC { unCRRC :: Word8 }
   deriving (Eq, Ord, Show)
 
 -- | Floating-point register by number
@@ -212,8 +237,8 @@ truncBits nBits w = onesMask nBits .&. fromIntegral w
 instance PP.Pretty GPR where
   pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
 
-instance PP.Pretty CR where
-  pPrint (CR rno) = PP.char 'c' <> PP.char 'r' <> PP.int (fromIntegral rno)
+instance PP.Pretty CRBitM where
+  pPrint (CRBitM rno) = PP.char 'c' <> PP.char 'r' <> PP.int (fromIntegral rno)
 
 instance PP.Pretty CRBitRC where
   pPrint (CRBitRC n) =
@@ -225,6 +250,9 @@ instance PP.Pretty CRBitRC where
           3 -> "so"
           _ -> error ("Invalid CRBitRC kind: " ++ show kno)
     in PP.text "4*cr" <> PP.int crno <> PP.char '+' <> PP.text kstr
+
+instance PP.Pretty CRRC where
+  pPrint (CRRC rno) = PP.char 'c' <> PP.char 'r' <> PP.int (fromIntegral rno)
 
 instance PP.Pretty FR where
   pPrint (FR rno) = PP.char 'f' <> PP.int (fromIntegral rno)
@@ -262,13 +290,14 @@ instance PP.Pretty AbsBranchTarget where
 instance PP.Pretty BranchTarget where
   pPrint (BT i) = PP.pPrint i
 
--- | FIXME: Is this right?  It might need to be 0-7... unless it is bit
--- addressed.
-instance A.Arbitrary CR where
-  arbitrary g = CR <$> A.uniformR (0, 31) g
+instance A.Arbitrary CRBitM where
+  arbitrary g = CRBitM <$> A.uniformR (0, 7) g
 
 instance A.Arbitrary CRBitRC where
   arbitrary g = CRBitRC <$> A.uniformR (0, 31) g
+
+instance A.Arbitrary CRRC where
+  arbitrary g = CRRC <$> A.uniformR (0, 7) g
 
 instance A.Arbitrary FR where
   arbitrary g = FR <$> A.uniformR (0, 31) g
