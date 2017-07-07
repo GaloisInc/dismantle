@@ -48,7 +48,12 @@ import qualified Data.Int.Indexed as I
 import Dismantle.Tablegen.TH.Pretty ()
 import qualified Dismantle.Arbitrary as A
 
--- | Condition register fields
+-- | Condition register field selector, alternate form
+--
+-- This selects one of the eight 4-bit fields in the condition register. The
+-- index is stored here as a normal integer, but is encoded in the instruction
+-- as the 8-bit value @0x80 >> idx@, such that exactly the (8 - idx)th bit is
+-- set.
 newtype CRBitM = CRBitM { unCRBitM :: Word8 }
   deriving (Eq, Ord, Show)
 
@@ -58,9 +63,17 @@ mkCRBitM = CRBitM . fromIntegral . (7 -) . countTrailingZeros
 crbitmToBits :: CRBitM -> Word32
 crbitmToBits = shiftR 0x80 . fromIntegral . unCRBitM
 
+-- | Condition register bit selector
+--
+-- This selects a single bit from the 32-bit condition register. It is stored as
+-- a normal 5-bit integer.
 newtype CRBitRC = CRBitRC { unCRBitRC :: Word8 }
   deriving (Eq, Ord, Show)
 
+-- | Condition register field selector, primary form
+--
+-- This selects one of the eight 4-bit fields in the condition register. The
+-- index is stored as a normal 3-bit integer.
 newtype CRRC = CRRC { unCRRC :: Word8 }
   deriving (Eq, Ord, Show)
 
