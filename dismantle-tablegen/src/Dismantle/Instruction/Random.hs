@@ -19,6 +19,9 @@ import qualified Data.Sequence as Seq
 import qualified Data.Set as S
 import qualified Data.Type.Equality as E
 
+import Data.Parameterized.Classes ( OrdF(..) )
+import Data.Parameterized.Some ( Some(..) )
+
 import Data.EnumF ( EnumF(..) )
 import qualified Dismantle.Arbitrary as A
 import qualified Dismantle.Instruction as I
@@ -34,7 +37,7 @@ instance (A.Arbitrary (f tp), ArbitraryOperandList f tps) => ArbitraryOperandLis
 
 -- | The @c@ here is the opcode type or tag type, called @t@ in
 -- 'Dismantle.Instruction'.
-type RandomizableOpcode c o = (E.TestEquality (c o), EnumF (c o))
+type RandomizableOpcode c o = (E.TestEquality (c o), EnumF (c o), OrdF (c o))
 
 class ArbitraryOperands c o where
   arbitraryOperands :: A.Gen -> c o sh -> IO (I.OperandList o sh)
@@ -42,14 +45,14 @@ class ArbitraryOperands c o where
 -- | Generate a random instruction
 randomInstruction :: (ArbitraryOperands c o)
                   => A.Gen
-                  -> S.Set (I.SomeOpcode c o)
+                  -> S.Set (Some (c o))
                   -> IO (Maybe (I.GenericInstruction c o))
 randomInstruction gen pool
   | S.null pool = return Nothing
   | otherwise = do
      sop <- A.choose gen pool
      case sop of
-       I.SomeOpcode opcode -> Just <$> I.Instruction opcode <$> arbitraryOperands gen opcode
+       Some opcode -> Just <$> I.Instruction opcode <$> arbitraryOperands gen opcode
 
 -- | Given a set of allowed opcodes, select a random one that matches the shape
 -- of the input opcode and return it.
@@ -58,7 +61,7 @@ randomInstruction gen pool
 --
 -- FIXME: Switch to return Nothing if there are no alternate opcodes available?
 -- Using `MaybeT IO` would work with `traverseOpcode`
-replaceOpcode :: (RandomizableOpcode c o) => A.Gen -> S.Set (I.SomeOpcode c o) -> c o sh -> IO (c o sh)
+replaceOpcode :: (RandomizableOpcode c o) => A.Gen -> S.Set (Some (c o)) -> c o sh -> IO (c o sh)
 replaceOpcode g os o = do
   case Seq.length available of
     0 -> return o
@@ -71,15 +74,15 @@ replaceOpcode g os o = do
 
 -- | Collect compatible opcodes that appear in the given set into a list with
 -- the shape recovered
-checkCompatibleOpcode :: (RandomizableOpcode c o) => S.Set (I.SomeOpcode c o) -> Seq.Seq (c o sh) -> c o sh -> Seq.Seq (c o sh)
+checkCompatibleOpcode :: (RandomizableOpcode c o) => S.Set (Some (c o)) -> Seq.Seq (c o sh) -> c o sh -> Seq.Seq (c o sh)
 checkCompatibleOpcode s acc o =
-  case S.member (I.SomeOpcode o) s of
+  case S.member (Some o) s of
     True -> acc Seq.|> o
     False -> acc
 
 randomizeOpcode :: (RandomizableOpcode c o)
                 => A.Gen
-                -> S.Set (I.SomeOpcode c o)
+                -> S.Set (Some (c o))
                 -> I.GenericInstruction c o
                 -> IO (I.GenericInstruction c o)
 randomizeOpcode gen os = I.traverseOpcode (replaceOpcode gen os)

@@ -12,7 +12,6 @@ module Dismantle.Instruction (
   GenericInstruction(..),
   Annotated(..),
   OpcodeConstraints,
-  SomeOpcode(..),
   mapOpcode,
   traverseOpcode,
   operandListLength,
@@ -175,20 +174,3 @@ type OpcodeConstraints c o = (E.TestEquality (c o),
                               Typeable c,
                               Typeable o)
 
--- | A wrapper around an opcode tag that hides the shape parameter.
---
--- This allows opcodes to be stored heterogeneously in data structures.  Pattern
--- matching on them and using 'E.testEquality' allows the shape to be recovered.
-data SomeOpcode (c :: (k -> *) -> [k] -> *) (o :: k -> *) = forall (sh :: [k]) . SomeOpcode (c o sh)
-
-instance (ShowF (c o)) => Show (SomeOpcode c o) where
-  show (SomeOpcode o) = showF o
-
-instance (E.TestEquality (c o)) => Eq (SomeOpcode c o) where
-  SomeOpcode o1 == SomeOpcode o2 =
-    case E.testEquality o1 o2 of
-      Just E.Refl -> True
-      Nothing -> False
-
-instance (E.TestEquality (c o), EnumF (c o)) => Ord (SomeOpcode c o) where
-  SomeOpcode o1 `compare` SomeOpcode o2 = enumF o1 `compare` enumF o2
