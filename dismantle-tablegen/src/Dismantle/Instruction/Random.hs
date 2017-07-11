@@ -23,6 +23,7 @@ import Data.Parameterized.Classes ( OrdF(..) )
 import Data.Parameterized.Some ( Some(..) )
 
 import Data.EnumF ( EnumF(..) )
+import qualified Data.Set.NonEmpty as NES
 import qualified Dismantle.Arbitrary as A
 import qualified Dismantle.Instruction as I
 
@@ -43,16 +44,14 @@ class ArbitraryOperands c o where
   arbitraryOperands :: A.Gen -> c o sh -> IO (I.OperandList o sh)
 
 -- | Generate a random instruction
-randomInstruction :: (ArbitraryOperands c o)
+randomInstruction :: (ArbitraryOperands c o, OrdF (c o))
                   => A.Gen
-                  -> S.Set (Some (c o))
-                  -> IO (Maybe (I.GenericInstruction c o))
-randomInstruction gen pool
-  | S.null pool = return Nothing
-  | otherwise = do
-     sop <- A.choose gen pool
-     case sop of
-       Some opcode -> Just <$> I.Instruction opcode <$> arbitraryOperands gen opcode
+                  -> NES.Set (Some (c o))
+                  -> IO (I.GenericInstruction c o)
+randomInstruction gen pool = do
+  sop <- A.choose gen pool
+  case sop of
+    Some opcode -> I.Instruction opcode <$> arbitraryOperands gen opcode
 
 -- | Given a set of allowed opcodes, select a random one that matches the shape
 -- of the input opcode and return it.

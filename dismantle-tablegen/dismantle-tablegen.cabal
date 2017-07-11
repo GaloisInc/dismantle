@@ -29,6 +29,7 @@ library
                    Dismantle.Testing.Parser
                    Data.EnumF
                    Data.Int.Indexed
+                   Data.Set.NonEmpty
                    Data.Word.Indexed
   build-depends:       base >=4.8 && <4.10,
                        ghc-prim,

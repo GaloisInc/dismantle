@@ -2,6 +2,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ViewPatterns #-}
 module Dismantle.Arbitrary (
   Gen,
   Arbitrary(..),
@@ -20,6 +21,7 @@ import qualified Data.Set as S
 import Data.Word ( Word16 )
 
 import qualified Data.Int.Indexed as I
+import qualified Data.Set.NonEmpty as NES
 import qualified Data.Word.Indexed as W
 import qualified System.Random.MWC as R
 
@@ -40,8 +42,8 @@ uniform :: (R.Variate a) => Gen -> IO a
 uniform (Gen g) = R.uniform g
 
 -- | Choose uniformly from a set.
-choose :: Gen -> S.Set a -> IO a
-choose gen pool = do
+choose :: (Ord a) => Gen -> NES.Set a -> IO a
+choose gen (NES.flatten -> pool) = do
   ix <- uniformR (0, S.size pool - 1) gen
   return $ S.elemAt ix pool
 
