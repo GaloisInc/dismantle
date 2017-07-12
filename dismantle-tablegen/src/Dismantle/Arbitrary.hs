@@ -41,11 +41,12 @@ uniformR r (Gen g) = R.uniformR r g
 uniform :: (R.Variate a) => Gen -> IO a
 uniform (Gen g) = R.uniform g
 
--- | Choose uniformly from a set.
-choose :: (Ord a) => Gen -> NES.Set a -> IO a
-choose gen (NES.flatten -> pool) = do
-  ix <- uniformR (0, S.size pool - 1) gen
-  return $ S.elemAt ix pool
+-- | Choose uniformly from a non-empty set.
+choose :: Gen -> NES.Set a -> IO a
+choose gen (NES.view -> (a, pool)) = do
+  ix <- uniformR (0, S.size pool) gen
+  let isOutsidePool = ix == S.size pool
+  return $ if isOutsidePool then a else S.elemAt ix pool
 
 instance forall n . (KnownNat n) => Arbitrary (W.W n) where
   arbitrary (Gen g) = W.W <$> R.uniformR (0, (1 `shiftL` nBits) - 1) g

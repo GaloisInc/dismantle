@@ -53,48 +53,67 @@ randomInstruction gen pool = do
   case sop of
     Some opcode -> I.Instruction opcode <$> arbitraryOperands gen opcode
 
--- | Given a set of allowed opcodes, select a random one that matches the shape
--- of the input opcode and return it.
---
--- If there are no opcodes in the set with a matching shape, the opcode itself is returned.
---
--- FIXME: Switch to return Nothing if there are no alternate opcodes available?
--- Using `MaybeT IO` would work with `traverseOpcode`
+-- | Given a base set of allowed opcodes, select a random one that
+-- matches the shape of the input opcode and return it.
 replaceOpcode :: (RandomizableOpcode c o) => A.Gen -> S.Set (Some (c o)) -> c o sh -> IO (c o sh)
-replaceOpcode g os o = do
+replaceOpcode g baseSet o = do
   case Seq.length available of
-    0 -> return o
+    -- The opcode being replaced will always be in the base set, so
+    -- the 'available' set can't be empty. It would be easy to simply
+    -- form a 'NES.Set' from the the given opcode and the available
+    -- set, and then just use 'A.choose', but then we'd need 'Ord'
+    -- constraints on the opcodes, which are not forth coming given
+    -- the existential quantification in 'I.GenericInstruction' in
+    -- 'randomizeOpcode' ...
+    0 -> error "replaceOpcode: bug! The opcode being replaced should always be in the base set!"
     len -> do
       ix <- A.uniformR (0, len - 1) g
       return $! available `Seq.index` ix
   where
     eligible = congruentF o
-    available = F.foldl' (checkCompatibleOpcode os) Seq.empty eligible
+    available = F.foldl' (addOpcodeIfCompatible baseSet) Seq.empty eligible
 
--- | Collect compatible opcodes that appear in the given set into a list with
--- the shape recovered
-checkCompatibleOpcode :: (RandomizableOpcode c o) => S.Set (Some (c o)) -> Seq.Seq (c o sh) -> c o sh -> Seq.Seq (c o sh)
-checkCompatibleOpcode s acc o =
+-- | Add given opcode to accumulator if it appears in the base set.
+addOpcodeIfCompatible :: (RandomizableOpcode c o) => S.Set (Some (c o)) -> Seq.Seq (c o sh) -> c o sh -> Seq.Seq (c o sh)
+addOpcodeIfCompatible s acc o =
   case S.member (Some o) s of
     True -> acc Seq.|> o
     False -> acc
 
+-- | Randomly replace the opcode of an instruction with another opcode
+-- chosen uniformly from the set of all compatible opcodes in the base
+-- set.
+--
+-- The operands are preserved.
 randomizeOpcode :: (RandomizableOpcode c o)
                 => A.Gen
                 -> S.Set (Some (c o))
                 -> I.GenericInstruction c o
                 -> IO (I.GenericInstruction c o)
-randomizeOpcode gen os = I.traverseOpcode (replaceOpcode gen os)
+randomizeOpcode gen baseSet = I.traverseOpcode (replaceOpcode gen baseSet)
 
+-- | Randomly replace one operand of an instruction.
+--
+-- In the STOKE paper Section 4.3, the arbitrary operand is taken from
+-- a restricted set in the case of immediates, namely
+--
+-- > [-16,..,16] \union [ 2**k | k <- [5,..] ]
+--
+-- Presumably we'd just like to use an appropriate 'Arbitrary'
+-- instance for operands here, but
+--
+-- > forall sh. Arbitrary (o sh)
+--
+-- is problematic ...
 randomizeOperand :: A.Gen
                  -> (forall sh . A.Gen -> o sh -> IO (o sh))
                  -> I.GenericInstruction c o
                  -> IO (I.GenericInstruction c o)
-randomizeOperand gen f (I.Instruction op os) = do
+randomizeOperand gen arbitraryOperand (I.Instruction op os) = do
   updateAt <- A.uniformR (0, (I.operandListLength os - 1)) gen
   os' <- I.traverseOperandListIndexed (f' updateAt gen) os
   return (I.Instruction op os')
   where
     f' target g ix o
-      | ix == target = f g o
+      | ix == target = arbitraryOperand g o
       | otherwise = return o

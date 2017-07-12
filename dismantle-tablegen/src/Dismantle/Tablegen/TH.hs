@@ -34,6 +34,7 @@ import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Data.EnumF ( EnumF(..), enumCompareF )
+import qualified Data.Set.NonEmpty as NES
 import Data.Parameterized.Classes ( OrdF(..), ShowF(..) )
 import Dismantle.Arbitrary as A
 import Dismantle.Instruction
@@ -331,7 +332,7 @@ mkEnumFInstance desc = do
       match (conP conName []) (normalB (litE (integerL i))) []
 
     mkCongruentFCase eltName eltNames =
-      match (conP eltName []) (normalB [| S.fromList $(listE (map conE eltNames)) |]) []
+      match (conP eltName []) (normalB [| NES.fromList $(conE eltName) $(listE (map conE eltNames)) |]) []
 
 instructionShape :: InstructionDescriptor -> [OperandType]
 instructionShape i = [ opType op | op <- canonicalOperands i ]
