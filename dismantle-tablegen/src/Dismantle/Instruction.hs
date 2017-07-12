@@ -12,20 +12,22 @@ module Dismantle.Instruction (
   GenericInstruction(..),
   Annotated(..),
   OpcodeConstraints,
+  Index(..),
   mapOpcode,
   traverseOpcode,
   operandListLength,
   mapOperandList,
   mapOperandListIndexed,
   traverseOperandList,
-  traverseOperandListIndexed
+  traverseOperandListIndexed,
+  indexOpList
   ) where
 
 import qualified Data.Type.Equality as E
 import Data.Typeable ( Typeable )
 
 import Data.EnumF ( EnumF(..) )
-import Data.Parameterized.Classes ( ShowF(..) )
+import Data.Parameterized.Classes ( ShowF(..), OrdF(..), OrderingF(..), toOrdering )
 
 -- | A wrapper to allow operands to be easily annotated with arbitrary
 -- data (of kind '*' for now).
@@ -174,3 +176,39 @@ type OpcodeConstraints c o = (E.TestEquality (c o),
                               Typeable c,
                               Typeable o)
 
+-- | Represents an index into a type-level list. Used in place of integers to
+--   1. ensure that the given index *does* exist in the list
+--   2. guarantee that it has the given kind
+data Index :: [k] -> k -> * where
+  IndexHere :: forall x sh. Index (x ': sh) x
+  IndexThere :: forall x x' sh. Index sh x -> Index (x' ': sh) x
+deriving instance Eq (Index sh x)
+deriving instance Show (Index sh x)
+
+instance ShowF (Index sh)
+
+instance E.TestEquality (Index sh) where
+  IndexHere `testEquality` IndexHere = Just E.Refl
+  IndexThere idx1 `testEquality` IndexThere idx2 = E.testEquality idx1 idx2
+  _ `testEquality` _ = Nothing
+
+instance OrdF (Index sh) where
+  IndexHere `compareF` IndexHere = EQF
+  IndexHere `compareF` IndexThere _ = LTF
+  IndexThere _ `compareF` IndexHere = GTF
+  IndexThere idx1 `compareF` IndexThere idx2 =
+    case idx1 `compareF` idx2 of
+      LTF -> LTF
+      EQF -> EQF
+      GTF -> GTF
+
+instance Ord (Index sh x) where
+  x `compare` y = toOrdering $ x `compareF` y
+
+-- | Evaluate an index for a given operand list.
+indexOpList :: OperandList f sh -> Index sh s -> f s
+-- Why not destructure @vals@ in the argument position? GHC gives a warning
+-- about not handling the Nil case of vals. This way, GHC verifies that the
+-- pattern-matching is exhaustive.
+indexOpList vals IndexHere = case vals of x :> _ -> x
+indexOpList vals (IndexThere th) = case vals of _ :> rest -> indexOpList rest th
