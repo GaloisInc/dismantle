@@ -6,6 +6,7 @@
 module Dismantle.Arbitrary (
   Gen,
   Arbitrary(..),
+  categorical,
   choose,
   uniform,
   uniformR,
@@ -19,11 +20,13 @@ import Data.Int ( Int16 )
 import Data.Proxy ( Proxy(..) )
 import qualified Data.Set as S
 import Data.Word ( Word16 )
+import qualified Data.Vector.Unboxed as V
 
 import qualified Data.Int.Indexed as I
 import qualified Data.Set.NonEmpty as NES
 import qualified Data.Word.Indexed as W
 import qualified System.Random.MWC as R
+import qualified System.Random.MWC.Distributions as R
 
 newtype Gen = Gen R.GenIO
 
@@ -37,16 +40,30 @@ class Arbitrary a where
 uniformR :: (R.Variate a) => (a, a) -> Gen -> IO a
 uniformR r (Gen g) = R.uniformR r g
 
--- | Choose uniformly from a all elements of a type.
+-- | Choose uniformly from a *fixed subset* of a type.
+--
+-- For fixed-width integral types the whole type is used.
+-- For floating point numbers the range @(0,1]@ is used.
 uniform :: (R.Variate a) => Gen -> IO a
 uniform (Gen g) = R.uniform g
 
 -- | Choose uniformly from a non-empty set.
-choose :: Gen -> NES.Set a -> IO a
-choose gen (NES.view -> (a, pool)) = do
+choose :: NES.Set a -> Gen -> IO a
+choose (NES.view -> (a, pool)) gen = do
   ix <- uniformR (0, S.size pool) gen
   let isOutsidePool = ix == S.size pool
   return $ if isOutsidePool then a else S.elemAt ix pool
+
+-- | Choose an index based on the given *relative* non-negative
+-- weights.
+--
+-- E.g. @categorical [1/6, 1/3, 1/2]@ will return 0 with probability
+-- 1/6, 1 with probability 1/3, and 2 with probability 1/2.
+--
+-- E.g. @categorical [1, 2]@ will return 0 with probability 1/3
+-- and 1 with probability 2/3.
+categorical :: [Double] -> Gen -> IO Int
+categorical weights (Gen g) = R.categorical (V.fromList weights) g
 
 instance forall n . (KnownNat n) => Arbitrary (W.W n) where
   arbitrary (Gen g) = W.W <$> R.uniformR (0, (1 `shiftL` nBits) - 1) g

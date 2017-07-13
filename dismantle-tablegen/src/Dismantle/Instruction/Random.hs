@@ -49,7 +49,7 @@ randomInstruction :: (ArbitraryOperands c o, OrdF (c o))
                   -> NES.Set (Some (c o))
                   -> IO (I.GenericInstruction c o)
 randomInstruction gen pool = do
-  sop <- A.choose gen pool
+  sop <- A.choose pool gen
   case sop of
     Some opcode -> I.Instruction opcode <$> arbitraryOperands gen opcode
 
