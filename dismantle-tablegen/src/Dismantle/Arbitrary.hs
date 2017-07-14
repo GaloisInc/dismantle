@@ -7,6 +7,7 @@ module Dismantle.Arbitrary (
   Gen,
   Arbitrary(..),
   categorical,
+  categoricalChoose,
   choose,
   uniform,
   uniformR,
@@ -64,6 +65,17 @@ choose (NES.view -> (a, pool)) gen = do
 -- and 1 with probability 2/3.
 categorical :: [Double] -> Gen -> IO Int
 categorical weights (Gen g) = R.categorical (V.fromList weights) g
+
+-- | A version of 'categorical' that chooses a weighted element.
+--
+-- In term of 'categoricalChoose' we have
+--
+-- > categorical weights = categoricalChoose (zip weights [0..])
+categoricalChoose :: [(Double, a)] -> Gen -> IO a
+categoricalChoose weightedElems gen = do
+  let (weights, elems) = unzip weightedElems
+  index <- categorical weights gen
+  return $ elems !! index
 
 instance forall n . (KnownNat n) => Arbitrary (W.W n) where
   arbitrary (Gen g) = W.W <$> R.uniformR (0, (1 `shiftL` nBits) - 1) g
