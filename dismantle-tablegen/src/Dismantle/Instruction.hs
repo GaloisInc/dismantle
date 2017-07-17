@@ -4,6 +4,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -20,6 +21,7 @@ module Dismantle.Instruction (
   mapOperandListIndexed,
   traverseOperandList,
   traverseOperandListIndexed,
+  foldrOperandList,
   indexOpList
   ) where
 
@@ -146,6 +148,19 @@ traverseOperandListIndexed_ ix f l =
   case l of
     Nil -> pure Nil
     e :> rest -> (:>) <$> f ix e <*> traverseOperandListIndexed_ (ix + 1) f rest
+
+foldrOperandList :: forall sh a b . (forall tp . Index sh tp -> a tp -> b -> b) -> b -> OperandList a sh -> b
+foldrOperandList f seed0 l = go id l seed0
+  where
+    go :: forall tps
+        . (forall tp . Index tps tp -> Index sh tp)
+       -> OperandList a tps
+       -> b
+       -> b
+    go g ops b =
+      case ops of
+        Nil -> b
+        a :> rest -> f (g IndexHere) a (go (\ix -> g (IndexThere ix)) rest b)
 
 
 -- | Return the number of operands in an operand list.
