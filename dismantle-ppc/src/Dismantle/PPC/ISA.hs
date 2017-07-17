@@ -301,7 +301,7 @@ ppcOperandPayloadTypes =
   [ ("Abscondbrtarget", absoluteAddress)
   , ("Absdirectbrtarget", absoluteAddress)
   , ("Condbrtarget", relativeOffset)
-  , ("Directbrtarget", absoluteAddress)
+  , ("Directbrtarget", relativeOffset)
   , ("Calltarget", relativeOffset)
   , ("Abscalltarget", absoluteAddress)
   , ("Tlscall", relativeOffset)
