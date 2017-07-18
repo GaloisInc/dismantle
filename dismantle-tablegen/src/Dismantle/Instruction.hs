@@ -22,7 +22,9 @@ module Dismantle.Instruction (
   traverseOperandList,
   traverseOperandListIndexed,
   foldrOperandList,
-  indexOpList
+  foldrMOperandList,
+  indexOpList,
+  indexAsInt
   ) where
 
 import qualified Data.Type.Equality as E
@@ -121,33 +123,43 @@ mapOperandList f l =
     Nil -> Nil
     e :> rest -> f e :> mapOperandList f rest
 
-mapOperandListIndexed :: (forall tp . Int -> a tp -> b tp) -> OperandList a sh -> OperandList b sh
-mapOperandListIndexed f l = mapOperandListIndexed_ 0 f l
+mapOperandListIndexed :: forall a b sh
+                       . (forall tp . Index sh tp -> a tp -> b tp)
+                      -> OperandList a sh
+                      -> OperandList b sh
+mapOperandListIndexed f = go id
+  where
+    go :: forall tps . (forall tp . Index tps tp -> Index sh tp)
+       -> OperandList a tps
+       -> OperandList b tps
+    go g l =
+      case l of
+        Nil -> Nil
+        e :> rest -> f (g IndexHere) e :> go (\ix -> g (IndexThere ix)) rest
 
-mapOperandListIndexed_ :: Int -> (forall tp . Int -> a tp -> b tp) -> OperandList a sh -> OperandList b sh
-mapOperandListIndexed_ ix f l =
-  case l of
-    Nil -> Nil
-    e :> rest -> f ix e :> mapOperandListIndexed_ (ix + 1) f rest
-
-traverseOperandList :: (Applicative t) => (forall tp . a tp -> t (b tp)) -> OperandList a sh -> t (OperandList b sh)
+traverseOperandList :: (Applicative t)
+                    => (forall tp . a tp -> t (b tp))
+                    -> OperandList a sh
+                    -> t (OperandList b sh)
 traverseOperandList f l =
   case l of
     Nil -> pure Nil
     e :> rest -> (:>) <$> f e <*> traverseOperandList f rest
 
-traverseOperandListIndexed :: (Applicative t) => (forall tp . Int -> a tp -> t (b tp)) -> OperandList a sh -> t (OperandList b sh)
-traverseOperandListIndexed f l = traverseOperandListIndexed_ 0 f l
-
-traverseOperandListIndexed_ :: (Applicative t)
-                            => Int
-                            -> (forall tp . Int -> a tp -> t (b tp))
-                            -> OperandList a sh
-                            -> t (OperandList b sh)
-traverseOperandListIndexed_ ix f l =
-  case l of
-    Nil -> pure Nil
-    e :> rest -> (:>) <$> f ix e <*> traverseOperandListIndexed_ (ix + 1) f rest
+traverseOperandListIndexed :: forall a b sh t
+                            . (Applicative t)
+                           => (forall tp . Index sh tp -> a tp -> t (b tp))
+                           -> OperandList a sh
+                           -> t (OperandList b sh)
+traverseOperandListIndexed f = go id
+  where
+    go :: forall tps . (forall tp . Index tps tp -> Index sh tp)
+       -> OperandList a tps
+       -> t (OperandList b tps)
+    go g l =
+      case l of
+        Nil -> pure Nil
+        e :> rest -> (:>) <$> f (g IndexHere) e <*> go (\ix -> g (IndexThere ix)) rest
 
 foldrOperandList :: forall sh a b . (forall tp . Index sh tp -> a tp -> b -> b) -> b -> OperandList a sh -> b
 foldrOperandList f seed0 l = go id l seed0
@@ -162,6 +174,22 @@ foldrOperandList f seed0 l = go id l seed0
         Nil -> b
         a :> rest -> f (g IndexHere) a (go (\ix -> g (IndexThere ix)) rest b)
 
+foldrMOperandList :: forall sh a b m . (Monad m)
+                  => (forall tp . Index sh tp -> a tp -> b -> m b)
+                  -> b
+                  -> OperandList a sh
+                  -> m b
+foldrMOperandList f seed0 l = go id l seed0
+  where
+    go :: forall tps
+        . (forall tp . Index tps tp -> Index sh tp)
+       -> OperandList a tps
+       -> b
+       -> m b
+    go g ops b =
+      case ops of
+        Nil -> return b
+        a :> rest -> f (g IndexHere) a =<< go (\ix -> g (IndexThere ix)) rest b
 
 -- | Return the number of operands in an operand list.
 --
@@ -227,3 +255,9 @@ indexOpList :: OperandList f sh -> Index sh s -> f s
 -- pattern-matching is exhaustive.
 indexOpList vals IndexHere = case vals of x :> _ -> x
 indexOpList vals (IndexThere th) = case vals of _ :> rest -> indexOpList rest th
+
+indexAsInt :: Index sh tp -> Int
+indexAsInt ix =
+  case ix of
+    IndexHere -> 0
+    IndexThere ix' -> 1 + indexAsInt ix'

@@ -115,5 +115,5 @@ randomizeOperand gen arbitraryOperand (I.Instruction op os) = do
   return (I.Instruction op os')
   where
     f' target g ix o
-      | ix == target = arbitraryOperand g o
+      | I.indexAsInt ix == target = arbitraryOperand g o
       | otherwise = return o
