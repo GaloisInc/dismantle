@@ -16,7 +16,6 @@ module Dismantle.Instruction.Random (
 
 import qualified Data.Foldable as F
 import qualified Data.Sequence as Seq
-import qualified Data.Set as S
 import qualified Data.Type.Equality as E
 
 import Data.Parameterized.Classes ( OrdF(..) )
@@ -55,7 +54,7 @@ randomInstruction gen baseSet = do
 
 -- | Given a base set of allowed opcodes, select a random one that
 -- matches the shape of the input opcode and return it.
-replaceOpcode :: (RandomizableOpcode c o) => A.Gen -> S.Set (Some (c o)) -> c o sh -> IO (c o sh)
+replaceOpcode :: (RandomizableOpcode c o) => A.Gen -> NES.Set (Some (c o)) -> c o sh -> IO (c o sh)
 replaceOpcode g baseSet o = do
   case Seq.length available of
     -- The opcode being replaced will always be in the base set, so
@@ -74,9 +73,9 @@ replaceOpcode g baseSet o = do
     available = F.foldl' (addOpcodeIfCompatible baseSet) Seq.empty eligible
 
 -- | Add given opcode to accumulator if it appears in the base set.
-addOpcodeIfCompatible :: (RandomizableOpcode c o) => S.Set (Some (c o)) -> Seq.Seq (c o sh) -> c o sh -> Seq.Seq (c o sh)
+addOpcodeIfCompatible :: (RandomizableOpcode c o) => NES.Set (Some (c o)) -> Seq.Seq (c o sh) -> c o sh -> Seq.Seq (c o sh)
 addOpcodeIfCompatible s acc o =
-  case S.member (Some o) s of
+  case NES.member (Some o) s of
     True -> acc Seq.|> o
     False -> acc
 
@@ -87,7 +86,7 @@ addOpcodeIfCompatible s acc o =
 -- The operands are preserved.
 randomizeOpcode :: (RandomizableOpcode c o)
                 => A.Gen
-                -> S.Set (Some (c o))
+                -> NES.Set (Some (c o))
                 -> I.GenericInstruction c o
                 -> IO (I.GenericInstruction c o)
 randomizeOpcode gen baseSet = I.traverseOpcode (replaceOpcode gen baseSet)
