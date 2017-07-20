@@ -1,9 +1,11 @@
+{-# LANGUAGE ViewPatterns #-}
 module Data.Set.NonEmpty (
   Set,
   singleton,
   fromList,
   flatten,
-  view
+  view,
+  member
   ) where
 
 import qualified Data.Semigroup as SG
@@ -24,6 +26,10 @@ flatten (NonEmptySet a s) = S.insert a s
 -- | View a non-empty set as an element and a possibly empty set.
 view :: Set a -> (a, S.Set a)
 view (NonEmptySet a as) = (a, as)
+
+member :: (Ord a) => a -> Set a -> Bool
+member x (view -> (a, as)) =
+  x == a || x `S.member` as
 
 instance (Ord a) => SG.Semigroup (Set a) where
   NonEmptySet a1 as1 <> NonEmptySet a2 as2 =
