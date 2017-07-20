@@ -10,6 +10,7 @@ module Dismantle.Instruction.Random (
   randomInstruction,
   randomizeOperand,
   randomizeOpcode,
+  ArbitraryOperand(..),
   ArbitraryOperands(..),
   ArbitraryOperandList(..)
   ) where
@@ -38,6 +39,15 @@ instance (A.Arbitrary (f tp), ArbitraryOperandList f tps) => ArbitraryOperandLis
 -- | The @c@ here is the opcode type or tag type, called @t@ in
 -- 'Dismantle.Instruction'.
 type RandomizableOpcode c o = (E.TestEquality (c o), EnumF (c o), OrdF (c o))
+
+-- | Used to perturb existing operands in stratified synthesis.
+--
+-- In the STOKE paper Section 4.3, the arbitrary operand is taken from
+-- a restricted set in the case of immediates, namely
+--
+-- > [-16..16] \union [ +/- 2^k | k <- [5..] ]
+class ArbitraryOperand o where
+  arbitraryOperand :: A.Gen -> o sh -> IO (o sh)
 
 class ArbitraryOperands c o where
   arbitraryOperands :: A.Gen -> c o sh -> IO (I.OperandList o sh)
@@ -92,23 +102,11 @@ randomizeOpcode :: (RandomizableOpcode c o)
 randomizeOpcode gen baseSet = I.traverseOpcode (replaceOpcode gen baseSet)
 
 -- | Randomly replace one operand of an instruction.
---
--- In the STOKE paper Section 4.3, the arbitrary operand is taken from
--- a restricted set in the case of immediates, namely
---
--- > [-16,..,16] \union [ 2**k | k <- [5,..] ]
---
--- Presumably we'd just like to use an appropriate 'Arbitrary'
--- instance for operands here, but
---
--- > forall sh. Arbitrary (o sh)
---
--- is problematic ...
-randomizeOperand :: A.Gen
-                 -> (forall sh . A.Gen -> o sh -> IO (o sh))
+randomizeOperand :: (ArbitraryOperand o)
+                 => A.Gen
                  -> I.GenericInstruction c o
                  -> IO (I.GenericInstruction c o)
-randomizeOperand gen arbitraryOperand (I.Instruction op os) = do
+randomizeOperand gen (I.Instruction op os) = do
   updateAt <- A.uniformR (0, (I.operandListLength os - 1)) gen
   os' <- I.traverseOperandListIndexed (f' updateAt gen) os
   return (I.Instruction op os')
