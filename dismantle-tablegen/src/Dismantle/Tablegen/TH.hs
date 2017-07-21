@@ -43,6 +43,7 @@ import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
+import Compat.TH ( mkStandaloneDerivD )
 
 genISA :: ISA -> FilePath -> DecsQ
 genISA isa path = do
@@ -267,9 +268,9 @@ mkOpcodeType isa = do
   ordf <- mkOrdFInstance
   teq <- mkTestEqualityInstance isa
   return [ DataD [] opcodeTypeName tyVars Nothing cons []
-         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
-         , StandaloneDerivD [] (ConT ''Eq `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
-         , StandaloneDerivD [] (ConT ''Ord `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
+         , mkStandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
+         , mkStandaloneDerivD [] (ConT ''Eq `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
+         , mkStandaloneDerivD [] (ConT ''Ord `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
          , showf
          , ordf
          , teq
@@ -398,7 +399,7 @@ mkOperandType isa desc = do
   cons <- mapM (mkOperandCon isa) (isaOperands desc)
   showf <- mkOperandShowFInstance
   return [ DataD [] operandTypeName [] (Just ksig) cons []
-         , StandaloneDerivD [] (ConT ''Show `AppT` (ConT operandTypeName `AppT` VarT (mkName "tp")))
+         , mkStandaloneDerivD [] (ConT ''Show `AppT` (ConT operandTypeName `AppT` VarT (mkName "tp")))
          , showf
          ]
   where
