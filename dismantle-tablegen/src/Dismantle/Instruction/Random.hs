@@ -10,13 +10,13 @@ module Dismantle.Instruction.Random (
   randomInstruction,
   randomizeOperand,
   randomizeOpcode,
+  ArbitraryOperand(..),
   ArbitraryOperands(..),
   ArbitraryOperandList(..)
   ) where
 
 import qualified Data.Foldable as F
 import qualified Data.Sequence as Seq
-import qualified Data.Set as S
 import qualified Data.Type.Equality as E
 
 import Data.Parameterized.Classes ( OrdF(..) )
@@ -40,6 +40,15 @@ instance (A.Arbitrary (f tp), ArbitraryOperandList f tps) => ArbitraryOperandLis
 -- 'Dismantle.Instruction'.
 type RandomizableOpcode c o = (E.TestEquality (c o), EnumF (c o), OrdF (c o))
 
+-- | Used to perturb existing operands in stratified synthesis.
+--
+-- In the STOKE paper Section 4.3, the arbitrary operand is taken from
+-- a restricted set in the case of immediates, namely
+--
+-- > [-16..16] \union [ +/- 2^k | k <- [5..] ]
+class ArbitraryOperand o where
+  arbitraryOperand :: A.Gen -> o sh -> IO (o sh)
+
 class ArbitraryOperands c o where
   arbitraryOperands :: A.Gen -> c o sh -> IO (I.OperandList o sh)
 
@@ -55,7 +64,7 @@ randomInstruction gen baseSet = do
 
 -- | Given a base set of allowed opcodes, select a random one that
 -- matches the shape of the input opcode and return it.
-replaceOpcode :: (RandomizableOpcode c o) => A.Gen -> S.Set (Some (c o)) -> c o sh -> IO (c o sh)
+replaceOpcode :: (RandomizableOpcode c o) => A.Gen -> NES.Set (Some (c o)) -> c o sh -> IO (c o sh)
 replaceOpcode g baseSet o = do
   case Seq.length available of
     -- The opcode being replaced will always be in the base set, so
@@ -74,9 +83,9 @@ replaceOpcode g baseSet o = do
     available = F.foldl' (addOpcodeIfCompatible baseSet) Seq.empty eligible
 
 -- | Add given opcode to accumulator if it appears in the base set.
-addOpcodeIfCompatible :: (RandomizableOpcode c o) => S.Set (Some (c o)) -> Seq.Seq (c o sh) -> c o sh -> Seq.Seq (c o sh)
+addOpcodeIfCompatible :: (RandomizableOpcode c o) => NES.Set (Some (c o)) -> Seq.Seq (c o sh) -> c o sh -> Seq.Seq (c o sh)
 addOpcodeIfCompatible s acc o =
-  case S.member (Some o) s of
+  case NES.member (Some o) s of
     True -> acc Seq.|> o
     False -> acc
 
@@ -87,29 +96,17 @@ addOpcodeIfCompatible s acc o =
 -- The operands are preserved.
 randomizeOpcode :: (RandomizableOpcode c o)
                 => A.Gen
-                -> S.Set (Some (c o))
+                -> NES.Set (Some (c o))
                 -> I.GenericInstruction c o
                 -> IO (I.GenericInstruction c o)
 randomizeOpcode gen baseSet = I.traverseOpcode (replaceOpcode gen baseSet)
 
 -- | Randomly replace one operand of an instruction.
---
--- In the STOKE paper Section 4.3, the arbitrary operand is taken from
--- a restricted set in the case of immediates, namely
---
--- > [-16,..,16] \union [ 2**k | k <- [5,..] ]
---
--- Presumably we'd just like to use an appropriate 'Arbitrary'
--- instance for operands here, but
---
--- > forall sh. Arbitrary (o sh)
---
--- is problematic ...
-randomizeOperand :: A.Gen
-                 -> (forall sh . A.Gen -> o sh -> IO (o sh))
+randomizeOperand :: (ArbitraryOperand o)
+                 => A.Gen
                  -> I.GenericInstruction c o
                  -> IO (I.GenericInstruction c o)
-randomizeOperand gen arbitraryOperand (I.Instruction op os) = do
+randomizeOperand gen (I.Instruction op os) = do
   updateAt <- A.uniformR (0, (I.operandListLength os - 1)) gen
   os' <- I.traverseOperandListIndexed (f' updateAt gen) os
   return (I.Instruction op os')
