@@ -8,6 +8,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ViewPatterns #-}
 module Dismantle.Tablegen.TH (
+  captureDictionaries,
   genISA,
   genISARandomHelpers
   ) where
@@ -29,10 +30,13 @@ import qualified Data.Type.Equality as E
 import Data.Word ( Word8 )
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
+import Language.Haskell.TH.Datatype
 import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
 import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
+import Data.Parameterized.Some ( Some(..) )
+import Data.Parameterized.Witness ( Witness(..) )
 import Data.EnumF ( EnumF(..), enumCompareF )
 import qualified Data.Set.NonEmpty as NES
 import Data.Parameterized.Classes ( OrdF(..), ShowF(..) )
@@ -44,6 +48,32 @@ import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 import Compat.TH ( mkStandaloneDerivD )
+
+-- | For the named data type, generate a list of witnesses for that datatype
+-- that capture a dictionary for each constructor of that datatype.
+--
+-- The intended use is to capture witnesses of different operand shape lists.
+--
+-- Example:
+--
+-- > captureDictionary ''Operand
+--
+-- will generate an expression the type
+--
+-- > [Some (Witness klass Opcode)]
+--
+--
+-- The class for which dictionaries are captured is set by a type signature
+-- specified for the expression at the call site by the caller.  Note that
+-- 'Opcode' must have kind '[k] -> *' and the class must have kind '[k] ->
+-- Constraint'.
+captureDictionaries :: Name -> ExpQ
+captureDictionaries tyName = do
+  dti <- reifyDatatype tyName
+  listE (map captureDictionaryFor (datatypeCons dti))
+
+captureDictionaryFor :: ConstructorInfo -> ExpQ
+captureDictionaryFor ci = [e| Some (Witness $(conE (constructorName ci))) |]
 
 genISA :: ISA -> FilePath -> DecsQ
 genISA isa path = do

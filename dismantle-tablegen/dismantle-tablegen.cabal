@@ -29,12 +29,14 @@ library
                    Dismantle.Testing.Parser
                    Data.EnumF
                    Data.Int.Indexed
+                   Data.Parameterized.Witness
                    Data.Set.NonEmpty
                    Data.Word.Indexed
                    Compat.TH
   build-depends:       base >=4.8 && <4.11,
                        ghc-prim,
                        template-haskell,
+                       th-abstraction >= 0.2 && < 0.3,
                        bytestring,
                        binary,
                        pretty,
