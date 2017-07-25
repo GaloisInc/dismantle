@@ -83,7 +83,7 @@ instance forall n . (KnownNat n) => Arbitrary (W.W n) where
       nBits = fromIntegral (natVal (Proxy :: Proxy n))
 
 instance forall n . (KnownNat n) => Arbitrary (I.I n) where
-  arbitrary (Gen g) = I.I <$> R.uniformR (-maxVal, maxVal) g
+  arbitrary (Gen g) = I.I <$> R.uniformR (-maxVal - 1, maxVal) g
     where
       nBits = fromIntegral (natVal (Proxy :: Proxy n))
       maxVal = ((1 `shiftL` nBits) - 1) `div` 2
