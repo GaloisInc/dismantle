@@ -4,9 +4,10 @@ module Data.Word.Indexed ( W(..), width ) where
 
 import GHC.TypeLits
 import Data.Bits
+import Numeric.Natural ( Natural )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
-newtype W (n :: Nat) = W { unW :: Word } deriving (Eq,Ord)
+newtype W (n :: Nat) = W { unW :: Natural } deriving (Eq,Ord)
 
 instance KnownNat n => Show (W n) where
   showsPrec _ me@(W n) = showChar '(' . shows n
