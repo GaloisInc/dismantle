@@ -317,7 +317,7 @@ instance A.Arbitrary VR where
   arbitrary g = VR <$> A.uniformR (0, 31) g
 
 instance A.Arbitrary VSR where
-  arbitrary g = VR <$> A.uniformR (0, 63) g
+  arbitrary g = VSR <$> A.uniformR (0, 63) g
 
 instance A.Arbitrary AbsBranchTarget where
   arbitrary g = ABT <$> A.uniformR (0, maxVal) g
