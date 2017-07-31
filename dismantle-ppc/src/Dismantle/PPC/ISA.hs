@@ -403,9 +403,9 @@ ppcOperandPayloadTypes =
                                  , opConE = Just (conE 'PPC.VR)
                                  , opWordE = Just [| fromIntegral . PPC.unVR |]
                                  }
-    vsRegister = OperandPayload { opTypeT = [t| PPC.VSR |]
-                                , opConE = Just (conE 'PPC.VSR)
-                                , opWordE = Just [| fromIntegral . PPC.unVSR |]
+    vsRegister = OperandPayload { opTypeT = [t| PPC.VSReg |]
+                                , opConE = Just (conE 'PPC.VSReg)
+                                , opWordE = Just [| fromIntegral . PPC.unVSReg |]
                                 }
     memRI = OperandPayload { opTypeT = [t| PPC.MemRI |]
                          , opConE = Just (varE 'PPC.mkMemRI)
