@@ -12,6 +12,7 @@ module Dismantle.PPC.Operands (
   CRRC(..),
   FR(..),
   VR(..),
+  VSR(..),
   BranchTarget(..),
   mkBranchTarget,
   branchTargetToBits,
@@ -87,6 +88,10 @@ newtype GPR = GPR { unGPR :: Word8 }
 
 -- | Vector register by number
 newtype VR = VR { unVR :: Word8 }
+  deriving (Eq, Ord, Show)
+
+-- | VSX register by number
+newtype VSR = VSR { unVSR :: Word8 }
   deriving (Eq, Ord, Show)
 
 -- | An offset in a branch instruction that is added to the current IP to get
@@ -260,6 +265,9 @@ instance PP.Pretty FR where
 instance PP.Pretty VR where
   pPrint (VR rno) = PP.char 'v' <> PP.int (fromIntegral rno)
 
+instance PP.Pretty VSR where
+  pPrint (VSR rno) = PP.char 'x' <> PP.int (fromIntegral rno)
+
 instance PP.Pretty MemRI where
   pPrint (MemRI mr d) =
     case mr of
@@ -307,6 +315,9 @@ instance A.Arbitrary GPR where
 
 instance A.Arbitrary VR where
   arbitrary g = VR <$> A.uniformR (0, 31) g
+
+instance A.Arbitrary VSR where
+  arbitrary g = VR <$> A.uniformR (0, 63) g
 
 instance A.Arbitrary AbsBranchTarget where
   arbitrary g = ABT <$> A.uniformR (0, maxVal) g

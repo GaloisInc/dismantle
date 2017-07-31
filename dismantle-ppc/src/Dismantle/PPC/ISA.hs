@@ -350,9 +350,9 @@ ppcOperandPayloadTypes =
   , ("Memrix16", memRIX)
   , ("Pred", gpRegister)
   , ("Vrrc", vecRegister)
-  , ("Vsfrc", vecRegister) -- floating point vec?
-  , ("Vsrc", vecRegister) -- ??
-  , ("Vssrc", vecRegister) -- ??
+  , ("Vsfrc", vsRegister)
+  , ("Vsrc", vsRegister)
+  , ("Vssrc", vsRegister)
   ]
   where
     absoluteAddress = OperandPayload { opTypeT = [t| PPC.AbsBranchTarget |]
@@ -403,6 +403,10 @@ ppcOperandPayloadTypes =
                                  , opConE = Just (conE 'PPC.VR)
                                  , opWordE = Just [| fromIntegral . PPC.unVR |]
                                  }
+    vsRegister = OperandPayload { opTypeT = [t| PPC.VSR |]
+                                , opConE = Just (conE 'PPC.VSR)
+                                , opWordE = Just [| fromIntegral . PPC.unVSR |]
+                                }
     memRI = OperandPayload { opTypeT = [t| PPC.MemRI |]
                          , opConE = Just (varE 'PPC.mkMemRI)
                          , opWordE = Just (varE 'PPC.memRIToBits)
