@@ -14,11 +14,12 @@ import Data.Maybe ( catMaybes )
 import qualified Data.Text.Lazy as TL
 import Data.Word ( Word8, Word64 )
 import qualified Text.Megaparsec as P
+import qualified Text.Megaparsec.Char as P
 import Text.Read ( readMaybe )
 
 import Prelude
 
-type Parser = P.Parsec P.Dec TL.Text
+type Parser = P.Parsec (P.ErrorItem Char) TL.Text
 
 data Disassembly = Disassembly { sections :: [Section] }
   deriving (Show)
@@ -64,7 +65,7 @@ symbolNameChar = tryOne [ P.alphaNumChar
 
 parseSection :: Parser Section
 parseSection = do
-  _ <- P.string "Disassembly of section "
+  _ <- P.string (TL.pack "Disassembly of section ")
   sn <- parseSectionName
   _ <- P.char ':'
   _ <- P.eol
@@ -82,8 +83,8 @@ tryParseInstruction =
          ]
 
 parseEllipses :: Parser (Maybe a)
-parseEllipses = tryOne [ P.space >> P.string "..." >> P.eol >> P.eol >> return Nothing
-                       , P.space >> P.string "..." >> P.eol >> return Nothing
+parseEllipses = tryOne [ P.space >> P.string (TL.pack "...") >> P.eol >> P.eol >> return Nothing
+                       , P.space >> P.string (TL.pack "...") >> P.eol >> return Nothing
                        ]
 
 parseInstruction :: Parser (Maybe Instruction)
@@ -118,9 +119,9 @@ isUndefinedInstruction t =  TL.pack "UNDEFINED" `TL.isInfixOf` t
 parseFunctionHeading :: Parser (Maybe a)
 parseFunctionHeading = do
   _ <- parseAddress
-  _ <- P.string " <"
+  _ <- P.string (TL.pack " <")
   _ <- P.some symbolNameChar
-  _ <- P.string ">:"
+  _ <- P.string (TL.pack ">:")
   _ <- P.eol
   return Nothing
 
