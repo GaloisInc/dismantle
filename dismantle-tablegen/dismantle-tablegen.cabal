@@ -29,6 +29,8 @@ library
                    Dismantle.Testing.Parser
                    Data.EnumF
                    Data.Int.Indexed
+                   Data.Parameterized.HasRepr
+                   Data.Parameterized.ShapedList
                    Data.Parameterized.Witness
                    Data.Set.NonEmpty
                    Data.Word.Indexed

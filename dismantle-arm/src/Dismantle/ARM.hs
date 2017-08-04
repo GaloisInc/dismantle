@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-spec-constr -fno-specialise -fmax-simplifier-iterations=1 -fno-call-arity #-}
@@ -9,7 +10,7 @@ module Dismantle.ARM (
   Instruction,
   AnnotatedInstruction,
   GenericInstruction(..),
-  OperandList(..),
+  ShapedList(..),
   Annotated(..),
   Operand(..),
   Opcode(..),
@@ -18,6 +19,8 @@ module Dismantle.ARM (
   assembleInstruction,
   ppInstruction
   )where
+
+import Data.Parameterized.ShapedList ( ShapedList(..) )
 
 import Dismantle.ARM.ISA ( isa )
 import Dismantle.Instruction
