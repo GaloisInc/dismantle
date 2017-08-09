@@ -49,7 +49,6 @@ import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
-import Compat.TH ( mkStandaloneDerivD )
 
 -- | For the named data type, generate a list of witnesses for that datatype
 -- that capture a dictionary for each constructor of that datatype.  The
@@ -88,8 +87,8 @@ genISA isa path = do
   case isaErrors desc of
     [] -> return ()
     errs -> reportWarning ("Unhandled instruction definitions for ISA: " ++ show (length errs))
-  operandType <- mkOperandType isa desc
-  opcodeType <- mkOpcodeType desc
+  operandType <- mkOperandType isa desc >>= sequence
+  opcodeType <- mkOpcodeType desc >>= sequence
   instrTypes <- mkInstructionAliases
   ppDef <- mkPrettyPrinter desc
   parserDef <- mkParser isa desc path
@@ -285,22 +284,17 @@ mkInstructionAliases =
           ConT opcodeTypeName `AppT`
           (ConT ''Annotated `AppT` VarT annotVar `AppT` ConT operandTypeName)
 
-mkOpcodeType :: ISADescriptor -> Q [Dec]
+mkOpcodeType :: ISADescriptor -> Q [DecQ]
 mkOpcodeType isa = do
-  enumf <- mkEnumFInstance isa
-  showf <- mkOpcodeShowFInstance
-  ordf <- mkOrdFInstance
-  teq <- mkTestEqualityInstance isa
-  hasRepr <- mkHasReprInstance isa
-  return [ DataD [] opcodeTypeName tyVars Nothing cons []
-         , mkStandaloneDerivD [] (ConT ''Show `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
-         , mkStandaloneDerivD [] (ConT ''Eq `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
-         , mkStandaloneDerivD [] (ConT ''Ord `AppT` (ConT opcodeTypeName `AppT` VarT opVarName `AppT` VarT shapeVarName))
-         , showf
-         , ordf
-         , teq
-         , enumf
-         , hasRepr
+  return [ dataD (cxt []) opcodeTypeName tyVars Nothing cons []
+         , standaloneDerivD (cxt []) [t| Show ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
+         , standaloneDerivD (cxt []) [t| Eq ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
+         , standaloneDerivD (cxt []) [t| Ord ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
+         , mkEnumFInstance isa
+         , mkOpcodeShowFInstance
+         , mkOrdFInstance
+         , mkTestEqualityInstance isa
+         , mkHasReprInstance isa
          ]
   where
     opVarName = mkName "o"
@@ -409,8 +403,8 @@ mkHasReprInstance desc = do
       let conName = mkName (toTypeName (idMnemonic i))
       clause [conP conName []] (normalB [| knownRepr |]) []
 
-mkOpcodeCon :: InstructionDescriptor -> Con
-mkOpcodeCon i = GadtC [n] [] ty
+mkOpcodeCon :: InstructionDescriptor -> Q Con
+mkOpcodeCon i = return (GadtC [n] [] ty)
   where
     strName = toTypeName (idMnemonic i)
     n = mkName strName
@@ -433,13 +427,12 @@ opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
 -- structure.
 --
 -- String -> (String, Q Type)
-mkOperandType :: ISA -> ISADescriptor -> Q [Dec]
+mkOperandType :: ISA -> ISADescriptor -> Q [DecQ]
 mkOperandType isa desc = do
-  cons <- mapM (mkOperandCon isa) (isaOperands desc)
-  showf <- mkOperandShowFInstance
-  return [ DataD [] operandTypeName [] (Just ksig) cons []
-         , mkStandaloneDerivD [] (ConT ''Show `AppT` (ConT operandTypeName `AppT` VarT (mkName "tp")))
-         , showf
+  let cons = map (mkOperandCon isa) (isaOperands desc)
+  return [ dataD (cxt []) operandTypeName [] (Just ksig) cons []
+         , standaloneDerivD (cxt []) [t| Show ($(conT operandTypeName) $(varT (mkName "tp"))) |]
+         , mkOperandShowFInstance
          ]
   where
     ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
