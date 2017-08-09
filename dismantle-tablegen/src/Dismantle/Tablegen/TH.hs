@@ -31,7 +31,7 @@ import Data.Word ( Word8 )
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
 import Language.Haskell.TH.Datatype
-import Language.Haskell.TH.Syntax ( lift, qAddDependentFile )
+import Language.Haskell.TH.Syntax ( lift, qAddDependentFile, Name(..), OccName(..) )
 import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
@@ -52,13 +52,15 @@ import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 import Compat.TH ( mkStandaloneDerivD )
 
 -- | For the named data type, generate a list of witnesses for that datatype
--- that capture a dictionary for each constructor of that datatype.
+-- that capture a dictionary for each constructor of that datatype.  The
+-- predicate is a filter that enables control over which constructors are
+-- captured.  The predicate is matched against the unqualified constructor name.
 --
 -- The intended use is to capture witnesses of different operand shape lists.
 --
 -- Example:
 --
--- > captureDictionary ''Operand
+-- > captureDictionary (const True) ''Operand
 --
 -- will generate an expression the type
 --
@@ -69,10 +71,13 @@ import Compat.TH ( mkStandaloneDerivD )
 -- specified for the expression at the call site by the caller.  Note that
 -- 'Opcode' must have kind '[k] -> *' and the class must have kind '[k] ->
 -- Constraint'.
-captureDictionaries :: Name -> ExpQ
-captureDictionaries tyName = do
+captureDictionaries :: (String -> Bool) -> Name -> ExpQ
+captureDictionaries p tyName = do
   dti <- reifyDatatype tyName
-  listE (map captureDictionaryFor (datatypeCons dti))
+  let cons = filter (p . unqualifiedName . constructorName) (datatypeCons dti)
+  listE (map captureDictionaryFor cons)
+  where
+    unqualifiedName (Name (OccName s) _) = s
 
 captureDictionaryFor :: ConstructorInfo -> ExpQ
 captureDictionaryFor ci = [e| Some (Witness $(conE (constructorName ci))) |]
