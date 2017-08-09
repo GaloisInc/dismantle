@@ -61,10 +61,6 @@ data OperandDescriptor =
 instance NFData OperandDescriptor where
   rnf od = opName od `deepseq` opChunks od `deepseq` od `seq` ()
 
--- FIXME: Replace these big lists of bits with some cleaner bytestring
--- masks.  We won't need the endian-corrected one if we can generate
--- the trie tables at TH time, which would save a lot
-
 -- | Description of an instruction, abstracted from the tablegen
 -- definition
 data InstructionDescriptor =
