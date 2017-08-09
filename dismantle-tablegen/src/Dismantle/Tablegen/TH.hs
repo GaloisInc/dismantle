@@ -181,24 +181,10 @@ mkTrieInput isa i = do
     mnemonic = idMnemonic i
     (requiredMask, trueMask) = bitSpecAsBytes (idMask i)
 
--- | For a parsable instruction, return three expressions ready to be
--- spliced into the AST:
+-- | Return a TH expression that defines an instruction parser
 --
--- 1) The instruction mnemonic
---
--- 2) The mask (as a bytestring) of required bits
---
--- 3) The bits required to be 1 among the required bits
---
--- 4) The actual parser function wrapped in a 'Parser' constructor to
--- existentially quantify out type parameters and shapes and whatnot.
--- The parser is actually wrapped in a Just to satisfy the trie
--- constructor.
---
--- The masks are Addr# literals wrapped in an 'unsafePackAddresLen' to
--- create bytestrings cheaply.
---
--- Note that we use the endian-corrected bit specs here
+-- The parser contains an expected bytecount and a function from bytestring to
+-- instruction.
 mkParserExpr :: ISA -> InstructionDescriptor -> Q Exp
 mkParserExpr isa i
   | null (canonicalOperands i) = do
