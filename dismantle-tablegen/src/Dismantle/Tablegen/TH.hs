@@ -13,8 +13,6 @@ module Dismantle.Tablegen.TH (
   genISARandomHelpers
   ) where
 
-import GHC.TypeLits ( Symbol )
-
 import Data.Monoid ((<>))
 import Data.Bits
 import qualified Data.ByteString as BS
@@ -286,7 +284,7 @@ mkInstructionAliases =
 
 mkOpcodeType :: ISADescriptor -> Q [DecQ]
 mkOpcodeType isa = do
-  return [ dataD (cxt []) opcodeTypeName tyVars Nothing cons []
+  return [ dataDCompat (cxt []) opcodeTypeName tyVars cons []
          , standaloneDerivD (cxt []) [t| Show ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
          , standaloneDerivD (cxt []) [t| Eq ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
          , standaloneDerivD (cxt []) [t| Ord ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
@@ -430,12 +428,10 @@ opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
 mkOperandType :: ISA -> ISADescriptor -> Q [DecQ]
 mkOperandType isa desc = do
   let cons = map (mkOperandCon isa) (isaOperands desc)
-  return [ dataD (cxt []) operandTypeName [] (Just ksig) cons []
+  return [ dataDCompat (cxt []) operandTypeName [] cons []
          , standaloneDerivD (cxt []) [t| Show ($(conT operandTypeName) $(varT (mkName "tp"))) |]
          , mkOperandShowFInstance
          ]
-  where
-    ksig = ArrowT `AppT` ConT ''Symbol `AppT` StarT
 
 mkOperandCon :: ISA -> OperandType -> Q Con
 mkOperandCon isa (OperandType origName) = do
