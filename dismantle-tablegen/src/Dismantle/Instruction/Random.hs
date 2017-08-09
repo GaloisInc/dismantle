@@ -12,7 +12,7 @@ module Dismantle.Instruction.Random (
   randomizeOpcode,
   ArbitraryOperand(..),
   ArbitraryOperands(..),
-  ArbitraryOperandList(..)
+  ArbitraryShapedList(..)
   ) where
 
 import qualified Data.Foldable as F
@@ -21,20 +21,21 @@ import qualified Data.Type.Equality as E
 
 import Data.Parameterized.Classes ( OrdF(..) )
 import Data.Parameterized.Some ( Some(..) )
+import Data.Parameterized.ShapedList ( lengthFC, ShapedList(..), traverseFCIndexed, indexAsInt )
 
 import Data.EnumF ( EnumF(..) )
 import qualified Data.Set.NonEmpty as NES
 import qualified Dismantle.Arbitrary as A
 import qualified Dismantle.Instruction as I
 
-class ArbitraryOperandList f (tps :: [k]) where
-  arbitraryOperandList :: A.Gen -> IO (I.OperandList f tps)
+class ArbitraryShapedList f (tps :: [k]) where
+  arbitraryShapedList :: A.Gen -> IO (ShapedList f tps)
 
-instance ArbitraryOperandList f '[] where
-  arbitraryOperandList _gen = return I.Nil
+instance ArbitraryShapedList f '[] where
+  arbitraryShapedList _gen = return Nil
 
-instance (A.Arbitrary (f tp), ArbitraryOperandList f tps) => ArbitraryOperandList f (tp ': tps) where
-  arbitraryOperandList gen = (I.:>) <$> A.arbitrary gen <*> arbitraryOperandList gen
+instance (A.Arbitrary (f tp), ArbitraryShapedList f tps) => ArbitraryShapedList f (tp ': tps) where
+  arbitraryShapedList gen = (:>) <$> A.arbitrary gen <*> arbitraryShapedList gen
 
 -- | The @c@ here is the opcode type or tag type, called @t@ in
 -- 'Dismantle.Instruction'.
@@ -50,7 +51,7 @@ class ArbitraryOperand o where
   arbitraryOperand :: A.Gen -> o sh -> IO (o sh)
 
 class ArbitraryOperands c o where
-  arbitraryOperands :: A.Gen -> c o sh -> IO (I.OperandList o sh)
+  arbitraryOperands :: A.Gen -> c o sh -> IO (ShapedList o sh)
 
 -- | Generate a random instruction
 randomInstruction :: (ArbitraryOperands c o, OrdF (c o))
@@ -107,10 +108,10 @@ randomizeOperand :: (ArbitraryOperand o)
                  -> I.GenericInstruction c o
                  -> IO (I.GenericInstruction c o)
 randomizeOperand gen (I.Instruction op os) = do
-  updateAt <- A.uniformR (0, (I.operandListLength os - 1)) gen
-  os' <- I.traverseOperandListIndexed (f' updateAt gen) os
+  updateAt <- A.uniformR (0, (lengthFC os - 1)) gen
+  os' <- traverseFCIndexed (f' updateAt gen) os
   return (I.Instruction op os')
   where
     f' target g ix o
-      | I.indexAsInt ix == target = arbitraryOperand g o
+      | indexAsInt ix == target = arbitraryOperand g o
       | otherwise = return o

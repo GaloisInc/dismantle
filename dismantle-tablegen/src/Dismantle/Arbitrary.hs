@@ -16,11 +16,13 @@ module Dismantle.Arbitrary (
   ) where
 
 import GHC.TypeLits
+import Control.Monad ( replicateM )
 import Data.Bits
+import qualified Data.Foldable as F
 import Data.Int ( Int16 )
 import Data.Proxy ( Proxy(..) )
 import qualified Data.Set as S
-import Data.Word ( Word16 )
+import Data.Word ( Word16, Word64 )
 import qualified Data.Vector.Unboxed as V
 
 import qualified Data.Int.Indexed as I
@@ -78,12 +80,20 @@ categoricalChoose weightedElems gen = do
   return $ elems !! index
 
 instance forall n . (KnownNat n) => Arbitrary (W.W n) where
-  arbitrary (Gen g) = W.W <$> R.uniformR (0, (1 `shiftL` nBits) - 1) g
+  arbitrary (Gen g) = do
+    chunks :: [Word64]
+           <- replicateM nChunks (R.uniform g)
+    let (n, _) = F.foldl' shiftOr (0, 0) chunks
+    return (W.W (n .&. mask))
     where
       nBits = fromIntegral (natVal (Proxy :: Proxy n))
+      mask = (1 `shiftL` nBits) - 1
+      (nWords, leftoverBits) = nBits `divMod` 64
+      nChunks = nWords + if leftoverBits == 0 then 0 else 1
+      shiftOr (n, ix) c = (n .|. (fromIntegral c `shiftL` (ix * 64)), ix + 1)
 
 instance forall n . (KnownNat n) => Arbitrary (I.I n) where
-  arbitrary (Gen g) = I.I <$> R.uniformR (-maxVal, maxVal) g
+  arbitrary (Gen g) = I.I <$> R.uniformR (-maxVal - 1, maxVal) g
     where
       nBits = fromIntegral (natVal (Proxy :: Proxy n))
       maxVal = ((1 `shiftL` nBits) - 1) `div` 2

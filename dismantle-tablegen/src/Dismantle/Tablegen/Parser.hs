@@ -12,9 +12,10 @@ import Control.Applicative
 import qualified Control.Monad.State.Strict as St
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
-import Data.Text.Lazy ( Text )
+import Data.Text.Lazy ( Text, unpack )
 import Text.Megaparsec as P
-import qualified Text.Megaparsec.Lexer as L
+import qualified Text.Megaparsec.Char as P
+import qualified Text.Megaparsec.Char.Lexer as L
 
 import Prelude
 
@@ -24,8 +25,8 @@ parseTablegen :: String
               -- ^ The name of the file (used for error messages)
               -> Text
               -- ^ The content of the file to parse
-              -> Either (P.ParseError Char P.Dec) Records
-parseTablegen fname t = St.evalState (P.runParserT p fname t) emptyState
+              -> Either (P.ParseError Char String) Records
+parseTablegen fname t = St.evalState (P.runParserT p fname (unpack t)) emptyState
   where
     emptyState = TGState M.empty
 
@@ -41,7 +42,7 @@ internString s = do
       St.modify' (\st -> st { internTable = M.insert s s (internTable st) })
       return s
 
-type Parser = P.ParsecT P.Dec Text (St.State TGState)
+type Parser = P.ParsecT String String (St.State TGState)
 
 header :: String -> Parser ()
 header hdr = sc >> P.some (P.char '-') >> sc >> symbol hdr >> sc >> P.some (P.char '-') >> sc >> return ()
@@ -289,8 +290,8 @@ symbol s = L.symbol sc s >>= internString
 
 parseInt :: Parser Int
 parseInt =
-  tryChoice [ (fromIntegral . negate) <$> (symbol "-" *> lexeme L.integer)
-            , fromIntegral <$> lexeme L.integer
+  tryChoice [ negate <$> (symbol "-" *> lexeme L.decimal)
+            , lexeme L.decimal
             ]
 
 lexeme :: Parser a -> Parser a
