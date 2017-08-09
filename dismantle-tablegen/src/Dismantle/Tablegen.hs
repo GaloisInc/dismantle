@@ -39,7 +39,14 @@ import Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Debug.Trace
 
-data Parser a = Parser (LBS.ByteString -> a)
+-- Add a number of required bytes to the Parser structure.  Then
+-- `parseInstruction` can check to ensure that the bytestring has enough bytes
+-- before applying the parser
+
+-- | The parser contains the number of bytes occupied by the instruction (and
+-- may be more than the number of bytes required to determine which parser to
+-- invoke).
+data Parser a = Parser Int (LBS.ByteString -> a)
 
 parseInstruction :: BT.ByteTrie (Maybe (Parser a)) -> LBS.ByteString -> (Int, Maybe a)
 parseInstruction trie0 bs0 = go bs0 trie0 bs0 0
@@ -51,7 +58,25 @@ parseInstruction trie0 bs0 = go bs0 trie0 bs0 0
           case BT.lookupByte trie b of
             Left next -> go bs1 next bs' (consumed + 1)
             Right Nothing -> (consumed + 1, Nothing)
-            Right (Just (Parser p)) -> (consumed + 1, Just (p bs1))
+            Right (Just (Parser reqBytes p))
+              | hasAtLeast bs1 reqBytes -> (reqBytes, Just (p bs1))
+              | otherwise -> (consumed + 1, Nothing)
+--              -> (consumed + 1, Just (p bs1))
+
+-- | Check if a 'LBS.ByteString' has at least a certain number of bytes
+--
+-- This is a handy tool, as checking the length of a lazy bytestring is
+-- potentially expensive (O(n/c)).
+--
+-- Unfortunately, this is going to allocate a bit.
+hasAtLeast :: LBS.ByteString -> Int -> Bool
+hasAtLeast bs n =
+  case n of
+    0 -> True
+    _ ->
+      case LBS.uncons bs of
+        Nothing -> False
+        Just (_, rest) -> hasAtLeast rest (n - 1)
 
 parsableInstructions :: ISA -> ISADescriptor -> [InstructionDescriptor]
 parsableInstructions isa = filter (not . isaPseudoInstruction isa) . isaInstructions

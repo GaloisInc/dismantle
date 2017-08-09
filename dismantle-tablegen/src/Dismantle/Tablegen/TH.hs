@@ -204,17 +204,18 @@ mkParserExpr isa i
   | null (canonicalOperands i) = do
     -- If we have no operands, make a much simpler constructor (so we
     -- don't have an unused bytestring parameter)
-    [| Parser (\_ -> $(return con) $(return tag) Nil) |]
+    [| Parser reqBytes (\_ -> $(return con) $(return tag) Nil) |]
   | otherwise = do
     bsName <- newName "bytestring"
     wordName <- newName "w"
     opList <- F.foldrM (addOperandExpr wordName) (ConE 'Nil) (canonicalOperands i)
     let insnCon = con `AppE` tag `AppE` opList
-    [| Parser (\ $(varP bsName) ->
+    [| Parser reqBytes (\ $(varP bsName) ->
                  case $(varE (isaInsnWordFromBytes isa)) $(varE bsName) of
                    $(varP wordName) -> $(return insnCon))
      |]
   where
+    reqBytes = length (idMask i) `div` 8
     tag = ConE (mkName (toTypeName (idMnemonic i)))
     con = ConE 'Instruction
     addOperandExpr wordName od e =
