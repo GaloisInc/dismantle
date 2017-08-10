@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 ARCH=$1
 
 export STACK_YAML=stack-ghc-8.0.2.yaml
