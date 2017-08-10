@@ -13,6 +13,8 @@ module Dismantle.Tablegen.TH (
   genISARandomHelpers
   ) where
 
+import GHC.TypeLits ( Symbol )
+
 import Data.Monoid ((<>))
 import Data.Bits
 import qualified Data.ByteString as BS
@@ -297,7 +299,9 @@ mkOpcodeType isa = do
   where
     opVarName = mkName "o"
     shapeVarName = mkName "sh"
-    tyVars = [PlainTV opVarName, PlainTV shapeVarName]
+    tyVars = [ KindedTV opVarName (ArrowT `AppT` ConT ''Symbol `AppT` StarT)
+             , KindedTV shapeVarName (ListT `AppT` ConT ''Symbol)
+             ]
     cons = map mkOpcodeCon (isaInstructions isa)
 
 genISARandomHelpers :: ISA -> FilePath -> Q [Dec]
@@ -428,7 +432,7 @@ opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
 mkOperandType :: ISA -> ISADescriptor -> Q [DecQ]
 mkOperandType isa desc = do
   let cons = map (mkOperandCon isa) (isaOperands desc)
-  return [ dataDCompat (cxt []) operandTypeName [] cons []
+  return [ dataDCompat (cxt []) operandTypeName [KindedTV (mkName "tp") (ConT ''Symbol)] cons []
          , standaloneDerivD (cxt []) [t| Show ($(conT operandTypeName) $(varT (mkName "tp"))) |]
          , mkOperandShowFInstance
          ]
