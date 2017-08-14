@@ -84,7 +84,7 @@ instance forall n . (KnownNat n) => Arbitrary (W.W n) where
     chunks :: [Word64]
            <- replicateM nChunks (R.uniform g)
     let (n, _) = F.foldl' shiftOr (0, 0) chunks
-    return (W.W (n .&. mask))
+    return (W.w (n .&. mask))
     where
       nBits = fromIntegral (natVal (Proxy :: Proxy n))
       mask = (1 `shiftL` nBits) - 1

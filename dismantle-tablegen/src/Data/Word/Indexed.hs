@@ -1,13 +1,20 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
-module Data.Word.Indexed ( W(..), width ) where
+module Data.Word.Indexed ( W, w, unW, width ) where
 
 import GHC.TypeLits
 import Data.Bits
-import Numeric.Natural ( Natural )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
-newtype W (n :: Nat) = W { unW :: Natural } deriving (Eq,Ord)
+-- | Bit vectors of width @n@ with unsigned arithmetic ops.
+--
+-- Use 'w' or 'fromIntegral' to construct 'W' values, and use 'unW' to
+-- destruct them.
+newtype W (n :: Nat) = W { unW :: Integer } deriving (Eq,Ord)
+
+-- | Smart constructor for 'W' values.
+w :: KnownNat n => Integer -> W n
+w = fromInteger
 
 instance KnownNat n => Show (W n) where
   showsPrec _ me@(W n) = showChar '(' . shows n
@@ -45,14 +52,17 @@ rotL me@(W x) n =
       lower   = W (shiftR shifted (width me))
   in upper .|. lower
 
+-- | Unsigned arithmetic, with a 2's complement representation of
+-- "negative" values.
 instance KnownNat n => Num (W n) where
-  W x + W y     = fromIntegral (x + y)
-  W x * W y     = fromIntegral (x * y)
-  negate (W x)  = fromIntegral (negate x)
+  W x + W y     = fromInteger (x + y)
+  W x * W y     = fromInteger (x * y)
+  negate (W x)  = fromInteger (complement x + 1)
   abs           = id
   signum (W x)  = W (if x == 0 then 0 else 1)
   fromInteger n = res
-    where res = W (fromIntegral n .&. (shiftL 1 (width res) - 1))
+    where res = W (nonNeg .&. (shiftL 1 (width res) - 1))
+          nonNeg = if n < 0 then complement (abs n) + 1 else n
 
 instance KnownNat n => PP.Pretty (W n) where
   pPrint = PP.integer . fromIntegral . unW

@@ -397,7 +397,7 @@ ppcOperandPayloadTypes =
                                        }
     unsignedImmediate :: forall (n :: Nat) . (KnownNat n) => Proxy n -> OperandPayload
     unsignedImmediate p = OperandPayload { opTypeT = [t| I.W $(return (LitT (NumTyLit (natVal p)))) |]
-                                         , opConE = Just [| I.W |]
+                                         , opConE = Just [| I.w |]
                                          , opWordE = Just [| fromIntegral . I.unW |]
                                          }
     vecRegister = OperandPayload { opTypeT = [t| PPC.VR |]
