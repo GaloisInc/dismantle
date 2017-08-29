@@ -37,10 +37,10 @@ instance KnownNat n => Bits (W n) where
 
   rotate me n = rotL me amt
     where
-    amt | n >= 0    = if n < w then n else n'
-        | otherwise = w + (if n > negate w then n else n')
-    w               = width me
-    n'              = mod n w
+    amt | n >= 0    = if n < w' then n else n'
+        | otherwise = w' + (if n > negate w' then n else n')
+    w'              = width me
+    n'              = mod n w'
 
 width :: KnownNat n => W n -> Int
 width = fromIntegral . natVal
