@@ -14,6 +14,7 @@ module Data.Parameterized.ShapedList
     -- * Indexing
   , Index(..)
   , indexShapedList
+  , updateShapedList
   , indexAsInt
   , fmapFCIndexed
   , foldrFCIndexed
@@ -124,6 +125,15 @@ indexShapedList :: ShapedList f sh -> Index sh s -> f s
 -- pattern-matching is exhaustive.
 indexShapedList vals IndexHere = case vals of x :> _ -> x
 indexShapedList vals (IndexThere th) = case vals of _ :> rest -> indexShapedList rest th
+
+-- | Update the 'ShapedList' at an index
+updateShapedList :: ShapedList f sh -> Index sh s -> (f s -> f s) -> ShapedList f sh
+updateShapedList vals IndexHere upd =
+  case vals of
+    x :> rest -> upd x :> rest
+updateShapedList vals (IndexThere th) upd =
+  case vals of
+    x :> rest -> x :> updateShapedList rest th upd
 
 indexAsInt :: Index sh tp -> Int
 indexAsInt ix =
