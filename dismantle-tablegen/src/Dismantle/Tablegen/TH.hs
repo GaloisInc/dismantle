@@ -10,6 +10,7 @@
 module Dismantle.Tablegen.TH (
   captureDictionaries,
   genISA,
+  genInstances,
   genISARandomHelpers
   ) where
 
@@ -38,6 +39,7 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 import Data.Parameterized.HasRepr ( HasRepr(..) )
 import Data.Parameterized.ShapedList ( ShapedList(..), ShapeRepr )
 import Data.Parameterized.Some ( Some(..) )
+import qualified Data.Parameterized.TH.GADT as PTH
 import Data.Parameterized.Witness ( Witness(..) )
 import Data.EnumF ( EnumF(..), enumCompareF )
 import qualified Data.Set.NonEmpty as NES
@@ -292,7 +294,7 @@ mkOpcodeType isa = do
          , standaloneDerivD (cxt []) [t| Ord ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
          , mkEnumFInstance isa
          , mkOpcodeShowFInstance
-         , mkOrdFInstance
+         , mkOpcodeOrdFInstance
          , mkTestEqualityInstance isa
          , mkHasReprInstance isa
          ]
@@ -375,8 +377,8 @@ mkTestEqualityInstance desc = do
       clause [conP conName [], conP conName []] (normalB [| Just E.Refl |]) []
 
 -- | Create an instance of 'OrdF' for the opcode type
-mkOrdFInstance :: Q Dec
-mkOrdFInstance = do
+mkOpcodeOrdFInstance :: Q Dec
+mkOpcodeOrdFInstance = do
   [ordf] <- [d|
             instance OrdF ($(conT opcodeTypeName) $(conT operandTypeName)) where
               compareF = enumCompareF
@@ -449,6 +451,28 @@ mkOperandCon isa (OperandType origName) = do
         Just pd -> pd
     n = mkName name
     ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
+
+genInstances :: Q [Dec]
+genInstances = do
+  teq <- mkOperandTestEqInstance
+  ordf <- mkOperandOrdFInstance
+  return [teq, ordf]
+
+mkOperandOrdFInstance :: Q Dec
+mkOperandOrdFInstance = do
+  [ordf] <- [d|
+             instance OrdF $(conT operandTypeName) where
+               compareF = $(PTH.structuralTypeOrd (conT operandTypeName) [])
+              |]
+  return ordf
+
+mkOperandTestEqInstance :: Q Dec
+mkOperandTestEqInstance = do
+  [teq] <- [d|
+            instance E.TestEquality $(conT operandTypeName) where
+              testEquality = $(PTH.structuralTypeEquality (conT operandTypeName) [])
+             |]
+  return teq
 
 -- | Create an instance of 'ShowF' for the operand type
 mkOperandShowFInstance :: Q Dec

@@ -24,7 +24,13 @@ import Data.Parameterized.ShapedList ( ShapedList(..) )
 
 import Dismantle.ARM.ISA ( isa )
 import Dismantle.Instruction
-import Dismantle.Tablegen.TH ( genISA )
+import Dismantle.Tablegen.TH ( genISA, genInstances )
 import Dismantle.ARM.Operands (mkPred)
 
 $(genISA isa "data/ARM.tgen")
+$(return [])
+
+-- We need a separate call to generate some instances, since the helper(s) that
+-- create these instances use reify, which we can't call until we flush the TH
+-- generation using the @$(return [])@ trick.
+$(genInstances)

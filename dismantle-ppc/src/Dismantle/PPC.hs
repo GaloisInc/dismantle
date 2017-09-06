@@ -25,6 +25,12 @@ import Data.Parameterized.ShapedList ( ShapedList(..) )
 import Dismantle.Instruction
 import Dismantle.PPC.Operands
 import Dismantle.PPC.ISA ( isa )
-import Dismantle.Tablegen.TH ( genISA )
+import Dismantle.Tablegen.TH ( genISA, genInstances )
 
 $(genISA isa "data/PPC.tgen")
+$(return [])
+
+-- We need a separate call to generate some instances, since the helper(s) that
+-- create these instances use reify, which we can't call until we flush the TH
+-- generation using the @$(return [])@ trick.
+$(genInstances)
