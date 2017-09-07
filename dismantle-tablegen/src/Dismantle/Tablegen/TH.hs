@@ -46,7 +46,7 @@ import qualified Data.Set.NonEmpty as NES
 import Data.Parameterized.Classes ( OrdF(..), ShowF(..), KnownRepr(..) )
 import Dismantle.Arbitrary as A
 import Dismantle.Instruction
-import Dismantle.Instruction.Random ( ArbitraryOperands(..), arbitraryShapedList )
+import Dismantle.Instruction.Random ( ArbitraryOperands(..), ArbitraryOperand(..), arbitraryShapedList )
 import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
@@ -313,15 +313,16 @@ genISARandomHelpers isa path = do
   opcodeName <- newName "opcode"
   let caseBody = caseE (varE opcodeName) (map (mkOpListCase genName) (isaInstructions desc))
   let f = funD 'arbitraryOperands [clause [varP genName, varP opcodeName] (normalB caseBody) []]
-  aoInst <- instanceD (return []) [t| ArbitraryOperands $(conT opcodeTypeName) $(conT operandTypeName) |] [f]
-  arbitraryInstances <- mapM mkArbitraryOperandInstance (isaOperands desc)
-  return (aoInst : arbitraryInstances)
+  arbOperandsInst <- instanceD (return []) [t| ArbitraryOperands $(conT opcodeTypeName) $(conT operandTypeName) |] [f]
+  arbitraryInstances <- mapM mkArbitraryInstanceForOperand (isaOperands desc)
+  arbOperandInst <- mkArbitraryOperandInstance desc
+  return (arbOperandsInst : arbOperandInst : arbitraryInstances)
   where
     mkOpListCase genName i =
       let conName = mkName (toTypeName (idMnemonic i))
       in match (conP conName []) (normalB [| arbitraryShapedList $(varE genName) |]) []
 
-    mkArbitraryOperandInstance (OperandType origOperandName) = do
+    mkArbitraryInstanceForOperand (OperandType origOperandName) = do
       let symbol = toTypeName origOperandName
           name = mkName symbol
       genName <- newName "gen"
@@ -329,6 +330,19 @@ genISARandomHelpers isa path = do
           body = [| $(conE name) <$> A.arbitrary $(varE genName) |]
           fun = funD 'A.arbitrary [clause [varP genName] (normalB body) []]
       instanceD (return []) ty [fun]
+
+mkArbitraryOperandInstance :: ISADescriptor -> Q Dec
+mkArbitraryOperandInstance desc = do
+  genName <- newName "gen"
+  operandName <- newName "operand"
+  let caseBody = caseE (varE operandName) (map (mkOpListCase genName) (isaOperands desc))
+  let f = funD 'arbitraryOperand [clause [varP genName, varP operandName] (normalB caseBody) []]
+  instanceD (return []) [t| ArbitraryOperand $(conT operandTypeName) |] [f]
+  where
+    mkOpListCase genName (OperandType origOperandName) = do
+      let symbol = toTypeName origOperandName
+          name = mkName symbol
+      match (recP name []) (normalB [| A.arbitrary $(varE genName) |]) []
 
 mkEnumFInstance :: ISADescriptor -> Q Dec
 mkEnumFInstance desc = do
