@@ -126,12 +126,13 @@ import Data.Bits
 import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.Word ( Word8, Word16, Word32 )
-import Data.Int (Int32)
+import Data.Int ( Int16, Int32 )
 
 import Numeric (showHex)
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
+import qualified Dismantle.Arbitrary as A
 import Dismantle.Tablegen.TH.Pretty
 
 -- | A bit field description and functions for using it
@@ -977,3 +978,109 @@ soRegRegToBits (SoRegReg (GPR reg1) (GPR reg2) ty) =
     insert soRegRegShiftTypeField ty $
     insert soRegRegReg1Field reg1 $
     insert soRegRegReg2Field reg2 0
+
+instance A.Arbitrary GPR where
+  arbitrary g = GPR <$> A.uniformR (0, 15) g
+
+instance A.Arbitrary DPR where
+  arbitrary g = DPR <$> A.uniformR (0, 31) g
+
+instance A.Arbitrary QPR where
+  arbitrary g = QPR <$> A.uniformR (0, 15) g
+
+instance A.Arbitrary QQPR where
+  arbitrary g = (QQPR . (*2)) <$> A.uniformR (0, 7) g
+
+instance A.Arbitrary AddrModeImm12 where
+  arbitrary g = AddrModeImm12 <$> A.arbitrary g <*> A.arbitrary g
+
+instance A.Arbitrary CoprocRegister where
+  arbitrary g = CoprocRegister <$> A.uniformR (0, 15) g
+
+instance A.Arbitrary Opcode where
+  arbitrary g = Opcode <$> A.uniformR (0, 7) g
+
+instance A.Arbitrary AddrMode3 where
+  arbitrary g = AddrMode3 <$> A.arbitrary g
+                          <*> A.arbitrary g
+                          <*> A.arbitrary g
+                          <*> A.arbitrary g
+
+instance A.Arbitrary AM3Offset where
+  arbitrary g = AM3Offset <$> A.arbitrary g
+                          <*> A.arbitrary g
+                          <*> A.arbitrary g
+
+-- FIXME: This is probably not right.  Not sure what the real range of the
+-- stored immediate is
+instance A.Arbitrary Imm8S4 where
+  arbitrary g = Imm8S4 <$> A.arbitrary g
+
+-- FIXME: Probably also not right
+instance A.Arbitrary ShiftImm where
+  arbitrary g = ShiftImm <$> A.arbitrary g <*> A.arbitrary g
+
+instance A.Arbitrary SvcOperand where
+  arbitrary g = SvcOperand <$> A.arbitrary g
+
+instance A.Arbitrary RegWithAdd where
+  arbitrary g = RegWithAdd <$> A.arbitrary g <*> A.arbitrary g
+
+instance A.Arbitrary Am2OffsetImm where
+  arbitrary g = Am2OffsetImm <$> A.arbitrary g
+
+instance A.Arbitrary Am2OffsetReg where
+  arbitrary g = Am2OffsetReg <$> A.arbitrary g
+                             <*> A.arbitrary g
+                             <*> A.arbitrary g
+                             <*> A.arbitrary g
+
+instance A.Arbitrary AddrMode5 where
+  arbitrary g = AddrMode5 <$> A.arbitrary g <*> A.arbitrary g
+
+instance A.Arbitrary LdstSoReg where
+  arbitrary g = LdstSoReg <$> A.arbitrary g
+                          <*> A.arbitrary g
+                          <*> A.arbitrary g
+                          <*> A.arbitrary g
+
+instance A.Arbitrary ModImm where
+  arbitrary g = ModImm <$> A.arbitrary g
+                       <*> A.arbitrary g
+                       <*> A.arbitrary g
+
+instance A.Arbitrary Imm5 where
+  arbitrary g = Imm5 <$> A.uniformR (0, 31) g
+
+instance A.Arbitrary BranchTarget where
+  arbitrary g = BranchTarget <$> A.arbitrary g
+
+instance A.Arbitrary BranchExecuteTarget where
+  arbitrary g = BranchExecuteTarget <$> A.arbitrary g
+
+instance A.Arbitrary MSRMask where
+  arbitrary g = MSRMask <$> A.arbitrary g <*> A.arbitrary g
+
+instance A.Arbitrary Imm16 where
+  arbitrary g = (Imm16 . fromIntegral) <$> A.uniformR (minBound :: Int16, maxBound :: Int16) g
+
+instance A.Arbitrary Pred where
+  arbitrary g = Pred <$> A.uniformR (0, 16) g
+
+instance A.Arbitrary AdrLabel where
+  arbitrary g = AdrLabel <$> A.arbitrary g <*> A.arbitrary g
+
+instance A.Arbitrary SoRegImm where
+  arbitrary g = SoRegImm <$> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g
+
+instance A.Arbitrary SoRegReg where
+  arbitrary g = SoRegReg <$> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g
+
+instance A.Arbitrary Bit where
+  arbitrary g = Bit <$> A.uniformR (0, 1) g
+
+instance A.Arbitrary SBit where
+  arbitrary g = SBit <$> A.uniformR (0, 1) g
+
+instance A.Arbitrary Reglist where
+  arbitrary g = Reglist <$> A.arbitrary g

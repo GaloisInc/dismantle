@@ -19,10 +19,10 @@ import GHC.TypeLits
 import Control.Monad ( replicateM )
 import Data.Bits
 import qualified Data.Foldable as F
-import Data.Int ( Int16 )
+import Data.Int ( Int16, Int32 )
 import Data.Proxy ( Proxy(..) )
 import qualified Data.Set as S
-import Data.Word ( Word16, Word64 )
+import Data.Word ( Word8, Word16, Word32, Word64 )
 import qualified Data.Vector.Unboxed as V
 
 import qualified Data.Int.Indexed as I
@@ -98,11 +98,23 @@ instance forall n . (KnownNat n) => Arbitrary (I.I n) where
       nBits = fromIntegral (natVal (Proxy :: Proxy n))
       maxVal = ((1 `shiftL` nBits) - 1) `div` 2
 
+instance Arbitrary Integer where
+  arbitrary (Gen g) = fromIntegral <$> R.uniformR (minBound :: Int, maxBound :: Int) g
+
 instance Arbitrary Int16 where
   arbitrary (Gen g) = R.uniformR (minBound, maxBound :: Int16) g
 
+instance Arbitrary Int32 where
+  arbitrary (Gen g) = R.uniformR (minBound, maxBound :: Int32) g
+
+instance Arbitrary Word8 where
+  arbitrary (Gen g) = R.uniformR (0, maxBound :: Word8) g
+
 instance Arbitrary Word16 where
   arbitrary (Gen g) = R.uniformR (0, maxBound :: Word16) g
+
+instance Arbitrary Word32 where
+  arbitrary (Gen g) = R.uniformR (0, maxBound :: Word32) g
 
 withGen :: (Gen -> IO a) -> IO a
 withGen k = R.withSystemRandom $ \g -> k (Gen g)

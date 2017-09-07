@@ -14,6 +14,7 @@ cabal-version:       >=1.10
 library
   exposed-modules: Dismantle.ARM
                    Dismantle.ARM.ISA
+                   Dismantle.ARM.Random
   other-modules: Dismantle.ARM.Operands
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
