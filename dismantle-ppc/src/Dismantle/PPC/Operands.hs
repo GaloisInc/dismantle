@@ -314,7 +314,7 @@ instance A.Arbitrary FR where
   arbitrary g = FR <$> A.uniformR (0, 31) g
 
 instance A.Arbitrary GPR where
-  arbitrary g = GPR <$> A.uniformR (0, 31) g
+  arbitrary g = GPR <$> A.uniformR (1, 8) g
 
 instance A.Arbitrary VR where
   arbitrary g = VR <$> A.uniformR (0, 31) g
