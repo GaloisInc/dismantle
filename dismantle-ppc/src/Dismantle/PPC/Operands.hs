@@ -35,18 +35,19 @@ module Dismantle.PPC.Operands (
   signedImmediateToWord32
   ) where
 
-import GHC.TypeLits
+import           GHC.TypeLits
 
-import Data.Bits
-import Data.Int ( Int16, Int32 )
-import Data.Monoid
-import Data.Proxy ( Proxy(..) )
-import Data.Word ( Word8, Word16, Word32 )
+import           Data.Bits
+import           Data.Int ( Int16, Int32 )
+import           Data.Monoid
+import           Data.Proxy ( Proxy(..) )
+import           Data.Word ( Word8, Word16, Word32 )
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import qualified Data.Int.Indexed as I
-import Dismantle.Tablegen.TH.Pretty ()
+import qualified Data.Set.NonEmpty as NES
+import           Dismantle.Tablegen.TH.Pretty ()
 import qualified Dismantle.Arbitrary as A
 
 -- | Condition register field selector, alternate form
@@ -314,7 +315,7 @@ instance A.Arbitrary FR where
   arbitrary g = FR <$> A.uniformR (0, 31) g
 
 instance A.Arbitrary GPR where
-  arbitrary g = GPR <$> A.uniformR (1, 8) g
+  arbitrary g = GPR <$> A.choose (NES.fromList 0 [3..10]) g
 
 instance A.Arbitrary VR where
   arbitrary g = VR <$> A.uniformR (0, 31) g
