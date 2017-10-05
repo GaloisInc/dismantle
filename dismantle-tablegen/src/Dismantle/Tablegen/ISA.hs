@@ -109,6 +109,10 @@ data ISA =
       , isaInsnWordToBytes :: Name
       -- ^ The function to use to turn the assembly word (e.g., a
       -- Word32) into a bytestring.
+      , isaMapOperandPayloadType :: String -> String
+      -- ^ Convert from one operand payload type to another; this is useful to
+      -- let us treat operand types that tablegen treats as distinct uniformly.
+      -- We use this for PowerPC to treat the 'g8rc' register type as 'gprc'.
       }
 
 

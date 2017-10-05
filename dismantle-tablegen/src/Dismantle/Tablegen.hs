@@ -333,7 +333,7 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
                           let arrVals :: [(OBit, IBit)]
                               arrVals = swap <$> bitPositions
                               desc = OperandDescriptor { opName = var
-                                                       , opType = OperandType klass
+                                                       , opType = OperandType (isaMapOperandPayloadType isa klass)
                                                        , opChunks = groupByChunk (L.sortOn snd arrVals)
                                                        }
                           return (desc : operands)

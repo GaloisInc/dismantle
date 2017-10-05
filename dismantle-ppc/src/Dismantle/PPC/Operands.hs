@@ -28,9 +28,6 @@ module Dismantle.PPC.Operands (
   MemRR(..),
   mkMemRR,
   memRRToBits,
-  SPEDis(..),
-  mkSPEDis,
-  speDisToBits,
   truncBits,
   signedImmediateToWord32
   ) where
@@ -124,36 +121,6 @@ mkAbsBranchTarget w = ABT (w `shiftL` 2)
 
 absBranchTargetToBits :: AbsBranchTarget -> Word32
 absBranchTargetToBits (ABT w) = w `shiftR` 2
-
--- | A vector memory reference for the Signal Processing Engine (SPE) extensions
---
--- The reference is defined as a register reference and a scaled displacement
---
--- The reference is to an Effective Address EA = (RA|0) + (disp*scale)
---
--- The displacement is stored scaled.  It must be a multiple of the type-level
--- nat
-data SPEDis (scale :: Nat) = SPEDis (Maybe GPR) Word16
-  deriving (Eq, Ord, Show)
-
-mkSPEDis :: forall (s :: Nat) . (KnownNat s) => Word32 -> SPEDis s
-mkSPEDis w
-  | reg == 0 = SPEDis Nothing (scale * d)
-  | otherwise = SPEDis (Just (GPR reg)) (scale * d)
-  where
-    mask = (1 `shiftL` 5) - 1
-    d = fromIntegral (w .&. mask)
-    reg = fromIntegral ((w `shiftL` 5) .&. mask)
-    scale = fromInteger (natVal (Proxy :: Proxy s))
-
-speDisToBits :: forall (s :: Nat) . (KnownNat s) => SPEDis s -> Word32
-speDisToBits spe =
-  case spe of
-    SPEDis Nothing d -> fromIntegral (d `div` scale)
-    SPEDis (Just (GPR reg)) d ->
-      fromIntegral (reg `shiftL` 5) .|. fromIntegral (d `div` scale)
-  where
-    scale = fromInteger (natVal (Proxy :: Proxy s))
 
 -- | Memory addressed by two registers, RA and RB
 --
@@ -290,12 +257,6 @@ instance PP.Pretty MemRR where
       Nothing -> PP.text "0, " <> PP.pPrint rb
       Just ra -> PP.pPrint ra <> PP.text ", " <> PP.pPrint rb
 
-instance (KnownNat s) => PP.Pretty (SPEDis s) where
-  pPrint (SPEDis mreg d) =
-    case mreg of
-      Nothing -> PP.int (fromIntegral d)
-      Just r -> PP.int (fromIntegral d) <> PP.parens (PP.pPrint r)
-
 instance PP.Pretty AbsBranchTarget where
   pPrint (ABT w) = PP.pPrint w
 
@@ -354,23 +315,3 @@ instance A.Arbitrary MemRIX where
       0 -> MemRIX Nothing <$> A.arbitrary g
       _ -> MemRIX (Just (GPR ano)) <$> A.arbitrary g
 
-instance A.Arbitrary (SPEDis 2) where
-  arbitrary g = do
-    ano <- A.uniformR (0, 31) g
-    case ano of
-      0 -> SPEDis Nothing <$> A.arbitrary g
-      _ -> SPEDis (Just (GPR ano)) <$> A.arbitrary g
-
-instance A.Arbitrary (SPEDis 4) where
-  arbitrary g = do
-    ano <- A.uniformR (0, 31) g
-    case ano of
-      0 -> SPEDis Nothing <$> A.arbitrary g
-      _ -> SPEDis (Just (GPR ano)) <$> A.arbitrary g
-
-instance A.Arbitrary (SPEDis 8) where
-  arbitrary g = do
-    ano <- A.uniformR (0, 31) g
-    case ano of
-      0 -> SPEDis Nothing <$> A.arbitrary g
-      _ -> SPEDis (Just (GPR ano)) <$> A.arbitrary g

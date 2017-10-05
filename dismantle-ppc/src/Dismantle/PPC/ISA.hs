@@ -46,6 +46,7 @@ isa = ISA { isaName = "PPC"
           , isaInsnWordFromBytes = 'asWord32
           , isaInsnWordToBytes = 'fromWord32
           , isaInsnAssembleType = ''Word32
+          , isaMapOperandPayloadType = mapOperandPayloadType
           }
   where
     ppcIgnoreOperand op = op `elem` [ "ptr_rc_nor0:$ea_res"
@@ -64,9 +65,14 @@ isa = ISA { isaName = "PPC"
                   hasNamedString "DecoderNamespace" "" d &&
                   not (Metadata "Pseudo" `elem` defMetadata d) &&
                   not (L.isPrefixOf "EV" (defName d)) &&
-                  L.last (defName d) /= '8'
+                  not ('8' `elem` defName d)
 
     ppcPseudo = idPseudo
+
+    mapOperandPayloadType s =
+      case s of
+        "g8rc" -> "gprc"
+        _ -> s
 
 ppcFormOverrides :: [(String, FormOverride)]
 ppcFormOverrides = [ ("BForm", ppcBForm)
@@ -313,19 +319,14 @@ ppcOperandPayloadTypes =
   , ("Abscalltarget", absoluteAddress)
   , ("Tlscall", relativeOffset)
   , ("Tlscall32", relativeOffset)
-  , ("Spe8dis", speDIS8)
-  , ("Spe4dis", speDIS4)
-  , ("Spe2dis", speDIS2)
   , ("Crbitm", crbitm)  -- I think these following 3 are correct now.
   , ("Crbitrc", crbitrc)
   , ("Crrc", crrc) -- 4 bit
   , ("F4rc", floatRegister)
   , ("F8rc", floatRegister)
-  , ("G8rc", gpRegister)
   , ("Gprc", gpRegister)
     -- These two variants are special for instructions that treat r0 specially
   , ("Gprc_nor0", gpRegister)
-  , ("G8rc_nox0", gpRegister)
   , ("I1imm", signedImmediate (Proxy :: Proxy 1))
   , ("I32imm", signedImmediate (Proxy :: Proxy 32)) -- fixme
   , ("S16imm", s16Imm)
@@ -426,18 +427,3 @@ ppcOperandPayloadTypes =
                            , opConE = Just (varE 'PPC.mkMemRR)
                            , opWordE = Just (varE 'PPC.memRRToBits)
                            }
-
-    speDIS2 = OperandPayload { opTypeT = [t| PPC.SPEDis 2 |]
-                             , opConE = Just (varE 'PPC.mkSPEDis)
-                             , opWordE = Just (varE 'PPC.speDisToBits)
-                             }
-
-    speDIS4 = OperandPayload { opTypeT = [t| PPC.SPEDis 4 |]
-                             , opConE = Just (varE 'PPC.mkSPEDis)
-                             , opWordE = Just (varE 'PPC.speDisToBits)
-                             }
-
-    speDIS8 = OperandPayload { opTypeT = [t| PPC.SPEDis 8 |]
-                             , opConE = Just (varE 'PPC.mkSPEDis)
-                             , opWordE = Just (varE 'PPC.speDisToBits)
-                             }

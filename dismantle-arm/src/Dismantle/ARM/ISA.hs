@@ -40,6 +40,7 @@ isa = ISA { isaName = "ARM"
           , isaInsnAssembleType = ''Word32
           , isaIgnoreOperand = const False
           , isaFormOverrides = overrides
+          , isaMapOperandPayloadType = id
           }
   where
     gpRegister = OperandPayload { opTypeT = [t| ARM.GPR |]
