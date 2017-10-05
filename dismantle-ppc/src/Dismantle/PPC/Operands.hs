@@ -19,6 +19,12 @@ module Dismantle.PPC.Operands (
   AbsBranchTarget(..),
   mkAbsBranchTarget,
   absBranchTargetToBits,
+  CondBranchTarget(..),
+  mkCondBranchTarget,
+  condBranchTargetToBits,
+  AbsCondBranchTarget(..),
+  mkAbsCondBranchTarget,
+  absCondBranchTargetToBits,
   MemRI(..),
   mkMemRI,
   memRIToBits,
@@ -111,20 +117,40 @@ newtype AbsBranchTarget = ABT { unACT :: Word32 }
   deriving (Eq, Ord, Show)
 
 mkBranchTarget :: Word32 -> BranchTarget
-mkBranchTarget w = BT (fromIntegral (w `shiftL` 2))
+mkBranchTarget = BT . fromIntegral . (.&. 0xffffff)
 
 branchTargetToBits :: BranchTarget -> Word32
-branchTargetToBits (BT i) = fromIntegral i `shiftR` 2
+branchTargetToBits = (.&. 0xffffff) . fromIntegral . unCT
 
 mkAbsBranchTarget :: Word32 -> AbsBranchTarget
-mkAbsBranchTarget w = ABT (w `shiftL` 2)
+mkAbsBranchTarget = ABT . (.&. 0xffffff)
 
 absBranchTargetToBits :: AbsBranchTarget -> Word32
-absBranchTargetToBits (ABT w) = w `shiftR` 2
+absBranchTargetToBits = (.&. 0xffffff) . unACT
+
+-- | Conditional branch targets are 14 bit signed offsets from the current IP.
+newtype CondBranchTarget = CBT { unCBT :: Int32 }
+  deriving (Eq, Ord, Show)
+
+newtype AbsCondBranchTarget = ACBT { unACBT :: Word32 }
+  deriving (Eq, Ord, Show)
+
+mkCondBranchTarget :: Word32 -> CondBranchTarget
+mkCondBranchTarget = CBT . fromIntegral . (.&. 0x3fff)
+
+condBranchTargetToBits :: CondBranchTarget -> Word32
+condBranchTargetToBits = (.&. 0x3fff) . fromIntegral . unCBT
+
+mkAbsCondBranchTarget :: Word32 -> AbsCondBranchTarget
+mkAbsCondBranchTarget = ACBT . (.&. 0x3fff)
+
+absCondBranchTargetToBits :: AbsCondBranchTarget -> Word32
+absCondBranchTargetToBits = (.&. 0x3fff) . unACBT
 
 -- | Memory addressed by two registers, RA and RB
 --
--- The Effective Address (EA) is (RA|0) + (RB)
+-- NOTE: Sometimes the Effective Address (EA) is (RA|0) + (RB), but other times
+-- it is just (RA) + (RB)
 data MemRR = MemRR (Maybe GPR) GPR
   deriving (Eq, Ord, Show)
 
@@ -258,10 +284,16 @@ instance PP.Pretty MemRR where
       Just ra -> PP.pPrint ra <> PP.text ", " <> PP.pPrint rb
 
 instance PP.Pretty AbsBranchTarget where
-  pPrint (ABT w) = PP.pPrint w
+  pPrint (ABT w) = PP.pPrint (w `shiftL` 2)
 
 instance PP.Pretty BranchTarget where
-  pPrint (BT i) = PP.pPrint i
+  pPrint (BT i) = PP.pPrint (i `shiftL` 2)
+
+instance PP.Pretty AbsCondBranchTarget where
+  pPrint (ACBT w) = PP.pPrint (w `shiftL` 2)
+
+instance PP.Pretty CondBranchTarget where
+  pPrint (CBT i) = PP.pPrint (i `shiftL` 2)
 
 instance A.Arbitrary CRBitM where
   arbitrary g = CRBitM <$> A.uniformR (0, 7) g
@@ -293,6 +325,16 @@ instance A.Arbitrary BranchTarget where
   arbitrary g = BT <$> A.uniformR (-maxVal, maxVal) g
     where
       maxVal = ((1 `shiftL` 24) - 1) `div` 2
+
+instance A.Arbitrary AbsCondBranchTarget where
+  arbitrary g = mkAbsCondBranchTarget <$> A.uniformR (-maxVal, maxVal) g
+    where
+      maxVal = ((1 `shiftL` 14) - 1)
+
+instance A.Arbitrary CondBranchTarget where
+  arbitrary g = mkCondBranchTarget <$> A.uniformR (-maxVal, maxVal) g
+    where
+      maxVal = ((1 `shiftL` 14) - 1) `div` 2
 
 instance A.Arbitrary MemRR where
   arbitrary g = do

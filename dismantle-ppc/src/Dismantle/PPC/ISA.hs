@@ -311,9 +311,9 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
                             ]
 
 ppcOperandPayloadTypes =
-  [ ("Abscondbrtarget", absoluteAddress)
+  [ ("Abscondbrtarget", condAbsoluteAddress)
   , ("Absdirectbrtarget", absoluteAddress)
-  , ("Condbrtarget", relativeOffset)
+  , ("Condbrtarget", condRelativeOffset)
   , ("Directbrtarget", relativeOffset)
   , ("Calltarget", relativeOffset)
   , ("Abscalltarget", absoluteAddress)
@@ -371,6 +371,14 @@ ppcOperandPayloadTypes =
                                     , opConE = Just (varE 'PPC.mkBranchTarget)
                                     , opWordE = Just (varE 'PPC.branchTargetToBits)
                                     }
+    condAbsoluteAddress = OperandPayload { opTypeT = [t| PPC.AbsCondBranchTarget |]
+                                         , opConE = Just (varE 'PPC.mkAbsCondBranchTarget)
+                                         , opWordE = Just (varE 'PPC.absCondBranchTargetToBits)
+                                         }
+    condRelativeOffset = OperandPayload { opTypeT = [t| PPC.CondBranchTarget |]
+                                        , opConE = Just (varE 'PPC.mkCondBranchTarget)
+                                        , opWordE = Just (varE 'PPC.condBranchTargetToBits)
+                                        }
     gpRegister = OperandPayload { opTypeT = [t| PPC.GPR |]
                                 , opConE = Just (conE 'PPC.GPR)
                                 , opWordE = Just [| fromIntegral . PPC.unGPR |]
