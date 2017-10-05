@@ -54,10 +54,16 @@ isa = ISA { isaName = "PPC"
                                     , "crrc:$ret"
                                     ]
 
-
+    -- The instructions we actually want to generate opcodes for.
+    --
+    -- We restrict ourselves to non-pseudo instructions declaring themselves in
+    -- the PPC namespace.  Furthermore, we exclude the SPE (Streaming Processor
+    -- Extensions) instructions because they are uncommon; those instructions
+    -- all have an EV prefix.
     ppcFilter d = hasNamedString "Namespace" "PPC" d &&
                   hasNamedString "DecoderNamespace" "" d &&
                   not (Metadata "Pseudo" `elem` defMetadata d) &&
+                  not (L.isPrefixOf "EV" (defName d)) &&
                   L.last (defName d) /= '8'
 
     ppcPseudo = idPseudo
