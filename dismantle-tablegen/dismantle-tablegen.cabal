@@ -30,6 +30,7 @@ library
                    Data.EnumF
                    Data.Int.Indexed
                    Data.Parameterized.HasRepr
+                   Data.Parameterized.Lift
                    Data.Parameterized.ShapedList
                    Data.Parameterized.Witness
                    Data.Set.NonEmpty

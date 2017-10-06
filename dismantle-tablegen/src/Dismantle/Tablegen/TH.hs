@@ -32,10 +32,11 @@ import Data.Word ( Word8 )
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
 import Language.Haskell.TH.Datatype
-import Language.Haskell.TH.Syntax ( lift, qAddDependentFile, Name(..), OccName(..) )
+import Language.Haskell.TH.Syntax ( Lift(..), qAddDependentFile, Name(..), OccName(..) )
 import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
+import Data.Parameterized.Lift ( LiftF(..) )
 import Data.Parameterized.HasRepr ( HasRepr(..) )
 import Data.Parameterized.ShapedList ( ShapedList(..), ShapeRepr )
 import Data.Parameterized.Some ( Some(..) )
@@ -292,6 +293,8 @@ mkOpcodeType isa = do
          , standaloneDerivD (cxt []) [t| Show ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
          , standaloneDerivD (cxt []) [t| Eq ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
          , standaloneDerivD (cxt []) [t| Ord ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
+         , standaloneDerivD (cxt []) [t| Lift ($(conT opcodeTypeName) $(varT opVarName) $(varT shapeVarName)) |]
+         , instanceD (cxt []) [t| LiftF ($(conT opcodeTypeName) $(varT opVarName)) |] []
          , mkEnumFInstance isa
          , mkOpcodeShowFInstance
          , mkOpcodeOrdFInstance
