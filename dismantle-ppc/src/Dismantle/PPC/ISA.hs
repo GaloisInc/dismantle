@@ -65,6 +65,7 @@ isa = ISA { isaName = "PPC"
                   hasNamedString "DecoderNamespace" "" d &&
                   not (Metadata "Pseudo" `elem` defMetadata d) &&
                   not (L.isPrefixOf "EV" (defName d)) &&
+                  not (L.isInfixOf "TLS" (defName d)) &&
                   not ('8' `elem` defName d)
 
     ppcPseudo = idPseudo
