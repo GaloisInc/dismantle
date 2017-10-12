@@ -8,7 +8,6 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ViewPatterns #-}
 module Dismantle.Tablegen.TH (
-  captureDictionaries,
   genISA,
   genInstances,
   genISARandomHelpers
@@ -32,16 +31,14 @@ import Data.Word ( Word8 )
 import qualified Data.Text.Lazy.IO as TL
 import Language.Haskell.TH
 import Language.Haskell.TH.Datatype
-import Language.Haskell.TH.Syntax ( Lift(..), qAddDependentFile, Name(..), OccName(..) )
+import Language.Haskell.TH.Syntax ( Lift(..), qAddDependentFile, Name(..) )
 import System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Data.Parameterized.Lift ( LiftF(..) )
 import Data.Parameterized.HasRepr ( HasRepr(..) )
 import Data.Parameterized.ShapedList ( ShapedList(..), ShapeRepr )
-import Data.Parameterized.Some ( Some(..) )
 import qualified Data.Parameterized.TH.GADT as PTH
-import Data.Parameterized.Witness ( Witness(..) )
 import Data.EnumF ( EnumF(..), enumCompareF )
 import qualified Data.Set.NonEmpty as NES
 import Data.Parameterized.Classes ( OrdF(..), ShowF(..), KnownRepr(..) )
@@ -52,37 +49,6 @@ import Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
-
--- | For the named data type, generate a list of witnesses for that datatype
--- that capture a dictionary for each constructor of that datatype.  The
--- predicate is a filter that enables control over which constructors are
--- captured.  The predicate is matched against the unqualified constructor name.
---
--- The intended use is to capture witnesses of different operand shape lists.
---
--- Example:
---
--- > captureDictionary (const True) ''Operand
---
--- will generate an expression the type
---
--- > [Some (Witness klass Opcode)]
---
---
--- The class for which dictionaries are captured is set by a type signature
--- specified for the expression at the call site by the caller.  Note that
--- 'Opcode' must have kind '[k] -> *' and the class must have kind '[k] ->
--- Constraint'.
-captureDictionaries :: (String -> Bool) -> Name -> ExpQ
-captureDictionaries p tyName = do
-  dti <- reifyDatatype tyName
-  let cons = filter (p . unqualifiedName . constructorName) (datatypeCons dti)
-  listE (map captureDictionaryFor cons)
-  where
-    unqualifiedName (Name (OccName s) _) = s
-
-captureDictionaryFor :: ConstructorInfo -> ExpQ
-captureDictionaryFor ci = [e| Some (Witness $(conE (constructorName ci))) |]
 
 genISA :: ISA -> FilePath -> DecsQ
 genISA isa path = do

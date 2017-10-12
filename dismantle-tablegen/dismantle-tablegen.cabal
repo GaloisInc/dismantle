@@ -21,6 +21,8 @@ library
                    Dismantle.Tablegen.Combinators
                    Dismantle.Tablegen.TH
                    Dismantle.Tablegen.TH.Bits
+                   Dismantle.Tablegen.TH.Capture
+                   Dismantle.Tablegen.TH.CaptureInfo
                    Dismantle.Tablegen.TH.Pretty
                    Dismantle.Tablegen.Types
                    Dismantle.Tablegen.Parser
