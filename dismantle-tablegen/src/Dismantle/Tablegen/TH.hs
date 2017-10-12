@@ -13,42 +13,42 @@ module Dismantle.Tablegen.TH (
   genISARandomHelpers
   ) where
 
-import GHC.TypeLits ( Symbol )
+import           GHC.TypeLits ( Symbol )
 
-import Data.Monoid ((<>))
-import Data.Bits
+import           Data.Monoid ((<>))
+import           Data.Bits
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as UBS
 import qualified Data.ByteString.Lazy as LBS
-import Data.Char ( toUpper )
+import           Data.Char ( toUpper )
 import qualified Data.Foldable as F
 import qualified Data.List.Split as L
-import Data.Maybe ( fromMaybe )
+import           Data.Maybe ( fromMaybe )
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Type.Equality as E
-import Data.Word ( Word8 )
+import           Data.Word ( Word8 )
 import qualified Data.Text.Lazy.IO as TL
-import Language.Haskell.TH
-import Language.Haskell.TH.Datatype
-import Language.Haskell.TH.Syntax ( Lift(..), qAddDependentFile, Name(..) )
-import System.IO.Unsafe ( unsafePerformIO )
+import           Language.Haskell.TH
+import           Language.Haskell.TH.Datatype
+import           Language.Haskell.TH.Syntax ( Lift(..), qAddDependentFile, Name(..) )
+import           System.IO.Unsafe ( unsafePerformIO )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
-import Data.Parameterized.Lift ( LiftF(..) )
-import Data.Parameterized.HasRepr ( HasRepr(..) )
-import Data.Parameterized.ShapedList ( ShapedList(..), ShapeRepr )
+import           Data.Parameterized.Lift ( LiftF(..) )
+import           Data.Parameterized.HasRepr ( HasRepr(..) )
+import           Data.Parameterized.ShapedList ( ShapedList(..), ShapeRepr )
 import qualified Data.Parameterized.TH.GADT as PTH
-import Data.EnumF ( EnumF(..), enumCompareF )
+import           Data.EnumF ( EnumF(..), enumCompareF )
 import qualified Data.Set.NonEmpty as NES
-import Data.Parameterized.Classes ( OrdF(..), ShowF(..), KnownRepr(..) )
-import Dismantle.Arbitrary as A
-import Dismantle.Instruction
-import Dismantle.Instruction.Random ( ArbitraryOperands(..), ArbitraryOperand(..), arbitraryShapedList )
-import Dismantle.Tablegen
+import           Data.Parameterized.Classes ( OrdF(..), ShowF(..), KnownRepr(..) )
+import           Dismantle.Arbitrary as A
+import           Dismantle.Instruction
+import           Dismantle.Instruction.Random ( ArbitraryOperands(..), ArbitraryOperand(..), arbitraryShapedList )
+import           Dismantle.Tablegen
 import qualified Dismantle.Tablegen.ByteTrie as BT
-import Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
-import Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
+import           Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
+import           Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
 genISA :: ISA -> FilePath -> DecsQ
 genISA isa path = do
