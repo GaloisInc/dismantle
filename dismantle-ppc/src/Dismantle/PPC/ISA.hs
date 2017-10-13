@@ -73,6 +73,8 @@ isa = ISA { isaName = "PPC"
     mapOperandPayloadType s =
       case s of
         "g8rc" -> "gprc"
+        "f4rc" -> "fprc"
+        "f8rc" -> "fprc"
         _ -> s
 
 ppcFormOverrides :: [(String, FormOverride)]
@@ -323,8 +325,7 @@ ppcOperandPayloadTypes =
   , ("Crbitm", crbitm)  -- I think these following 3 are correct now.
   , ("Crbitrc", crbitrc)
   , ("Crrc", crrc) -- 4 bit
-  , ("F4rc", floatRegister)
-  , ("F8rc", floatRegister)
+  , ("Fprc", floatRegister)
   , ("Gprc", gpRegister)
     -- These two variants are special for instructions that treat r0 specially
   , ("Gprc_nor0", gpRegister)
@@ -351,8 +352,8 @@ ppcOperandPayloadTypes =
   , ("U7imm", unsignedImmediate (Proxy :: Proxy 7))
   , ("U8imm", unsignedImmediate (Proxy :: Proxy 8))
   , ("U10imm", unsignedImmediate (Proxy :: Proxy 10))
-  , ("U16imm", unsignedImmediate (Proxy :: Proxy 16)) -- fixme
-  , ("U16imm64", unsignedImmediate (Proxy :: Proxy 16)) -- fixme
+  , ("U16imm", unsignedImmediate (Proxy :: Proxy 16))
+  , ("U16imm64", unsignedImmediate (Proxy :: Proxy 16))
   , ("Memrr", memRR)
   , ("Memri", memRI)
   , ("Memrix", memRIX)
