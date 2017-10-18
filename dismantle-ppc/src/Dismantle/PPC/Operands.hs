@@ -199,10 +199,8 @@ memRIToBits (MemRI mreg disp) =
     dispMask = (1 `shiftL` 16) - 1
 
 -- | This operand is just like 'MemRI', but the displacement is concatenated on
--- the right by two zeros
---
--- Note that the low two bits of the Word16 must be 0
-data MemRIX = MemRIX (Maybe GPR) Int16
+-- the right by two zeros.
+data MemRIX = MemRIX (Maybe GPR) (I.I 14)
   deriving (Eq, Ord, Show)
 
 mkMemRIX :: Word32 -> MemRIX
@@ -218,10 +216,10 @@ mkMemRIX w
 memRIXToBits :: MemRIX -> Word32
 memRIXToBits (MemRIX mr disp) =
   case mr of
-    Just (GPR r) -> (fromIntegral r `shiftL` 16) .|. (fromIntegral (disp `shiftR` 2) .&. dispMask)
-    Nothing -> fromIntegral (disp `shiftR` 2) .&. dispMask
+    Just (GPR r) -> (fromIntegral r `shiftL` 14) .|. (fromIntegral (I.unI disp) .&. dispMask)
+    Nothing -> fromIntegral (I.unI disp) .&. dispMask
   where
-    dispMask = onesMask 16
+    dispMask = onesMask 14
 
 -- | Make a mask of @n@ bits set to true
 onesMask :: (Bits w, Num w) => Int -> w
@@ -275,7 +273,7 @@ instance PP.Pretty MemRIX where
   pPrint (MemRIX mr d) =
     case mr of
       Nothing -> PP.pPrint d
-      Just r -> PP.int (fromIntegral d) <> PP.parens (PP.pPrint r)
+      Just r -> PP.int (fromIntegral (I.unI d)) <> PP.parens (PP.pPrint r)
 
 instance PP.Pretty MemRR where
   pPrint (MemRR mra rb) =
