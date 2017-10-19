@@ -395,7 +395,7 @@ mkOpcodeCon i = return (GadtC [n] [] ty)
   where
     strName = toTypeName (idMnemonic i)
     n = mkName strName
-    ty = ConT opcodeTypeName `AppT` ConT operandTypeName `AppT` opcodeShape i
+    ty = ConT opcodeTypeName `AppT` VarT (mkName "o") `AppT` opcodeShape i
 
 opcodeShape :: InstructionDescriptor -> Type
 opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
