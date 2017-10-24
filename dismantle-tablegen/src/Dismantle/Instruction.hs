@@ -40,6 +40,11 @@ import Data.Parameterized.ShapedList ( ShapedList )
 -- simplified.
 data Annotated a o tp = Annotated a (o tp)
 
+instance (Show a, ShowF o) => Show (Annotated a o tp) where
+  show (Annotated a o) = unwords [ "Annotated", show a, " ", showF o ]
+
+instance (Show a, ShowF o) => ShowF (Annotated a o)
+
 -- | The type of instructions
 --
 -- This type is has two type parameters:
