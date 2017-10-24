@@ -315,7 +315,7 @@ mkArbitraryOperandInstance desc = do
 
 mkEnumFInstance :: ISADescriptor -> Q Dec
 mkEnumFInstance desc = do
-  enumfTy <- [t| EnumF ($(conT opcodeTypeName) $(conT operandTypeName)) |]
+  enumfTy <- [t| EnumF ($(conT opcodeTypeName) $(varT =<< newName "o")) |]
   enumfArgName <- newName "o"
   let enumfCase = caseE (varE enumfArgName) (zipWith mkEnumFMatch [0..] (isaInstructions desc))
   enumfDec <- funD 'enumF [clause [varP enumfArgName] (normalB enumfCase) []]
@@ -348,8 +348,7 @@ instructionShape i = [ opType op | op <- canonicalOperands i ]
 -- | Create a 'E.TestEquality' instance for the opcode type
 mkTestEqualityInstance :: ISADescriptor -> Q Dec
 mkTestEqualityInstance desc = do
-  operandTyVar <- newName "o"
-  testEqTy <- [t| E.TestEquality ($(conT opcodeTypeName) ($(varT operandTyVar))) |]
+  testEqTy <- [t| E.TestEquality ($(conT opcodeTypeName) $(varT =<< newName "o")) |]
   let clauses = map mkTestEqualityCase (isaInstructions desc)
   let fallthrough = clause [wildP, wildP] (normalB [| Nothing |]) []
   dec <- funD 'E.testEquality (clauses ++ [fallthrough])
@@ -363,7 +362,7 @@ mkTestEqualityInstance desc = do
 mkOpcodeOrdFInstance :: Q Dec
 mkOpcodeOrdFInstance = do
   [ordf] <- [d|
-            instance OrdF ($(conT opcodeTypeName) $(conT operandTypeName)) where
+            instance OrdF ($(conT opcodeTypeName) $(varT =<< newName "o")) where
               compareF = enumCompareF
             |]
   return ordf
@@ -372,7 +371,7 @@ mkOpcodeOrdFInstance = do
 mkOpcodeShowFInstance :: Q Dec
 mkOpcodeShowFInstance = do
   [showf] <- [d|
-             instance ShowF ($(conT opcodeTypeName) $(conT operandTypeName)) where
+             instance ShowF ($(conT opcodeTypeName) $(varT =<< newName "o")) where
                showF = show
              |]
   return showf
