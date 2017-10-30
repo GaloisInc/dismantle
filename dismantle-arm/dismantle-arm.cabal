@@ -4,7 +4,7 @@ synopsis:            A disassembler and assembler for ARM
 license:             BSD3
 license-file:        LICENSE
 author:              Jonathan Daugherty
-maintainer:          cygnus@foobox.com
+maintainer:          jtd@galois.com
 copyright:           2017 Jonathan Daugherty, Tristan Ravitch
 category:            Development
 build-type:          Simple
