@@ -539,12 +539,15 @@ regWithAddToBits (RegWithAdd (GPR reg) add) =
     insert regWithAddRegField reg 0
 
 -- | An Am2offset_imm memory reference
-data Am2OffsetImm = Am2OffsetImm { am2OffsetImmImmediate :: Integer
+data Am2OffsetImm = Am2OffsetImm { am2OffsetImmAdd :: Word8
+                                 , am2OffsetImmImmediate :: Word16
                                  }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty Am2OffsetImm where
-  pPrint m = PP.pPrint (am2OffsetImmImmediate m)
+  pPrint m =
+      let s = PP.text $ if am2OffsetImmAdd m == 0 then "-" else ""
+      in s <> (PP.pPrint (am2OffsetImmImmediate m))
 
 am2OffsetImmAddField :: Field
 am2OffsetImmAddField = Field 1 12
@@ -553,15 +556,15 @@ am2OffsetImmImmField :: Field
 am2OffsetImmImmField = Field 12 0
 
 mkAm2OffsetImm :: Word32 -> Am2OffsetImm
-mkAm2OffsetImm w = Am2OffsetImm (addBitToSign add * fromIntegral imm)
+mkAm2OffsetImm w = Am2OffsetImm (fromIntegral add) (fromIntegral imm)
   where
     add = extract am2OffsetImmAddField w
     imm = extract am2OffsetImmImmField w
 
 am2OffsetImmToBits :: Am2OffsetImm -> Word32
-am2OffsetImmToBits (Am2OffsetImm imm) =
-    insert am2OffsetImmAddField (addBitFromNum imm) $
-    insert am2OffsetImmImmField (abs imm) 0
+am2OffsetImmToBits (Am2OffsetImm a imm) =
+    insert am2OffsetImmAddField a $
+    insert am2OffsetImmImmField imm 0
 
 -- | An am2offset_reg operand with a register, immediate, and shift type
 -- (l/r). See also LDRBT in the ARM ARM and tgen.
@@ -1032,6 +1035,7 @@ instance A.Arbitrary RegWithAdd where
 
 instance A.Arbitrary Am2OffsetImm where
   arbitrary g = Am2OffsetImm <$> A.arbitrary g
+                             <*> A.arbitrary g
 
 instance A.Arbitrary Am2OffsetReg where
   arbitrary g = Am2OffsetReg <$> A.arbitrary g
