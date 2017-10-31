@@ -655,7 +655,8 @@ addrMode5ToBits (AddrMode5 a imm (GPR reg)) =
 -- instruction
 data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
                            , ldstSoRegOffsetRegister :: GPR
-                           , ldstSoRegImmediate      :: Integer
+                           , ldstSoRegAdd            :: Word8
+                           , ldstSoRegImmediate      :: Word16
                            , ldstSoRegShiftType      :: Word8
                            }
   deriving (Eq, Ord, Show)
@@ -663,6 +664,7 @@ data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
 instance PP.Pretty LdstSoReg where
   pPrint m =
       let (t, amt) = decodeImmShift (ldstSoRegShiftType m) (ldstSoRegImmediate m)
+          s = PP.text $ if ldstSoRegAdd m == 1 then "" else "-"
           addAmt = if t == RRX && amt == 1
                    then id
                    else (PP.<+> PP.text ("#" <> show amt))
@@ -671,7 +673,7 @@ instance PP.Pretty LdstSoReg where
                        else id
       in (PP.pPrint (ldstSoRegBaseRegister m) <> PP.char ',') PP.<+>
          (PP.pPrint (ldstSoRegOffsetRegister m) <>
-          (maybePrint $ addAmt $ PP.text "," PP.<+> PP.pPrint t))
+          (maybePrint $ addAmt $ PP.text "," PP.<+> (s <> PP.pPrint t)))
 
 ldstSoRegBaseRegField :: Field
 ldstSoRegBaseRegField = Field 4 13
@@ -691,7 +693,8 @@ ldstSoRegImmField = Field 5 7
 mkLdstSoSreg :: Word32 -> LdstSoReg
 mkLdstSoSreg w = LdstSoReg (GPR $ fromIntegral baseReg)
                            (GPR $ fromIntegral offsetReg)
-                           (addBitToSign add * fromIntegral imm)
+                           (fromIntegral add)
+                           (fromIntegral imm)
                            (fromIntegral ty)
   where
     baseReg   = extract ldstSoRegBaseRegField w
@@ -701,11 +704,11 @@ mkLdstSoSreg w = LdstSoReg (GPR $ fromIntegral baseReg)
     ty        = extract ldstSoRegTypeField w
 
 ldstSoRegToBits :: LdstSoReg -> Word32
-ldstSoRegToBits (LdstSoReg (GPR baseR) (GPR offsetR) imm ty) =
+ldstSoRegToBits (LdstSoReg (GPR baseR) (GPR offsetR) a imm ty) =
     insert ldstSoRegBaseRegField baseR $
     insert ldstSoRegOffsetRegField offsetR $
-    insert ldstSoRegAddField (addBitFromNum imm) $
-    insert ldstSoRegImmField (abs imm) $
+    insert ldstSoRegAddField a $
+    insert ldstSoRegImmField imm $
     insert ldstSoRegTypeField ty 0
 
 -- | A twelve-bit immediate
@@ -1053,6 +1056,7 @@ instance A.Arbitrary AddrMode5 where
 
 instance A.Arbitrary LdstSoReg where
   arbitrary g = LdstSoReg <$> A.arbitrary g
+                          <*> A.arbitrary g
                           <*> A.arbitrary g
                           <*> A.arbitrary g
                           <*> A.arbitrary g
