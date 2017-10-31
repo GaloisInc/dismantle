@@ -617,14 +617,17 @@ am2OffsetRegToBits (Am2OffsetReg imm ty (GPR reg) add) =
     insert am2OffsetRegRegField reg 0
 
 -- | An AddrMode5 memory reference
-data AddrMode5 = AddrMode5 { addrMode5Immediate :: Integer
+data AddrMode5 = AddrMode5 { addrMode5Add       :: Word8
+                           , addrMode5Immediate :: Integer
                            , addrMode5Reg       :: GPR
                            }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddrMode5 where
   pPrint m = PP.brackets $
-      PP.pPrint (addrMode5Reg m) <> (PP.char ',' PP.<+> (PP.char '#' <> PP.pPrint (addrMode5Immediate m)))
+      let s = PP.text $ if addrMode5Add m == 1 then "" else "-"
+      in PP.pPrint (addrMode5Reg m) <>
+            (PP.char ',' PP.<+> (PP.char '#' <> s <> PP.pPrint (addrMode5Immediate m)))
 
 addrMode5AddField :: Field
 addrMode5AddField = Field 1 8
@@ -636,16 +639,16 @@ addrMode5ImmField :: Field
 addrMode5ImmField = Field 8 0
 
 mkAddrMode5 :: Word32 -> AddrMode5
-mkAddrMode5 w = AddrMode5 (addBitToSign add * fromIntegral imm) (GPR $ fromIntegral reg)
+mkAddrMode5 w = AddrMode5 (fromIntegral add) (fromIntegral imm) (GPR $ fromIntegral reg)
   where
     add = extract addrMode5AddField w
     imm = (extract addrMode5ImmField w) `shiftL` 2
     reg = extract addrMode5RegField w
 
 addrMode5ToBits :: AddrMode5 -> Word32
-addrMode5ToBits (AddrMode5 imm (GPR reg)) =
-    insert addrMode5AddField (addBitFromNum imm) $
-    insert addrMode5ImmField ((abs imm) `shiftR` 2) $
+addrMode5ToBits (AddrMode5 a imm (GPR reg)) =
+    insert addrMode5AddField a $
+    insert addrMode5ImmField (imm `shiftR` 2) $
     insert addrMode5RegField reg 0
 
 -- | An load/store memory reference for a preload (e.g. PLDW)
@@ -1044,7 +1047,9 @@ instance A.Arbitrary Am2OffsetReg where
                              <*> A.arbitrary g
 
 instance A.Arbitrary AddrMode5 where
-  arbitrary g = AddrMode5 <$> A.arbitrary g <*> A.arbitrary g
+  arbitrary g = AddrMode5 <$> A.arbitrary g
+                          <*> A.arbitrary g
+                          <*> A.arbitrary g
 
 instance A.Arbitrary LdstSoReg where
   arbitrary g = LdstSoReg <$> A.arbitrary g
