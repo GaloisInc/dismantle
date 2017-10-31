@@ -430,23 +430,26 @@ decodeShiftType v =
         0b11 -> ROR
         _    -> error $ "Invalid shift type bits: " <> show v
 
-data Imm8S4 = Imm8S4 { imm8s4Immediate :: Integer
+data Imm8S4 = Imm8S4 { imm8s4Add :: Word8
+                     , imm8s4Immediate :: Word16
                      }
     deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm8S4 where
-    pPrint (Imm8S4 i) = PP.char '#' <> PP.pPrint i
+    pPrint (Imm8S4 a i) =
+        let s = PP.text $ if a == 1 then "" else "-"
+        in PP.char '#' <> s <> PP.pPrint i
 
 mkImm8s4 :: Word32 -> Imm8S4
-mkImm8s4 w = Imm8S4 imm
+mkImm8s4 w = Imm8S4 (fromIntegral add) imm
   where
     add = extract (Field 1 8) w
     imm8 = extract (Field 8 0) w
-    imm = addBitToSign add * (fromIntegral $ imm8 `shiftL` 2)
+    imm = fromIntegral $ imm8 `shiftL` 2
 
 imm8s4ToBits :: Imm8S4 -> Word32
-imm8s4ToBits (Imm8S4 imm) =
-    insert (Field 1 8) (addBitFromNum imm) $
+imm8s4ToBits (Imm8S4 add imm) =
+    insert (Field 1 8) add $
     insert (Field 8 0) (abs imm `shiftR` 2) 0
 
 -- | A shift_imm operand with a shift immediate and shift type (l/r).
@@ -1027,7 +1030,7 @@ instance A.Arbitrary AM3Offset where
 -- FIXME: This is probably not right.  Not sure what the real range of the
 -- stored immediate is
 instance A.Arbitrary Imm8S4 where
-  arbitrary g = Imm8S4 <$> A.arbitrary g
+  arbitrary g = Imm8S4 <$> A.arbitrary g <*> A.arbitrary g
 
 -- FIXME: Probably also not right
 instance A.Arbitrary ShiftImm where
