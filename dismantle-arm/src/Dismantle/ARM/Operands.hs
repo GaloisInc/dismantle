@@ -423,26 +423,25 @@ decodeShiftType v =
         _    -> error $ "Invalid shift type bits: " <> show v
 
 data Imm8S4 = Imm8S4 { imm8s4Add :: Word8
-                     , imm8s4Immediate :: Word16
+                     , imm8s4Immediate :: Word8
                      }
     deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm8S4 where
     pPrint (Imm8S4 a i) =
         let s = PP.text $ if a == 1 then "" else "-"
-        in PP.char '#' <> s <> PP.pPrint i
+        in PP.char '#' <> s <> PP.pPrint (((fromIntegral i) :: Word32) `shiftL` 2)
 
 mkImm8s4 :: Word32 -> Imm8S4
-mkImm8s4 w = Imm8S4 (fromIntegral add) imm
+mkImm8s4 w = Imm8S4 (fromIntegral add) (fromIntegral imm8)
   where
     add = extract (Field 1 8) w
     imm8 = extract (Field 8 0) w
-    imm = fromIntegral $ imm8 `shiftL` 2
 
 imm8s4ToBits :: Imm8S4 -> Word32
 imm8s4ToBits (Imm8S4 add imm) =
     insert (Field 1 8) add $
-    insert (Field 8 0) (abs imm `shiftR` 2) 0
+    insert (Field 8 0) imm 0
 
 -- | A shift_imm operand with a shift immediate and shift type (l/r).
 -- See also USAT in the ARM ARM and tgen.
@@ -613,7 +612,7 @@ am2OffsetRegToBits (Am2OffsetReg imm ty (GPR reg) add) =
 
 -- | An AddrMode5 memory reference
 data AddrMode5 = AddrMode5 { addrMode5Add       :: Word8
-                           , addrMode5Immediate :: Integer
+                           , addrMode5Immediate :: Word8
                            , addrMode5Reg       :: GPR
                            }
   deriving (Eq, Ord, Show)
@@ -621,8 +620,11 @@ data AddrMode5 = AddrMode5 { addrMode5Add       :: Word8
 instance PP.Pretty AddrMode5 where
   pPrint m = PP.brackets $
       let s = PP.text $ if addrMode5Add m == 1 then "" else "-"
+          imm :: Word32
+          imm = fromIntegral $ addrMode5Immediate m
       in PP.pPrint (addrMode5Reg m) <>
-            (PP.char ',' PP.<+> (PP.char '#' <> s <> PP.pPrint (addrMode5Immediate m)))
+            (PP.char ',' PP.<+> (PP.char '#' <> s <>
+             PP.pPrint (imm `shiftL` 2)))
 
 addrMode5AddField :: Field
 addrMode5AddField = Field 1 8
@@ -637,13 +639,13 @@ mkAddrMode5 :: Word32 -> AddrMode5
 mkAddrMode5 w = AddrMode5 (fromIntegral add) (fromIntegral imm) (GPR $ fromIntegral reg)
   where
     add = extract addrMode5AddField w
-    imm = (extract addrMode5ImmField w) `shiftL` 2
+    imm = extract addrMode5ImmField w
     reg = extract addrMode5RegField w
 
 addrMode5ToBits :: AddrMode5 -> Word32
 addrMode5ToBits (AddrMode5 a imm (GPR reg)) =
     insert addrMode5AddField a $
-    insert addrMode5ImmField (imm `shiftR` 2) $
+    insert addrMode5ImmField imm $
     insert addrMode5RegField reg 0
 
 -- | An load/store memory reference for a preload (e.g. PLDW)
@@ -707,16 +709,18 @@ ldstSoRegToBits (LdstSoReg (GPR baseR) (GPR offsetR) a imm ty) =
     insert ldstSoRegTypeField ty 0
 
 -- | A twelve-bit immediate
-data ModImm = ModImm { modImmRecoveredValue :: Int32
-                     , modImmOrigImmediate  :: Word8
+data ModImm = ModImm { modImmOrigImmediate  :: Word8
                      , modImmOrigRotate     :: Word8
                      }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty ModImm where
-  pPrint (ModImm val imm rot) =
+  pPrint (ModImm imm rot) =
+      let val :: Int32
+          val = fromIntegral $ (fromIntegral imm :: Word32) `rotateR` ((fromIntegral rot) * 2)
+
       -- See objump, opcodes/arm-dis.c, print_insn_arm, case 'o'.
-      let imm32 :: Word32
+          imm32 :: Word32
           imm32 = fromIntegral imm
 
           rotate = 2 * fromIntegral rot
@@ -748,14 +752,13 @@ modImmRotField = Field 4 8
 -- See the ARM ARM, A5.2.4, Modified immediate constants in ARM
 -- instructions
 mkModImm :: Word32 -> ModImm
-mkModImm w = ModImm (fromIntegral val) (fromIntegral imm) (fromIntegral rot)
+mkModImm w = ModImm (fromIntegral imm) (fromIntegral rot)
   where
-    val = fromIntegral (imm `rotateR` ((fromIntegral rot) * 2))
     imm = extract modImmImmField w
     rot = extract modImmRotField w
 
 modImmToBits :: ModImm -> Word32
-modImmToBits (ModImm _ imm rot) =
+modImmToBits (ModImm imm rot) =
     insert modImmImmField imm $
     insert modImmRotField rot 0
 
@@ -800,22 +803,22 @@ branchTargetToBits (BranchTarget i) =
     insert branchTargetField (fromIntegral i) 0
 
 -- | A branch-and-execute target
-data BranchExecuteTarget = BranchExecuteTarget { unBranchExecuteTarget :: Integer
+data BranchExecuteTarget = BranchExecuteTarget { unBranchExecuteTarget :: Word32
                                                }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty BranchExecuteTarget where
-    pPrint (BranchExecuteTarget t) = PP.pPrint t
+    pPrint (BranchExecuteTarget t) = PP.pPrint $ t `shiftL` 1
 
 branchExecuteTargetField :: Field
 branchExecuteTargetField = Field 25 0
 
 mkBranchExecuteTarget :: Word32 -> BranchExecuteTarget
-mkBranchExecuteTarget w = BranchExecuteTarget $ fromIntegral $ w `shiftL` 1
+mkBranchExecuteTarget w = BranchExecuteTarget w
 
 branchExecuteTargetToBits :: BranchExecuteTarget -> Word32
 branchExecuteTargetToBits (BranchExecuteTarget i) =
-    insert branchExecuteTargetField (((fromIntegral i)::Word32) `shiftR` 1) 0
+    insert branchExecuteTargetField ((fromIntegral i)::Word32) 0
 
 data MSRMask = MSRMask { msrMaskWriteBit :: Word8
                        , msrMaskImmediate :: Word8
@@ -1058,7 +1061,6 @@ instance A.Arbitrary LdstSoReg where
 
 instance A.Arbitrary ModImm where
   arbitrary g = ModImm <$> A.arbitrary g
-                       <*> A.arbitrary g
                        <*> A.arbitrary g
 
 instance A.Arbitrary Imm5 where
