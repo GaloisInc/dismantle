@@ -144,14 +144,6 @@ data Field = Field { fieldBits :: Int
                    -- starting from zero
                    }
 
-addBitToSign :: (Num a) => Word32 -> a
-addBitToSign 1 = fromIntegral 1
-addBitToSign 0 = fromIntegral (-1)
-addBitToSign v = error $ "Invalid add bit value (word): " <> show v
-
-addBitFromNum :: (Ord a, Num a) => a -> Word32
-addBitFromNum v = if v < 0 then 0 else 1
-
 mkMask :: Field -> Word32
 mkMask (Field bits offset) = (2 ^ bits - 1) `shiftL` offset
 
