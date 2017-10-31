@@ -286,15 +286,17 @@ instance PP.Pretty QQPR where
 -- | An AddrMode_Imm12 memory reference for a load or store instruction
 -- (with a 12-bit immediate)
 data AddrModeImm12 = AddrModeImm12 { addrModeImm12Register  :: GPR
-                                   , addrModeImm12Immediate :: Integer
+                                   , addrModeImm12Immediate :: Word16
+                                   , addrModeImm12Add       :: Word8
                                    }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddrModeImm12 where
   pPrint m =
-      let suf = if addrModeImm12Immediate m == 0
+      let s = PP.text $ if addrModeImm12Add m == 0 then "-" else ""
+          suf = if addrModeImm12Immediate m == 0
                 then mempty
-                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeImm12Immediate m))
+                else PP.char ',' PP.<+> ((PP.char '#') <> (s <> (PP.pPrint $ addrModeImm12Immediate m)))
       in PP.brackets $ PP.pPrint (addrModeImm12Register m) <> suf
 
 addrModeImm12RegField :: Field
@@ -307,17 +309,17 @@ addrModeImm12ImmField :: Field
 addrModeImm12ImmField = Field 12 0
 
 mkAddrModeImm12 :: Word32 -> AddrModeImm12
-mkAddrModeImm12 w = AddrModeImm12 (GPR $ fromIntegral reg) (addBitToSign add * fromIntegral imm)
+mkAddrModeImm12 w = AddrModeImm12 (GPR $ fromIntegral reg) (fromIntegral imm) (fromIntegral add)
   where
     reg = extract addrModeImm12RegField w
     add = extract addrModeImm12AddField w
     imm = extract addrModeImm12ImmField w
 
 addrModeImm12ToBits :: AddrModeImm12 -> Word32
-addrModeImm12ToBits (AddrModeImm12 (GPR r) imm) =
+addrModeImm12ToBits (AddrModeImm12 (GPR r) imm a) =
     insert addrModeImm12RegField r $
-    insert addrModeImm12AddField (addBitFromNum imm) $
-    insert addrModeImm12ImmField (abs imm) 0
+    insert addrModeImm12AddField a $
+    insert addrModeImm12ImmField imm 0
 
 -- | An AddrMode3 memory reference for a load or store instruction
 data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
@@ -992,7 +994,9 @@ instance A.Arbitrary QQPR where
   arbitrary g = (QQPR . (*2)) <$> A.uniformR (0, 7) g
 
 instance A.Arbitrary AddrModeImm12 where
-  arbitrary g = AddrModeImm12 <$> A.arbitrary g <*> A.arbitrary g
+  arbitrary g = AddrModeImm12 <$> A.arbitrary g
+                              <*> A.arbitrary g
+                              <*> A.arbitrary g
 
 instance A.Arbitrary CoprocRegister where
   arbitrary g = CoprocRegister <$> A.uniformR (0, 15) g
