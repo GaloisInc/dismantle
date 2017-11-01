@@ -172,12 +172,14 @@ import Numeric (showHex)
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
+-- For Arbitrary instances
+import Dismantle.Tablegen.TH.Pretty ()
+
 import qualified Dismantle.Arbitrary as A
-import Dismantle.Tablegen.TH.Pretty
 
 -- | A bit field description and functions for using it
 
-data Field = Field { fieldBits :: Int
+data Field = Field { _fieldBits :: Int
                    -- ^ The number of bits in the field
                    , fieldOffset :: Int
                    -- ^ The offset of the rightmost bit in the field,
@@ -196,7 +198,7 @@ extract f val = (val .&. (mkMask f)) `shiftR` (fieldOffset f)
 
 -- Operand data types
 
-newtype Bit = Bit { unBit :: Word8 }
+newtype Bit = Bit { _unBit :: Word8 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty Bit where
@@ -208,7 +210,7 @@ mkBit v = Bit $ fromIntegral v
 bitToBits :: Bit -> Word32
 bitToBits (Bit v) = fromIntegral v
 
-newtype SBit = SBit { unSBit :: Word8 }
+newtype SBit = SBit { _unSBit :: Word8 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty SBit where
@@ -222,7 +224,7 @@ mkSBit v = SBit $ fromIntegral v
 sBitToBits :: SBit -> Word32
 sBitToBits (SBit v) = fromIntegral v
 
-data Reglist = Reglist { unReglist :: Word16 }
+data Reglist = Reglist { _unReglist :: Word16 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty Reglist where
@@ -270,7 +272,7 @@ gpr :: Word8 -> GPR
 gpr = GPR
 
 -- | Coprocessor register by number
-newtype CoprocRegister = CoprocRegister { unCoprocRegister :: Word8 }
+newtype CoprocRegister = CoprocRegister { _unCoprocRegister :: Word8 }
   deriving (Eq, Ord, Show)
 
 mkCoprocRegister :: Word32 -> CoprocRegister
@@ -283,7 +285,7 @@ instance PP.Pretty CoprocRegister where
   pPrint (CoprocRegister r) = PP.text "cr" <> PP.pPrint r
 
 -- | Coprocessor operation opcode register by number
-newtype Opcode = Opcode { unOpcode :: Word8 }
+newtype Opcode = Opcode { _unOpcode :: Word8 }
   deriving (Eq, Ord, Show)
 
 mkOpcode :: Word32 -> Opcode
@@ -495,11 +497,11 @@ addrModePcToBits (AddrModePc imm) =
     insert addrModeIs4ImmField imm 0
 
 data ThumbBlxTarget =
-    ThumbBlxTarget { thumbBlxTargetS      :: Word8
-                   , thumbBlxTargetImm10H :: Word16
-                   , thumbBlxTargetJ1     :: Word8
-                   , thumbBlxTargetJ2     :: Word8
-                   , thumbBlxTargetImm10L :: Word16
+    ThumbBlxTarget { _thumbBlxTargetS      :: Word8
+                   , _thumbBlxTargetImm10H :: Word16
+                   , _thumbBlxTargetJ1     :: Word8
+                   , _thumbBlxTargetJ2     :: Word8
+                   , _thumbBlxTargetImm10L :: Word16
                    }
                    deriving (Eq, Ord, Show)
 
@@ -543,11 +545,11 @@ thumbBlxTargetToBits (ThumbBlxTarget s imm10h j1 j2 imm10l) =
     insert thumbBlxTargetImm10LField imm10l 0
 
 data ThumbBlTarget =
-    ThumbBlTarget { thumbBlTargetS     :: Word8
-                  , thumbBlTargetImm10 :: Word16
-                  , thumbBlTargetJ1    :: Word8
-                  , thumbBlTargetJ2    :: Word8
-                  , thumbBlTargetImm11 :: Word16
+    ThumbBlTarget { _thumbBlTargetS     :: Word8
+                  , _thumbBlTargetImm10 :: Word16
+                  , _thumbBlTargetJ1    :: Word8
+                  , _thumbBlTargetJ2    :: Word8
+                  , _thumbBlTargetImm11 :: Word16
                   }
                   deriving (Eq, Ord, Show)
 
@@ -611,8 +613,8 @@ tBrTargetToBits (TBrTarget imm) =
     insert addrModeIs4ImmField imm 0
 
 data AddrModeRr =
-    AddrModeRr { addrModeRmReg :: LowGPR
-               , addrModeRnReg :: LowGPR
+    AddrModeRr { _addrModeRmReg :: LowGPR
+               , _addrModeRnReg :: LowGPR
                }
                deriving (Eq, Ord, Show)
 
@@ -694,7 +696,7 @@ addrMode3ToBits (AddrMode3 (GPR r) imm ty add) =
 
 -- | An am3Offset memory reference for a load or store instruction
 data AM3Offset = AM3Offset { am3OffsetImmediate :: Word8
-                           , am3OffsetOther     :: Word8
+                           , _am3OffsetOther    :: Word8
                            , am3OffsetAdd       :: Word8
                            }
   deriving (Eq, Ord, Show)
@@ -746,8 +748,8 @@ decodeShiftType v =
         0b11 -> ROR
         _    -> error $ "Invalid shift type bits: " <> show v
 
-data Imm8S4 = Imm8S4 { imm8s4Add :: Word8
-                     , imm8s4Immediate :: Word8
+data Imm8S4 = Imm8S4 { _imm8s4Add :: Word8
+                     , _imm8s4Immediate :: Word8
                      }
     deriving (Eq, Ord, Show)
 
@@ -1033,8 +1035,8 @@ ldstSoRegToBits (LdstSoReg (GPR baseR) (GPR offsetR) a imm ty) =
     insert ldstSoRegTypeField ty 0
 
 -- | A twelve-bit immediate
-data ModImm = ModImm { modImmOrigImmediate  :: Word8
-                     , modImmOrigRotate     :: Word8
+data ModImm = ModImm { _modImmOrigImmediate  :: Word8
+                     , _modImmOrigRotate     :: Word8
                      }
   deriving (Eq, Ord, Show)
 
@@ -1047,10 +1049,10 @@ instance PP.Pretty ModImm where
           imm32 :: Word32
           imm32 = fromIntegral imm
 
-          rotate = 2 * fromIntegral rot
+          rotateVal = 2 * fromIntegral rot
 
-          a = (((imm32 `shiftL` (32 - rotate))
-              .|. (imm32 `shiftR` rotate)) .&. 0xffffffff)
+          a = (((imm32 `shiftL` (32 - rotateVal))
+              .|. (imm32 `shiftR` rotateVal)) .&. 0xffffffff)
 
           -- If there is another encoding with a smaller rotate, the
           -- rotate should be specified directly.
@@ -1061,10 +1063,10 @@ instance PP.Pretty ModImm where
 
           smallestRotate = case smallerRotates of
               (e:_) -> e
-              _     -> rotate
+              _     -> rotateVal
 
-      in if smallestRotate /= rotate
-         then PP.text "#" <> (PP.pPrint imm) <> (PP.text "," PP.<+> PP.pPrint rotate)
+      in if smallestRotate /= rotateVal
+         then PP.text "#" <> (PP.pPrint imm) <> (PP.text "," PP.<+> PP.pPrint rotateVal)
          else PP.text "#" <> (PP.pPrint val)
 
 modImmImmField :: Field
@@ -1104,7 +1106,7 @@ mkImm5 w = Imm5 $ fromIntegral i
 
 imm5ToBits :: Imm5 -> Word32
 imm5ToBits (Imm5 i) =
-    insert imm5Field (fromIntegral i) 0
+    insert imm5Field i 0
 
 -- | A branch target
 data BranchTarget = BranchTarget { unBranchTarget :: Integer
@@ -1124,10 +1126,10 @@ mkBranchTarget w = BranchTarget $ fromIntegral i
 
 branchTargetToBits :: BranchTarget -> Word32
 branchTargetToBits (BranchTarget i) =
-    insert branchTargetField (fromIntegral i) 0
+    insert branchTargetField i 0
 
 -- | A branch-and-execute target
-data BranchExecuteTarget = BranchExecuteTarget { unBranchExecuteTarget :: Word32
+data BranchExecuteTarget = BranchExecuteTarget { _unBranchExecuteTarget :: Word32
                                                }
   deriving (Eq, Ord, Show)
 
@@ -1144,8 +1146,8 @@ branchExecuteTargetToBits :: BranchExecuteTarget -> Word32
 branchExecuteTargetToBits (BranchExecuteTarget i) =
     insert branchExecuteTargetField ((fromIntegral i)::Word32) 0
 
-data MSRMask = MSRMask { msrMaskWriteBit :: Word8
-                       , msrMaskImmediate :: Word8
+data MSRMask = MSRMask { _msrMaskWriteBit :: Word8
+                       , _msrMaskImmediate :: Word8
                        }
   deriving (Eq, Ord, Show)
 
@@ -1170,7 +1172,7 @@ msrMaskToBits (MSRMask wr i) =
     insert msrMaskImmField i 0
 
 -- | A 16-bit immediate split into 12- and 4-bit chunks
-data Imm16 = Imm16 { unImm16 :: Integer
+data Imm16 = Imm16 { _unImm16 :: Integer
                    }
   deriving (Eq, Ord, Show)
 
@@ -1184,7 +1186,7 @@ imm16ToBits :: Imm16 -> Word32
 imm16ToBits (Imm16 i) = fromIntegral i
 
 -- | Four-bit condition flag sequence
-data Pred = Pred { unPred :: Word8
+data Pred = Pred { _unPred :: Word8
                  }
   deriving (Eq, Ord, Show)
 
@@ -1214,8 +1216,8 @@ predToBits :: Pred -> Word32
 predToBits (Pred p) = fromIntegral p
 
 -- | An ADR immediate offset and addition bit
-data AdrLabel = AdrLabel { adrLabelImm :: Word16
-                         , adrLabelOther :: Word8
+data AdrLabel = AdrLabel { _adrLabelImm :: Word16
+                         , _adrLabelOther :: Word8
                          }
   deriving (Eq, Ord, Show)
 
@@ -1239,9 +1241,9 @@ adrLabelToBits (AdrLabel imm other) =
     insert otherBitsField other $
     insert adrLabelImmField imm 0
 
-data SoRegImm = SoRegImm { soRegImmImmediate :: Word8
-                         , soRegImmReg       :: GPR
-                         , soRegImmShiftType :: Word8
+data SoRegImm = SoRegImm { _soRegImmImmediate :: Word8
+                         , _soRegImmReg       :: GPR
+                         , _soRegImmShiftType :: Word8
                          }
   deriving (Eq, Ord, Show)
 
@@ -1279,9 +1281,9 @@ soRegImmToBits (SoRegImm imm (GPR reg) ty) =
     insert soRegImmShiftTypeField ty $
     insert soRegImmRegField reg 0
 
-data SoRegReg = SoRegReg { soRegRegReg1      :: GPR
-                         , soRegRegReg2      :: GPR
-                         , soRegRegShiftType :: Word8
+data SoRegReg = SoRegReg { _soRegRegReg1      :: GPR
+                         , _soRegRegReg2      :: GPR
+                         , _soRegRegShiftType :: Word8
                          }
   deriving (Eq, Ord, Show)
 
