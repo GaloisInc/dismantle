@@ -77,6 +77,10 @@ module Dismantle.Thumb.Operands (
   mkAddrModePc,
   addrModePcToBits,
 
+  AddrModeRr,
+  mkAddrModeRr,
+  addrModeRrToBits,
+
   AM3Offset,
   mkAM3Offset,
   am3OffsetToBits,
@@ -453,6 +457,33 @@ mkAddrModePc w = AddrModePc (fromIntegral imm)
 addrModePcToBits :: AddrModePc -> Word32
 addrModePcToBits (AddrModePc imm) =
     insert addrModeIs4ImmField imm 0
+
+data AddrModeRr =
+    AddrModeRr { addrModeRmReg :: LowGPR
+               , addrModeRnReg :: LowGPR
+               }
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddrModeRr where
+  pPrint (AddrModeRr rm rn) =
+      PP.pPrint rm <> (PP.text ", " PP.<+> PP.pPrint rn)
+
+addrModeRrRmField :: Field
+addrModeRrRmField = Field 3 3
+
+addrModeRrRnField :: Field
+addrModeRrRnField = Field 3 0
+
+mkAddrModeRr :: Word32 -> AddrModeRr
+mkAddrModeRr w = AddrModeRr (LowGPR $ fromIntegral rm) (LowGPR $ fromIntegral rn)
+  where
+    rm = extract addrModeRrRmField w
+    rn = extract addrModeRrRnField w
+
+addrModeRrToBits :: AddrModeRr -> Word32
+addrModeRrToBits (AddrModeRr (LowGPR rm) (LowGPR rn)) =
+    insert addrModeRrRmField rm $
+    insert addrModeRrRnField rn 0
 
 -- | An AddrMode3 memory reference for a load or store instruction
 data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
