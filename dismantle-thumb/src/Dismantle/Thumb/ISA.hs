@@ -319,7 +319,8 @@ isa = ISA { isaName = "Thumb"
         ]
 
     ignoredDef d = defName d `elem`
-        [
+        [ "tADDrSP" -- See tADDhirr
+        , "tADDspr" -- See tADDhirr
         ]
 
     ignoredMetadataNames = S.fromList $ Metadata <$>
