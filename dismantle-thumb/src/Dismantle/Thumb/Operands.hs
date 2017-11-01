@@ -33,6 +33,10 @@ module Dismantle.Thumb.Operands (
   mkSBit,
   sBitToBits,
 
+  TBrTarget,
+  mkTBrTarget,
+  tBrTargetToBits,
+
   CoprocRegister,
   mkCoprocRegister,
   coprocRegisterToBits,
@@ -480,6 +484,26 @@ mkAddrModePc w = AddrModePc (fromIntegral imm)
 
 addrModePcToBits :: AddrModePc -> Word32
 addrModePcToBits (AddrModePc imm) =
+    insert addrModeIs4ImmField imm 0
+
+data TBrTarget =
+    TBrTarget { tBrTargetImm :: Word8
+              }
+              deriving (Eq, Ord, Show)
+
+instance PP.Pretty TBrTarget where
+  pPrint m = PP.pPrint (((fromIntegral $ tBrTargetImm m) :: Word32) `shiftL` 2)
+
+tBrTargetImmField :: Field
+tBrTargetImmField = Field 8 0
+
+mkTBrTarget :: Word32 -> TBrTarget
+mkTBrTarget w = TBrTarget (fromIntegral imm)
+  where
+    imm = extract tBrTargetImmField w
+
+tBrTargetToBits :: TBrTarget -> Word32
+tBrTargetToBits (TBrTarget imm) =
     insert addrModeIs4ImmField imm 0
 
 data AddrModeRr =
