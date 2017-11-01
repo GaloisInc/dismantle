@@ -1422,3 +1422,45 @@ instance A.Arbitrary SBit where
 
 instance A.Arbitrary Reglist where
   arbitrary g = Reglist <$> A.arbitrary g
+
+instance A.Arbitrary LowGPR where
+  arbitrary g = LowGPR <$> A.arbitrary g
+
+instance A.Arbitrary AddrModeIs1 where
+  arbitrary g = AddrModeIs1 <$> A.arbitrary g
+                            <*> A.arbitrary g
+
+instance A.Arbitrary AddrModeIs2 where
+  arbitrary g = AddrModeIs2 <$> A.arbitrary g
+                            <*> A.arbitrary g
+
+instance A.Arbitrary AddrModeIs4 where
+  arbitrary g = AddrModeIs4 <$> A.arbitrary g
+                            <*> A.arbitrary g
+
+instance A.Arbitrary AddrModePc where
+  arbitrary g = AddrModePc <$> A.arbitrary g
+
+instance A.Arbitrary TAdrLabel where
+  arbitrary g = TAdrLabel <$> A.arbitrary g
+
+instance A.Arbitrary TBrTarget where
+  arbitrary g = TBrTarget <$> A.arbitrary g
+
+instance A.Arbitrary ThumbBlxTarget where
+  arbitrary g = ThumbBlxTarget <$> A.arbitrary g
+                               <*> A.arbitrary g
+                               <*> A.arbitrary g
+                               <*> A.arbitrary g
+                               <*> A.arbitrary g
+
+instance A.Arbitrary ThumbBlTarget where
+  arbitrary g = ThumbBlTarget <$> A.arbitrary g
+                              <*> A.arbitrary g
+                              <*> A.arbitrary g
+                              <*> A.arbitrary g
+                              <*> A.arbitrary g
+
+instance A.Arbitrary AddrModeRr where
+  arbitrary g = AddrModeRr <$> A.arbitrary g
+                           <*> A.arbitrary g
