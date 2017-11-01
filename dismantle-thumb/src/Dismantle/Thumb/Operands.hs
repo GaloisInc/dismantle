@@ -49,6 +49,10 @@ module Dismantle.Thumb.Operands (
   mkTAdrLabel,
   tAdrLabelToBits,
 
+  ThumbBlTarget,
+  mkThumbBlTarget,
+  thumbBlTargetToBits,
+
   ShiftImm,
   mkShiftImm,
   shiftImmToBits,
@@ -485,6 +489,54 @@ mkAddrModePc w = AddrModePc (fromIntegral imm)
 addrModePcToBits :: AddrModePc -> Word32
 addrModePcToBits (AddrModePc imm) =
     insert addrModeIs4ImmField imm 0
+
+data ThumbBlTarget =
+    ThumbBlTarget { thumbBlTargetS     :: Word8
+                  , thumbBlTargetImm10 :: Word16
+                  , thumbBlTargetJ1    :: Word8
+                  , thumbBlTargetJ2    :: Word8
+                  , thumbBlTargetImm11 :: Word16
+                  }
+                  deriving (Eq, Ord, Show)
+
+instance PP.Pretty ThumbBlTarget where
+    pPrint _ = PP.text "not implemented"
+
+thumbBlTargetSField :: Field
+thumbBlTargetSField = Field 1 23
+
+thumbBlTargetImm10Field :: Field
+thumbBlTargetImm10Field = Field 10 11
+
+thumbBlTargetJ1Field :: Field
+thumbBlTargetJ1Field = Field 1 22
+
+thumbBlTargetJ2Field :: Field
+thumbBlTargetJ2Field = Field 1 21
+
+thumbBlTargetImm11Field :: Field
+thumbBlTargetImm11Field = Field 11 0
+
+mkThumbBlTarget :: Word32 -> ThumbBlTarget
+mkThumbBlTarget w = ThumbBlTarget (fromIntegral s)
+                                  (fromIntegral imm10)
+                                  (fromIntegral j1)
+                                  (fromIntegral j2)
+                                  (fromIntegral imm11)
+  where
+      s     = extract thumbBlTargetSField w
+      imm10 = extract thumbBlTargetImm10Field w
+      j1    = extract thumbBlTargetJ1Field w
+      j2    = extract thumbBlTargetJ2Field w
+      imm11 = extract thumbBlTargetImm11Field w
+
+thumbBlTargetToBits :: ThumbBlTarget -> Word32
+thumbBlTargetToBits (ThumbBlTarget s imm10 j1 j2 imm11) =
+    insert thumbBlTargetSField s $
+    insert thumbBlTargetImm10Field imm10 $
+    insert thumbBlTargetJ1Field j1 $
+    insert thumbBlTargetJ2Field j2 $
+    insert thumbBlTargetImm11Field imm11 0
 
 data TBrTarget =
     TBrTarget { tBrTargetImm :: Word8
