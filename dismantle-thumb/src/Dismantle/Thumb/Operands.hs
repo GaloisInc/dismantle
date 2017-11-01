@@ -5,6 +5,10 @@ module Dismantle.Thumb.Operands (
   gpr,
   unGPR,
 
+  LowGPR,
+  lowGpr,
+  unLowGPR,
+
   DPR,
   dpr,
   unDPR,
@@ -206,6 +210,17 @@ mkRegList v = Reglist $ fromIntegral v
 regListToBits :: Reglist -> Word32
 regListToBits (Reglist v) = fromIntegral v
 
+-- | General-purpose low register by number (0-7) for 16-bit thumb
+-- instructions
+newtype LowGPR = LowGPR { unLowGPR :: Word8 }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty LowGPR where
+  pPrint (LowGPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
+
+lowGpr :: Word8 -> LowGPR
+lowGpr = LowGPR
+
 -- | General-purpose register by number
 newtype GPR = GPR { unGPR :: Word8 }
   deriving (Eq, Ord, Show)
@@ -316,6 +331,36 @@ addrModeImm12ToBits (AddrModeImm12 (GPR r) imm a) =
     insert addrModeImm12RegField r $
     insert addrModeImm12AddField a $
     insert addrModeImm12ImmField imm 0
+
+data AddrModeIs1 =
+    AddrModeIs1 { addrModeIs1Reg :: LowGPR
+                , addrModeIs1Imm :: Word8
+                }
+                deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddrModeIs1 where
+  pPrint m =
+      let suf = if addrModeIs1Imm m == 0
+                then mempty
+                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs1Imm m))
+      in PP.brackets $ PP.pPrint (addrModeIs1Reg m) <> suf
+
+addrModeIs1RegField :: Field
+addrModeIs1RegField = Field 3 0
+
+addrModeIs1ImmField :: Field
+addrModeIs1ImmField = Field 5 3
+
+mkAddrModeIs1 :: Word32 -> AddrModeIs1
+mkAddrModeIs1 w = AddrModeIs1 (LowGPR $ fromIntegral reg) (fromIntegral imm)
+  where
+    reg = extract addrModeIs1RegField w
+    imm = extract addrModeIs1ImmField w
+
+addrModeIs1ToBits :: AddrModeIs1 -> Word32
+addrModeIs1ToBits (AddrModeIs1 (LowGPR r) imm) =
+    insert addrModeIs1RegField r $
+    insert addrModeIs1ImmField imm 0
 
 -- | An AddrMode3 memory reference for a load or store instruction
 data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR

@@ -47,6 +47,10 @@ isa = ISA { isaName = "Thumb"
                                 , opConE = Just (varE 'Thumb.gpr)
                                 , opWordE = Just [| fromIntegral . Thumb.unGPR |]
                                 }
+    lowGpRegister = OperandPayload { opTypeT = [t| Thumb.LowGPR |]
+                                   , opConE = Just (varE 'Thumb.lowGpr)
+                                   , opWordE = Just [| fromIntegral . Thumb.unLowGPR |]
+                                   }
     qpRegister = OperandPayload { opTypeT = [t| Thumb.QPR |]
                                 , opConE = Just (varE 'Thumb.qpr)
                                 , opWordE = Just [| fromIntegral . Thumb.unQPR |]
@@ -75,6 +79,10 @@ isa = ISA { isaName = "Thumb"
                                    , opConE = Just (varE 'Thumb.mkAddrModeImm12)
                                    , opWordE = Just (varE 'Thumb.addrModeImm12ToBits)
                                    }
+    addrModeIs1 = OperandPayload { opTypeT = [t| Thumb.AddrModeIs1 |]
+                                 , opConE = Just (varE 'Thumb.mkAddrModeIs1)
+                                 , opWordE = Just (varE 'Thumb.addrModeIs1ToBits)
+                                 }
     modImm = OperandPayload { opTypeT = [t| Thumb.ModImm |]
                             , opConE = Just (varE 'Thumb.mkModImm)
                             , opWordE = Just (varE 'Thumb.modImmToBits)
@@ -182,6 +190,8 @@ isa = ISA { isaName = "Thumb"
 
     thumbOperandPayloadTypes =
         [
+          ("GPR"               , gpRegister)
+        , ("TGPR"              , lowGpRegister)
         -- [ ("Addr_offset_none"  , gpRegister)
         -- , ("Addrmode3"         , addrMode3)
         -- , ("Addrmode3_pre"     , addrMode3)
@@ -193,6 +203,7 @@ isa = ISA { isaName = "Thumb"
         -- , ("Am2offset_imm"     , am2OffsetImm)
         -- , ("Am2offset_reg"     , am2OffsetReg)
         -- , ("Am3offset"         , addrMode3Offset)
+        , ("T_addrmode_is1"       , addrModeIs1)
         -- , ("Arm_bl_target"     , branchTarget)
         -- , ("Arm_blx_target"    , branchExecuteTarget)
         -- , ("Arm_br_target"     , branchTarget)
@@ -201,8 +212,6 @@ isa = ISA { isaName = "Thumb"
         -- , ("Cc_out"            , sBit)
         -- , ("Coproc_option_imm" , word8Operand)
         -- , ("Dpr"               , dpRegister)
-        , ("GPR"               , gpRegister)
-        , ("TGPR"              , gpRegister)
         , ("Thumb_bcc_target"  , word8Operand)
         , ("Thumb_cb_target"   , word8Operand)
         -- , ("GPRPairOp"         , gpRegister)
