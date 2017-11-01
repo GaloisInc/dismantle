@@ -69,6 +69,10 @@ module Dismantle.Thumb.Operands (
   mkAddrModeIs2,
   addrModeIs2ToBits,
 
+  AddrModeIs4,
+  mkAddrModeIs4,
+  addrModeIs4ToBits,
+
   AM3Offset,
   mkAM3Offset,
   am3OffsetToBits,
@@ -395,6 +399,36 @@ addrModeIs2ToBits :: AddrModeIs2 -> Word32
 addrModeIs2ToBits (AddrModeIs2 (LowGPR r) imm) =
     insert addrModeIs2RegField r $
     insert addrModeIs2ImmField imm 0
+
+data AddrModeIs4 =
+    AddrModeIs4 { addrModeIs4Reg :: LowGPR
+                , addrModeIs4Imm :: Word8
+                }
+                deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddrModeIs4 where
+  pPrint m =
+      let suf = if addrModeIs4Imm m == 0
+                then mempty
+                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs4Imm m))
+      in PP.brackets $ PP.pPrint (addrModeIs4Reg m) <> suf
+
+addrModeIs4RegField :: Field
+addrModeIs4RegField = Field 3 0
+
+addrModeIs4ImmField :: Field
+addrModeIs4ImmField = Field 5 3
+
+mkAddrModeIs4 :: Word32 -> AddrModeIs4
+mkAddrModeIs4 w = AddrModeIs4 (LowGPR $ fromIntegral reg) (fromIntegral imm)
+  where
+    reg = extract addrModeIs4RegField w
+    imm = extract addrModeIs4ImmField w
+
+addrModeIs4ToBits :: AddrModeIs4 -> Word32
+addrModeIs4ToBits (AddrModeIs4 (LowGPR r) imm) =
+    insert addrModeIs4RegField r $
+    insert addrModeIs4ImmField imm 0
 
 -- | An AddrMode3 memory reference for a load or store instruction
 data AddrMode3 = AddrMode3 { addrMode3Register  :: GPR
