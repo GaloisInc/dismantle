@@ -73,6 +73,10 @@ module Dismantle.Thumb.Operands (
   mkAddrModeIs4,
   addrModeIs4ToBits,
 
+  AddrModePc,
+  mkAddrModePc,
+  addrModePcToBits,
+
   AM3Offset,
   mkAM3Offset,
   am3OffsetToBits,
@@ -428,6 +432,26 @@ mkAddrModeIs4 w = AddrModeIs4 (LowGPR $ fromIntegral reg) (fromIntegral imm)
 addrModeIs4ToBits :: AddrModeIs4 -> Word32
 addrModeIs4ToBits (AddrModeIs4 (LowGPR r) imm) =
     insert addrModeIs4RegField r $
+    insert addrModeIs4ImmField imm 0
+
+data AddrModePc =
+    AddrModePc { addrModePcImm :: Word8
+               }
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddrModePc where
+  pPrint m = PP.pPrint (((fromIntegral $ addrModePcImm m) :: Word32) `shiftL` 2)
+
+addrModePcImmField :: Field
+addrModePcImmField = Field 8 0
+
+mkAddrModePc :: Word32 -> AddrModePc
+mkAddrModePc w = AddrModePc (fromIntegral imm)
+  where
+    imm = extract addrModePcImmField w
+
+addrModePcToBits :: AddrModePc -> Word32
+addrModePcToBits (AddrModePc imm) =
     insert addrModeIs4ImmField imm 0
 
 -- | An AddrMode3 memory reference for a load or store instruction
