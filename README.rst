@@ -30,7 +30,7 @@ Generating TableGen Files
 The file we take as inputs to this suite of tools are not actually in the
 TableGen format (extension ``.td``); instead, we consume the output of the
 ``llvm-tblgen`` tool, which reads the real TableGen files and pre-processes
-them.
+them. We use data files generated from sources of LLVM 3.9.
 
 The real TableGen files are included in the LLVM source distribution.
 
