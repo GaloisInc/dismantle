@@ -53,6 +53,10 @@ module Dismantle.Thumb.Operands (
   mkThumbBlTarget,
   thumbBlTargetToBits,
 
+  ThumbBlxTarget,
+  mkThumbBlxTarget,
+  thumbBlxTargetToBits,
+
   ShiftImm,
   mkShiftImm,
   shiftImmToBits,
@@ -489,6 +493,54 @@ mkAddrModePc w = AddrModePc (fromIntegral imm)
 addrModePcToBits :: AddrModePc -> Word32
 addrModePcToBits (AddrModePc imm) =
     insert addrModeIs4ImmField imm 0
+
+data ThumbBlxTarget =
+    ThumbBlxTarget { thumbBlxTargetS      :: Word8
+                   , thumbBlxTargetImm10H :: Word16
+                   , thumbBlxTargetJ1     :: Word8
+                   , thumbBlxTargetJ2     :: Word8
+                   , thumbBlxTargetImm10L :: Word16
+                   }
+                   deriving (Eq, Ord, Show)
+
+instance PP.Pretty ThumbBlxTarget where
+    pPrint _ = PP.text "not implemented"
+
+thumbBlxTargetSField :: Field
+thumbBlxTargetSField = Field 1 23
+
+thumbBlxTargetImm10HField :: Field
+thumbBlxTargetImm10HField = Field 10 11
+
+thumbBlxTargetJ1Field :: Field
+thumbBlxTargetJ1Field = Field 1 22
+
+thumbBlxTargetJ2Field :: Field
+thumbBlxTargetJ2Field = Field 1 21
+
+thumbBlxTargetImm10LField :: Field
+thumbBlxTargetImm10LField = Field 10 1
+
+mkThumbBlxTarget :: Word32 -> ThumbBlxTarget
+mkThumbBlxTarget w = ThumbBlxTarget (fromIntegral s)
+                                    (fromIntegral imm10h)
+                                    (fromIntegral j1)
+                                    (fromIntegral j2)
+                                    (fromIntegral imm10l)
+  where
+      s      = extract thumbBlxTargetSField w
+      imm10h = extract thumbBlxTargetImm10HField w
+      j1     = extract thumbBlxTargetJ1Field w
+      j2     = extract thumbBlxTargetJ2Field w
+      imm10l = extract thumbBlxTargetImm10LField w
+
+thumbBlxTargetToBits :: ThumbBlxTarget -> Word32
+thumbBlxTargetToBits (ThumbBlxTarget s imm10h j1 j2 imm10l) =
+    insert thumbBlxTargetSField s $
+    insert thumbBlxTargetImm10HField imm10h $
+    insert thumbBlxTargetJ1Field j1 $
+    insert thumbBlxTargetJ2Field j2 $
+    insert thumbBlxTargetImm10LField imm10l 0
 
 data ThumbBlTarget =
     ThumbBlTarget { thumbBlTargetS     :: Word8

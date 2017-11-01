@@ -131,6 +131,10 @@ isa = ISA { isaName = "Thumb"
                                    , opConE = Just (varE 'Thumb.mkThumbBlTarget)
                                    , opWordE = Just (varE 'Thumb.thumbBlTargetToBits)
                                    }
+    thumbBlxTarget = OperandPayload { opTypeT = [t| Thumb.ThumbBlxTarget |]
+                                    , opConE = Just (varE 'Thumb.mkThumbBlxTarget)
+                                    , opWordE = Just (varE 'Thumb.thumbBlxTargetToBits)
+                                    }
     branchTarget = OperandPayload { opTypeT = [t| Thumb.BranchTarget |]
                                   , opConE = Just (varE 'Thumb.mkBranchTarget)
                                   , opWordE = Just (varE 'Thumb.branchTargetToBits)
@@ -242,6 +246,7 @@ isa = ISA { isaName = "Thumb"
         , ("T_imm0_1020s4"        , addrModePc)
         , ("T_imm0_508s4"         , addrModePc)
         , ("Thumb_bl_target"      , thumbBlTarget)
+        , ("Thumb_blx_target"     , thumbBlxTarget)
         -- , ("Arm_bl_target"     , branchTarget)
         -- , ("Arm_blx_target"    , branchExecuteTarget)
         -- , ("Arm_br_target"     , branchTarget)
