@@ -215,5 +215,5 @@ isa = ISA { isaName = "Thumb"
         , ("tREV"               , FormOverride [("p", Ignore)])
         , ("tREV16"             , FormOverride [("p", Ignore)])
         , ("tREVSH"             , FormOverride [("p", Ignore)])
-        , ("tPICADD"            , FormOverride[("cp", Ignore), ("lhs", Ignore)])
+        , ("tPICADD"            , FormOverride [("cp", Ignore), ("lhs", Ignore)])
         ]
