@@ -208,9 +208,9 @@ mkMemRIX w
   | r == 0 = MemRIX Nothing d
   | otherwise = MemRIX (Just (GPR r)) d
   where
-    dispMask = (1 `shiftL` 16) - 1
+    dispMask = (1 `shiftL` 14) - 1
     regMask = (1 `shiftL` 5) - 1
-    r = fromIntegral ((w `shiftR` 16) .&. regMask)
+    r = fromIntegral ((w `shiftR` 14) .&. regMask)
     d = fromIntegral (w .&. dispMask) `shiftL` 2
 
 memRIXToBits :: MemRIX -> Word32
