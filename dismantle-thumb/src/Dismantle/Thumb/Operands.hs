@@ -41,6 +41,10 @@ module Dismantle.Thumb.Operands (
   mkOpcode,
   opcodeToBits,
 
+  TAdrLabel,
+  mkTAdrLabel,
+  tAdrLabelToBits,
+
   ShiftImm,
   mkShiftImm,
   shiftImmToBits,
@@ -437,6 +441,26 @@ addrModeIs4ToBits :: AddrModeIs4 -> Word32
 addrModeIs4ToBits (AddrModeIs4 (LowGPR r) imm) =
     insert addrModeIs4RegField r $
     insert addrModeIs4ImmField imm 0
+
+data TAdrLabel =
+    TAdrLabel { tAddrLabelImm :: Word8
+              }
+              deriving (Eq, Ord, Show)
+
+instance PP.Pretty TAdrLabel where
+  pPrint m = PP.pPrint (((fromIntegral $ tAddrLabelImm m) :: Word32) `shiftL` 2)
+
+tAddrLabelImmField :: Field
+tAddrLabelImmField = Field 8 0
+
+mkTAdrLabel :: Word32 -> TAdrLabel
+mkTAdrLabel w = TAdrLabel (fromIntegral imm)
+  where
+    imm = extract tAddrLabelImmField w
+
+tAdrLabelToBits :: TAdrLabel -> Word32
+tAdrLabelToBits (TAdrLabel imm) =
+    insert tAddrLabelImmField imm 0
 
 data AddrModePc =
     AddrModePc { addrModePcImm :: Word8
