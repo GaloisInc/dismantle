@@ -224,6 +224,7 @@ isa = ISA { isaName = "Thumb"
         , ("T_addrmode_is4"       , addrModeIs4)
         , ("T_addrmode_pc"        , addrModePc)
         , ("T_addrmode_rr"        , addrModeRr)
+        , ("T_addrmode_sp"        , addrModePc)
         -- , ("Arm_bl_target"     , branchTarget)
         -- , ("Arm_blx_target"    , branchExecuteTarget)
         -- , ("Arm_br_target"     , branchTarget)
