@@ -87,13 +87,22 @@ parseEllipses = tryOne [ P.space >> P.string (TL.pack "...") >> P.eol >> P.eol >
                        , P.space >> P.string (TL.pack "...") >> P.eol >> return Nothing
                        ]
 
+parseInstructionBytes :: Parser [Word8]
+parseInstructionBytes =
+  -- PowerPC format: "0a 0b 0c 0d"
+  (P.try (P.endBy1 parseByte (P.char ' '))) <|>
+      -- ARM full word format: "0a0b0c0d"
+      (P.try $ replicateM 4 parseByte) <|>
+      -- ARM thumb halfword format: "0a0b"
+      replicateM 2 parseByte
+
 parseInstruction :: Parser (Maybe Instruction)
 parseInstruction = do
   P.skipMany (P.char ' ')
   addr <- parseAddress
   _ <- P.char ':'
   P.space
-  bytes <- P.try (P.endBy1 parseByte (P.char ' ')) <|> replicateM 4 parseByte
+  bytes <- parseInstructionBytes
   P.space
   txt <- TL.pack <$> P.manyTill P.anyChar P.eol
   _ <- P.optional P.eol
