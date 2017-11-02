@@ -1,3 +1,4 @@
+{-# LANGUAGE BinaryLiterals #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Dismantle.Thumb.ISA (
   isa
@@ -7,7 +8,8 @@ import qualified Data.Binary.Get as B
 import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Set as S
-import Data.Word ( Word8, Word32 )
+import Data.Bits (shiftL, shiftR, (.|.), (.&.))
+import Data.Word ( Word8, Word16, Word32 )
 
 import Language.Haskell.TH
 
@@ -20,11 +22,40 @@ import Dismantle.Tablegen.Parser.Types
   )
 import qualified Dismantle.Thumb.Operands as Thumb
 
+fullWordStartPatterns :: [Word16]
+fullWordStartPatterns =
+    [ 0b11101 `shiftL` 11
+    , 0b11110 `shiftL` 11
+    , 0b11111 `shiftL` 11
+    ]
+
 asWord32 :: LBS.ByteString -> Word32
-asWord32 = B.runGet B.getWord32be
+asWord32 = B.runGet $ do
+    w1 <- B.getWord16be
+    -- These bit patterns indicate a full word instruction so we need to
+    -- parse another halfword and shift the first word left.
+    --
+    -- For details, see the ARM ARM A6.1 Thumb Instruction Set Encoding,
+    -- version ARM DDI 0406C.b.
+    let matchesPattern p = (w1 .&. p) == p
+        fullWord = any matchesPattern fullWordStartPatterns
+    if not fullWord
+       then return $ fromIntegral w1
+       else do
+           w2 <- B.getWord16be
+           return $ (((fromIntegral w1)::Word32) `shiftL` 16) .|.
+                    (fromIntegral w2)
 
 fromWord32 :: Word32 -> LBS.ByteString
-fromWord32 = B.runPut . B.putWord32be
+fromWord32 w =
+    let matchesPattern p =
+            let p' = ((fromIntegral p) :: Word32) `shiftL` 16
+            in (w .&. p') == p'
+        fullWord = any matchesPattern fullWordStartPatterns
+        halfWordMask = 0xffff
+    in if fullWord
+       then B.runPut $ B.putWord32be w
+       else B.runPut $ B.putWord16be (fromIntegral $ w .&. halfWordMask)
 
 isa :: ISA
 isa = ISA { isaName = "Thumb"
