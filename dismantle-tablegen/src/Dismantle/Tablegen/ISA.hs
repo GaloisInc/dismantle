@@ -6,6 +6,7 @@ module Dismantle.Tablegen.ISA (
   FormOverride(..),
   InstFieldDescriptor(..),
   Endianness(..),
+  UnusedBitsPolicy(..),
   thumb,
   aarch64,
   mips,
@@ -62,6 +63,16 @@ data InstFieldDescriptor = SimpleDescriptor String
                          -- bit specfications).
                          deriving (Show, Eq)
 
+-- | How to handle instruction bit patterns that provide more bits
+-- than the instruction claims to need. Specifically, an instruction
+-- description might provide a pattern with 32 bits but only use the
+-- rightmost 16 bits. In that case a policy of Drop, meaning to drop
+-- the first 16 bits, would be appropriate. If, on the other hand,
+-- the instruction specified 32 bits but only used the leftmost 16, a
+-- policy of Take would be the right choice. The choice depends on the
+-- conventions used in the Tablegen data for the ISA in question.
+data UnusedBitsPolicy = Take | Drop
+
 -- | Information specific to an ISA that influences code generation
 data ISA =
   ISA { isaName :: String
@@ -73,6 +84,9 @@ data ISA =
       , isaInputEndianness :: Endianness
       -- ^ The endianness of the input bytes when parsing an instruction
       -- stream
+      , isaUnusedBitsPolicy :: Maybe UnusedBitsPolicy
+      -- ^ How to handle instructions that specify longer bit patterns
+      -- than they actually need
       , isaInstructionFilter :: Def -> Bool
       -- ^ A function that should return True for the def if it is part
       -- of the ISA and False if not.
@@ -122,6 +136,7 @@ thumb = ISA { isaName = "Thumb"
             , isaTgenBitPreprocess = id
             , isaInstructionFilter = thumbFilter
             , isaPseudoInstruction = const False
+            , isaUnusedBitsPolicy = Just Drop
             }
   where
     thumbFilter = hasNamedString "DecoderNamespace" "Thumb" &&&
@@ -134,6 +149,7 @@ aarch64 = ISA { isaName = "AArch64"
               , isaTgenBitPreprocess = id
               , isaInstructionFilter = aarch64Filter
               , isaPseudoInstruction = const False
+              , isaUnusedBitsPolicy = Nothing
               }
   where
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
@@ -148,6 +164,7 @@ mips = ISA { isaName = "Mips"
            , isaTgenBitPreprocess = id
            , isaInstructionFilter = mipsFilter
            , isaPseudoInstruction = const False
+           , isaUnusedBitsPolicy = Nothing
            }
   where
     mipsFilter = hasNamedString "DecoderNamespace" "Mips" &&&
@@ -159,6 +176,7 @@ avr = ISA { isaName = "AVR"
           , isaTgenBitPreprocess = id
           , isaInstructionFilter = avrFilter
           , isaPseudoInstruction = avrPsuedo
+          , isaUnusedBitsPolicy = Nothing
           }
   where
     avrFilter = hasNamedString "Namespace" "AVR"
@@ -186,6 +204,7 @@ sparc = ISA { isaName = "Sparc"
             , isaTgenBitPreprocess = id
             , isaInstructionFilter = sparcFilter
             , isaPseudoInstruction = const False
+            , isaUnusedBitsPolicy = Nothing
             }
   where
     sparcFilter = hasNamedString "Namespace" "SP" &&&

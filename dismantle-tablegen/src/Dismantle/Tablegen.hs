@@ -398,11 +398,38 @@ toInstructionDescriptor isa def = do
 -- 'InstructionDescriptor' if possible.  If not possible, log an error
 -- and continue.
 finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [OperandDescriptor] -> [OperandDescriptor] -> FM ()
-finishInstructionDescriptor _isa def mbits ins outs =
+finishInstructionDescriptor isa def mbits ins outs =
   case mvals of
     Nothing -> return ()
-    Just (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly) -> do
-      let i = InstructionDescriptor { idMask = map toTrieBit mbits
+    Just (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly, mSz) -> do
+      let takeUsedBits = case mSz of
+              -- The instruction descriptor didn't declare a size, so just use
+              -- the entire bit pattern.
+              Nothing -> id
+              Just sz ->
+                  -- If the bit pattern length matches the declared
+                  -- instruction size, use the entire bit pattern.
+                  let usedLength = 8 * sz
+                      patternLength = length mbits
+                  in if usedLength == patternLength
+                     then id
+                     -- Otherwise we need to look at the ISA configuration to
+                     -- decide how to rectify the mismatch in instruction size
+                     -- and bit pattern length.
+                     else case isaUnusedBitsPolicy isa of
+                            -- The ISA did not specify, so we conservatively
+                            -- just use the whole pattern.
+                            Nothing   -> id
+                            -- The ISA specified that the beginning of the
+                            -- pattern contains the significant entries, so
+                            -- take those.
+                            Just Take -> take usedLength
+                            -- The ISA specified that the end of the pattern
+                            -- contains the significant entries, so drop the
+                            -- unused bits.
+                            Just Drop -> drop (patternLength - usedLength)
+          usedBits = map toTrieBit $ takeUsedBits mbits
+          i = InstructionDescriptor { idMask = usedBits
                                     , idMnemonic = defName def
                                     , idNamespace = ns
                                     , idDecoderNamespace = decoderNs
@@ -424,7 +451,10 @@ finishInstructionDescriptor _isa def mbits ins outs =
       Named _ (BitItem b)            <- F.find (named "isPseudo") (defDecls def)
       Named _ (BitItem cgOnly)       <- F.find (named "isCodeGenOnly") (defDecls def)
       Named _ (BitItem asmParseOnly) <- F.find (named "isAsmParserOnly") (defDecls def)
-      return (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly)
+      let sz = getInt =<< F.find (named "Size") (defDecls def)
+          getInt (Named _ (IntItem v)) = Just v
+          getInt _ = Nothing
+      return (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly, sz)
 
 -- | Group bits in the operand bit spec into contiguous chunks.
 --

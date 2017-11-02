@@ -39,6 +39,7 @@ isa = ISA { isaName = "Thumb"
           , isaIgnoreOperand = const False
           , isaFormOverrides = overrides
           , isaMapOperandPayloadType = id
+          , isaUnusedBitsPolicy = Just Drop
           }
   where
     gpRegister = OperandPayload { opTypeT = [t| Thumb.GPR |]
