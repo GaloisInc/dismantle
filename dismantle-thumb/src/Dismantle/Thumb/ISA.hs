@@ -154,10 +154,22 @@ isa = ISA { isaName = "Thumb"
                                    , opConE = Nothing
                                    , opWordE = Nothing
                                    }
+    coprocRegister = OperandPayload { opTypeT = [t| ARM.CoprocRegister |]
+                                    , opConE = Just (varE 'ARM.mkCoprocRegister)
+                                    , opWordE = Just (varE 'ARM.coprocRegisterToBits)
+                                    }
     bit = OperandPayload { opTypeT = [t| Thumb.Bit |]
                          , opConE = Just (varE 'Thumb.mkBit)
                          , opWordE = Just (varE 'Thumb.bitToBits)
                          }
+    sBit = OperandPayload { opTypeT = [t| ARM.SBit |]
+                          , opConE = Just (varE 'ARM.mkSBit)
+                          , opWordE = Just (varE 'ARM.sBitToBits)
+                          }
+    imm5 = OperandPayload { opTypeT = [t| ARM.Imm5 |]
+                          , opConE = Just (varE 'ARM.mkImm5)
+                          , opWordE = Just (varE 'ARM.imm5ToBits)
+                          }
 
     thumbOperandPayloadTypes =
         [ ("GPR"                  , gpRegister)
@@ -184,16 +196,29 @@ isa = ISA { isaName = "Thumb"
         , ("Thumb_cb_target"      , word8Operand)
         , ("GPRnopc"              , gpRegister)
         , ("Iflags_op"            , word8Operand)
+        , ("Imm0_4095"            , word16Operand)
+        , ("Imm0_65535"           , word16Operand)
+        , ("Imm0_65535_expr"      , word16Operand)
         , ("Imm0_1"               , bit)
+        , ("Imm0_7"               , opcodeOperand)
         , ("Imm0_15"              , opcodeOperand)
+        , ("Imm0_31"              , imm5)
         , ("Imm0_63"              , word8Operand)
+        , ("Imm0_239"             , word8Operand)
         , ("Imm0_255"             , word8Operand)
+        , ("Imm1_16"              , word8Operand)
+        , ("Imm1_32"              , imm5)
+        , ("Imm_sr"               , word8Operand)
         , ("Imod_op"              , word8Operand)
         , ("Pred"                 , predOperand)
         , ("Reglist"              , reglistOperand)
         , ("Setend_op"            , bit)
         , ("Unpredictable"        , word32Operand)
         , ("Brtarget"             , word32Operand)
+        , ("C_imm"                , coprocRegister)
+        , ("Cc_out"               , sBit)
+        , ("Coproc_option_imm"    , word8Operand)
+        , ("I32imm"               , word8Operand)
         ]
 
     thumbFilter = hasNamedString "Namespace" "ARM" &&&
