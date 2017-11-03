@@ -15,7 +15,7 @@ library
   exposed-modules: Dismantle.ARM
                    Dismantle.ARM.ISA
                    Dismantle.ARM.Random
-  other-modules: Dismantle.ARM.Operands
+                   Dismantle.ARM.Operands
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
                        dismantle-tablegen,

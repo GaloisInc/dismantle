@@ -144,6 +144,7 @@ isa = ISA { isaName = "Thumb"
     thumbOperandPayloadTypes =
         [ ("GPR"                  , gpRegister)
         , ("GPRwithAPSR"          , gpRegister)
+        , ("addr_offset_none"     , gpRegister)
         , ("TGPR"                 , lowGpRegister)
         , ("T_addrmode_is1"       , addrModeIs1)
         , ("T_addrmode_is2"       , addrModeIs2)
