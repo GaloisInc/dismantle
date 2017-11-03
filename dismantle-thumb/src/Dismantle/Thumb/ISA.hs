@@ -177,7 +177,8 @@ isa = ISA { isaName = "Thumb"
         ]
 
     thumbFilter = hasNamedString "Namespace" "ARM" &&&
-                  hasNamedString "DecoderNamespace" "Thumb" &&&
+                  (hasNamedString "DecoderNamespace" "Thumb" |||
+                   hasNamedString "DecoderNamespace" "Thumb2") &&&
                   (not . isPseudo) &&&
                   (not . ignoredDef) &&&
                   (not . ignoredMetadata)
