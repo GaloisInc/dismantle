@@ -41,6 +41,8 @@ isa = ISA { isaName = "ARM"
           , isaIgnoreOperand = const False
           , isaFormOverrides = overrides
           , isaMapOperandPayloadType = id
+          , isaDefaultPrettyVariableValues = []
+          , isaUnusedBitsPolicy = Nothing
           }
   where
     gpRegister = OperandPayload { opTypeT = [t| ARM.GPR |]
