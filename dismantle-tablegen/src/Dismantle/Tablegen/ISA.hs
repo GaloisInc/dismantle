@@ -15,7 +15,8 @@ module Dismantle.Tablegen.ISA (
   named,
   hasNamedString,
   isPseudo,
-  (&&&)
+  (&&&),
+  (|||)
   ) where
 
 import qualified Data.Foldable as F
@@ -208,6 +209,9 @@ hasNamedString label value def =
 
 (&&&) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
 (&&&) f g val = f val && g val
+
+(|||) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
+(|||) f g val = f val || g val
 
 named :: String -> Named DeclItem -> Bool
 named s n = namedName n == s
