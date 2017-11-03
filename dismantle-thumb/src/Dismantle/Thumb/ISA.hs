@@ -71,8 +71,12 @@ isa = ISA { isaName = "Thumb"
           , isaFormOverrides = overrides
           , isaMapOperandPayloadType = id
           , isaUnusedBitsPolicy = Just Drop
+          , isaDefaultPrettyVariableValues = defaultPP
           }
   where
+    defaultPP = [ ("p", "")
+                ]
+
     gpRegister = OperandPayload { opTypeT = [t| Thumb.GPR |]
                                 , opConE = Just (varE 'Thumb.gpr)
                                 , opWordE = Just [| fromIntegral . Thumb.unGPR |]

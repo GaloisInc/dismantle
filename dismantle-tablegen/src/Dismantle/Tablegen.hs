@@ -430,6 +430,7 @@ finishInstructionDescriptor isa def mbits ins outs =
                             Just Drop -> drop (patternLength - usedLength)
           usedBits = map toTrieBit $ takeUsedBits mbits
           i = InstructionDescriptor { idMask = usedBits
+                                    , idDefaultPrettyVariableValues = isaDefaultPrettyVariableValues isa
                                     , idMnemonic = defName def
                                     , idNamespace = ns
                                     , idDecoderNamespace = decoderNs

@@ -21,6 +21,7 @@ module Dismantle.Tablegen.ISA (
 
 import qualified Data.Foldable as F
 import qualified Data.List.NonEmpty as NL
+import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -127,8 +128,15 @@ data ISA =
       -- ^ Convert from one operand payload type to another; this is useful to
       -- let us treat operand types that tablegen treats as distinct uniformly.
       -- We use this for PowerPC to treat the 'g8rc' register type as 'gprc'.
+      , isaDefaultPrettyVariableValues :: [(String, String)]
+      -- ^ Default representations for variables encountered in
+      -- instruction descriptor format strings when those variables
+      -- are not mentioned elsewhere in the descriptor and thus have
+      -- no value. Some descriptors may reference variables in format
+      -- strings even if those variables are not defined as input or
+      -- output operands or are unmentioned in the instruction's bit
+      -- pattern.
       }
-
 
 thumb :: ISA
 thumb = ISA { isaName = "Thumb"
