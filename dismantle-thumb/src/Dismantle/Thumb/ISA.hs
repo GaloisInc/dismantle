@@ -142,6 +142,10 @@ isa = ISA { isaName = "Thumb"
                                   , opConE = Nothing
                                   , opWordE = Just [| fromIntegral |]
                                   }
+    word16Operand = OperandPayload { opTypeT = [t| Word16 |]
+                                   , opConE = Nothing
+                                   , opWordE = Just [| fromIntegral |]
+                                   }
     reglistOperand = OperandPayload { opTypeT = [t| Thumb.Reglist |]
                                     , opConE = Just (varE 'Thumb.mkRegList)
                                     , opWordE = Just (varE 'Thumb.regListToBits)
@@ -161,6 +165,7 @@ isa = ISA { isaName = "Thumb"
         , ("Addr_offset_none"     , gpRegister)
         , ("Addrmode5"            , addrMode5)
         , ("Addrmode5_pre"        , addrMode5)
+        , ("Bf_inv_mask_imm"      , word16Operand)
         , ("Banked_reg"           , bankedReg)
         , ("TGPR"                 , lowGpRegister)
         , ("T_addrmode_is1"       , addrModeIs1)
@@ -188,6 +193,7 @@ isa = ISA { isaName = "Thumb"
         , ("Reglist"              , reglistOperand)
         , ("Setend_op"            , bit)
         , ("Unpredictable"        , word32Operand)
+        , ("Brtarget"             , word32Operand)
         ]
 
     thumbFilter = hasNamedString "Namespace" "ARM" &&&
