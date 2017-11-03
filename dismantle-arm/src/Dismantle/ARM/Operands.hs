@@ -53,6 +53,10 @@ module Dismantle.ARM.Operands (
   mkSvcOperand,
   svcOperandToBits,
 
+  BankedReg,
+  mkBankedReg,
+  bankedRegToBits,
+
   AddrMode3,
   mkAddrMode3,
   addrMode3ToBits,
@@ -489,6 +493,19 @@ shiftImmToBits :: ShiftImm -> Word32
 shiftImmToBits (ShiftImm imm ty) =
     insert shiftImmTypeField ty $
     insert shiftImmImmField imm 0
+
+-- | Only used with MRS/MSR and indicative of CPSR/APSR.
+data BankedReg = BankedReg
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty BankedReg where
+    pPrint BankedReg = PP.text "cpsr"
+
+mkBankedReg :: Word32 -> BankedReg
+mkBankedReg = const BankedReg
+
+bankedRegToBits :: BankedReg -> Word32
+bankedRegToBits _ = 0
 
 data SvcOperand = SvcOperand Word32
                 deriving (Eq, Ord, Show)
