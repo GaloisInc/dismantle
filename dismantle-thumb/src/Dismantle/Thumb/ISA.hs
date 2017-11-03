@@ -21,6 +21,7 @@ import Dismantle.Tablegen.Parser.Types
   , defMetadata
   )
 import qualified Dismantle.Thumb.Operands as Thumb
+import qualified Dismantle.ARM.Operands as ARM
 
 fullWordStartPatterns :: [Word16]
 fullWordStartPatterns =
@@ -85,6 +86,14 @@ isa = ISA { isaName = "Thumb"
                                    , opConE = Just (varE 'Thumb.lowGpr)
                                    , opWordE = Just [| fromIntegral . Thumb.unLowGPR |]
                                    }
+    addrMode5 = OperandPayload { opTypeT = [t| ARM.AddrMode5 |]
+                               , opConE = Just (varE 'ARM.mkAddrMode5)
+                               , opWordE = Just (varE 'ARM.addrMode5ToBits)
+                               }
+    bankedReg = OperandPayload { opTypeT = [t| ARM.BankedReg |]
+                               , opConE = Just (varE 'ARM.mkBankedReg)
+                               , opWordE = Just (varE 'ARM.bankedRegToBits)
+                               }
     addrModeIs1 = OperandPayload { opTypeT = [t| Thumb.AddrModeIs1 |]
                                  , opConE = Just (varE 'Thumb.mkAddrModeIs1)
                                  , opWordE = Just (varE 'Thumb.addrModeIs1ToBits)
@@ -148,6 +157,11 @@ isa = ISA { isaName = "Thumb"
 
     thumbOperandPayloadTypes =
         [ ("GPR"                  , gpRegister)
+        , ("GPRwithAPSR"          , gpRegister)
+        , ("Addr_offset_none"     , gpRegister)
+        , ("Addrmode5"            , addrMode5)
+        , ("Addrmode5_pre"        , addrMode5)
+        , ("Banked_reg"           , bankedReg)
         , ("TGPR"                 , lowGpRegister)
         , ("T_addrmode_is1"       , addrModeIs1)
         , ("T_addrmode_is2"       , addrModeIs2)
