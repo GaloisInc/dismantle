@@ -170,9 +170,18 @@ isa = ISA { isaName = "Thumb"
                           , opConE = Just (varE 'ARM.mkImm5)
                           , opWordE = Just (varE 'ARM.imm5ToBits)
                           }
+    msrMask = OperandPayload { opTypeT = [t| ARM.MSRMask |]
+                             , opConE = Just (varE 'ARM.mkMSRMask)
+                             , opWordE = Just (varE 'ARM.msrMaskToBits)
+                             }
+    imm8s4 = OperandPayload { opTypeT = [t| ARM.Imm8S4 |]
+                            , opConE = Just (varE 'ARM.mkImm8s4)
+                            , opWordE = Just (varE 'ARM.imm8s4ToBits)
+                            }
 
     thumbOperandPayloadTypes =
         [ ("GPR"                  , gpRegister)
+        , ("RGPR"                 , gpRegister)
         , ("GPRwithAPSR"          , gpRegister)
         , ("Addr_offset_none"     , gpRegister)
         , ("Addrmode5"            , addrMode5)
@@ -210,6 +219,18 @@ isa = ISA { isaName = "Thumb"
         , ("Imm1_32"              , imm5)
         , ("Imm_sr"               , word8Operand)
         , ("Imod_op"              , word8Operand)
+        , ("Instsyncb_opt"        , word8Operand)
+        , ("It_mask"              , word8Operand)
+        , ("It_pred"              , word8Operand)
+        , ("Memb_opt"             , word8Operand)
+        , ("Msr_mask"             , msrMask)
+        , ("P_imm"                , word8Operand)
+        , ("Pkh_asr_amt"          , word8Operand)
+        , ("Pkh_lsl_amt"          , word8Operand)
+        , ("Rot_imm"              , word8Operand)
+        , ("T2_shift_imm"         , word8Operand)
+        , ("T2_so_imm"            , word16Operand)
+        , ("Postidx_imm8s4"       , imm8s4)
         , ("Pred"                 , predOperand)
         , ("Reglist"              , reglistOperand)
         , ("Setend_op"            , bit)
