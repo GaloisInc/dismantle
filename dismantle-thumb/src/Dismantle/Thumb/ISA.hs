@@ -158,6 +158,10 @@ isa = ISA { isaName = "Thumb"
                                       , opConE = Just (varE 'Thumb.mkTAdrLabel)
                                       , opWordE = Just (varE 'Thumb.tAdrLabelToBits)
                                       }
+    t2AdrLabelOperand = OperandPayload { opTypeT = [t| Thumb.T2AdrLabel |]
+                                       , opConE = Just (varE 'Thumb.mkT2AdrLabel)
+                                       , opWordE = Just (varE 'Thumb.t2AdrLabelToBits)
+                                       }
     tBrTargetOperand = OperandPayload { opTypeT = [t| Thumb.TBrTarget |]
                                       , opConE = Just (varE 'Thumb.mkTBrTarget)
                                       , opWordE = Just (varE 'Thumb.tBrTargetToBits)
@@ -232,6 +236,7 @@ isa = ISA { isaName = "Thumb"
         , ("T_addrmode_rr"        , addrModeRr)
         , ("T_addrmode_sp"        , addrModePc)
         , ("T_adrlabel"           , tAdrLabelOperand)
+        , ("T2adrlabel"           , t2AdrLabelOperand)
         , ("T_brtarget"           , tBrTargetOperand)
         , ("T_imm0_1020s4"        , addrModePc)
         , ("T_imm0_508s4"         , addrModePc)

@@ -57,6 +57,10 @@ module Dismantle.Thumb.Operands (
   mkTAdrLabel,
   tAdrLabelToBits,
 
+  T2AdrLabel,
+  mkT2AdrLabel,
+  t2AdrLabelToBits,
+
   ThumbBlTarget,
   mkThumbBlTarget,
   thumbBlTargetToBits,
@@ -360,6 +364,32 @@ mkTAdrLabel w = TAdrLabel (fromIntegral imm)
 tAdrLabelToBits :: TAdrLabel -> Word32
 tAdrLabelToBits (TAdrLabel imm) =
     insert tAddrLabelImmField imm 0
+
+data T2AdrLabel =
+    T2AdrLabel { t2AdrLabelImm     :: Word16
+               , t2AdrLabelVariant :: Word8
+               }
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty T2AdrLabel where
+  pPrint _ = PP.text "not implemented"
+
+t2AddrLabelImmField :: Field
+t2AddrLabelImmField = Field 11 0
+
+t2AddrLabelVariantField :: Field
+t2AddrLabelVariantField = Field 1 12
+
+mkT2AdrLabel :: Word32 -> T2AdrLabel
+mkT2AdrLabel w = T2AdrLabel (fromIntegral imm) (fromIntegral var)
+  where
+    imm = extract t2AddrLabelImmField w
+    var = extract t2AddrLabelVariantField w
+
+t2AdrLabelToBits :: T2AdrLabel -> Word32
+t2AdrLabelToBits (T2AdrLabel imm var) =
+    insert t2AddrLabelImmField imm $
+    insert t2AddrLabelVariantField var 0
 
 data AddrModePc =
     AddrModePc { addrModePcImm :: Word8
