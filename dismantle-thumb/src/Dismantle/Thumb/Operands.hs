@@ -29,6 +29,10 @@ module Dismantle.Thumb.Operands (
   mkT2AddrModeImm12,
   t2AddrModeImm12ToBits,
 
+  T2AddrModeImm8S4Pre,
+  mkT2AddrModeImm8S4Pre,
+  t2AddrModeImm8S4PreToBits,
+
   T2AddrModeImm8S4,
   mkT2AddrModeImm8S4,
   t2AddrModeImm8S4ToBits,
@@ -192,6 +196,29 @@ opcodeToBits (Opcode i) = fromIntegral i
 
 instance PP.Pretty Opcode where
   pPrint (Opcode o) = PP.pPrint o
+
+data T2AddrModeImm8S4Pre =
+    T2AddrModeImm8S4Pre { t2AddrModeImm8s4PreAdd       :: Word8
+                        , t2AddrModeImm8s4PreImmediate :: Word8
+                        , t2AddrModeImm8s4PreReg       :: GPR
+                        }
+                        deriving (Eq, Ord, Show)
+
+instance PP.Pretty T2AddrModeImm8S4Pre where
+    pPrint _ = PP.text "not implemented"
+
+mkT2AddrModeImm8S4Pre :: Word32 -> T2AddrModeImm8S4Pre
+mkT2AddrModeImm8S4Pre w = T2AddrModeImm8S4Pre (fromIntegral add) (fromIntegral imm8) (GPR $ fromIntegral reg)
+  where
+    add = extract (Field 1 8) w
+    reg = extract (Field 4 9) w
+    imm8 = extract (Field 8 0) w
+
+t2AddrModeImm8S4PreToBits :: T2AddrModeImm8S4Pre -> Word32
+t2AddrModeImm8S4PreToBits (T2AddrModeImm8S4Pre add imm (GPR reg)) =
+    insert (Field 4 9) reg $
+    insert (Field 1 8) add $
+    insert (Field 8 0) imm 0
 
 data T2AddrModeImm8S4 =
     T2AddrModeImm8S4 { t2AddrModeImm8s4Add       :: Word8
