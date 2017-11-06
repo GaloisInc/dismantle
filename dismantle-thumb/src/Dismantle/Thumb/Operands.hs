@@ -45,6 +45,10 @@ module Dismantle.Thumb.Operands (
   mkT2AddrModeImm8,
   t2AddrModeImm8ToBits,
 
+  T2AddrModeImm8Offset,
+  mkT2AddrModeImm8Offset,
+  t2AddrModeImm8OffsetToBits,
+
   T2AddrModeNegImm8,
   mkT2AddrModeNegImm8,
   t2AddrModeNegImm8ToBits,
@@ -662,6 +666,34 @@ t2AddrModeNegImm8ToBits (T2AddrModeNegImm8 (GPR r) imm a) =
     insert t2AddrModeNegImm8RegField r $
     insert t2AddrModeNegImm8AddField a $
     insert t2AddrModeNegImm8ImmField imm 0
+
+-- | An T2AddrMode_Imm8Offset memory reference for a load or store instruction
+-- (with a 8-bit immediate)
+data T2AddrModeImm8Offset =
+    T2AddrModeImm8Offset { t2AddrModeImm8OffsetAdd :: Word8
+                         , t2AddrModeImm8OffsetImm :: Word8
+                         }
+                         deriving (Eq, Ord, Show)
+
+instance PP.Pretty T2AddrModeImm8Offset where
+  pPrint _ = PP.text "not implemented"
+
+t2AddrModeImm8OffsetAddField :: Field
+t2AddrModeImm8OffsetAddField = Field 1 8
+
+t2AddrModeImm8OffsetImmField :: Field
+t2AddrModeImm8OffsetImmField = Field 8 0
+
+mkT2AddrModeImm8Offset :: Word32 -> T2AddrModeImm8Offset
+mkT2AddrModeImm8Offset w = T2AddrModeImm8Offset (fromIntegral add) (fromIntegral imm)
+  where
+    add = extract t2AddrModeImm8OffsetAddField w
+    imm = extract t2AddrModeImm8OffsetImmField w
+
+t2AddrModeImm8OffsetToBits :: T2AddrModeImm8Offset -> Word32
+t2AddrModeImm8OffsetToBits (T2AddrModeImm8Offset add imm) =
+    insert t2AddrModeImm8OffsetAddField add $
+    insert t2AddrModeImm8OffsetImmField imm 0
 
 -- | An T2AddrMode_Imm8 memory reference for a load or store instruction
 -- (with a 8-bit immediate)
