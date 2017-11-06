@@ -59,7 +59,11 @@ module Dismantle.Thumb.Operands (
 
   Pred,
   mkPred,
-  predToBits
+  predToBits,
+
+  T2SoReg,
+  mkT2SoReg,
+  t2SoRegToBits
   ) where
 
 import Data.Bits
@@ -73,6 +77,8 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 import Dismantle.Tablegen.TH.Pretty ()
 
 import qualified Dismantle.Arbitrary as A
+
+import qualified Dismantle.ARM.Operands as ARM
 
 -- | A bit field description and functions for using it
 
@@ -297,6 +303,45 @@ addrModePcToBits :: AddrModePc -> Word32
 addrModePcToBits (AddrModePc imm) =
     insert addrModeIs4ImmField imm 0
 
+data T2SoReg =
+    T2SoReg { t2SoRegImm5      :: Word8
+            , t2SoRegShiftType :: ARM.ShiftType
+            , t2SoRegRm        :: GPR
+            }
+
+instance PP.Pretty T2SoReg where
+    pPrint _ = PP.text "not implemented"
+
+t2SoRegImm3Field :: Field
+t2SoRegImm3Field = Field 3 9
+
+t2SoRegImm2Field :: Field
+t2SoRegImm2Field = Field 2 7
+
+t2SoRegShiftTypeField :: Field
+t2SoRegShiftTypeField = Field 2 5
+
+t2SoRegRmField :: Field
+t2SoRegRmField = Field 4 0
+
+mkT2SoReg :: Word32 -> T2SoReg
+mkT2SoReg w = T2SoReg (fromIntegral imm) st (GPR $ fromIntegral reg)
+  where
+      reg  = extract t2SoRegRmField w
+      imm2 = extract t2SoRegImm2Field w
+      imm3 = extract t2SoRegImm3Field w
+      imm = (imm3 `shiftL` 2) .|. imm2
+      st   = ARM.decodeShiftType $ extract t2SoRegShiftTypeField w
+
+t2SoRegToBits :: T2SoReg -> Word32
+t2SoRegToBits (T2SoReg imm st (GPR reg)) =
+    let imm3 = imm `shiftR` 2
+        imm2 = imm .&. 0b11
+    in insert t2SoRegRmField reg $
+       insert t2SoRegImm2Field imm2 $
+       insert t2SoRegImm3Field imm3 $
+       insert t2SoRegShiftTypeField (ARM.encodeShiftType st) 0
+
 data ThumbBlxTarget =
     ThumbBlxTarget { _thumbBlxTargetS      :: Word8
                    , _thumbBlxTargetImm10H :: Word16
@@ -439,16 +484,6 @@ addrModeRrToBits :: AddrModeRr -> Word32
 addrModeRrToBits (AddrModeRr (LowGPR rm) (LowGPR rn)) =
     insert addrModeRrRmField rm $
     insert addrModeRrRnField rn 0
-
-data ShiftType = LSL | LSR | ASR | ROR | RRX
-               deriving (Eq, Ord, Show)
-
-instance PP.Pretty ShiftType where
-    pPrint LSL = PP.text "lsl"
-    pPrint LSR = PP.text "lsr"
-    pPrint ASR = PP.text "asr"
-    pPrint ROR = PP.text "ror"
-    pPrint RRX = PP.text "rrx"
 
 -- | Four-bit condition flag sequence
 data Pred = Pred { _unPred :: Word8

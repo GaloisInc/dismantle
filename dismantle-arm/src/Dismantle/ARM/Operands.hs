@@ -123,7 +123,11 @@ module Dismantle.ARM.Operands (
 
   SoRegReg,
   mkSoRegReg,
-  soRegRegToBits
+  soRegRegToBits,
+
+  ShiftType(..),
+  decodeShiftType,
+  encodeShiftType
   ) where
 
 import Data.Bits
@@ -425,6 +429,13 @@ decodeShiftType v =
         0b10 -> ASR
         0b11 -> ROR
         _    -> error $ "Invalid shift type bits: " <> show v
+
+encodeShiftType :: ShiftType -> Word32
+encodeShiftType LSL = 0b00
+encodeShiftType LSR = 0b01
+encodeShiftType ASR = 0b10
+encodeShiftType ROR = 0b11
+encodeShiftType RRX = 0
 
 data Imm8S4 = Imm8S4 { imm8s4Add :: Word8
                      , imm8s4Immediate :: Word8

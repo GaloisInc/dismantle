@@ -94,6 +94,10 @@ isa = ISA { isaName = "Thumb"
                                , opConE = Just (varE 'ARM.mkBankedReg)
                                , opWordE = Just (varE 'ARM.bankedRegToBits)
                                }
+    t2SoReg = OperandPayload { opTypeT = [t| Thumb.T2SoReg |]
+                             , opConE = Just (varE 'Thumb.mkT2SoReg)
+                             , opWordE = Just (varE 'Thumb.t2SoRegToBits)
+                             }
     addrModeIs1 = OperandPayload { opTypeT = [t| Thumb.AddrModeIs1 |]
                                  , opConE = Just (varE 'Thumb.mkAddrModeIs1)
                                  , opWordE = Just (varE 'Thumb.addrModeIs1ToBits)
@@ -240,6 +244,7 @@ isa = ISA { isaName = "Thumb"
         , ("Cc_out"               , sBit)
         , ("Coproc_option_imm"    , word8Operand)
         , ("I32imm"               , word8Operand)
+        , ("T2_so_reg"            , t2SoReg)
         ]
 
     thumbFilter = hasNamedString "Namespace" "ARM" &&&
