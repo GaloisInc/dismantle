@@ -448,6 +448,7 @@ data T2AddrModeSoReg =
                     , t2AddrModeSoRegRm        :: GPR
                     , t2AddrModeSoRegRn        :: GPR
                     }
+                    deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeSoReg where
     pPrint _ = PP.text "not implemented"
@@ -479,6 +480,7 @@ data T2SoReg =
             , t2SoRegShiftType :: ARM.ShiftType
             , t2SoRegRm        :: GPR
             }
+            deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2SoReg where
     pPrint _ = PP.text "not implemented"
