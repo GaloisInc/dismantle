@@ -37,6 +37,10 @@ module Dismantle.Thumb.Operands (
   mkThumbBlxTarget,
   thumbBlxTargetToBits,
 
+  AddrModeImm01020S4,
+  mkAddrModeImm01020S4,
+  addrModeImm01020S4ToBits,
+
   AddrModeIs1,
   mkAddrModeIs1,
   addrModeIs1ToBits,
@@ -484,6 +488,33 @@ addrModeRrToBits :: AddrModeRr -> Word32
 addrModeRrToBits (AddrModeRr (LowGPR rm) (LowGPR rn)) =
     insert addrModeRrRmField rm $
     insert addrModeRrRnField rn 0
+
+data AddrModeImm01020S4 =
+    AddrModeImm01020S4 { _addrModeImm01020S4Reg :: GPR
+                       , _addrModeImm01020S4Imm :: Word8
+                       }
+                       deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddrModeImm01020S4 where
+  pPrint (AddrModeImm01020S4 reg imm) =
+      PP.pPrint reg <> (PP.text ", " PP.<+> PP.pPrint (((fromIntegral imm) :: Word32) `shiftL` 2))
+
+addrModeImm01020S4RegField :: Field
+addrModeImm01020S4RegField = Field 4 8
+
+addrModeImm01020S4ImmField :: Field
+addrModeImm01020S4ImmField = Field 8 0
+
+mkAddrModeImm01020S4 :: Word32 -> AddrModeImm01020S4
+mkAddrModeImm01020S4 w = AddrModeImm01020S4 (GPR $ fromIntegral rm) (fromIntegral imm)
+  where
+    rm = extract addrModeImm01020S4RegField w
+    imm = extract addrModeImm01020S4ImmField w
+
+addrModeImm01020S4ToBits :: AddrModeImm01020S4 -> Word32
+addrModeImm01020S4ToBits (AddrModeImm01020S4 (GPR rm) imm) =
+    insert addrModeImm01020S4RegField rm $
+    insert addrModeImm01020S4ImmField imm 0
 
 -- | Four-bit condition flag sequence
 data Pred = Pred { _unPred :: Word8
