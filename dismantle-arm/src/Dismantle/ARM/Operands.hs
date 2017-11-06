@@ -1126,3 +1126,9 @@ instance A.Arbitrary SBit where
 
 instance A.Arbitrary Reglist where
   arbitrary g = Reglist <$> A.arbitrary g
+
+instance A.Arbitrary BankedReg where
+  arbitrary _ = return BankedReg
+
+instance A.Arbitrary ShiftType where
+  arbitrary g = A.oneof [LSL, LSR, ASR, ROR, RRX] g

@@ -12,7 +12,8 @@ module Dismantle.Arbitrary (
   uniform,
   uniformR,
   withGen,
-  createGen
+  createGen,
+  oneof
   ) where
 
 import GHC.TypeLits
@@ -42,6 +43,10 @@ class Arbitrary a where
 -- | Choose uniformly from a range, /inclusive/ of endpoints.
 uniformR :: (R.Variate a) => (a, a) -> Gen -> IO a
 uniformR r (Gen g) = R.uniformR r g
+
+-- | Choose a random element of a list uniformly.
+oneof :: [a] -> Gen -> IO a
+oneof vals g = (vals !!) <$> uniformR (0, length vals - 1) g
 
 -- | Choose uniformly from a *fixed subset* of a type.
 --

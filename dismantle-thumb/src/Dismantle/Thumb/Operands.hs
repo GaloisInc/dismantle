@@ -955,3 +955,61 @@ instance A.Arbitrary ThumbBlTarget where
 instance A.Arbitrary AddrModeRr where
   arbitrary g = AddrModeRr <$> A.arbitrary g
                            <*> A.arbitrary g
+
+instance A.Arbitrary AddrModeImm01020S4 where
+  arbitrary g = AddrModeImm01020S4 <$> A.arbitrary g
+                                   <*> A.arbitrary g
+
+instance A.Arbitrary T2AddrModeImm12 where
+  arbitrary g = T2AddrModeImm12 <$> A.arbitrary g
+                                <*> A.arbitrary g
+
+instance A.Arbitrary T2SoReg where
+  arbitrary g = T2SoReg <$> A.arbitrary g
+                        <*> A.arbitrary g
+                        <*> A.arbitrary g
+
+instance A.Arbitrary T2AddrModeImm8 where
+  arbitrary g = T2AddrModeImm8 <$> A.arbitrary g
+                               <*> A.arbitrary g
+
+instance A.Arbitrary T2AddrModeImm8Pre where
+  arbitrary g = T2AddrModeImm8Pre <$> A.arbitrary g
+                                  <*> A.arbitrary g
+                                  <*> A.arbitrary g
+
+instance A.Arbitrary T2AddrModeImm8S4 where
+  arbitrary g = T2AddrModeImm8S4 <$> A.arbitrary g
+                                 <*> A.arbitrary g
+                                 <*> A.arbitrary g
+
+instance A.Arbitrary T2AddrModeImm8S4Pre where
+  arbitrary g = T2AddrModeImm8S4Pre <$> A.arbitrary g
+                                    <*> A.arbitrary g
+                                    <*> A.arbitrary g
+
+instance A.Arbitrary T2AddrModeNegImm8 where
+  arbitrary g = T2AddrModeNegImm8 <$> A.arbitrary g
+                                  <*> A.arbitrary g
+                                  <*> A.arbitrary g
+
+instance A.Arbitrary T2AddrModeSoReg where
+  arbitrary g = T2AddrModeSoReg <$> A.arbitrary g
+                                <*> A.arbitrary g
+                                <*> A.arbitrary g
+
+instance A.Arbitrary T2AdrLabel where
+  arbitrary g = T2AdrLabel <$> A.arbitrary g
+                           <*> A.arbitrary g
+
+instance A.Arbitrary T2LdrLabel where
+  arbitrary g = T2LdrLabel <$> A.arbitrary g
+                           <*> A.arbitrary g
+
+instance A.Arbitrary T2AddrModeImm8Offset where
+  arbitrary g = T2AddrModeImm8Offset <$> A.arbitrary g
+                                     <*> A.arbitrary g
+
+instance A.Arbitrary T2AddrModeImm8S4Offset where
+  arbitrary g = T2AddrModeImm8S4Offset <$> A.arbitrary g
+                                       <*> A.arbitrary g
