@@ -130,6 +130,10 @@ isa = ISA { isaName = "Thumb"
                                     , opConE = Just (varE 'Thumb.mkT2AddrModeImm8)
                                     , opWordE = Just (varE 'Thumb.t2AddrModeImm8ToBits)
                                     }
+    t2AddrModeImm8S4 = OperandPayload { opTypeT = [t| Thumb.T2AddrModeImm8S4 |]
+                                      , opConE = Just (varE 'Thumb.mkT2AddrModeImm8S4)
+                                      , opWordE = Just (varE 'Thumb.t2AddrModeImm8S4ToBits)
+                                      }
     t2AddrModeImm8Pre = OperandPayload { opTypeT = [t| Thumb.T2AddrModeImm8Pre |]
                                        , opConE = Just (varE 'Thumb.mkT2AddrModeImm8Pre)
                                        , opWordE = Just (varE 'Thumb.t2AddrModeImm8PreToBits)
@@ -222,6 +226,7 @@ isa = ISA { isaName = "Thumb"
         , ("T2addrmode_imm0_1020s4", addrModeImm01020S4)
         , ("T2addrmode_imm12"     , t2AddrModeImm12)
         , ("T2addrmode_imm8"      , t2AddrModeImm8)
+        , ("T2addrmode_imm8s4"    , t2AddrModeImm8S4)
         , ("T2addrmode_imm8_pre"  , t2AddrModeImm8Pre)
         , ("Thumb_bl_target"      , thumbBlTarget)
         , ("Thumb_blx_target"     , thumbBlxTarget)
