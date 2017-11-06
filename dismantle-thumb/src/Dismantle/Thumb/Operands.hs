@@ -25,6 +25,10 @@ module Dismantle.Thumb.Operands (
   mkOpcode,
   opcodeToBits,
 
+  T2AddrModeSoReg,
+  mkT2AddrModeSoReg,
+  t2AddrModeSoRegToBits,
+
   T2AddrModeImm12,
   mkT2AddrModeImm12,
   t2AddrModeImm12ToBits,
@@ -376,6 +380,37 @@ mkAddrModePc w = AddrModePc (fromIntegral imm)
 addrModePcToBits :: AddrModePc -> Word32
 addrModePcToBits (AddrModePc imm) =
     insert addrModeIs4ImmField imm 0
+
+data T2AddrModeSoReg =
+    T2AddrModeSoReg { t2AddrModeSoRegShiftType :: ARM.ShiftType
+                    , t2AddrModeSoRegRm        :: GPR
+                    , t2AddrModeSoRegRn        :: GPR
+                    }
+
+instance PP.Pretty T2AddrModeSoReg where
+    pPrint _ = PP.text "not implemented"
+
+t2AddrModeSoRegRmField :: Field
+t2AddrModeSoRegRmField = Field 4 0
+
+t2AddrModeSoRegShiftTypeField :: Field
+t2AddrModeSoRegShiftTypeField = Field 2 4
+
+t2AddrModeSoRegRnField :: Field
+t2AddrModeSoRegRnField = Field 4 6
+
+mkT2AddrModeSoReg :: Word32 -> T2AddrModeSoReg
+mkT2AddrModeSoReg w = T2AddrModeSoReg st (GPR $ fromIntegral rm) (GPR $ fromIntegral rn)
+  where
+      rm  = extract t2AddrModeSoRegRmField w
+      rn  = extract t2AddrModeSoRegRnField w
+      st  = ARM.decodeShiftType $ extract t2AddrModeSoRegShiftTypeField w
+
+t2AddrModeSoRegToBits :: T2AddrModeSoReg -> Word32
+t2AddrModeSoRegToBits (T2AddrModeSoReg st (GPR rm) (GPR rn)) =
+    insert t2AddrModeSoRegRmField rm $
+    insert t2AddrModeSoRegRnField rn $
+    insert t2AddrModeSoRegShiftTypeField (ARM.encodeShiftType st) 0
 
 data T2SoReg =
     T2SoReg { t2SoRegImm5      :: Word8
