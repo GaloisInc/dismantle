@@ -41,6 +41,10 @@ module Dismantle.Thumb.Operands (
   mkT2AddrModeImm8,
   t2AddrModeImm8ToBits,
 
+  T2AddrModeNegImm8,
+  mkT2AddrModeNegImm8,
+  t2AddrModeNegImm8ToBits,
+
   T2AddrModeImm8Pre,
   mkT2AddrModeImm8Pre,
   t2AddrModeImm8PreToBits,
@@ -560,6 +564,39 @@ t2AddrModeImm8PreToBits (T2AddrModeImm8Pre (GPR r) imm u) =
     insert t2AddrModeImm8PreRegField r $
     insert t2AddrModeImm8PreUBitField u $
     insert t2AddrModeImm8PreImmField imm 0
+
+-- | An T2AddrMode_NegImm8 memory reference for a load or store instruction
+-- (with a 8-bit immediate)
+data T2AddrModeNegImm8 = T2AddrModeNegImm8 { t2AddrModeNegImm8Register  :: GPR
+                                           , t2AddrModeNegImm8Immediate :: Word8
+                                           , t2AddrModeNegImm8Add       :: Word8
+                                           }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty T2AddrModeNegImm8 where
+  pPrint _ = PP.text "not implemented"
+
+t2AddrModeNegImm8RegField :: Field
+t2AddrModeNegImm8RegField = Field 4 9
+
+t2AddrModeNegImm8AddField :: Field
+t2AddrModeNegImm8AddField = Field 1 9
+
+t2AddrModeNegImm8ImmField :: Field
+t2AddrModeNegImm8ImmField = Field 8 0
+
+mkT2AddrModeNegImm8 :: Word32 -> T2AddrModeNegImm8
+mkT2AddrModeNegImm8 w = T2AddrModeNegImm8 (GPR $ fromIntegral reg) (fromIntegral imm) (fromIntegral a)
+  where
+    reg = extract t2AddrModeNegImm8RegField w
+    a   = extract t2AddrModeNegImm8AddField w
+    imm = extract t2AddrModeNegImm8ImmField w
+
+t2AddrModeNegImm8ToBits :: T2AddrModeNegImm8 -> Word32
+t2AddrModeNegImm8ToBits (T2AddrModeNegImm8 (GPR r) imm a) =
+    insert t2AddrModeNegImm8RegField r $
+    insert t2AddrModeNegImm8AddField a $
+    insert t2AddrModeNegImm8ImmField imm 0
 
 -- | An T2AddrMode_Imm8 memory reference for a load or store instruction
 -- (with a 8-bit immediate)
