@@ -69,6 +69,10 @@ module Dismantle.Thumb.Operands (
   mkT2AdrLabel,
   t2AdrLabelToBits,
 
+  T2LdrLabel,
+  mkT2LdrLabel,
+  t2LdrLabelToBits,
+
   ThumbBlTarget,
   mkThumbBlTarget,
   thumbBlTargetToBits,
@@ -239,6 +243,26 @@ t2AddrModeImm8S4PreToBits (T2AddrModeImm8S4Pre add imm (GPR reg)) =
     insert (Field 4 9) reg $
     insert (Field 1 8) add $
     insert (Field 8 0) imm 0
+
+data T2LdrLabel =
+    T2LdrLabel { t2LdrLabelImm :: Word16
+               , t2LdrLabelAdd :: Word8
+               }
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty T2LdrLabel where
+    pPrint _ = PP.text "not implemented"
+
+mkT2LdrLabel :: Word32 -> T2LdrLabel
+mkT2LdrLabel w = T2LdrLabel (fromIntegral imm) (fromIntegral add)
+  where
+    add = extract (Field 1 12) w
+    imm = extract (Field 12 0) w
+
+t2LdrLabelToBits :: T2LdrLabel -> Word32
+t2LdrLabelToBits (T2LdrLabel add imm) =
+    insert (Field 1 12) add $
+    insert (Field 12 0) imm 0
 
 data T2AddrModeImm8S4 =
     T2AddrModeImm8S4 { t2AddrModeImm8s4Add       :: Word8
