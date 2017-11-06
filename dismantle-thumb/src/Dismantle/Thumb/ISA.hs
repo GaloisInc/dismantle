@@ -234,6 +234,7 @@ isa = ISA { isaName = "Thumb"
         , ("T2addrmode_imm0_1020s4", addrModeImm01020S4)
         , ("T2addrmode_imm12"     , t2AddrModeImm12)
         , ("T2addrmode_imm8"      , t2AddrModeImm8)
+        , ("T2addrmode_posimm8"   , t2AddrModeImm8)
         , ("T2addrmode_negimm8"   , t2AddrModeNegImm8)
         , ("T2addrmode_imm8s4"    , t2AddrModeImm8S4)
         , ("T2addrmode_imm8s4_pre", t2AddrModeImm8S4Pre)
