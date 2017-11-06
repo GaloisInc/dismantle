@@ -76,6 +76,8 @@ isa = ISA { isaName = "Thumb"
           }
   where
     defaultPP = [ ("p", "")
+                , ("Rdn", "")
+                , ("sp", "sp")
                 ]
 
     gpRegister = OperandPayload { opTypeT = [t| Thumb.GPR |]
