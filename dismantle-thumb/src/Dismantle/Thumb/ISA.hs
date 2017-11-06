@@ -265,6 +265,7 @@ isa = ISA { isaName = "Thumb"
         , ("T2addrmode_imm8s4_pre", t2AddrModeImm8S4Pre)
         , ("T2addrmode_imm8_pre"  , t2AddrModeImm8Pre)
         , ("Thumb_bl_target"      , thumbBlTarget)
+        , ("Thumb_br_target"      , thumbBlTarget)
         , ("Thumb_blx_target"     , thumbBlxTarget)
         , ("Thumb_bcc_target"     , word8Operand)
         , ("Thumb_cb_target"      , word8Operand)
