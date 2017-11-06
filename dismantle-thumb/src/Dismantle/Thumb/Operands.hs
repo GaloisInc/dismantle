@@ -25,6 +25,10 @@ module Dismantle.Thumb.Operands (
   mkOpcode,
   opcodeToBits,
 
+  T2AddrModeImm12,
+  mkT2AddrModeImm12,
+  t2AddrModeImm12ToBits,
+
   TAdrLabel,
   mkTAdrLabel,
   tAdrLabelToBits,
@@ -461,6 +465,37 @@ mkTBrTarget w = TBrTarget (fromIntegral imm)
 tBrTargetToBits :: TBrTarget -> Word32
 tBrTargetToBits (TBrTarget imm) =
     insert addrModeIs4ImmField imm 0
+
+-- | An T2AddrMode_Imm12 memory reference for a load or store instruction
+-- (with a 12-bit immediate)
+data T2AddrModeImm12 = T2AddrModeImm12 { t2AddrModeImm12Register  :: GPR
+                                       , t2AddrModeImm12Immediate :: Word16
+                                       }
+  deriving (Eq, Ord, Show)
+
+instance PP.Pretty T2AddrModeImm12 where
+  pPrint m =
+      let suf = if t2AddrModeImm12Immediate m == 0
+                then mempty
+                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ t2AddrModeImm12Immediate m))
+      in PP.brackets $ PP.pPrint (t2AddrModeImm12Register m) <> suf
+
+t2AddrModeImm12RegField :: Field
+t2AddrModeImm12RegField = Field 4 12
+
+t2AddrModeImm12ImmField :: Field
+t2AddrModeImm12ImmField = Field 12 0
+
+mkT2AddrModeImm12 :: Word32 -> T2AddrModeImm12
+mkT2AddrModeImm12 w = T2AddrModeImm12 (GPR $ fromIntegral reg) (fromIntegral imm)
+  where
+    reg = extract t2AddrModeImm12RegField w
+    imm = extract t2AddrModeImm12ImmField w
+
+t2AddrModeImm12ToBits :: T2AddrModeImm12 -> Word32
+t2AddrModeImm12ToBits (T2AddrModeImm12 (GPR r) imm) =
+    insert t2AddrModeImm12RegField r $
+    insert t2AddrModeImm12ImmField imm 0
 
 data AddrModeRr =
     AddrModeRr { _addrModeRmReg :: LowGPR
