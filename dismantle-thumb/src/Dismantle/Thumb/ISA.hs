@@ -321,6 +321,11 @@ isa = ISA { isaName = "Thumb"
     ignoredDef d = defName d `elem`
         [ "tADDrSP" -- See tADDhirr
         , "tADDspr" -- See tADDhirr
+        , "t2LDRBpci" -- See t2LDRB_POST
+        , "t2LDRHpci" -- See t2LDRH_POST
+        , "t2LDRpci" -- See t2LDR_POST
+        , "t2LDRSBpci" -- See t2LDRSB_POST
+        , "t2LDRSHpci" -- See t2LDRSH_POST
         ]
 
     ignoredMetadataNames = S.fromList $ Metadata <$>
