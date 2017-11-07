@@ -21,6 +21,10 @@ module Dismantle.Thumb.Operands (
   mkTBrTarget,
   tBrTargetToBits,
 
+  T2SoImm,
+  mkT2SoImm,
+  t2SoImmToBits,
+
   Opcode,
   mkOpcode,
   opcodeToBits,
@@ -442,6 +446,48 @@ mkAddrModePc w = AddrModePc (fromIntegral imm)
 addrModePcToBits :: AddrModePc -> Word32
 addrModePcToBits (AddrModePc imm) =
     insert addrModeIs4ImmField imm 0
+
+data T2SoImm = T2SoImm { t2SoImm :: Word16 }
+             deriving (Eq, Ord, Show)
+
+-- See the ARM ARM DDI 0406C.b A6.3.2, "Operation of modified immediate
+-- constants, Thumb instructions", ThumbExpandImm() definition.
+thumbExpandImm :: Word16 -> Word32
+thumbExpandImm imm12 = imm32
+    where
+        mask1 = 0b11 `shiftL` 10
+
+        imm32 = if imm12 .&. mask1 == 0
+                then a
+                else b
+
+        a = let mask = 0b11111111
+                low8 = fromIntegral $ imm12 .&. mask
+            in case extract (Field 2 8) (fromIntegral imm12) of
+                0b00 -> low8
+                0b01 -> (low8 `shiftL` 16) .|.
+                         low8
+                0b10 -> (low8 `shiftL` 24) .|.
+                        (low8 `shiftL` 8)
+                0b11 -> (low8 `shiftL` 24) .|.
+                        (low8 `shiftL` 16) .|.
+                        (low8 `shiftL` 8)  .|.
+                         low8
+                _ -> error "BUG: invalid field value in thumbExpandImm"
+
+        b = let low7 = (fromIntegral imm12) .&. 0b1111111
+                unrotated_value = (0b1 `shiftL` 7) .|. low7
+                rot = fromIntegral $ extract (Field 5 7) (fromIntegral imm12)
+            in unrotated_value `rotateR` rot
+
+instance PP.Pretty T2SoImm where
+    pPrint (T2SoImm v) = PP.text $ "#" <> (show $ thumbExpandImm v)
+
+mkT2SoImm :: Word32 -> T2SoImm
+mkT2SoImm w = T2SoImm $ fromIntegral w
+
+t2SoImmToBits :: T2SoImm -> Word32
+t2SoImmToBits (T2SoImm w) = fromIntegral w
 
 data T2AddrModeSoReg =
     T2AddrModeSoReg { t2AddrModeSoRegShiftType :: ARM.ShiftType
@@ -1013,3 +1059,6 @@ instance A.Arbitrary T2AddrModeImm8Offset where
 instance A.Arbitrary T2AddrModeImm8S4Offset where
   arbitrary g = T2AddrModeImm8S4Offset <$> A.arbitrary g
                                        <*> A.arbitrary g
+
+instance A.Arbitrary T2SoImm where
+  arbitrary g = T2SoImm <$> A.arbitrary g

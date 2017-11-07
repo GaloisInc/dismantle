@@ -216,6 +216,10 @@ isa = ISA { isaName = "Thumb"
                          , opConE = Just (varE 'Thumb.mkBit)
                          , opWordE = Just (varE 'Thumb.bitToBits)
                          }
+    t2SoImmOperand = OperandPayload { opTypeT = [t| Thumb.T2SoImm |]
+                                    , opConE = Just (varE 'Thumb.mkT2SoImm)
+                                    , opWordE = Just (varE 'Thumb.t2SoImmToBits)
+                                    }
     sBit = OperandPayload { opTypeT = [t| ARM.SBit |]
                           , opConE = Just (varE 'ARM.mkSBit)
                           , opWordE = Just (varE 'ARM.sBitToBits)
@@ -297,7 +301,7 @@ isa = ISA { isaName = "Thumb"
         , ("Pkh_lsl_amt"          , word8Operand)
         , ("Rot_imm"              , word8Operand)
         , ("T2_shift_imm"         , word8Operand)
-        , ("T2_so_imm"            , word16Operand)
+        , ("T2_so_imm"            , t2SoImmOperand)
         , ("Postidx_imm8s4"       , imm8s4)
         , ("Pred"                 , predOperand)
         , ("Reglist"              , reglistOperand)
