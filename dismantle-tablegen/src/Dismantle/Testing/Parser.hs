@@ -80,6 +80,7 @@ tryParseInstruction =
   tryOne [ parseInstruction
          , parseEllipses
          , parseFunctionHeading
+         , parseAddressOutOfBounds
          ]
 
 parseEllipses :: Parser (Maybe a)
@@ -95,6 +96,19 @@ parseInstructionBytes =
       (P.try $ replicateM 4 parseByte) <|>
       -- ARM thumb halfword format: "0a0b"
       replicateM 2 parseByte
+
+-- Objdump sometimes emits these lines for thumb disassemblies.
+parseAddressOutOfBounds :: Parser (Maybe Instruction)
+parseAddressOutOfBounds = do
+  P.space
+  void parseAddress
+  void $ P.char ':'
+  P.space
+  void $ P.string $ TL.pack "Address 0x"
+  void parseAddress
+  void $ P.string $ TL.pack " is out of bounds."
+  void $ replicateM 3 P.eol
+  return Nothing
 
 parseInstruction :: Parser (Maybe Instruction)
 parseInstruction = do
