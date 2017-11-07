@@ -20,6 +20,7 @@ ppc = ATC { archName = "ppc"
           , skipPrettyCheck = Just skipPrettyRE
           , ignoreAddresses = []
           , normalizePretty = normalize
+          , instructionFilter = const True
           }
 
 main :: IO ()

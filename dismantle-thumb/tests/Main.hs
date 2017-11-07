@@ -25,6 +25,7 @@ thumb = ATC { archName = "thumb"
             , assemble = Thumb.assembleInstruction
             , prettyPrint = Thumb.ppInstruction
             , expectFailure = Just expectedFailures
+            , instructionFilter = ((/= FullWord) . insnLayout)
             , skipPrettyCheck = Just skipPretty
             , ignoreAddresses = ignored
             , normalizePretty = normalize
