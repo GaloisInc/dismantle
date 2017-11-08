@@ -441,7 +441,7 @@ mkAddrModePc w = AddrModePc (fromIntegral imm)
 
 addrModePcToBits :: AddrModePc -> Word32
 addrModePcToBits (AddrModePc imm) =
-    insert addrModeIs4ImmField imm 0
+    insert addrModePcImmField imm 0
 
 data T2SoImm = T2SoImm { t2SoImm :: Word16 }
              deriving (Eq, Ord, Show)
