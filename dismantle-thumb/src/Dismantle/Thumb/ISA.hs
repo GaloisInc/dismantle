@@ -117,6 +117,10 @@ isa = ISA { isaName = "Thumb"
                                 , opConE = Just (varE 'Thumb.mkAddrModePc)
                                 , opWordE = Just (varE 'Thumb.addrModePcToBits)
                                 }
+    addrModeSp = OperandPayload { opTypeT = [t| Thumb.AddrModeSp |]
+                                , opConE = Just (varE 'Thumb.mkAddrModeSp)
+                                , opWordE = Just (varE 'Thumb.addrModeSpToBits)
+                                }
     tImm0508s4 = OperandPayload { opTypeT = [t| Thumb.TImm0508S4 |]
                                 , opConE = Just (varE 'Thumb.mkTImm0508S4)
                                 , opWordE = Just (varE 'Thumb.tImm0508S4ToBits)
@@ -261,7 +265,7 @@ isa = ISA { isaName = "Thumb"
         , ("T_addrmode_is4"       , addrModeIs4)
         , ("T_addrmode_pc"        , addrModePc)
         , ("T_addrmode_rr"        , addrModeRr)
-        , ("T_addrmode_sp"        , addrModePc)
+        , ("T_addrmode_sp"        , addrModeSp)
         , ("T_adrlabel"           , tAdrLabelOperand)
         , ("T2adrlabel"           , t2AdrLabelOperand)
         , ("T2ldrlabel"           , t2LdrLabelOperand)
@@ -302,7 +306,7 @@ isa = ISA { isaName = "Thumb"
         , ("Imod_op"              , word8Operand)
         , ("Instsyncb_opt"        , word8Operand)
         , ("It_mask"              , word8Operand)
-        , ("It_pred"              , word8Operand)
+        , ("It_pred"              , predOperand)
         , ("Memb_opt"             , word8Operand)
         , ("Msr_mask"             , msrMask)
         , ("P_imm"                , word8Operand)

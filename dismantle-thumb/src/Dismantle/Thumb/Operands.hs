@@ -17,6 +17,10 @@ module Dismantle.Thumb.Operands (
   mkBit,
   bitToBits,
 
+  ITMask,
+  mkITMask,
+  itMaskToBits,
+
   TBrTarget,
   mkTBrTarget,
   tBrTargetToBits,
@@ -112,6 +116,10 @@ module Dismantle.Thumb.Operands (
   AddrModePc,
   mkAddrModePc,
   addrModePcToBits,
+
+  AddrModeSp,
+  mkAddrModeSp,
+  addrModeSpToBits,
 
   AddrModeRr,
   mkAddrModeRr,
@@ -470,6 +478,27 @@ mkTImm01020S4 w = TImm01020S4 (fromIntegral imm)
 tImm01020S4ToBits :: TImm01020S4 -> Word32
 tImm01020S4ToBits (TImm01020S4 imm) =
     insert tImm01020S4ImmField imm 0
+
+data AddrModeSp =
+    AddrModeSp { addrModeSpImm :: Word8
+               }
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddrModeSp where
+  pPrint m =
+      PP.brackets $ PP.text "sp," PP.<+> PP.pPrint (((fromIntegral $ addrModeSpImm m) :: Word32) `shiftL` 2)
+
+addrModeSpImmField :: Field
+addrModeSpImmField = Field 8 0
+
+mkAddrModeSp :: Word32 -> AddrModeSp
+mkAddrModeSp w = AddrModeSp (fromIntegral imm)
+  where
+    imm = extract addrModeSpImmField w
+
+addrModeSpToBits :: AddrModeSp -> Word32
+addrModeSpToBits (AddrModeSp imm) =
+    insert addrModeSpImmField imm 0
 
 data AddrModePc =
     AddrModePc { addrModePcImm :: Word8
@@ -956,6 +985,21 @@ addrModeImm01020S4ToBits (AddrModeImm01020S4 (GPR rm) imm) =
     insert addrModeImm01020S4RegField rm $
     insert addrModeImm01020S4ImmField imm 0
 
+data ITMask = ITMask { _unITMask :: Word8
+                     }
+                     deriving (Eq, Ord, Show)
+
+instance PP.Pretty ITMask where
+    -- See the ARM ARM DDI 0406C.b, A8-391
+    pPrint (ITMask 0b1110) = PP.text ""
+    pPrint _               = PP.text "<UND>"
+
+mkITMask :: Word32 -> ITMask
+mkITMask = ITMask . fromIntegral
+
+itMaskToBits :: ITMask -> Word32
+itMaskToBits (ITMask p) = fromIntegral p
+
 -- | Four-bit condition flag sequence
 data Pred = Pred { _unPred :: Word8
                  }
@@ -1018,6 +1062,9 @@ instance A.Arbitrary AddrModeIs4 where
 
 instance A.Arbitrary AddrModePc where
   arbitrary g = AddrModePc <$> A.arbitrary g
+
+instance A.Arbitrary AddrModeSp where
+  arbitrary g = AddrModeSp <$> A.arbitrary g
 
 instance A.Arbitrary TAdrLabel where
   arbitrary g = TAdrLabel <$> A.arbitrary g
