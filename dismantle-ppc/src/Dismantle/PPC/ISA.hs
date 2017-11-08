@@ -205,13 +205,13 @@ ppcFormOverrides = [ ("BForm", ppcBForm)
     ppcMForm = FormOverride [ ("SH", SimpleDescriptor "RB")
                             , ("rA", SimpleDescriptor "RA")
                             , ("rB", SimpleDescriptor "RB")
-                            , ("rSi", SimpleDescriptor "RS")
+                            , ("rSi", Ignore)
                             , ("rS", SimpleDescriptor "RS")
                             ]
 
     ppcMDForm = FormOverride [ ("rA", SimpleDescriptor "RA")
                              , ("rS", SimpleDescriptor "RS")
-                             , ("rSi", SimpleDescriptor "RS")
+                             , ("rSi", Ignore)
                              ]
 
     ppcVXForm = FormOverride [ ("vD", SimpleDescriptor "VD")
