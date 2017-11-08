@@ -249,6 +249,10 @@ isa = ISA { isaName = "Thumb"
                             , opConE = Just (varE 'ARM.mkImm8s4)
                             , opWordE = Just (varE 'ARM.imm8s4ToBits)
                             }
+    bfInvMaskImm = OperandPayload { opTypeT = [t| Thumb.BfInvMaskImm |]
+                                  , opConE = Just (varE 'Thumb.mkBfInvMaskImm)
+                                  , opWordE = Just (varE 'Thumb.bfInvMaskImmToBits)
+                                  }
 
     thumbOperandPayloadTypes =
         [ ("GPR"                  , gpRegister)
@@ -257,7 +261,7 @@ isa = ISA { isaName = "Thumb"
         , ("Addr_offset_none"     , gpRegister)
         , ("Addrmode5"            , addrMode5)
         , ("Addrmode5_pre"        , addrMode5)
-        , ("Bf_inv_mask_imm"      , word16Operand)
+        , ("Bf_inv_mask_imm"      , bfInvMaskImm)
         , ("Banked_reg"           , bankedReg)
         , ("TGPR"                 , lowGpRegister)
         , ("T_addrmode_is1"       , addrModeIs1)

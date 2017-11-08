@@ -33,6 +33,10 @@ module Dismantle.Thumb.Operands (
   mkOpcode,
   opcodeToBits,
 
+  BfInvMaskImm,
+  mkBfInvMaskImm,
+  bfInvMaskImmToBits,
+
   T2AddrModeSoReg,
   mkT2AddrModeSoReg,
   t2AddrModeSoRegToBits,
@@ -562,6 +566,36 @@ mkT2SoImm w = T2SoImm $ fromIntegral w
 
 t2SoImmToBits :: T2SoImm -> Word32
 t2SoImmToBits (T2SoImm w) = fromIntegral w
+
+data BfInvMaskImm =
+    BfInvMaskImm { bfInvMaskImmLsbits :: Word8
+                 , bfInvMaskImmMsbits :: Word8
+                 }
+                 deriving (Eq, Ord, Show)
+
+instance PP.Pretty BfInvMaskImm where
+    pPrint (BfInvMaskImm l m) =
+        let w = ((fromIntegral m) :: Int) + 1 - lsb
+            lsb = ((fromIntegral l) :: Int)
+        in (PP.char '#' <> PP.text (show lsb) <> PP.char ',') PP.<+>
+           (PP.char '#' <> PP.text (show w))
+
+bfInvMaskImmLsbitsField :: Field
+bfInvMaskImmLsbitsField = Field 5 0
+
+bfInvMaskImmMsbitsField :: Field
+bfInvMaskImmMsbitsField = Field 5 5
+
+mkBfInvMaskImm :: Word32 -> BfInvMaskImm
+mkBfInvMaskImm w = BfInvMaskImm (fromIntegral l) (fromIntegral m)
+  where
+      m = extract bfInvMaskImmMsbitsField w
+      l = extract bfInvMaskImmLsbitsField w
+
+bfInvMaskImmToBits :: BfInvMaskImm -> Word32
+bfInvMaskImmToBits (BfInvMaskImm l m) =
+    insert bfInvMaskImmMsbitsField m $
+    insert bfInvMaskImmLsbitsField l 0
 
 data T2AddrModeSoReg =
     T2AddrModeSoReg { t2AddrModeSoRegShiftType :: ARM.ShiftType
@@ -1156,3 +1190,7 @@ instance A.Arbitrary TImm0508S4 where
 
 instance A.Arbitrary TImm01020S4 where
   arbitrary g = TImm01020S4 <$> A.arbitrary g
+
+instance A.Arbitrary BfInvMaskImm where
+  arbitrary g = BfInvMaskImm <$> A.arbitrary g
+                             <*> A.arbitrary g
