@@ -299,9 +299,7 @@ data AddrModeIs1 =
 
 instance PP.Pretty AddrModeIs1 where
   pPrint m =
-      let suf = if addrModeIs1Imm m == 0
-                then mempty
-                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs1Imm m))
+      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs1Imm m))
       in PP.brackets $ PP.pPrint (addrModeIs1Reg m) <> suf
 
 addrModeIs1RegField :: Field
@@ -805,9 +803,7 @@ data T2AddrModeImm8 = T2AddrModeImm8 { t2AddrModeImm8Register  :: GPR
 
 instance PP.Pretty T2AddrModeImm8 where
   pPrint m =
-      let suf = if t2AddrModeImm8Immediate m == 0
-                then mempty
-                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ t2AddrModeImm8Immediate m))
+      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ t2AddrModeImm8Immediate m))
       in PP.brackets $ PP.pPrint (t2AddrModeImm8Register m) <> suf
 
 t2AddrModeImm8RegField :: Field
