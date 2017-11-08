@@ -233,7 +233,7 @@ data T2AddrModeImm8S4Pre =
                         deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeImm8S4Pre where
-    pPrint _ = PP.text "not implemented"
+    pPrint _ = PP.text "not implemented 1"
 
 mkT2AddrModeImm8S4Pre :: Word32 -> T2AddrModeImm8S4Pre
 mkT2AddrModeImm8S4Pre w = T2AddrModeImm8S4Pre (fromIntegral add) (fromIntegral imm8) (GPR $ fromIntegral reg)
@@ -255,7 +255,7 @@ data T2LdrLabel =
                deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2LdrLabel where
-    pPrint _ = PP.text "not implemented"
+    pPrint _ = PP.text "not implemented 2"
 
 mkT2LdrLabel :: Word32 -> T2LdrLabel
 mkT2LdrLabel w = T2LdrLabel (fromIntegral imm) (fromIntegral add)
@@ -276,7 +276,7 @@ data T2AddrModeImm8S4 =
                      deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeImm8S4 where
-    pPrint _ = PP.text "not implemented"
+    pPrint _ = PP.text "not implemented 3"
 
 mkT2AddrModeImm8S4 :: Word32 -> T2AddrModeImm8S4
 mkT2AddrModeImm8S4 w = T2AddrModeImm8S4 (fromIntegral add) (fromIntegral imm8) (GPR $ fromIntegral reg)
@@ -404,7 +404,7 @@ data T2AdrLabel =
                deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AdrLabel where
-  pPrint _ = PP.text "not implemented"
+  pPrint _ = PP.text "not implemented 4"
 
 t2AddrLabelImmField :: Field
 t2AddrLabelImmField = Field 11 0
@@ -493,7 +493,7 @@ data T2AddrModeSoReg =
                     deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeSoReg where
-    pPrint _ = PP.text "not implemented"
+    pPrint _ = PP.text "not implemented 5"
 
 t2AddrModeSoRegRmField :: Field
 t2AddrModeSoRegRmField = Field 4 0
@@ -525,7 +525,7 @@ data T2SoReg =
             deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2SoReg where
-    pPrint _ = PP.text "not implemented"
+    pPrint _ = PP.text "not implemented 6"
 
 t2SoRegImm3Field :: Field
 t2SoRegImm3Field = Field 3 9
@@ -567,7 +567,7 @@ data ThumbBlxTarget =
                    deriving (Eq, Ord, Show)
 
 instance PP.Pretty ThumbBlxTarget where
-    pPrint _ = PP.text "not implemented"
+    pPrint _ = PP.text "not implemented 7"
 
 thumbBlxTargetSField :: Field
 thumbBlxTargetSField = Field 1 23
@@ -615,7 +615,7 @@ data ThumbBlTarget =
                   deriving (Eq, Ord, Show)
 
 instance PP.Pretty ThumbBlTarget where
-    pPrint _ = PP.text "not implemented"
+    pPrint _ = PP.text "not implemented 8"
 
 thumbBlTargetSField :: Field
 thumbBlTargetSField = Field 1 23
@@ -682,7 +682,7 @@ data T2AddrModeImm8Pre = T2AddrModeImm8Pre { t2AddrModeImm8PreRn   :: GPR
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeImm8Pre where
-  pPrint _ = PP.text "not implemented"
+  pPrint _ = PP.text "not implemented 9"
 
 t2AddrModeImm8PreRegField :: Field
 t2AddrModeImm8PreRegField = Field 4 9
@@ -715,7 +715,7 @@ data T2AddrModeNegImm8 = T2AddrModeNegImm8 { t2AddrModeNegImm8Register  :: GPR
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeNegImm8 where
-  pPrint _ = PP.text "not implemented"
+  pPrint _ = PP.text "not implemented 10"
 
 t2AddrModeNegImm8RegField :: Field
 t2AddrModeNegImm8RegField = Field 4 9
@@ -748,7 +748,7 @@ data T2AddrModeImm8S4Offset =
                            deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeImm8S4Offset where
-  pPrint _ = PP.text "not implemented"
+  pPrint _ = PP.text "not implemented 11"
 
 t2AddrModeImm8S4OffsetAddField :: Field
 t2AddrModeImm8S4OffsetAddField = Field 1 8
@@ -776,7 +776,7 @@ data T2AddrModeImm8Offset =
                          deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeImm8Offset where
-  pPrint _ = PP.text "not implemented"
+  pPrint _ = PP.text "not implemented 12"
 
 t2AddrModeImm8OffsetAddField :: Field
 t2AddrModeImm8OffsetAddField = Field 1 8
