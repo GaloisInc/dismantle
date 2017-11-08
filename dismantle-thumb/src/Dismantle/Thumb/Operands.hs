@@ -329,9 +329,7 @@ data AddrModeIs2 =
 
 instance PP.Pretty AddrModeIs2 where
   pPrint m =
-      let suf = if addrModeIs2Imm m == 0
-                then mempty
-                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs2Imm m))
+      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs2Imm m `shiftL` 2))
       in PP.brackets $ PP.pPrint (addrModeIs2Reg m) <> suf
 
 addrModeIs2RegField :: Field
@@ -359,9 +357,7 @@ data AddrModeIs4 =
 
 instance PP.Pretty AddrModeIs4 where
   pPrint m =
-      let suf = if addrModeIs4Imm m == 0
-                then mempty
-                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs4Imm m))
+      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs4Imm m `shiftL` 2))
       in PP.brackets $ PP.pPrint (addrModeIs4Reg m) <> suf
 
 addrModeIs4RegField :: Field
@@ -839,13 +835,11 @@ data T2AddrModeImm12 = T2AddrModeImm12 { t2AddrModeImm12Register  :: GPR
 
 instance PP.Pretty T2AddrModeImm12 where
   pPrint m =
-      let suf = if t2AddrModeImm12Immediate m == 0
-                then mempty
-                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ t2AddrModeImm12Immediate m))
+      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ t2AddrModeImm12Immediate m))
       in PP.brackets $ PP.pPrint (t2AddrModeImm12Register m) <> suf
 
 t2AddrModeImm12RegField :: Field
-t2AddrModeImm12RegField = Field 4 12
+t2AddrModeImm12RegField = Field 4 13
 
 t2AddrModeImm12ImmField :: Field
 t2AddrModeImm12ImmField = Field 12 0
@@ -869,7 +863,7 @@ data AddrModeRr =
 
 instance PP.Pretty AddrModeRr where
   pPrint (AddrModeRr rm rn) =
-      PP.pPrint rm <> (PP.text ", " PP.<+> PP.pPrint rn)
+      PP.brackets $ PP.pPrint rn <> (PP.text "," PP.<+> PP.pPrint rm)
 
 addrModeRrRmField :: Field
 addrModeRrRmField = Field 3 3
