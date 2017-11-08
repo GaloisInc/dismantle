@@ -1,8 +1,10 @@
+{-# LANGUAGE TupleSections #-}
 module Dismantle.Testing.Parser (
   objdumpParser,
   Disassembly(..),
   Section(..),
   Instruction(..),
+  InstructionLayout(..),
   Parser
   ) where
 
@@ -10,6 +12,7 @@ import Control.Applicative
 import Control.Monad ( replicateM, replicateM_, void )
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List.NonEmpty as NL
+import Data.Monoid ((<>))
 import Data.Maybe ( catMaybes )
 import qualified Data.Text.Lazy as TL
 import Data.Word ( Word8, Word64 )
@@ -29,11 +32,25 @@ data Section = Section { sectionName :: TL.Text
                        }
              deriving (Show)
 
-data Instruction = Instruction { insnAddress :: Word64
-                               , insnBytes :: LBS.ByteString
-                               , insnText :: TL.Text
-                               }
-                 deriving (Show)
+data Instruction =
+    Instruction { insnAddress :: Word64
+                , insnBytes :: LBS.ByteString
+                , insnText :: TL.Text
+                , insnLayout :: InstructionLayout
+                }
+                deriving (Show)
+
+data InstructionLayout =
+    FullWord
+    -- ^ The instruction bytes are to be treated as a contiguous
+    -- four-byte word.
+    | HalfWord
+    -- ^ The instruction bytes are to be treated as a single two-byte
+    -- half word.
+    | HalfWordPair
+    -- ^ The instruction bytes are to be treated as a pair of two-byte
+    -- half words.
+    deriving (Eq, Read, Show)
 
 objdumpParser :: Parser Disassembly
 objdumpParser =
@@ -80,6 +97,7 @@ tryParseInstruction =
   tryOne [ parseInstruction
          , parseEllipses
          , parseFunctionHeading
+         , parseAddressOutOfBounds
          ]
 
 parseEllipses :: Parser (Maybe a)
@@ -87,13 +105,63 @@ parseEllipses = tryOne [ P.space >> P.string (TL.pack "...") >> P.eol >> P.eol >
                        , P.space >> P.string (TL.pack "...") >> P.eol >> return Nothing
                        ]
 
+parseInstructionBytes :: Parser ([Word8], InstructionLayout)
+parseInstructionBytes =
+  tryOne [ parseThumbFull
+         , parsePowerPCFull
+         , parseARMFull
+         , parseThumbHalf
+         ]
+
+parseHalfWord :: Parser [Word8]
+parseHalfWord = replicateM 2 parseByte
+
+parseThumbFull :: Parser ([Word8], InstructionLayout)
+parseThumbFull = do
+    w1 <- parseHalfWord
+    void $ P.char ' '
+    w2 <- parseHalfWord
+    return (w1 <> w2, HalfWordPair)
+
+parsePowerPCFull :: Parser ([Word8], InstructionLayout)
+parsePowerPCFull = do
+    b1 <- parseByte
+    void $ P.char ' '
+    b2 <- parseByte
+    void $ P.char ' '
+    b3 <- parseByte
+    void $ P.char ' '
+    b4 <- parseByte
+    return ([b1, b2, b3, b4], FullWord)
+
+parseARMFull :: Parser ([Word8], InstructionLayout)
+parseARMFull =
+    (, FullWord) <$> replicateM 4 parseByte
+
+parseThumbHalf :: Parser ([Word8], InstructionLayout)
+parseThumbHalf =
+    (, HalfWord) <$> parseHalfWord
+
+-- Objdump sometimes emits these lines for thumb disassemblies.
+parseAddressOutOfBounds :: Parser (Maybe Instruction)
+parseAddressOutOfBounds = do
+  P.space
+  void parseAddress
+  void $ P.char ':'
+  P.space
+  void $ P.string $ TL.pack "Address 0x"
+  void parseAddress
+  void $ P.string $ TL.pack " is out of bounds."
+  void $ replicateM 3 P.eol
+  return Nothing
+
 parseInstruction :: Parser (Maybe Instruction)
 parseInstruction = do
   P.skipMany (P.char ' ')
   addr <- parseAddress
   _ <- P.char ':'
   P.space
-  bytes <- P.try (P.endBy1 parseByte (P.char ' ')) <|> replicateM 4 parseByte
+  (bytes, layout) <- parseInstructionBytes
   P.space
   txt <- TL.pack <$> P.manyTill P.anyChar P.eol
   _ <- P.optional P.eol
@@ -103,6 +171,7 @@ parseInstruction = do
       return $ Just Instruction { insnAddress = addr
                                 , insnBytes = LBS.pack bytes
                                 , insnText = txt
+                                , insnLayout = layout
                                 }
 
 isDataDirective :: TL.Text -> Bool

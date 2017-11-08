@@ -53,6 +53,10 @@ module Dismantle.ARM.Operands (
   mkSvcOperand,
   svcOperandToBits,
 
+  BankedReg,
+  mkBankedReg,
+  bankedRegToBits,
+
   AddrMode3,
   mkAddrMode3,
   addrMode3ToBits,
@@ -119,7 +123,11 @@ module Dismantle.ARM.Operands (
 
   SoRegReg,
   mkSoRegReg,
-  soRegRegToBits
+  soRegRegToBits,
+
+  ShiftType(..),
+  decodeShiftType,
+  encodeShiftType
   ) where
 
 import Data.Bits
@@ -422,6 +430,13 @@ decodeShiftType v =
         0b11 -> ROR
         _    -> error $ "Invalid shift type bits: " <> show v
 
+encodeShiftType :: ShiftType -> Word32
+encodeShiftType LSL = 0b00
+encodeShiftType LSR = 0b01
+encodeShiftType ASR = 0b10
+encodeShiftType ROR = 0b11
+encodeShiftType RRX = 0
+
 data Imm8S4 = Imm8S4 { imm8s4Add :: Word8
                      , imm8s4Immediate :: Word8
                      }
@@ -489,6 +504,19 @@ shiftImmToBits :: ShiftImm -> Word32
 shiftImmToBits (ShiftImm imm ty) =
     insert shiftImmTypeField ty $
     insert shiftImmImmField imm 0
+
+-- | Only used with MRS/MSR and indicative of CPSR/APSR.
+data BankedReg = BankedReg
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty BankedReg where
+    pPrint BankedReg = PP.text "cpsr"
+
+mkBankedReg :: Word32 -> BankedReg
+mkBankedReg = const BankedReg
+
+bankedRegToBits :: BankedReg -> Word32
+bankedRegToBits _ = 0
 
 data SvcOperand = SvcOperand Word32
                 deriving (Eq, Ord, Show)
@@ -1098,3 +1126,9 @@ instance A.Arbitrary SBit where
 
 instance A.Arbitrary Reglist where
   arbitrary g = Reglist <$> A.arbitrary g
+
+instance A.Arbitrary BankedReg where
+  arbitrary _ = return BankedReg
+
+instance A.Arbitrary ShiftType where
+  arbitrary g = A.oneof [LSL, LSR, ASR, ROR, RRX] g

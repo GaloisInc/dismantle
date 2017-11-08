@@ -6,6 +6,7 @@ module Dismantle.Tablegen.ISA (
   FormOverride(..),
   InstFieldDescriptor(..),
   Endianness(..),
+  UnusedBitsPolicy(..),
   thumb,
   aarch64,
   mips,
@@ -15,11 +16,13 @@ module Dismantle.Tablegen.ISA (
   named,
   hasNamedString,
   isPseudo,
-  (&&&)
+  (&&&),
+  (|||)
   ) where
 
 import qualified Data.Foldable as F
 import qualified Data.List.NonEmpty as NL
+import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -62,6 +65,16 @@ data InstFieldDescriptor = SimpleDescriptor String
                          -- bit specfications).
                          deriving (Show, Eq)
 
+-- | How to handle instruction bit patterns that provide more bits
+-- than the instruction claims to need. Specifically, an instruction
+-- description might provide a pattern with 32 bits but only use the
+-- rightmost 16 bits. In that case a policy of Drop, meaning to drop
+-- the first 16 bits, would be appropriate. If, on the other hand,
+-- the instruction specified 32 bits but only used the leftmost 16, a
+-- policy of Take would be the right choice. The choice depends on the
+-- conventions used in the Tablegen data for the ISA in question.
+data UnusedBitsPolicy = Take | Drop
+
 -- | Information specific to an ISA that influences code generation
 data ISA =
   ISA { isaName :: String
@@ -73,6 +86,9 @@ data ISA =
       , isaInputEndianness :: Endianness
       -- ^ The endianness of the input bytes when parsing an instruction
       -- stream
+      , isaUnusedBitsPolicy :: Maybe UnusedBitsPolicy
+      -- ^ How to handle instructions that specify longer bit patterns
+      -- than they actually need
       , isaInstructionFilter :: Def -> Bool
       -- ^ A function that should return True for the def if it is part
       -- of the ISA and False if not.
@@ -100,6 +116,12 @@ data ISA =
       -- ^ A list of *ordered* overrides to apply to operand mappings based on
       -- the forms specified in instruction metadata.  The first match will be
       -- used as the override (if any).
+      , isaPrettyOverrides :: [(String, [(String, String)])]
+      -- ^ A mapping of per-operand pretty-printing overrides. The keys
+      -- in the map are tablegen def names (same as in isaFormOverrides)
+      -- and the values are lists that map operand names to their
+      -- pretty-printing representations. Mappings provided here take
+      -- precedence over the defaults in isaDefaultPrettyVariableValues.
       , isaInsnWordFromBytes :: Name
       -- ^ The name of the function that is used to convert a prefix
       -- of the instruction stream into a single word that contains an
@@ -113,8 +135,15 @@ data ISA =
       -- ^ Convert from one operand payload type to another; this is useful to
       -- let us treat operand types that tablegen treats as distinct uniformly.
       -- We use this for PowerPC to treat the 'g8rc' register type as 'gprc'.
+      , isaDefaultPrettyVariableValues :: [(String, String)]
+      -- ^ Default representations for variables encountered in
+      -- instruction descriptor format strings when those variables
+      -- are not mentioned elsewhere in the descriptor and thus have
+      -- no value. Some descriptors may reference variables in format
+      -- strings even if those variables are not defined as input or
+      -- output operands or are unmentioned in the instruction's bit
+      -- pattern.
       }
-
 
 thumb :: ISA
 thumb = ISA { isaName = "Thumb"
@@ -122,6 +151,7 @@ thumb = ISA { isaName = "Thumb"
             , isaTgenBitPreprocess = id
             , isaInstructionFilter = thumbFilter
             , isaPseudoInstruction = const False
+            , isaUnusedBitsPolicy = Just Drop
             }
   where
     thumbFilter = hasNamedString "DecoderNamespace" "Thumb" &&&
@@ -134,6 +164,7 @@ aarch64 = ISA { isaName = "AArch64"
               , isaTgenBitPreprocess = id
               , isaInstructionFilter = aarch64Filter
               , isaPseudoInstruction = const False
+              , isaUnusedBitsPolicy = Nothing
               }
   where
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
@@ -148,6 +179,7 @@ mips = ISA { isaName = "Mips"
            , isaTgenBitPreprocess = id
            , isaInstructionFilter = mipsFilter
            , isaPseudoInstruction = const False
+           , isaUnusedBitsPolicy = Nothing
            }
   where
     mipsFilter = hasNamedString "DecoderNamespace" "Mips" &&&
@@ -159,6 +191,7 @@ avr = ISA { isaName = "AVR"
           , isaTgenBitPreprocess = id
           , isaInstructionFilter = avrFilter
           , isaPseudoInstruction = avrPsuedo
+          , isaUnusedBitsPolicy = Nothing
           }
   where
     avrFilter = hasNamedString "Namespace" "AVR"
@@ -186,6 +219,7 @@ sparc = ISA { isaName = "Sparc"
             , isaTgenBitPreprocess = id
             , isaInstructionFilter = sparcFilter
             , isaPseudoInstruction = const False
+            , isaUnusedBitsPolicy = Nothing
             }
   where
     sparcFilter = hasNamedString "Namespace" "SP" &&&
@@ -208,6 +242,9 @@ hasNamedString label value def =
 
 (&&&) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
 (&&&) f g val = f val && g val
+
+(|||) :: (a -> Bool) -> (a -> Bool) -> a -> Bool
+(|||) f g val = f val || g val
 
 named :: String -> Named DeclItem -> Bool
 named s n = namedName n == s

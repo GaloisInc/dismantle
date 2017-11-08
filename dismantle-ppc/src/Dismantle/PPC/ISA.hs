@@ -47,6 +47,9 @@ isa = ISA { isaName = "PPC"
           , isaInsnWordToBytes = 'fromWord32
           , isaInsnAssembleType = ''Word32
           , isaMapOperandPayloadType = mapOperandPayloadType
+          , isaDefaultPrettyVariableValues = []
+          , isaPrettyOverrides = []
+          , isaUnusedBitsPolicy = Nothing
           }
   where
     ppcIgnoreOperand op = op `elem` [ "ptr_rc_nor0:$ea_res"

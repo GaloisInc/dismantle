@@ -4,6 +4,8 @@
 -- | Provide some tools for testing disassemblers
 module Dismantle.Testing (
   ArchTestConfig(..),
+  Instruction(..),
+  InstructionLayout(..),
   binaryTestSuite,
   mkTestCase,
   withInstructions,
@@ -51,6 +53,9 @@ data ArchTestConfig = forall i .
       -- objdump); if the regular expression matches, disassembly and reassembly
       -- are expected to fail (and the pretty printing check is therefore not
       -- run).
+      , instructionFilter :: Instruction -> Bool
+      -- ^ A function to determine which parsed instructions should be
+      -- tested.
       , skipPrettyCheck :: Maybe RE.RE
       -- ^ A regular expression run against the text of an instruction (from
       -- objdump); if the regular expression matches, the output of the pretty
@@ -133,7 +138,7 @@ insnTestCase normalize disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unp
 -- matches the instruction under test.
 binaryTestSuite :: ArchTestConfig -> FilePath -> IO T.TestTree
 binaryTestSuite atc dir = do
-  testsByFile <- withInstructions objdumpParser dir (mkTestCase atc)
+  testsByFile <- withInstructions objdumpParser dir (instructionFilter atc) (mkTestCase atc)
 
   -- Filter out the Nothing test cases for each file, since those were
   -- ignored by the ArchTestConfig. If no tests remain for a given file
@@ -154,16 +159,18 @@ withInstructions :: Parser Disassembly
                  -- ^ The parser to use to parse the objdump output
                  -> FilePath
                  -- ^ A directory containing executables (that can be objdumped)
+                 -> (Instruction -> Bool)
+                 -- ^ Instruction filter
                  -> (FilePath -> Word64 -> LBS.ByteString -> TL.Text -> a)
                  -- ^ Turn a disassembled instruction into data
                  -> IO [(FilePath, [a])]
-withInstructions parser dir con = do
+withInstructions parser dir filterInstruction con = do
   files <- namesMatching (dir </> "*")
   mapM disassembleFile files
   where
     disassembleFile f = do
       insns <- withDisassembledFile parser f $ \d -> do
-        T.forM (concatMap instructions (sections d)) $ \i ->
+        T.forM (filter filterInstruction $ concatMap instructions (sections d)) $ \i ->
             return (con f (insnAddress i) (insnBytes i) (insnText i))
       return (f, insns)
 
