@@ -101,6 +101,14 @@ module Dismantle.Thumb.Operands (
   mkAddrModeIs4,
   addrModeIs4ToBits,
 
+  TImm0508S4,
+  mkTImm0508S4,
+  tImm0508S4ToBits,
+
+  TImm01020S4,
+  mkTImm01020S4,
+  tImm01020S4ToBits,
+
   AddrModePc,
   mkAddrModePc,
   addrModePcToBits,
@@ -420,6 +428,48 @@ t2AdrLabelToBits :: T2AdrLabel -> Word32
 t2AdrLabelToBits (T2AdrLabel imm var) =
     insert t2AddrLabelImmField imm $
     insert t2AddrLabelVariantField var 0
+
+data TImm0508S4 =
+    TImm0508S4 { tImm0508S4Imm :: Word8
+               }
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty TImm0508S4 where
+  pPrint m =
+      PP.brackets $ PP.char '#' <> PP.pPrint (((fromIntegral $ tImm0508S4Imm m) :: Word32) `shiftL` 2)
+
+tImm0508S4ImmField :: Field
+tImm0508S4ImmField = Field 8 0
+
+mkTImm0508S4 :: Word32 -> TImm0508S4
+mkTImm0508S4 w = TImm0508S4 (fromIntegral imm)
+  where
+    imm = extract tImm0508S4ImmField w
+
+tImm0508S4ToBits :: TImm0508S4 -> Word32
+tImm0508S4ToBits (TImm0508S4 imm) =
+    insert tImm0508S4ImmField imm 0
+
+data TImm01020S4 =
+    TImm01020S4 { tImm01020S4Imm :: Word8
+               }
+               deriving (Eq, Ord, Show)
+
+instance PP.Pretty TImm01020S4 where
+  pPrint m =
+      PP.brackets $ PP.char '#' <> PP.pPrint (((fromIntegral $ tImm01020S4Imm m) :: Word32) `shiftL` 2)
+
+tImm01020S4ImmField :: Field
+tImm01020S4ImmField = Field 8 0
+
+mkTImm01020S4 :: Word32 -> TImm01020S4
+mkTImm01020S4 w = TImm01020S4 (fromIntegral imm)
+  where
+    imm = extract tImm01020S4ImmField w
+
+tImm01020S4ToBits :: TImm01020S4 -> Word32
+tImm01020S4ToBits (TImm01020S4 imm) =
+    insert tImm01020S4ImmField imm 0
 
 data AddrModePc =
     AddrModePc { addrModePcImm :: Word8
@@ -1053,3 +1103,9 @@ instance A.Arbitrary T2AddrModeImm8S4Offset where
 
 instance A.Arbitrary T2SoImm where
   arbitrary g = T2SoImm <$> A.arbitrary g
+
+instance A.Arbitrary TImm0508S4 where
+  arbitrary g = TImm0508S4 <$> A.arbitrary g
+
+instance A.Arbitrary TImm01020S4 where
+  arbitrary g = TImm01020S4 <$> A.arbitrary g
