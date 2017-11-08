@@ -498,7 +498,8 @@ mkOpcodePrettyPrinter i = do
   (opsPat, prettyOps) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
   let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
       body = VarE 'prettyInstruction `AppE` ListE defaults `AppE` LitE (StringL (idAsmString i)) `AppE` ListE prettyOps
-      defaults = mkDefault <$> idDefaultPrettyVariableValues i
+      defaults = (mkDefault <$> idPrettyVariableOverrides i) <>
+                 (mkDefault <$> idDefaultPrettyVariableValues i)
       mkDefault (varName, pretty) = TupE [LitE $ StringL varName, LitE $ StringL pretty]
   return $ Match pat (NormalB body) []
   where

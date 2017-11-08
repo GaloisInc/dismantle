@@ -73,6 +73,7 @@ data InstructionDescriptor =
                         , idAsmString :: String
                         , idPseudo :: Bool
                         , idDefaultPrettyVariableValues :: [(String, String)]
+                        , idPrettyVariableOverrides :: [(String, String)]
                         }
   deriving (Eq, Ord, Show, Generic, NFData)
 

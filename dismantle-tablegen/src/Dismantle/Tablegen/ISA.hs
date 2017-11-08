@@ -116,6 +116,12 @@ data ISA =
       -- ^ A list of *ordered* overrides to apply to operand mappings based on
       -- the forms specified in instruction metadata.  The first match will be
       -- used as the override (if any).
+      , isaPrettyOverrides :: [(String, [(String, String)])]
+      -- ^ A mapping of per-operand pretty-printing overrides. The keys
+      -- in the map are tablegen def names (same as in isaFormOverrides)
+      -- and the values are lists that map operand names to their
+      -- pretty-printing representations. Mappings provided here take
+      -- precedence over the defaults in isaDefaultPrettyVariableValues.
       , isaInsnWordFromBytes :: Name
       -- ^ The name of the function that is used to convert a prefix
       -- of the instruction stream into a single word that contains an

@@ -42,6 +42,7 @@ isa = ISA { isaName = "ARM"
           , isaFormOverrides = overrides
           , isaMapOperandPayloadType = id
           , isaDefaultPrettyVariableValues = []
+          , isaPrettyOverrides = []
           , isaUnusedBitsPolicy = Nothing
           }
   where

@@ -26,7 +26,7 @@ import qualified Data.List as L
 import qualified Data.List.NonEmpty as NL
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
-import Data.Maybe ( mapMaybe )
+import Data.Maybe ( mapMaybe, fromMaybe )
 import qualified Data.Set as S
 import Data.Word ( Word8 )
 import Text.Printf ( printf )
@@ -431,6 +431,7 @@ finishInstructionDescriptor isa def mbits ins outs =
           usedBits = map toTrieBit $ takeUsedBits mbits
           i = InstructionDescriptor { idMask = usedBits
                                     , idDefaultPrettyVariableValues = isaDefaultPrettyVariableValues isa
+                                    , idPrettyVariableOverrides = fromMaybe [] $ lookup (defName def) $ isaPrettyOverrides isa
                                     , idMnemonic = defName def
                                     , idNamespace = ns
                                     , idDecoderNamespace = decoderNs

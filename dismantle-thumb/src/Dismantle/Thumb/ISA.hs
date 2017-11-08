@@ -73,6 +73,7 @@ isa = ISA { isaName = "Thumb"
           , isaMapOperandPayloadType = id
           , isaUnusedBitsPolicy = Just Drop
           , isaDefaultPrettyVariableValues = defaultPP
+          , isaPrettyOverrides = prettyOverrides
           }
   where
     defaultPP = [ ("p", "")
@@ -753,4 +754,8 @@ isa = ISA { isaName = "Thumb"
         , ("tTST"               , FormOverride [("p", Ignore)])
         , ("tUXTB"              , FormOverride [("p", Ignore)])
         , ("tUXTH"              , FormOverride [("p", Ignore)])
+        ]
+
+    prettyOverrides =
+        [ ("tSUBspi", [("Rdn", "sp")])
         ]

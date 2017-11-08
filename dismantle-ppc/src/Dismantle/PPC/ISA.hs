@@ -48,6 +48,7 @@ isa = ISA { isaName = "PPC"
           , isaInsnAssembleType = ''Word32
           , isaMapOperandPayloadType = mapOperandPayloadType
           , isaDefaultPrettyVariableValues = []
+          , isaPrettyOverrides = []
           , isaUnusedBitsPolicy = Nothing
           }
   where
