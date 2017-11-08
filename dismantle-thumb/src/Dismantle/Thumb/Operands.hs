@@ -429,7 +429,8 @@ data AddrModePc =
                deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddrModePc where
-  pPrint m = PP.pPrint (((fromIntegral $ addrModePcImm m) :: Word32) `shiftL` 2)
+  pPrint m =
+      PP.brackets $ PP.text "pc," PP.<+> PP.pPrint (((fromIntegral $ addrModePcImm m) :: Word32) `shiftL` 2)
 
 addrModePcImmField :: Field
 addrModePcImmField = Field 8 0
