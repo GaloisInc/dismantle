@@ -62,18 +62,18 @@ formatBracketedVar defaults fmt operands varName =
 formatUnbracketedVar :: [(String, String)] -> String -> M.Map String PP.Doc -> String -> PP.Doc
 formatUnbracketedVar defaults fmt operands varName =
   let name = reverse varName
+      ppOperand = M.lookup name operands
+      ppDefault = PP.text <$> lookup name defaults
+      result = ppOperand <|> ppDefault
   in case fmt of
     [] ->
-      let ppOperand = M.lookup name operands
-          ppDefault = PP.text <$> lookup name defaults
-          result = ppOperand <|> ppDefault
-      in case result of
+      case result of
         Nothing -> PP.text ("[UndefinedVar: " ++ name ++ "]")
         Just s -> s
     c : rest
       | isAlphaNum c -> formatUnbracketedVar defaults rest operands (c : varName)
       | otherwise ->
-        case M.lookup name operands of
+        case result of
           Nothing -> PP.text ("[UndefinedVar: " ++ name ++ "]") <> PP.char c <> format defaults rest operands
           Just s -> s <> PP.char c <> format defaults rest operands
 
