@@ -147,7 +147,7 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "nop"
               ]
 
-    matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> suffix <> "[[:space:]])"
+    matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> suffix <> "[[:space:]]?)"
 
     conditions = "(" <> (concat $ L.intersperse "|"
                   (PP.render <$> PP.pPrint <$> Thumb.mkPred <$> [0..13])) <> ")?"
