@@ -89,6 +89,11 @@ skipPretty = rx (L.intercalate "|" rxes)
                 "bls"
               , "bl"
               , "b"
+              , "b.n"
+
+              -- These get represented as RSBS (see ARM ARM, DDI
+              -- 0406C.b, A8.8.118 NEG)
+              , "negs?"
 
               -- These get represented as load/store multiple with sp
               -- mutation; push and pop are not even mentioned in the
