@@ -36,8 +36,20 @@ main = do
   tg <- binaryTestSuite thumb "tests/bin"
   T.defaultMain tg
 
+remove :: TL.Text -> TL.Text -> TL.Text
+remove needle s =
+    let (h, t) = TL.breakOn ".w" s
+    in if needle `TL.isPrefixOf` t
+       then h <> (TL.drop (TL.length needle) t)
+       else h
+
 normalize :: TL.Text -> TL.Text
 normalize =
+    -- Then, because objdump and tablegen don't always agree on when to
+    -- append the ".w" instruction name suffix, we strip it. This means
+    -- we at least get to test that operand pretty printing works in
+    -- those cases rather than ignoring the entire instruction.
+    remove ".w" .
     -- Then remove whitespace
     TL.filter (not . isSpace) .
     -- Remove square brackets and "#"
