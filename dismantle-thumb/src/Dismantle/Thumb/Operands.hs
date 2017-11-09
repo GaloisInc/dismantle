@@ -17,6 +17,10 @@ module Dismantle.Thumb.Operands (
   mkBit,
   bitToBits,
 
+  Imm1_32,
+  mkImm1_32,
+  imm1_32ToBits,
+
   ITMask,
   mkITMask,
   itMaskToBits,
@@ -629,6 +633,25 @@ t2AddrModeSoRegToBits (T2AddrModeSoReg st (GPR rm) (GPR rn)) =
     insert t2AddrModeSoRegRnField rn $
     insert t2AddrModeSoRegShiftTypeField (ARM.encodeShiftType st) 0
 
+data Imm1_32 = Imm1_32 { unImm1_32 :: Word8
+                       }
+                       deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm1_32 where
+  pPrint v = PP.char '#' <> (PP.pPrint (unImm1_32 v + 1))
+
+imm1_32Field :: Field
+imm1_32Field = Field 5 0
+
+mkImm1_32 :: Word32 -> Imm1_32
+mkImm1_32 w = Imm1_32 $ fromIntegral i
+  where
+    i = extract imm1_32Field w
+
+imm1_32ToBits :: Imm1_32 -> Word32
+imm1_32ToBits (Imm1_32 i) =
+    insert imm1_32Field (fromIntegral i) 0
+
 data T2SoReg =
     T2SoReg { t2SoRegImm5      :: Word8
             , t2SoRegShiftType :: ARM.ShiftType
@@ -1190,6 +1213,9 @@ instance A.Arbitrary TImm0508S4 where
 
 instance A.Arbitrary TImm01020S4 where
   arbitrary g = TImm01020S4 <$> A.arbitrary g
+
+instance A.Arbitrary Imm1_32 where
+  arbitrary g = Imm1_32 <$> A.arbitrary g
 
 instance A.Arbitrary BfInvMaskImm where
   arbitrary g = BfInvMaskImm <$> A.arbitrary g

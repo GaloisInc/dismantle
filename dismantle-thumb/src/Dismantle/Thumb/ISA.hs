@@ -242,6 +242,10 @@ isa = ISA { isaName = "Thumb"
                           , opConE = Just (varE 'ARM.mkImm5)
                           , opWordE = Just (varE 'ARM.imm5ToBits)
                           }
+    imm1_32 = OperandPayload { opTypeT = [t| Thumb.Imm1_32 |]
+                             , opConE = Just (varE 'Thumb.mkImm1_32)
+                             , opWordE = Just (varE 'Thumb.imm1_32ToBits)
+                             }
     msrMask = OperandPayload { opTypeT = [t| ARM.MSRMask |]
                              , opConE = Just (varE 'ARM.mkMSRMask)
                              , opWordE = Just (varE 'ARM.msrMaskToBits)
@@ -306,7 +310,7 @@ isa = ISA { isaName = "Thumb"
         , ("Imm0_239"             , word8Operand)
         , ("Imm0_255"             , word8Operand)
         , ("Imm1_16"              , word8Operand)
-        , ("Imm1_32"              , imm5)
+        , ("Imm1_32"              , imm1_32)
         , ("Imm_sr"               , word8Operand)
         , ("Imod_op"              , word8Operand)
         , ("Instsyncb_opt"        , word8Operand)
