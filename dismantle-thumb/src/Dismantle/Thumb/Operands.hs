@@ -766,7 +766,7 @@ thumbBlTargetToBits (ThumbBlTarget s imm10 j1 j2 imm11) =
     insert thumbBlTargetImm11Field imm11 0
 
 data TBrTarget =
-    TBrTarget { tBrTargetImm :: Word8
+    TBrTarget { tBrTargetImm :: Word16
               }
               deriving (Eq, Ord, Show)
 
@@ -774,7 +774,7 @@ instance PP.Pretty TBrTarget where
   pPrint m = PP.pPrint (((fromIntegral $ tBrTargetImm m) :: Word32) `shiftL` 2)
 
 tBrTargetImmField :: Field
-tBrTargetImmField = Field 8 0
+tBrTargetImmField = Field 11 0
 
 mkTBrTarget :: Word32 -> TBrTarget
 mkTBrTarget w = TBrTarget (fromIntegral imm)
@@ -783,7 +783,7 @@ mkTBrTarget w = TBrTarget (fromIntegral imm)
 
 tBrTargetToBits :: TBrTarget -> Word32
 tBrTargetToBits (TBrTarget imm) =
-    insert addrModeIs4ImmField imm 0
+    insert tBrTargetImmField imm 0
 
 -- | An T2AddrMode_Imm8Pre memory reference for a load or store instruction
 -- (with a 8-bit immediate)
