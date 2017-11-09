@@ -78,6 +78,7 @@ isa = ISA { isaName = "Thumb"
   where
     defaultPP = [ ("p", "")
                 , ("Rdn", "")
+                , ("s", "s")
                 , ("sp", "sp")
                 ]
 
@@ -334,6 +335,7 @@ isa = ISA { isaName = "Thumb"
 
     thumbFilter = hasNamedString "Namespace" "ARM" &&&
                   (hasNamedString "DecoderNamespace" "Thumb" |||
+                   hasNamedString "DecoderNamespace" "ThumbSBit" |||
                    hasNamedString "DecoderNamespace" "Thumb2") &&&
                   (not . isPseudo) &&&
                   (not . ignoredDef) &&&
@@ -474,7 +476,9 @@ isa = ISA { isaName = "Thumb"
         , ("t2LDRi8",           FormOverride [("p", Ignore)])
         , ("t2LDRpci",          FormOverride [("p", Ignore)])
         , ("t2LDRs",            FormOverride [("p", Ignore)])
+        , ("tLSLri",            FormOverride [("p", Ignore), ("s", Ignore)])
         , ("t2LSLri",           FormOverride [("p", Ignore)])
+        , ("tLSLrr",            FormOverride [("p", Ignore), ("s", Ignore), ("Rn", Ignore)])
         , ("t2LSLrr",           FormOverride [("p", Ignore)])
         , ("t2LSRri",           FormOverride [("p", Ignore)])
         , ("t2LSRrr",           FormOverride [("p", Ignore)])
@@ -718,6 +722,29 @@ isa = ISA { isaName = "Thumb"
         , ("t2UXTB",            FormOverride [("p", Ignore)])
         , ("t2UXTB16",          FormOverride [("p", Ignore)])
         , ("t2UXTH",            FormOverride [("p", Ignore)])
+        , ("tADC",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tBIC",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tEOR",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tLSLri",            FormOverride [("s", Ignore), ("s", Ignore), ("s", Ignore)])
+        , ("tLSLrr",            FormOverride [("s", Ignore), ("s", Ignore), ("s", Ignore)])
+        , ("tLSRri",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tLSRrr",            FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tMOVi8",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tMUL",              FormOverride [("s", Ignore), ("Rm", Ignore), ("p", Ignore)])
+        , ("tMVN",              FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tORR",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tROR",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tRSB",              FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tSBC",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tSUBi3",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tSUBi8",            FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tSUBrr",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tADDi3",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tADDi8",            FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tADDrr",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tASRri",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tASRrr",            FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tAND",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
         , ("tADDhirr"           , FormOverride [("Rn", Ignore), ("p"  , Ignore)])
         , ("tADDrSP"            , FormOverride [("sp", Ignore), ("Rn" , Ignore), ("p", Ignore)])
         , ("tADDrSPi"           , FormOverride [("sp", Ignore), ("p"  , Ignore)])
