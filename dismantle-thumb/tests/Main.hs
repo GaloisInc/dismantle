@@ -145,6 +145,17 @@ skipPretty = rx (L.intercalate "|" rxes)
 
               -- We show nop as "mov r0, r0"
               , "nop"
+
+              -- We can't decode "it" branching instructions because
+              -- we need information from multiple operands at once to
+              -- render the instruction correctly, but the Tablegen
+              -- parser only lets us pretty-print at the operand level.
+              -- There are many t/e condition flags that can follow
+              -- the "it" instruction name, but rather than write out
+              -- a regular expression to handle them all, I decided to
+              -- just write out an expression to handle just the ones
+              -- we've encountered. -JTD
+              , "ite?"
               ]
 
     matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> suffix <> "[[:space:]]?)"
