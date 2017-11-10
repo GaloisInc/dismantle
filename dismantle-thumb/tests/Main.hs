@@ -135,6 +135,7 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- Ignored because the Tgen format string uses "ldm" for
               -- this instruction and objdump uses "ldmfd".
               , "ldmfd"
+              , "ldmia"
 
               -- Ignored because the Tgen format string for these
               -- reference an implied operand that isn't mentioned
@@ -162,6 +163,14 @@ skipPretty = rx (L.intercalate "|" rxes)
 
               -- We show nop as "mov r0, r0"
               , "nop"
+
+              -- Ignore instructions where objdump used a preceding "it"
+              -- instruction to get condition hints about subsequent
+              -- instructions. Those get pretty-printed by objdump as
+              -- ARM-style instructions with predication suffixes and
+              -- that isn't legal, so we can safely ignore those in
+              -- thiese Thumb tests.
+              , "mov(eq|ne|le|ge|lt|gt|hi|ls)"
 
               -- We can't decode "it" branching instructions because
               -- we need information from multiple operands at once to
