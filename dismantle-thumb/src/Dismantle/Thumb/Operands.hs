@@ -351,7 +351,7 @@ data AddrModeIs2 =
 
 instance PP.Pretty AddrModeIs2 where
   pPrint m =
-      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs2Imm m `shiftL` 2))
+      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs2Imm m `shiftL` 1))
       in PP.brackets $ PP.pPrint (addrModeIs2Reg m) <> suf
 
 addrModeIs2RegField :: Field
