@@ -805,4 +805,5 @@ isa = ISA { isaName = "Thumb"
 
     prettyOverrides =
         [ ("tSUBspi", [("Rdn", "sp")])
+        , ("tADDspi", [("Rdn", "sp")])
         ]
