@@ -665,7 +665,10 @@ data T2SoReg =
             deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2SoReg where
-    pPrint _ = PP.text "not implemented 6"
+    pPrint (T2SoReg imm ty rm) =
+        (PP.pPrint rm <> PP.char ',') PP.<+>
+        PP.pPrint ty PP.<+>
+        (PP.char '#' <> PP.pPrint imm)
 
 t2SoRegImm3Field :: Field
 t2SoRegImm3Field = Field 3 9
