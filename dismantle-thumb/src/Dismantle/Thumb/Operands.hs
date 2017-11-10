@@ -260,7 +260,10 @@ instance PP.Pretty T2AddrModeImm8S4Pre where
     pPrint _ = PP.text "not implemented 1"
 
 mkT2AddrModeImm8S4Pre :: Word32 -> T2AddrModeImm8S4Pre
-mkT2AddrModeImm8S4Pre w = T2AddrModeImm8S4Pre (fromIntegral add) (fromIntegral imm8) (GPR $ fromIntegral reg)
+mkT2AddrModeImm8S4Pre w =
+    T2AddrModeImm8S4Pre (fromIntegral add)
+                        (fromIntegral imm8)
+                        (GPR $ fromIntegral reg)
   where
     add = extract (Field 1 8) w
     reg = extract (Field 4 9) w
@@ -303,7 +306,10 @@ instance PP.Pretty T2AddrModeImm8S4 where
     pPrint _ = PP.text "not implemented 3"
 
 mkT2AddrModeImm8S4 :: Word32 -> T2AddrModeImm8S4
-mkT2AddrModeImm8S4 w = T2AddrModeImm8S4 (fromIntegral add) (fromIntegral imm8) (GPR $ fromIntegral reg)
+mkT2AddrModeImm8S4 w =
+    T2AddrModeImm8S4 (fromIntegral add)
+                     (fromIntegral imm8)
+                     (GPR $ fromIntegral reg)
   where
     add = extract (Field 1 8) w
     reg = extract (Field 4 9) w
@@ -837,7 +843,10 @@ t2AddrModeImm8PreImmField :: Field
 t2AddrModeImm8PreImmField = Field 8 0
 
 mkT2AddrModeImm8Pre :: Word32 -> T2AddrModeImm8Pre
-mkT2AddrModeImm8Pre w = T2AddrModeImm8Pre (GPR $ fromIntegral reg) (fromIntegral imm) (fromIntegral u)
+mkT2AddrModeImm8Pre w =
+    T2AddrModeImm8Pre (GPR $ fromIntegral reg)
+                      (fromIntegral imm)
+                      (fromIntegral u)
   where
     reg = extract t2AddrModeImm8PreRegField w
     imm = extract t2AddrModeImm8PreImmField w
@@ -870,7 +879,10 @@ t2AddrModeNegImm8ImmField :: Field
 t2AddrModeNegImm8ImmField = Field 8 0
 
 mkT2AddrModeNegImm8 :: Word32 -> T2AddrModeNegImm8
-mkT2AddrModeNegImm8 w = T2AddrModeNegImm8 (GPR $ fromIntegral reg) (fromIntegral imm) (fromIntegral a)
+mkT2AddrModeNegImm8 w =
+    T2AddrModeNegImm8 (GPR $ fromIntegral reg)
+                      (fromIntegral imm)
+                      (fromIntegral a)
   where
     reg = extract t2AddrModeNegImm8RegField w
     a   = extract t2AddrModeNegImm8AddField w
@@ -900,7 +912,8 @@ t2AddrModeImm8S4OffsetImmField :: Field
 t2AddrModeImm8S4OffsetImmField = Field 8 0
 
 mkT2AddrModeImm8S4Offset :: Word32 -> T2AddrModeImm8S4Offset
-mkT2AddrModeImm8S4Offset w = T2AddrModeImm8S4Offset (fromIntegral add) (fromIntegral imm)
+mkT2AddrModeImm8S4Offset w =
+    T2AddrModeImm8S4Offset (fromIntegral add) (fromIntegral imm)
   where
     add = extract t2AddrModeImm8S4OffsetAddField w
     imm = extract t2AddrModeImm8S4OffsetImmField w
@@ -928,7 +941,8 @@ t2AddrModeImm8OffsetImmField :: Field
 t2AddrModeImm8OffsetImmField = Field 8 0
 
 mkT2AddrModeImm8Offset :: Word32 -> T2AddrModeImm8Offset
-mkT2AddrModeImm8Offset w = T2AddrModeImm8Offset (fromIntegral add) (fromIntegral imm)
+mkT2AddrModeImm8Offset w =
+    T2AddrModeImm8Offset (fromIntegral add) (fromIntegral imm)
   where
     add = extract t2AddrModeImm8OffsetAddField w
     imm = extract t2AddrModeImm8OffsetImmField w
@@ -957,7 +971,8 @@ t2AddrModeImm8ImmField :: Field
 t2AddrModeImm8ImmField = Field 8 0
 
 mkT2AddrModeImm8 :: Word32 -> T2AddrModeImm8
-mkT2AddrModeImm8 w = T2AddrModeImm8 (GPR $ fromIntegral reg) (fromIntegral imm)
+mkT2AddrModeImm8 w =
+    T2AddrModeImm8 (GPR $ fromIntegral reg) (fromIntegral imm)
   where
     reg = extract t2AddrModeImm8RegField w
     imm = extract t2AddrModeImm8ImmField w
@@ -986,7 +1001,8 @@ t2AddrModeImm12ImmField :: Field
 t2AddrModeImm12ImmField = Field 12 0
 
 mkT2AddrModeImm12 :: Word32 -> T2AddrModeImm12
-mkT2AddrModeImm12 w = T2AddrModeImm12 (GPR $ fromIntegral reg) (fromIntegral imm)
+mkT2AddrModeImm12 w =
+    T2AddrModeImm12 (GPR $ fromIntegral reg) (fromIntegral imm)
   where
     reg = extract t2AddrModeImm12RegField w
     imm = extract t2AddrModeImm12ImmField w
@@ -1040,7 +1056,8 @@ addrModeImm01020S4ImmField :: Field
 addrModeImm01020S4ImmField = Field 8 0
 
 mkAddrModeImm01020S4 :: Word32 -> AddrModeImm01020S4
-mkAddrModeImm01020S4 w = AddrModeImm01020S4 (GPR $ fromIntegral rm) (fromIntegral imm)
+mkAddrModeImm01020S4 w =
+    AddrModeImm01020S4 (GPR $ fromIntegral rm) (fromIntegral imm)
   where
     rm = extract addrModeImm01020S4RegField w
     imm = extract addrModeImm01020S4ImmField w
