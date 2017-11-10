@@ -602,36 +602,41 @@ bfInvMaskImmToBits (BfInvMaskImm l m) =
     insert bfInvMaskImmLsbitsField l 0
 
 data T2AddrModeSoReg =
-    T2AddrModeSoReg { t2AddrModeSoRegShiftType :: ARM.ShiftType
+    T2AddrModeSoReg { t2AddrModeSoRegShiftAmt  :: Word8
                     , t2AddrModeSoRegRm        :: GPR
                     , t2AddrModeSoRegRn        :: GPR
                     }
                     deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeSoReg where
-    pPrint _ = PP.text "not implemented 5"
+    pPrint (T2AddrModeSoReg s rm rn) =
+        PP.brackets $ (PP.pPrint rn <> PP.char ',') PP.<+>
+                      (PP.pPrint rm <>
+                       (if s == 0
+                        then mempty
+                        else PP.text ", lsl #" <> PP.pPrint s))
 
 t2AddrModeSoRegRmField :: Field
-t2AddrModeSoRegRmField = Field 4 0
+t2AddrModeSoRegRmField = Field 4 2
 
-t2AddrModeSoRegShiftTypeField :: Field
-t2AddrModeSoRegShiftTypeField = Field 2 4
+t2AddrModeSoRegShiftAmtField :: Field
+t2AddrModeSoRegShiftAmtField = Field 2 0
 
 t2AddrModeSoRegRnField :: Field
 t2AddrModeSoRegRnField = Field 4 6
 
 mkT2AddrModeSoReg :: Word32 -> T2AddrModeSoReg
-mkT2AddrModeSoReg w = T2AddrModeSoReg st (GPR $ fromIntegral rm) (GPR $ fromIntegral rn)
+mkT2AddrModeSoReg w = T2AddrModeSoReg (fromIntegral s) (GPR $ fromIntegral rm) (GPR $ fromIntegral rn)
   where
       rm  = extract t2AddrModeSoRegRmField w
       rn  = extract t2AddrModeSoRegRnField w
-      st  = ARM.decodeShiftType $ extract t2AddrModeSoRegShiftTypeField w
+      s   = extract t2AddrModeSoRegShiftAmtField w
 
 t2AddrModeSoRegToBits :: T2AddrModeSoReg -> Word32
-t2AddrModeSoRegToBits (T2AddrModeSoReg st (GPR rm) (GPR rn)) =
+t2AddrModeSoRegToBits (T2AddrModeSoReg s (GPR rm) (GPR rn)) =
     insert t2AddrModeSoRegRmField rm $
     insert t2AddrModeSoRegRnField rn $
-    insert t2AddrModeSoRegShiftTypeField (ARM.encodeShiftType st) 0
+    insert t2AddrModeSoRegShiftAmtField s 0
 
 data Imm1_32 = Imm1_32 { unImm1_32 :: Word8
                        }
