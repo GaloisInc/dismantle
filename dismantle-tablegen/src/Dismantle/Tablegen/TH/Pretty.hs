@@ -74,8 +74,8 @@ formatUnbracketedVar defaults fmt operands varName =
       | isAlphaNum c -> formatUnbracketedVar defaults rest operands (c : varName)
       | otherwise ->
         case result of
-          Nothing -> PP.text ("[UndefinedVar: " ++ name ++ "]") <> PP.char c <> format defaults rest operands
-          Just s -> s <> format defaults (c:rest) operands
+          Nothing -> PP.text ("[UndefinedVar: " ++ name ++ "]") <> format defaults fmt operands
+          Just s -> s <> format defaults fmt operands
 
 instance PP.Pretty Int16 where
   pPrint = PP.integer . fromIntegral
