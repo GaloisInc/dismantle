@@ -831,7 +831,10 @@ data T2AddrModeImm8Pre = T2AddrModeImm8Pre { t2AddrModeImm8PreRn   :: GPR
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeImm8Pre where
-  pPrint _ = PP.text "not implemented 9"
+  pPrint (T2AddrModeImm8Pre rn imm u) =
+      let s = PP.text $ if u == 0 then "-" else ""
+      in PP.brackets $ (PP.pPrint rn <> PP.char ',') PP.<+>
+                       (PP.char '#' <> s <> PP.pPrint imm)
 
 t2AddrModeImm8PreRegField :: Field
 t2AddrModeImm8PreRegField = Field 4 9
