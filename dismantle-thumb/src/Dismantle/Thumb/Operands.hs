@@ -1025,7 +1025,9 @@ data T2AddrModeImm12 = T2AddrModeImm12 { t2AddrModeImm12Register  :: GPR
 
 instance PP.Pretty T2AddrModeImm12 where
   pPrint m =
-      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ t2AddrModeImm12Immediate m))
+      let suf = if t2AddrModeImm12Immediate m == 0
+                then mempty
+                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ t2AddrModeImm12Immediate m))
       in PP.brackets $ PP.pPrint (t2AddrModeImm12Register m) <> suf
 
 t2AddrModeImm12RegField :: Field
