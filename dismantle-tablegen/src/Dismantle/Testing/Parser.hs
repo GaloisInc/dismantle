@@ -180,6 +180,7 @@ parseInstruction = do
 isDataDirective :: TL.Text -> Bool
 isDataDirective t =  or [ TL.pack ".long" `TL.isInfixOf` t
                         , TL.pack ".word" `TL.isInfixOf` t
+                        , TL.pack ".short" `TL.isInfixOf` t
                         , TL.pack ".byte" `TL.isInfixOf` t
                         ]
 
