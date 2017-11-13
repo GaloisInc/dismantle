@@ -203,6 +203,9 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "udiv" <> conditions
               , "addw" <> conditions
               , "clz" <> conditions
+              , "uxth" <> conditions
+              , "sxth" <> conditions
+              , "rev" <> conditions
 
               -- We render this as a shift instruction
               , "mov.*lsl.*"
