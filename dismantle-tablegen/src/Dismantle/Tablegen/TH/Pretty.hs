@@ -75,7 +75,7 @@ formatUnbracketedVar defaults fmt operands varName =
       | otherwise ->
         case result of
           Nothing -> PP.text ("[UndefinedVar: " ++ name ++ "]") <> PP.char c <> format defaults rest operands
-          Just s -> s <> PP.char c <> format defaults rest operands
+          Just s -> s <> format defaults (c:rest) operands
 
 instance PP.Pretty Int16 where
   pPrint = PP.integer . fromIntegral
