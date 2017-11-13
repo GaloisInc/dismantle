@@ -50,9 +50,9 @@ header hdr = sc >> P.some (P.char '-') >> sc >> symbol hdr >> sc >> P.some (P.ch
 p :: Parser Records
 p = do
   header "Classes"
-  klasses <- P.some parseClass
+  klasses <- P.many parseClass
   header "Defs"
-  defs <- P.some parseDef
+  defs <- P.many parseDef
   return Records { tblClasses = klasses
                  , tblDefs = defs
                  }

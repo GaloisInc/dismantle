@@ -15,6 +15,7 @@ module Dismantle.Tablegen.TH (
 
 import           GHC.TypeLits ( Symbol )
 
+import           Control.Monad ( forM )
 import           Data.Monoid ((<>))
 import           Data.Bits
 import qualified Data.ByteString as BS
@@ -22,8 +23,9 @@ import qualified Data.ByteString.Unsafe as UBS
 import qualified Data.ByteString.Lazy as LBS
 import           Data.Char ( toUpper )
 import qualified Data.Foldable as F
+import           Data.List ( isSuffixOf )
 import qualified Data.List.Split as L
-import           Data.Maybe ( fromMaybe )
+import           Data.Maybe ( fromMaybe, catMaybes )
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Type.Equality as E
@@ -33,6 +35,8 @@ import           Language.Haskell.TH
 import           Language.Haskell.TH.Datatype
 import           Language.Haskell.TH.Syntax ( Lift(..), qAddDependentFile, Name(..) )
 import           System.IO.Unsafe ( unsafePerformIO )
+import           System.Directory ( doesFileExist, doesDirectoryExist, getDirectoryContents )
+import           System.FilePath ( (</>) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import           Data.Parameterized.Lift ( LiftF(..) )
@@ -50,9 +54,12 @@ import qualified Dismantle.Tablegen.ByteTrie as BT
 import           Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import           Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
-genISA :: ISA -> FilePath -> DecsQ
-genISA isa path = do
-  desc <- runIO $ loadISA isa path
+genISA :: ISA -> FilePath -> [FilePath] -> DecsQ
+genISA isa path overridePaths = do
+  initialDesc <- runIO $ loadISA isa path
+  overrides <- loadOverrides isa overridePaths
+  let desc = applyOverrides overrides initialDesc
+
   case isaErrors desc of
     [] -> return ()
     errs -> reportWarning ("Unhandled instruction definitions for ISA: " ++ show (length errs))
@@ -77,6 +84,90 @@ loadISA isa path = do
   case parseTablegen path txt of
     Left err -> fail (show err)
     Right defs -> return $ filterISA isa defs
+
+tgenOverrideExtension :: String
+tgenOverrideExtension = ".tgen"
+
+emptyDescriptor :: ISADescriptor
+emptyDescriptor =
+    ISADescriptor { isaInstructions = []
+                  , isaRegisterClasses = []
+                  , isaRegisters = []
+                  , isaOperands = []
+                  , isaErrors = []
+                  }
+
+loadOverrides :: ISA -> [FilePath] -> Q ISADescriptor
+loadOverrides _ [] = return emptyDescriptor
+loadOverrides isa (path:rest) = do
+    override <- loadOverridesFromDir isa path
+    desc <- loadOverrides isa rest
+    return $ applyOverrides override desc
+
+loadOverridesFromDir :: ISA -> FilePath -> Q ISADescriptor
+loadOverridesFromDir isa path = do
+    dirEx <- runIO $ doesDirectoryExist path
+
+    case dirEx of
+        False -> return emptyDescriptor
+        True -> do
+            allEntries <- runIO $ getDirectoryContents path
+            mFiles <- forM allEntries $ \e -> do
+                ex <- runIO $ doesFileExist $ path </> e
+                return $ if ex && tgenOverrideExtension `isSuffixOf` e
+                         then Just $ path </> e
+                         else Nothing
+
+            let go [] = return emptyDescriptor
+                go (f:rest) = do
+                    overrides <- runIO $ loadISA isa f
+                    qAddDependentFile f
+                    desc <- go rest
+                    return $ applyOverrides overrides desc
+
+            go $ catMaybes mFiles
+
+-- | Given two ISA descriptors A and B, return B with any content
+-- overriden by content provided in A. Content provided by A but not by
+-- B will be added to B.
+--
+-- * Instruction descriptors in B are replaced with versions from A
+--   based on their mnemonics.
+-- * All other content in B but not A is added to B.
+applyOverrides :: ISADescriptor
+               -- ^ The override descriptor (A).
+               -> ISADescriptor
+               -- ^ The descriptor to be augmented/extended (B).
+               -> ISADescriptor
+applyOverrides overrideDesc oldDesc = new
+    where
+        new = oldDesc { isaInstructions = overrideWith matchInstruction
+                                                       (isaInstructions overrideDesc)
+                                                       (isaInstructions oldDesc)
+                      , isaRegisterClasses = overrideWith matchesRegisterClass
+                                                          (isaRegisterClasses overrideDesc)
+                                                          (isaRegisterClasses oldDesc)
+                      , isaRegisters = overrideWith matchesRegister
+                                                    (isaRegisters overrideDesc)
+                                                    (isaRegisters oldDesc)
+                      , isaOperands = overrideWith matchesOperandType
+                                                   (isaOperands overrideDesc)
+                                                   (isaOperands oldDesc)
+                      , isaErrors = overrideWith matchesIsaError
+                                                 (isaErrors overrideDesc)
+                                                 (isaErrors oldDesc)
+                      }
+
+        matchInstruction a b = idMnemonic a == idMnemonic b
+        matchesRegisterClass (RegisterClass a) (RegisterClass b) = a == b
+        matchesRegister (a, _) (b, _) = a == b
+        matchesOperandType (OperandType a) (OperandType b) = a == b
+        matchesIsaError (a, _) (b, _) = a == b
+
+        overrideWith :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+        overrideWith matches overrides old =
+            let unmatched = filter (\val -> not $ any (matches val) overrides) old
+            in overrides <> unmatched
 
 opcodeTypeName :: Name
 opcodeTypeName = mkName "Opcode"

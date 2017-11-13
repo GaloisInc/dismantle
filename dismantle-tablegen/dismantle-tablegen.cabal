@@ -52,6 +52,7 @@ library
                        case-insensitive >= 1 && < 2,
                        filemanip,
                        filepath,
+                       directory,
                        split >= 0.2 && < 0.3,
                        containers,
                        zlib >= 0.6 && < 0.7,
