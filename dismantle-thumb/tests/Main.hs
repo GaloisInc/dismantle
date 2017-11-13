@@ -90,6 +90,7 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "bl"
               , "b"
               , "b.n"
+              , "cb"
 
               -- These get represented as RSBS (see ARM ARM, DDI
               -- 0406C.b, A8.8.118 NEG)
