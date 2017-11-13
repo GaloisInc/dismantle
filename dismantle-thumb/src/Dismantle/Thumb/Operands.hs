@@ -867,13 +867,16 @@ data T2AddrModeNegImm8 = T2AddrModeNegImm8 { t2AddrModeNegImm8Register  :: GPR
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeNegImm8 where
-  pPrint _ = PP.text "not implemented 10"
+  pPrint (T2AddrModeNegImm8 reg imm add) =
+      let s = PP.text $ if add == 0 then "-" else ""
+      in PP.brackets $ (PP.pPrint reg <> PP.char ',') PP.<+>
+         (PP.char '#' <> s <> PP.pPrint imm)
 
 t2AddrModeNegImm8RegField :: Field
 t2AddrModeNegImm8RegField = Field 4 9
 
 t2AddrModeNegImm8AddField :: Field
-t2AddrModeNegImm8AddField = Field 1 9
+t2AddrModeNegImm8AddField = Field 1 8
 
 t2AddrModeNegImm8ImmField :: Field
 t2AddrModeNegImm8ImmField = Field 8 0
