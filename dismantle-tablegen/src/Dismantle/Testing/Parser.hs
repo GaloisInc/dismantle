@@ -50,6 +50,8 @@ data InstructionLayout =
     | HalfWordPair
     -- ^ The instruction bytes are to be treated as a pair of two-byte
     -- half words.
+    | SingleByte
+    -- ^ Used only by .byte entries.
     deriving (Eq, Read, Show)
 
 objdumpParser :: Parser Disassembly
@@ -94,10 +96,10 @@ parseSection = do
 
 tryParseInstruction :: Parser (Maybe Instruction)
 tryParseInstruction =
-  tryOne [ parseInstruction
+  tryOne [ parseAddressOutOfBounds
          , parseEllipses
          , parseFunctionHeading
-         , parseAddressOutOfBounds
+         , parseInstruction
          ]
 
 parseEllipses :: Parser (Maybe a)
@@ -111,6 +113,7 @@ parseInstructionBytes =
          , parsePowerPCFull
          , parseARMFull
          , parseThumbHalf
+         , (, SingleByte) <$> pure <$> parseByte
          ]
 
 parseHalfWord :: Parser [Word8]
@@ -177,6 +180,7 @@ parseInstruction = do
 isDataDirective :: TL.Text -> Bool
 isDataDirective t =  or [ TL.pack ".long" `TL.isInfixOf` t
                         , TL.pack ".word" `TL.isInfixOf` t
+                        , TL.pack ".byte" `TL.isInfixOf` t
                         ]
 
 isUndefinedInstruction :: TL.Text -> Bool
