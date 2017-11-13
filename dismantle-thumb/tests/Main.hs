@@ -171,7 +171,13 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- ARM-style instructions with predication suffixes and
               -- that isn't legal, so we can safely ignore those in
               -- thiese Thumb tests.
-              , "mov(eq|ne|le|ge|lt|gt|hi|ls)"
+              , "mov" <> conditions
+              , "utxb" <> conditions
+              , "add" <> conditions
+              , "sub" <> conditions
+              , "uxtb" <> conditions
+              , "rsb" <> conditions
+              , "cmp" <> conditions
 
               -- We can't decode "it" branching instructions because
               -- we need information from multiple operands at once to
@@ -185,10 +191,10 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "ite?"
               ]
 
-    matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> suffix <> "[[:space:]]?)"
+    matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> "?" <> suffix <> "[[:space:]]?)"
 
     conditions = "(" <> (concat $ L.intersperse "|"
-                  (PP.render <$> PP.pPrint <$> Thumb.mkPred <$> [0..13])) <> ")?"
+                  (PP.render <$> PP.pPrint <$> Thumb.mkPred <$> [0..13])) <> ")"
     suffix = "(.n)?"
 
 expectedFailures :: RE.RE
