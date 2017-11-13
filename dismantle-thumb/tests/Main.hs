@@ -165,6 +165,14 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- We show nop as "mov r0, r0"
               , "nop"
 
+              -- Tablegen format string has an undefined variable
+              -- for this one (tMUL). We could ignore that, but it
+              -- still leaves a trailing comma in the pretty-printed
+              -- instruction that would still fail to match the objdump
+              -- output.
+              , "muls"
+              , "mulcs"
+
               -- Ignore instructions where objdump used a preceding "it"
               -- instruction to get condition hints about subsequent
               -- instructions. Those get pretty-printed by objdump as
@@ -172,12 +180,36 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- that isn't legal, so we can safely ignore those in
               -- thiese Thumb tests.
               , "mov" <> conditions
+              , "mul" <> conditions
               , "utxb" <> conditions
               , "add" <> conditions
               , "sub" <> conditions
               , "uxtb" <> conditions
               , "rsb" <> conditions
               , "cmp" <> conditions
+              , "ldrb" <> conditions
+              , "ldr" <> conditions
+              , "orr" <> conditions
+              , "str" <> conditions
+              , "ubfx" <> conditions
+              , "and" <> conditions
+              , "strh" <> conditions
+              , "mvn" <> conditions
+              , "ldrsb" <> conditions
+              , "ldrh" <> conditions
+              , "sdiv" <> conditions
+              , "umull" <> conditions
+              , "eor" <> conditions
+              , "udiv" <> conditions
+              , "addw" <> conditions
+              , "clz" <> conditions
+
+              -- We render this as a shift instruction
+              , "mov.*lsl.*"
+              , "mov.*lsr.*"
+              , "mov.*asr.*"
+              , "mov.*ror.*"
+              , "mov.*rrx.*"
 
               -- We can't decode "it" branching instructions because
               -- we need information from multiple operands at once to
