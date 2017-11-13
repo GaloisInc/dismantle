@@ -938,7 +938,9 @@ data T2AddrModeImm8Offset =
                          deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeImm8Offset where
-  pPrint _ = PP.text "not implemented 12"
+  pPrint (T2AddrModeImm8Offset add imm) =
+      let s = PP.text $ if add == 0 then "-" else ""
+      in PP.char ',' PP.<+> (PP.char '#' <> s <> PP.pPrint imm)
 
 t2AddrModeImm8OffsetAddField :: Field
 t2AddrModeImm8OffsetAddField = Field 1 8
