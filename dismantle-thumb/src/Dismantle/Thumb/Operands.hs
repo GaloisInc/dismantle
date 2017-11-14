@@ -17,6 +17,10 @@ module Dismantle.Thumb.Operands (
   mkBit,
   bitToBits,
 
+  Imm065535,
+  mkImm065535,
+  imm065535ToBits,
+
   RotImm,
   mkRotImm,
   rotImmToBits,
@@ -648,6 +652,25 @@ t2AddrModeSoRegToBits (T2AddrModeSoReg s (GPR rm) (GPR rn)) =
     insert t2AddrModeSoRegRnField rn $
     insert t2AddrModeSoRegShiftAmtField s 0
 
+data Imm065535 = Imm065535 { unImm065535 :: Word16
+                           }
+                           deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm065535 where
+  pPrint (Imm065535 v) = PP.char '#' <> PP.pPrint v
+
+imm065535Field :: Field
+imm065535Field = Field 16 0
+
+mkImm065535 :: Word32 -> Imm065535
+mkImm065535 w = Imm065535 $ fromIntegral i
+  where
+    i = extract imm065535Field w
+
+imm065535ToBits :: Imm065535 -> Word32
+imm065535ToBits (Imm065535 i) =
+    insert imm065535Field i 0
+
 data RotImm = RotImm { unRotImm :: Word8
                      }
                      deriving (Eq, Ord, Show)
@@ -1277,6 +1300,9 @@ instance A.Arbitrary TImm01020S4 where
 
 instance A.Arbitrary Imm1_32 where
   arbitrary g = Imm1_32 <$> A.arbitrary g
+
+instance A.Arbitrary Imm065535 where
+  arbitrary g = Imm065535 <$> A.arbitrary g
 
 instance A.Arbitrary RotImm where
   arbitrary g = RotImm <$> A.arbitrary g

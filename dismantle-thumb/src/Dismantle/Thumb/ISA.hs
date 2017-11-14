@@ -214,6 +214,10 @@ isa = ISA { isaName = "Thumb"
                                   , opConE = Nothing
                                   , opWordE = Just [| fromIntegral |]
                                   }
+    imm065535 = OperandPayload { opTypeT = [t| Thumb.Imm065535 |]
+                               , opConE = Just (varE 'Thumb.mkImm065535)
+                               , opWordE = Just (varE 'Thumb.imm065535ToBits)
+                               }
     word16Operand = OperandPayload { opTypeT = [t| Word16 |]
                                    , opConE = Nothing
                                    , opWordE = Just [| fromIntegral |]
@@ -304,8 +308,8 @@ isa = ISA { isaName = "Thumb"
         , ("GPRnopc"              , gpRegister)
         , ("Iflags_op"            , word8Operand)
         , ("Imm0_4095"            , word16Operand)
-        , ("Imm0_65535"           , word16Operand)
-        , ("Imm0_65535_expr"      , word16Operand)
+        , ("Imm0_65535"           , imm065535)
+        , ("Imm0_65535_expr"      , imm065535)
         , ("Imm0_1"               , bit)
         , ("Imm0_7"               , opcodeOperand)
         , ("Imm0_15"              , opcodeOperand)
