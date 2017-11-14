@@ -207,6 +207,9 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "sxth" <> conditions
               , "rev" <> conditions
 
+              -- We render this as ADR
+              , "addw.*pc.*"
+
               -- We render this as a shift instruction
               , "mov.*lsl.*"
               , "mov.*lsr.*"
