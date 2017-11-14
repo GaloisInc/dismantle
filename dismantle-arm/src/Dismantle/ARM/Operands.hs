@@ -127,7 +127,9 @@ module Dismantle.ARM.Operands (
 
   ShiftType(..),
   decodeShiftType,
-  encodeShiftType
+  encodeShiftType,
+
+  decodeImmShift
   ) where
 
 import Data.Bits

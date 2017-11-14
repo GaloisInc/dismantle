@@ -743,8 +743,8 @@ mkT2SoReg w = T2SoReg (fromIntegral imm) st (GPR $ fromIntegral reg)
       reg  = extract t2SoRegRmField w
       imm2 = extract t2SoRegImm2Field w
       imm3 = extract t2SoRegImm3Field w
-      imm = (imm3 `shiftL` 2) .|. imm2
-      st   = ARM.decodeShiftType $ extract t2SoRegShiftTypeField w
+      imm' = (imm3 `shiftL` 2) .|. imm2
+      (st, imm)   = ARM.decodeImmShift (extract t2SoRegShiftTypeField w) imm'
 
 t2SoRegToBits :: T2SoReg -> Word32
 t2SoRegToBits (T2SoReg imm st (GPR reg)) =
