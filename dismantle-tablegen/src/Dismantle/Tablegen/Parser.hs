@@ -195,13 +195,13 @@ parseBangOperator = BangOperator <$> (P.char '!' *> name)
 
 parseBit :: Parser Bool
 parseBit = tryChoice [ False <$ symbol "0"
-                    , True <$ symbol "1"
-                    ]
+                     , True <$ symbol "1"
+                     ]
 
 parseUnknownBit :: Parser (Maybe BitRef)
 parseUnknownBit = tryChoice [ Just <$> parseBitRef
-                           , Nothing <$ symbol "?"
-                           ]
+                            , Nothing <$ symbol "?"
+                            ]
 
 parseBitRef :: Parser BitRef
 parseBitRef =
