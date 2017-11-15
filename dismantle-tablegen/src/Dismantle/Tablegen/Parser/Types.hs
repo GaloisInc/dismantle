@@ -121,6 +121,7 @@ data BangOperator = BangOperator String
 
 data SimpleValue = Identifier String
                  | VString String
+                 | VCode String
                  | VNum !Int
                  | VUnset
                  | VList [SimpleValue] (Maybe String)

@@ -179,6 +179,7 @@ parseSimpleValue cfg =
             , VString <$> parseStringLiteral cfg
             , VList <$> between (symbol "[") (symbol "]") (P.sepBy1 (parseSimpleValue NoEmbeddedStrings) (symbol ","))
                     <*> P.optional parseType
+            , VCode <$> (symbol "[{" *> P.manyTill P.anyChar (symbol "}]"))
             , VSequence <$> between (symbol "{") (symbol "}") (P.sepBy (parseSimpleValue NoEmbeddedStrings) (symbol ","))
             , VAnonRecord <$> name <*> between (symbol "<") (symbol ">") (P.sepBy1 (parseSimpleValue NoEmbeddedStrings) (symbol ","))
             , id <$> between (symbol "(") (symbol ")") (VDag <$> parseDagArg <*> P.sepBy parseDagArg (symbol ","))
