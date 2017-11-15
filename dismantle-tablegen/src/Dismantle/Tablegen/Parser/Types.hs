@@ -113,6 +113,7 @@ data DeclType = TGBit
               | TGFieldBits !Int
               | TGList DeclType
               | TGClass String
+              | TGCode
   deriving (Show, Generic, NFData, Eq)
 
 data BangOperator = BangOperator String

@@ -105,6 +105,7 @@ parseDeclType =
             , TGString <$ symbol "string"
             , TGInt <$ symbol "int"
             , TGDag <$ symbol "dag"
+            , TGCode <$ symbol "code"
             , TGList <$> (symbol "list<" *> parseDeclType) <* symbol ">"
             , TGClass <$> name
             ]
@@ -137,6 +138,7 @@ parseKnownDeclItem dt =
     TGFieldBits _ ->
       FieldBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseUnknownBit) (symbol ","))
     TGDag -> parseDAGItem
+    TGCode -> parseDAGItem
     TGBits _ ->
       tryChoice [ ExpectedBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseBit) (symbol ","))
                 , ExpectedUnknownBits <$> P.between (symbol "{") (symbol "}") (P.sepBy1 (lexeme parseUnknownBit) (symbol ","))
