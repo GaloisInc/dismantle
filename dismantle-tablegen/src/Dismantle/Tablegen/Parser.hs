@@ -21,6 +21,35 @@ import Prelude
 
 import Dismantle.Tablegen.Parser.Types
 
+-- For testing internal functions in this module.
+{-
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE FlexibleInstances #-}
+import Data.Text.Lazy ( pack )
+import Text.Printf
+
+testParseTableGen file = do
+  content <- pack <$> readFile file
+  case parseTablegen "<test>" content of
+    Left e -> printf $ P.parseErrorPretty' content e
+    Right Records {..} -> do
+      printf "%i classes, %i defs\n" (length tblClasses) (length tblDefs)
+
+testParser :: Parser a -> Text -> IO ()
+testParser parser input = do
+  let result = St.evalState
+        (P.runParserT parser "<test>" (unpack input)) emptyState
+  case result of
+    Left e -> printf $ P.parseErrorPretty' input e
+    Right _ -> printf "success!\n"
+  where
+    emptyState = TGState M.empty
+
+-- | So that parse errors can be pretty printed.
+instance P.ShowErrorComponent String where
+  showErrorComponent = id
+-}
+
 parseTablegen :: String
               -- ^ The name of the file (used for error messages)
               -> Text
@@ -45,17 +74,32 @@ internString s = do
 type Parser = P.ParsecT String String (St.State TGState)
 
 header :: String -> Parser ()
-header hdr = sc >> P.some (P.char '-') >> sc >> symbol hdr >> sc >> P.some (P.char '-') >> sc >> return ()
+header hdr = sc >> P.some (P.char '-') >> sc >> symbol hdr >> sc >> P.some (P.char '-') >> sc
 
+-- | Parse a sequence of classes followed by a sequence of defs,
+-- skipping @/* ... */@-comments between (but not inside!).
 p :: Parser Records
 p = do
+  skipComments
   header "Classes"
-  klasses <- P.some parseClass
+  skipComments
+  klasses <- P.some (parseClass <* skipComments)
+  skipComments
   header "Defs"
-  defs <- P.some parseDef
+  skipComments
+  defs <- P.some (parseDef <* skipComments)
+  skipComments
   return Records { tblClasses = klasses
                  , tblDefs = defs
                  }
+
+-- | Skip C-style @/* ... */@ range comments. Like in the TableGen
+-- spec, and unlike in C, range comments *can* be nested.
+--
+-- Not skipping @// ...@ comments since those are meaningful in some
+-- places as metadata comments.
+skipComments :: Parser ()
+skipComments = P.skipMany (L.skipBlockCommentNested "/*" "*/" *> sc)
 
 parseClass :: Parser ClassDecl
 parseClass = do
