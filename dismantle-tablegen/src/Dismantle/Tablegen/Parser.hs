@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 -- | A parser for the output of the @llvm-tablegen@ tool's dumped output.
 --
@@ -23,15 +25,13 @@ import Dismantle.Tablegen.Parser.Types
 
 -- For testing internal functions in this module.
 {-
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE FlexibleInstances #-}
 import Data.Text.Lazy ( pack )
 import Text.Printf
 
 testParseTableGen file = do
   content <- pack <$> readFile file
   case parseTablegen "<test>" content of
-    Left e -> printf $ P.parseErrorPretty' content e
+    Left e -> printf e
     Right Records {..} -> do
       printf "%i classes, %i defs\n" (length tblClasses) (length tblDefs)
 
@@ -45,17 +45,22 @@ testParser parser input = do
   where
     emptyState = TGState M.empty
 
+-}
+
 -- | So that parse errors can be pretty printed.
 instance P.ShowErrorComponent String where
   showErrorComponent = id
--}
 
 parseTablegen :: String
               -- ^ The name of the file (used for error messages)
               -> Text
               -- ^ The content of the file to parse
-              -> Either (P.ParseError Char String) Records
-parseTablegen fname t = St.evalState (P.runParserT p fname (unpack t)) emptyState
+              -> Either String Records
+parseTablegen fname t =
+  case St.evalState (P.runParserT p fname (unpack t)) emptyState of
+    -- Render the parse error, including the line where it occurred.
+    Left e -> Left $ P.parseErrorPretty' t e
+    Right r -> Right r
   where
     emptyState = TGState M.empty
 

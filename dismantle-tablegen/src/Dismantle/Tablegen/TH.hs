@@ -75,7 +75,7 @@ loadISA :: ISA -> FilePath -> IO ISADescriptor
 loadISA isa path = do
   txt <- TL.readFile path
   case parseTablegen path txt of
-    Left err -> fail (show err)
+    Left err -> fail err
     Right defs -> return $ filterISA isa defs
 
 opcodeTypeName :: Name
