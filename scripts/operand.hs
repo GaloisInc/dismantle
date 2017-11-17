@@ -30,34 +30,43 @@ boilerplate op =
         mkFunc = "mk" <> ty
         toBitsFunc = lowerTy <> "ToBits"
         operandFunc = lowerTy <> "Operand"
-    in unlines [ "  , " <> ty
-               , "  , " <> mkFunc
-               , "  , " <> toBitsFunc
-               , "  , " <> operandFunc
-               , ""
-               , "data " <> ty <> " = " <> ty <> " {"
-               , "         " <> replicate (length ty * 2) ' ' <> "}"
-               , "        " <> replicate (length ty) ' ' <> "deriving (" <> (intercalate ", " derived) <> ")"
-               , ""
-               , "instance PP.Pretty " <> ty <> " where"
-               , "  pPrint _ = PP.text \"" <> ty <> ": not implemented\""
-               , ""
-               , mkFunc <> " :: Word32 -> " <> ty
-               , mkFunc <> " w = " <> ty
-               , ""
-               , toBitsFunc <> " :: " <> ty <> " -> Word32"
-               , toBitsFunc <> " " <> ty <> " = 0"
-               , ""
-               , operandFunc <> " :: OperandPayload"
-               , operandFunc <> " ="
-               , "  OperandPayload { opTypeT = [t| " <> ty <> " |]"
-               , "                 , opConE  = Just (varE '" <> mkFunc <> ")"
-               , "                 , opWordE = Just (varE '" <> toBitsFunc <> ")"
-               , "                 }"
-               , ""
-               , "instance A.Arbitrary " <> ty <> " where"
-               , "  arbitrary g = pure " <> ty
-               ]
+        exports = [ ty
+                  , mkFunc
+                  , toBitsFunc
+                  , operandFunc
+                  ]
+        sections = [ (("  , " <>) <$> exports)
+                   , tySection
+                   , ppInstance
+                   , arbitraryInstance
+                   , toBitsSection
+                   , mkOpSection
+                   , payloadSection
+                   ]
+        tySection = [ "data " <> ty <> " = " <> ty <> " {"
+                    , "         " <> replicate (length ty * 2) ' ' <> "}"
+                    , "        " <> replicate (length ty) ' ' <> "deriving (" <> (intercalate ", " derived) <> ")"
+                    ]
+        ppInstance = [ "instance PP.Pretty " <> ty <> " where"
+                     , "  pPrint _ = PP.text \"" <> ty <> ": not implemented\""
+                     ]
+        arbitraryInstance = [ "instance A.Arbitrary " <> ty <> " where"
+                            , "  arbitrary g = pure " <> ty
+                            ]
+        mkOpSection = [ mkFunc <> " :: Word32 -> " <> ty
+                      , mkFunc <> " w = " <> ty
+                      ]
+        toBitsSection = [ toBitsFunc <> " :: " <> ty <> " -> Word32"
+                        , toBitsFunc <> " " <> ty <> " = 0"
+                        ]
+        payloadSection = [ operandFunc <> " :: OperandPayload"
+                         , operandFunc <> " ="
+                         , "  OperandPayload { opTypeT = [t| " <> ty <> " |]"
+                         , "                 , opConE  = Just (varE '" <> mkFunc <> ")"
+                         , "                 , opWordE = Just (varE '" <> toBitsFunc <> ")"
+                         , "                 }"
+                         ]
+    in unlines $ unlines <$> sections
 
 main :: IO ()
 main = do
