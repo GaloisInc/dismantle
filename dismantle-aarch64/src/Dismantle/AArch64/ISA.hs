@@ -48,7 +48,15 @@ isa = ISA { isaName = "AArch64"
   where
 
     aarch64OperandPayloadTypes =
-        [
+        [ ("FPR128", AArch64.fPR128Operand)
+        , ("FPR16", AArch64.fPR16Operand)
+        , ("FPR32", AArch64.fPR32Operand)
+        , ("FPR64", AArch64.fPR64Operand)
+        , ("FPR8", AArch64.fPR8Operand)
+        , ("GPR32", AArch64.gPR32Operand)
+        , ("GPR64", AArch64.gPR64Operand)
+        , ("GPR32sp", AArch64.gPR32spOperand)
+        , ("GPR64sp", AArch64.gPR64spOperand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
