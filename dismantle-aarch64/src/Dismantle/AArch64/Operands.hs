@@ -62,6 +62,11 @@ module Dismantle.AArch64.Operands
   , addsubShiftedImm64ToBits
   , addsubShiftedImm64Operand
 
+  , Adrlabel
+  , mkAdrlabel
+  , adrlabelToBits
+  , adrlabelOperand
+
   )
 where
 
@@ -437,5 +442,32 @@ addsubShiftedImm64Operand =
   OperandPayload { opTypeT = [t| AddsubShiftedImm64 |]
                  , opConE  = Just (varE 'mkAddsubShiftedImm64)
                  , opWordE = Just (varE 'addsubShiftedImm64ToBits)
+                 }
+
+data Adrlabel = Adrlabel { adrlabelImm :: Word32
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Adrlabel where
+  pPrint _ = PP.text "Adrlabel: not implemented"
+
+instance A.Arbitrary Adrlabel where
+  arbitrary g = Adrlabel <$> A.arbitrary g
+
+adrlabelImmField :: Field
+adrlabelImmField = Field 21 0
+
+adrlabelToBits :: Adrlabel -> Word32
+adrlabelToBits val =
+  insert adrlabelImmField (adrlabelImm val) 0
+
+mkAdrlabel :: Word32 -> Adrlabel
+mkAdrlabel w =
+  Adrlabel (fromIntegral $ extract adrlabelImmField w)
+
+adrlabelOperand :: OperandPayload
+adrlabelOperand =
+  OperandPayload { opTypeT = [t| Adrlabel |]
+                 , opConE  = Just (varE 'mkAdrlabel)
+                 , opWordE = Just (varE 'adrlabelToBits)
                  }
 
