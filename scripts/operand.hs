@@ -48,7 +48,8 @@ parseField s =
                       let bytes = if size `mod` 8 == 0
                                   then size `div` 8
                                   else (size `div` 8) + 1
-                          bits = bytes * 8
+                          rawBits = bytes * 8
+                          bits = if rawBits == 24 then 32 else rawBits
                       in "Word" <> show bits
 
             return $ FieldInfo name ty size offset
