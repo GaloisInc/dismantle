@@ -67,6 +67,31 @@ module Dismantle.AArch64.Operands
   , adrlabelToBits
   , adrlabelOperand
 
+  , Adrplabel
+  , mkAdrplabel
+  , adrplabelToBits
+  , adrplabelOperand
+
+  , AmBTarget
+  , mkAmBTarget
+  , amBTargetToBits
+  , amBTargetOperand
+
+  , AmBrcond
+  , mkAmBrcond
+  , amBrcondToBits
+  , amBrcondOperand
+
+  , AmLdrlit
+  , mkAmLdrlit
+  , amLdrlitToBits
+  , amLdrlitOperand
+
+  , AmTbrcond
+  , mkAmTbrcond
+  , amTbrcondToBits
+  , amTbrcondOperand
+
   )
 where
 
@@ -469,5 +494,140 @@ adrlabelOperand =
   OperandPayload { opTypeT = [t| Adrlabel |]
                  , opConE  = Just (varE 'mkAdrlabel)
                  , opWordE = Just (varE 'adrlabelToBits)
+                 }
+
+data Adrplabel = Adrplabel { adrplabelImm :: Word32
+                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Adrplabel where
+  pPrint _ = PP.text "Adrplabel: not implemented"
+
+instance A.Arbitrary Adrplabel where
+  arbitrary g = Adrplabel <$> A.arbitrary g
+
+adrplabelImmField :: Field
+adrplabelImmField = Field 21 0
+
+adrplabelToBits :: Adrplabel -> Word32
+adrplabelToBits val =
+  insert adrplabelImmField (adrplabelImm val) 0
+
+mkAdrplabel :: Word32 -> Adrplabel
+mkAdrplabel w =
+  Adrplabel (fromIntegral $ extract adrplabelImmField w)
+
+adrplabelOperand :: OperandPayload
+adrplabelOperand =
+  OperandPayload { opTypeT = [t| Adrplabel |]
+                 , opConE  = Just (varE 'mkAdrplabel)
+                 , opWordE = Just (varE 'adrplabelToBits)
+                 }
+
+data AmBTarget = AmBTarget { amBTargetAddr :: Word32
+                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty AmBTarget where
+  pPrint _ = PP.text "AmBTarget: not implemented"
+
+instance A.Arbitrary AmBTarget where
+  arbitrary g = AmBTarget <$> A.arbitrary g
+
+amBTargetAddrField :: Field
+amBTargetAddrField = Field 26 0
+
+amBTargetToBits :: AmBTarget -> Word32
+amBTargetToBits val =
+  insert amBTargetAddrField (amBTargetAddr val) 0
+
+mkAmBTarget :: Word32 -> AmBTarget
+mkAmBTarget w =
+  AmBTarget (fromIntegral $ extract amBTargetAddrField w)
+
+amBTargetOperand :: OperandPayload
+amBTargetOperand =
+  OperandPayload { opTypeT = [t| AmBTarget |]
+                 , opConE  = Just (varE 'mkAmBTarget)
+                 , opWordE = Just (varE 'amBTargetToBits)
+                 }
+
+data AmBrcond = AmBrcond { amBrcondAddr :: Word32
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty AmBrcond where
+  pPrint _ = PP.text "AmBrcond: not implemented"
+
+instance A.Arbitrary AmBrcond where
+  arbitrary g = AmBrcond <$> A.arbitrary g
+
+amBrcondAddrField :: Field
+amBrcondAddrField = Field 19 0
+
+amBrcondToBits :: AmBrcond -> Word32
+amBrcondToBits val =
+  insert amBrcondAddrField (amBrcondAddr val) 0
+
+mkAmBrcond :: Word32 -> AmBrcond
+mkAmBrcond w =
+  AmBrcond (fromIntegral $ extract amBrcondAddrField w)
+
+amBrcondOperand :: OperandPayload
+amBrcondOperand =
+  OperandPayload { opTypeT = [t| AmBrcond |]
+                 , opConE  = Just (varE 'mkAmBrcond)
+                 , opWordE = Just (varE 'amBrcondToBits)
+                 }
+
+data AmLdrlit = AmLdrlit { amLdrlitLabel :: Word32
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty AmLdrlit where
+  pPrint _ = PP.text "AmLdrlit: not implemented"
+
+instance A.Arbitrary AmLdrlit where
+  arbitrary g = AmLdrlit <$> A.arbitrary g
+
+amLdrlitLabelField :: Field
+amLdrlitLabelField = Field 19 0
+
+amLdrlitToBits :: AmLdrlit -> Word32
+amLdrlitToBits val =
+  insert amLdrlitLabelField (amLdrlitLabel val) 0
+
+mkAmLdrlit :: Word32 -> AmLdrlit
+mkAmLdrlit w =
+  AmLdrlit (fromIntegral $ extract amLdrlitLabelField w)
+
+amLdrlitOperand :: OperandPayload
+amLdrlitOperand =
+  OperandPayload { opTypeT = [t| AmLdrlit |]
+                 , opConE  = Just (varE 'mkAmLdrlit)
+                 , opWordE = Just (varE 'amLdrlitToBits)
+                 }
+
+data AmTbrcond = AmTbrcond { amTbrcondLabel :: Word16
+                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty AmTbrcond where
+  pPrint _ = PP.text "AmTbrcond: not implemented"
+
+instance A.Arbitrary AmTbrcond where
+  arbitrary g = AmTbrcond <$> A.arbitrary g
+
+amTbrcondLabelField :: Field
+amTbrcondLabelField = Field 14 0
+
+amTbrcondToBits :: AmTbrcond -> Word32
+amTbrcondToBits val =
+  insert amTbrcondLabelField (amTbrcondLabel val) 0
+
+mkAmTbrcond :: Word32 -> AmTbrcond
+mkAmTbrcond w =
+  AmTbrcond (fromIntegral $ extract amTbrcondLabelField w)
+
+amTbrcondOperand :: OperandPayload
+amTbrcondOperand =
+  OperandPayload { opTypeT = [t| AmTbrcond |]
+                 , opConE  = Just (varE 'mkAmTbrcond)
+                 , opWordE = Just (varE 'amTbrcondToBits)
                  }
 

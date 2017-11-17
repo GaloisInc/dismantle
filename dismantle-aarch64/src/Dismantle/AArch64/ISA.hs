@@ -21,6 +21,7 @@ import Dismantle.Tablegen.Parser.Types
   , defMetadata
   )
 import qualified Dismantle.AArch64.Operands as AArch64
+import qualified Dismantle.ARM.ISA as ARM
 
 asWord32 :: LBS.ByteString -> Word32
 asWord32 = B.runGet B.getWord32be
@@ -64,6 +65,13 @@ isa = ISA { isaName = "AArch64"
         , ("Addsub_shifted_imm32", AArch64.addsubShiftedImm32Operand)
         , ("Addsub_shifted_imm64", AArch64.addsubShiftedImm64Operand)
         , ("Adrlabel", AArch64.adrlabelOperand)
+        , ("Adrplabel", AArch64.adrplabelOperand)
+        , ("Am_b_target", AArch64.amBTargetOperand)
+        , ("Am_bl_target", AArch64.amBTargetOperand)
+        , ("Am_brcond", AArch64.amBrcondOperand)
+        , ("Am_tbrcond", AArch64.amTbrcondOperand)
+        , ("Ccode", ARM.predOperand)
+        , ("Am_ldrlit", AArch64.amLdrlitOperand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
