@@ -105,6 +105,7 @@ isa = ISA { isaName = "AArch64"
     ignoredMetadata d = any badMetadata (defMetadata d)
     badMetadata (Metadata m) =
         or [ "SIMD" `L.isInfixOf` m
+           , "FP" `L.isInfixOf` m
            , m `elem` ["BaseIntegerToFP", "BaseIntegerToFPUnscaled"]
            , "v" `L.isPrefixOf` m
            , "Vector" `L.isInfixOf` m
