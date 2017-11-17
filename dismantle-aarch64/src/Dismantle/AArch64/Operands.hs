@@ -109,7 +109,7 @@ fPR128ToBits val =
 
 mkFPR128 :: Word32 -> FPR128
 mkFPR128 w =
-  FPR128 $ (fromIntegral $ extract fPR128RegField w)
+  FPR128 (fromIntegral $ extract fPR128RegField w)
 
 fPR128Operand :: OperandPayload
 fPR128Operand =
@@ -136,7 +136,7 @@ fPR16ToBits val =
 
 mkFPR16 :: Word32 -> FPR16
 mkFPR16 w =
-  FPR16 $ (fromIntegral $ extract fPR16RegField w)
+  FPR16 (fromIntegral $ extract fPR16RegField w)
 
 fPR16Operand :: OperandPayload
 fPR16Operand =
@@ -163,7 +163,7 @@ fPR32ToBits val =
 
 mkFPR32 :: Word32 -> FPR32
 mkFPR32 w =
-  FPR32 $ (fromIntegral $ extract fPR32RegField w)
+  FPR32 (fromIntegral $ extract fPR32RegField w)
 
 fPR32Operand :: OperandPayload
 fPR32Operand =
@@ -190,7 +190,7 @@ fPR64ToBits val =
 
 mkFPR64 :: Word32 -> FPR64
 mkFPR64 w =
-  FPR64 $ (fromIntegral $ extract fPR64RegField w)
+  FPR64 (fromIntegral $ extract fPR64RegField w)
 
 fPR64Operand :: OperandPayload
 fPR64Operand =
@@ -217,7 +217,7 @@ fPR8ToBits val =
 
 mkFPR8 :: Word32 -> FPR8
 mkFPR8 w =
-  FPR8 $ (fromIntegral $ extract fPR8RegField w)
+  FPR8 (fromIntegral $ extract fPR8RegField w)
 
 fPR8Operand :: OperandPayload
 fPR8Operand =
@@ -244,7 +244,7 @@ gPR32ToBits val =
 
 mkGPR32 :: Word32 -> GPR32
 mkGPR32 w =
-  GPR32 $ (fromIntegral $ extract gPR32RegField w)
+  GPR32 (fromIntegral $ extract gPR32RegField w)
 
 gPR32Operand :: OperandPayload
 gPR32Operand =
@@ -271,7 +271,7 @@ gPR64ToBits val =
 
 mkGPR64 :: Word32 -> GPR64
 mkGPR64 w =
-  GPR64 $ (fromIntegral $ extract gPR64RegField w)
+  GPR64 (fromIntegral $ extract gPR64RegField w)
 
 gPR64Operand :: OperandPayload
 gPR64Operand =
@@ -299,7 +299,7 @@ gPR32spToBits val =
 
 mkGPR32sp :: Word32 -> GPR32sp
 mkGPR32sp w =
-  GPR32sp $ (fromIntegral $ extract gPR32spRegField w)
+  GPR32sp (fromIntegral $ extract gPR32spRegField w)
 
 gPR32spOperand :: OperandPayload
 gPR32spOperand =
