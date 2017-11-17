@@ -57,6 +57,11 @@ module Dismantle.AArch64.Operands
   , addsubShiftedImm32ToBits
   , addsubShiftedImm32Operand
 
+  , AddsubShiftedImm64
+  , mkAddsubShiftedImm64
+  , addsubShiftedImm64ToBits
+  , addsubShiftedImm64Operand
+
   )
 where
 
@@ -399,5 +404,38 @@ addsubShiftedImm32Operand =
   OperandPayload { opTypeT = [t| AddsubShiftedImm32 |]
                  , opConE  = Just (varE 'mkAddsubShiftedImm32)
                  , opWordE = Just (varE 'addsubShiftedImm32ToBits)
+                 }
+
+data AddsubShiftedImm64 = AddsubShiftedImm64 { addsubShiftedImm64Imm :: Word16
+                                             , addsubShiftedImm64Shift :: Word8
+                                             } deriving (Eq, Ord, Show)
+
+instance PP.Pretty AddsubShiftedImm64 where
+  pPrint _ = PP.text "AddsubShiftedImm64: not implemented"
+
+instance A.Arbitrary AddsubShiftedImm64 where
+  arbitrary g = AddsubShiftedImm64 <$> A.arbitrary g <*> A.arbitrary g
+
+addsubShiftedImm64ImmField :: Field
+addsubShiftedImm64ImmField = Field 12 0
+
+addsubShiftedImm64ShiftField :: Field
+addsubShiftedImm64ShiftField = Field 2 12
+
+addsubShiftedImm64ToBits :: AddsubShiftedImm64 -> Word32
+addsubShiftedImm64ToBits val =
+  insert addsubShiftedImm64ImmField (addsubShiftedImm64Imm val) $
+  insert addsubShiftedImm64ShiftField (addsubShiftedImm64Shift val) 0
+
+mkAddsubShiftedImm64 :: Word32 -> AddsubShiftedImm64
+mkAddsubShiftedImm64 w =
+  AddsubShiftedImm64 (fromIntegral $ extract addsubShiftedImm64ImmField w)
+                     (fromIntegral $ extract addsubShiftedImm64ShiftField w)
+
+addsubShiftedImm64Operand :: OperandPayload
+addsubShiftedImm64Operand =
+  OperandPayload { opTypeT = [t| AddsubShiftedImm64 |]
+                 , opConE  = Just (varE 'mkAddsubShiftedImm64)
+                 , opWordE = Just (varE 'addsubShiftedImm64ToBits)
                  }
 
