@@ -46,6 +46,12 @@ module Dismantle.AArch64.Operands
   , mkGPR64sp
   , gPR64spToBits
   , gPR64spOperand
+
+  , V128
+  , mkV128
+  , v128ToBits
+  , v128Operand
+
   )
 where
 
@@ -328,5 +334,32 @@ gPR64spOperand =
   OperandPayload { opTypeT = [t| GPR64sp |]
                  , opConE  = Just (varE 'mkGPR64sp)
                  , opWordE = Just (varE 'gPR64spToBits)
+                 }
+
+data V128 = V128 { v128Reg :: Word8
+                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty V128 where
+  pPrint (V128 r) = PP.text $ "V" <> show r
+
+instance A.Arbitrary V128 where
+  arbitrary g = V128 <$> A.arbitrary g
+
+v128RegField :: Field
+v128RegField = Field 5 0
+
+v128ToBits :: V128 -> Word32
+v128ToBits val =
+  insert v128RegField (v128Reg val) 0
+
+mkV128 :: Word32 -> V128
+mkV128 w =
+  V128 $ (fromIntegral $ extract v128RegField w)
+
+v128Operand :: OperandPayload
+v128Operand =
+  OperandPayload { opTypeT = [t| V128 |]
+                 , opConE  = Just (varE 'mkV128)
+                 , opWordE = Just (varE 'v128ToBits)
                  }
 
