@@ -72,6 +72,15 @@ isa = ISA { isaName = "AArch64"
         , ("Am_tbrcond", AArch64.amTbrcondOperand)
         , ("Ccode", ARM.predOperand)
         , ("Am_ldrlit", AArch64.amLdrlitOperand)
+        , ("Arith_extendlsl64", AArch64.arithExtendlsl64Operand)
+        , ("Barrier_op", AArch64.barrierOpOperand)
+        , ("Imm0_1", AArch64.imm01Operand)
+        , ("Imm0_7", AArch64.imm07Operand)
+        , ("Imm0_15", AArch64.imm015Operand)
+        , ("Imm0_31", AArch64.imm031Operand)
+        , ("Imm0_63", AArch64.imm063Operand)
+        , ("Imm0_127", AArch64.imm0127Operand)
+        , ("Imm0_65535", AArch64.imm065535Operand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&

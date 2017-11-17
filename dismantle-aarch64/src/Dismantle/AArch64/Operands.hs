@@ -92,6 +92,51 @@ module Dismantle.AArch64.Operands
   , amTbrcondToBits
   , amTbrcondOperand
 
+  , ArithExtendlsl64
+  , mkArithExtendlsl64
+  , arithExtendlsl64ToBits
+  , arithExtendlsl64Operand
+
+  , BarrierOp
+  , mkBarrierOp
+  , barrierOpToBits
+  , barrierOpOperand
+
+  , Imm01
+  , mkImm01
+  , imm01ToBits
+  , imm01Operand
+
+  , Imm0127
+  , mkImm0127
+  , imm0127ToBits
+  , imm0127Operand
+
+  , Imm015
+  , mkImm015
+  , imm015ToBits
+  , imm015Operand
+
+  , Imm031
+  , mkImm031
+  , imm031ToBits
+  , imm031Operand
+
+  , Imm063
+  , mkImm063
+  , imm063ToBits
+  , imm063Operand
+
+  , Imm065535
+  , mkImm065535
+  , imm065535ToBits
+  , imm065535Operand
+
+  , Imm07
+  , mkImm07
+  , imm07ToBits
+  , imm07Operand
+
   )
 where
 
@@ -629,5 +674,248 @@ amTbrcondOperand =
   OperandPayload { opTypeT = [t| AmTbrcond |]
                  , opConE  = Just (varE 'mkAmTbrcond)
                  , opWordE = Just (varE 'amTbrcondToBits)
+                 }
+
+data ArithExtendlsl64 = ArithExtendlsl64 { arithExtendlsl64Shift :: Word8
+                                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty ArithExtendlsl64 where
+  pPrint _ = PP.text "ArithExtendlsl64: not implemented"
+
+instance A.Arbitrary ArithExtendlsl64 where
+  arbitrary g = ArithExtendlsl64 <$> A.arbitrary g
+
+arithExtendlsl64ShiftField :: Field
+arithExtendlsl64ShiftField = Field 3 0
+
+arithExtendlsl64ToBits :: ArithExtendlsl64 -> Word32
+arithExtendlsl64ToBits val =
+  insert arithExtendlsl64ShiftField (arithExtendlsl64Shift val) 0
+
+mkArithExtendlsl64 :: Word32 -> ArithExtendlsl64
+mkArithExtendlsl64 w =
+  ArithExtendlsl64 (fromIntegral $ extract arithExtendlsl64ShiftField w)
+
+arithExtendlsl64Operand :: OperandPayload
+arithExtendlsl64Operand =
+  OperandPayload { opTypeT = [t| ArithExtendlsl64 |]
+                 , opConE  = Just (varE 'mkArithExtendlsl64)
+                 , opWordE = Just (varE 'arithExtendlsl64ToBits)
+                 }
+
+data BarrierOp = BarrierOp { barrierOpType :: Word8
+                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty BarrierOp where
+  pPrint _ = PP.text "BarrierOp: not implemented"
+
+instance A.Arbitrary BarrierOp where
+  arbitrary g = BarrierOp <$> A.arbitrary g
+
+barrierOpTypeField :: Field
+barrierOpTypeField = Field 4 0
+
+barrierOpToBits :: BarrierOp -> Word32
+barrierOpToBits val =
+  insert barrierOpTypeField (barrierOpType val) 0
+
+mkBarrierOp :: Word32 -> BarrierOp
+mkBarrierOp w =
+  BarrierOp (fromIntegral $ extract barrierOpTypeField w)
+
+barrierOpOperand :: OperandPayload
+barrierOpOperand =
+  OperandPayload { opTypeT = [t| BarrierOp |]
+                 , opConE  = Just (varE 'mkBarrierOp)
+                 , opWordE = Just (varE 'barrierOpToBits)
+                 }
+
+data Imm01 = Imm01 { imm01Bit :: Word8
+                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm01 where
+  pPrint _ = PP.text "Imm01: not implemented"
+
+instance A.Arbitrary Imm01 where
+  arbitrary g = Imm01 <$> A.arbitrary g
+
+imm01BitField :: Field
+imm01BitField = Field 1 0
+
+imm01ToBits :: Imm01 -> Word32
+imm01ToBits val =
+  insert imm01BitField (imm01Bit val) 0
+
+mkImm01 :: Word32 -> Imm01
+mkImm01 w =
+  Imm01 (fromIntegral $ extract imm01BitField w)
+
+imm01Operand :: OperandPayload
+imm01Operand =
+  OperandPayload { opTypeT = [t| Imm01 |]
+                 , opConE  = Just (varE 'mkImm01)
+                 , opWordE = Just (varE 'imm01ToBits)
+                 }
+
+data Imm0127 = Imm0127 { imm0127Imm :: Word8
+                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm0127 where
+  pPrint _ = PP.text "Imm0127: not implemented"
+
+instance A.Arbitrary Imm0127 where
+  arbitrary g = Imm0127 <$> A.arbitrary g
+
+imm0127ImmField :: Field
+imm0127ImmField = Field 7 0
+
+imm0127ToBits :: Imm0127 -> Word32
+imm0127ToBits val =
+  insert imm0127ImmField (imm0127Imm val) 0
+
+mkImm0127 :: Word32 -> Imm0127
+mkImm0127 w =
+  Imm0127 (fromIntegral $ extract imm0127ImmField w)
+
+imm0127Operand :: OperandPayload
+imm0127Operand =
+  OperandPayload { opTypeT = [t| Imm0127 |]
+                 , opConE  = Just (varE 'mkImm0127)
+                 , opWordE = Just (varE 'imm0127ToBits)
+                 }
+
+data Imm015 = Imm015 { imm015Imm :: Word8
+                     } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm015 where
+  pPrint _ = PP.text "Imm015: not implemented"
+
+instance A.Arbitrary Imm015 where
+  arbitrary g = Imm015 <$> A.arbitrary g
+
+imm015ImmField :: Field
+imm015ImmField = Field 4 0
+
+imm015ToBits :: Imm015 -> Word32
+imm015ToBits val =
+  insert imm015ImmField (imm015Imm val) 0
+
+mkImm015 :: Word32 -> Imm015
+mkImm015 w =
+  Imm015 (fromIntegral $ extract imm015ImmField w)
+
+imm015Operand :: OperandPayload
+imm015Operand =
+  OperandPayload { opTypeT = [t| Imm015 |]
+                 , opConE  = Just (varE 'mkImm015)
+                 , opWordE = Just (varE 'imm015ToBits)
+                 }
+
+data Imm031 = Imm031 { imm031Imm :: Word8
+                     } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm031 where
+  pPrint _ = PP.text "Imm031: not implemented"
+
+instance A.Arbitrary Imm031 where
+  arbitrary g = Imm031 <$> A.arbitrary g
+
+imm031ImmField :: Field
+imm031ImmField = Field 5 0
+
+imm031ToBits :: Imm031 -> Word32
+imm031ToBits val =
+  insert imm031ImmField (imm031Imm val) 0
+
+mkImm031 :: Word32 -> Imm031
+mkImm031 w =
+  Imm031 (fromIntegral $ extract imm031ImmField w)
+
+imm031Operand :: OperandPayload
+imm031Operand =
+  OperandPayload { opTypeT = [t| Imm031 |]
+                 , opConE  = Just (varE 'mkImm031)
+                 , opWordE = Just (varE 'imm031ToBits)
+                 }
+
+data Imm063 = Imm063 { imm063Imm :: Word8
+                     } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm063 where
+  pPrint _ = PP.text "Imm063: not implemented"
+
+instance A.Arbitrary Imm063 where
+  arbitrary g = Imm063 <$> A.arbitrary g
+
+imm063ImmField :: Field
+imm063ImmField = Field 6 0
+
+imm063ToBits :: Imm063 -> Word32
+imm063ToBits val =
+  insert imm063ImmField (imm063Imm val) 0
+
+mkImm063 :: Word32 -> Imm063
+mkImm063 w =
+  Imm063 (fromIntegral $ extract imm063ImmField w)
+
+imm063Operand :: OperandPayload
+imm063Operand =
+  OperandPayload { opTypeT = [t| Imm063 |]
+                 , opConE  = Just (varE 'mkImm063)
+                 , opWordE = Just (varE 'imm063ToBits)
+                 }
+
+data Imm065535 = Imm065535 { imm065535Imm :: Word16
+                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm065535 where
+  pPrint _ = PP.text "Imm065535: not implemented"
+
+instance A.Arbitrary Imm065535 where
+  arbitrary g = Imm065535 <$> A.arbitrary g
+
+imm065535ImmField :: Field
+imm065535ImmField = Field 16 0
+
+imm065535ToBits :: Imm065535 -> Word32
+imm065535ToBits val =
+  insert imm065535ImmField (imm065535Imm val) 0
+
+mkImm065535 :: Word32 -> Imm065535
+mkImm065535 w =
+  Imm065535 (fromIntegral $ extract imm065535ImmField w)
+
+imm065535Operand :: OperandPayload
+imm065535Operand =
+  OperandPayload { opTypeT = [t| Imm065535 |]
+                 , opConE  = Just (varE 'mkImm065535)
+                 , opWordE = Just (varE 'imm065535ToBits)
+                 }
+
+data Imm07 = Imm07 { imm07Imm :: Word8
+                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm07 where
+  pPrint _ = PP.text "Imm07: not implemented"
+
+instance A.Arbitrary Imm07 where
+  arbitrary g = Imm07 <$> A.arbitrary g
+
+imm07ImmField :: Field
+imm07ImmField = Field 3 0
+
+imm07ToBits :: Imm07 -> Word32
+imm07ToBits val =
+  insert imm07ImmField (imm07Imm val) 0
+
+mkImm07 :: Word32 -> Imm07
+mkImm07 w =
+  Imm07 (fromIntegral $ extract imm07ImmField w)
+
+imm07Operand :: OperandPayload
+imm07Operand =
+  OperandPayload { opTypeT = [t| Imm07 |]
+                 , opConE  = Just (varE 'mkImm07)
+                 , opWordE = Just (varE 'imm07ToBits)
                  }
 
