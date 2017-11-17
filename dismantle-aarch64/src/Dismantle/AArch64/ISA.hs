@@ -61,6 +61,7 @@ isa = ISA { isaName = "AArch64"
         , ("V128", AArch64.v128Operand)
         , ("WSeqPairClassOperand", AArch64.gPR32Operand)
         , ("XSeqPairClassOperand", AArch64.gPR64Operand)
+        , ("Addsub_shifted_imm32", AArch64.addsubShiftedImm32Operand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
