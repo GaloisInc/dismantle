@@ -105,7 +105,7 @@ boilerplate op fields =
                 extract f = "(fromIntegral $ extract " <> fullFieldName f <> " w)"
             in [ mkFunc <> " :: Word32 -> " <> ty
                , mkFunc <> " w ="
-               , "  " <> ty <> " $ " <> (concat (intersperse ("\n" <> replicate (length ty + 5) ' ') ls))
+               , "  " <> ty <> " " <> (concat (intersperse ("\n" <> replicate (length ty + 3) ' ') ls))
                ]
         toBitsSection =
             let ls = mkInsert <$> fields
