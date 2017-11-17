@@ -78,9 +78,13 @@ isa = ISA { isaName = "AArch64"
         [
         ]
 
-    ignoredMetadata d = not $ S.null $
-                        S.intersection (S.fromList $ defMetadata d)
-                                       ignoredMetadataNames
+    ignoredMetadata d = any badMetadata (defMetadata d)
+    badMetadata (Metadata m) =
+        or [ "SIMD" `L.isInfixOf` m
+           , m `elem` ["BaseIntegerToFP", "BaseIntegerToFPUnscaled"]
+           , "v" `L.isPrefixOf` m
+           , "Vector" `L.isInfixOf` m
+           ]
 
     overrides =
         [ ("ADDHNv2i64_v4i32", FormOverride [("dst", Ignore)])
