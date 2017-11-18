@@ -81,6 +81,8 @@ isa = ISA { isaName = "AArch64"
         , ("Imm0_63", AArch64.imm063Operand)
         , ("Imm0_127", AArch64.imm0127Operand)
         , ("Imm0_65535", AArch64.imm065535Operand)
+        , ("Imm32_0_15", AArch64.imm32015Operand)
+        , ("Imm32_0_31", AArch64.imm32031Operand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&

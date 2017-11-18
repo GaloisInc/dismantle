@@ -137,6 +137,16 @@ module Dismantle.AArch64.Operands
   , imm07ToBits
   , imm07Operand
 
+  , Imm32015
+  , mkImm32015
+  , imm32015ToBits
+  , imm32015Operand
+
+  , Imm32031
+  , mkImm32031
+  , imm32031ToBits
+  , imm32031Operand
+
   )
 where
 
@@ -917,5 +927,59 @@ imm07Operand =
   OperandPayload { opTypeT = [t| Imm07 |]
                  , opConE  = Just (varE 'mkImm07)
                  , opWordE = Just (varE 'imm07ToBits)
+                 }
+
+data Imm32015 = Imm32015 { imm32015Nzcv :: Word8
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm32015 where
+  pPrint _ = PP.text "Imm32015: not implemented"
+
+instance A.Arbitrary Imm32015 where
+  arbitrary g = Imm32015 <$> A.arbitrary g
+
+imm32015NzcvField :: Field
+imm32015NzcvField = Field 4 0
+
+imm32015ToBits :: Imm32015 -> Word32
+imm32015ToBits val =
+  insert imm32015NzcvField (imm32015Nzcv val) 0
+
+mkImm32015 :: Word32 -> Imm32015
+mkImm32015 w =
+  Imm32015 (fromIntegral $ extract imm32015NzcvField w)
+
+imm32015Operand :: OperandPayload
+imm32015Operand =
+  OperandPayload { opTypeT = [t| Imm32015 |]
+                 , opConE  = Just (varE 'mkImm32015)
+                 , opWordE = Just (varE 'imm32015ToBits)
+                 }
+
+data Imm32031 = Imm32031 { imm32031Imm :: Word8
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm32031 where
+  pPrint _ = PP.text "Imm32031: not implemented"
+
+instance A.Arbitrary Imm32031 where
+  arbitrary g = Imm32031 <$> A.arbitrary g
+
+imm32031ImmField :: Field
+imm32031ImmField = Field 5 0
+
+imm32031ToBits :: Imm32031 -> Word32
+imm32031ToBits val =
+  insert imm32031ImmField (imm32031Imm val) 0
+
+mkImm32031 :: Word32 -> Imm32031
+mkImm32031 w =
+  Imm32031 (fromIntegral $ extract imm32031ImmField w)
+
+imm32031Operand :: OperandPayload
+imm32031Operand =
+  OperandPayload { opTypeT = [t| Imm32031 |]
+                 , opConE  = Just (varE 'mkImm32031)
+                 , opWordE = Just (varE 'imm32031ToBits)
                  }
 
