@@ -56,7 +56,7 @@ mkTest p = T.testCase (takeFileName p) $ do
   let expectedDefCount = RE.countMatches (t RE.*=~ re)
   case D.parseTablegen p t of
     Left err ->
-        let msg = "Error parsing " <> show p <> ": " <> show err
+        let msg = "Error parsing " <> show p <> ": " <> err
         in T.assertFailure msg
     Right rs -> do
         rs `deepseq` return ()
