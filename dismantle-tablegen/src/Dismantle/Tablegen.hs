@@ -21,7 +21,7 @@ import Data.Tuple (swap)
 import qualified Data.ByteString.Lazy as LBS
 import Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
-import           Data.Char ( toLower )
+import           Data.Char ( toUpper )
 import qualified Data.Foldable as F
 import qualified Data.List as L
 import qualified Data.List.NonEmpty as NL
@@ -124,7 +124,7 @@ addKnownOperandTypes :: ISA -> S.Set OperandType -> S.Set OperandType
 addKnownOperandTypes isa observedOpTys = opTys
   where
     fromTypeName [] = error "Empty names are not allowed"
-    fromTypeName (c:cs) = toLower c : cs
+    fromTypeName (c:cs) = toUpper c : cs
     knownOpTys = S.fromList $
       map (OperandType . fromTypeName . fst)
           (isaOperandPayloadTypes isa)
