@@ -202,6 +202,51 @@ module Dismantle.AArch64.Operands
   , roWextend128ToBits
   , roWextend128Operand
 
+  , RoWextend16
+  , mkRoWextend16
+  , roWextend16ToBits
+  , roWextend16Operand
+
+  , RoWextend32
+  , mkRoWextend32
+  , roWextend32ToBits
+  , roWextend32Operand
+
+  , RoWextend64
+  , mkRoWextend64
+  , roWextend64ToBits
+  , roWextend64Operand
+
+  , RoWextend8
+  , mkRoWextend8
+  , roWextend8ToBits
+  , roWextend8Operand
+
+  , RoXextend128
+  , mkRoXextend128
+  , roXextend128ToBits
+  , roXextend128Operand
+
+  , RoXextend16
+  , mkRoXextend16
+  , roXextend16ToBits
+  , roXextend16Operand
+
+  , RoXextend32
+  , mkRoXextend32
+  , roXextend32ToBits
+  , roXextend32Operand
+
+  , RoXextend64
+  , mkRoXextend64
+  , roXextend64ToBits
+  , roXextend64Operand
+
+  , RoXextend8
+  , mkRoXextend8
+  , roXextend8ToBits
+  , roXextend8Operand
+
   )
 where
 
@@ -1426,5 +1471,305 @@ roWextend128Operand =
   OperandPayload { opTypeT = [t| RoWextend128 |]
                  , opConE  = Just (varE 'mkRoWextend128)
                  , opWordE = Just (varE 'roWextend128ToBits)
+                 }
+
+data RoWextend16 = RoWextend16 { roWextend16Sbit :: Word8
+                               , roWextend16OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoWextend16 where
+  -- See C5.6.93
+  pPrint _ = PP.text "RoWextend16: not implemented"
+
+instance A.Arbitrary RoWextend16 where
+  arbitrary g = RoWextend16 <$> A.arbitrary g <*> A.arbitrary g
+
+roWextend16SbitField :: Field
+roWextend16SbitField = Field 1 0
+
+roWextend16OptionHiBitField :: Field
+roWextend16OptionHiBitField = Field 1 1
+
+roWextend16ToBits :: RoWextend16 -> Word32
+roWextend16ToBits val =
+  insert roWextend16SbitField (roWextend16Sbit val) $
+  insert roWextend16OptionHiBitField (roWextend16OptionHiBit val) 0
+
+mkRoWextend16 :: Word32 -> RoWextend16
+mkRoWextend16 w =
+  RoWextend16 (fromIntegral $ extract roWextend16SbitField w)
+              (fromIntegral $ extract roWextend16OptionHiBitField w)
+
+roWextend16Operand :: OperandPayload
+roWextend16Operand =
+  OperandPayload { opTypeT = [t| RoWextend16 |]
+                 , opConE  = Just (varE 'mkRoWextend16)
+                 , opWordE = Just (varE 'roWextend16ToBits)
+                 }
+
+data RoWextend32 = RoWextend32 { roWextend32Sbit :: Word8
+                               , roWextend32OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoWextend32 where
+  pPrint _ = PP.text "RoWextend32: not implemented"
+
+instance A.Arbitrary RoWextend32 where
+  arbitrary g = RoWextend32 <$> A.arbitrary g <*> A.arbitrary g
+
+roWextend32SbitField :: Field
+roWextend32SbitField = Field 1 0
+
+roWextend32OptionHiBitField :: Field
+roWextend32OptionHiBitField = Field 1 1
+
+roWextend32ToBits :: RoWextend32 -> Word32
+roWextend32ToBits val =
+  insert roWextend32SbitField (roWextend32Sbit val) $
+  insert roWextend32OptionHiBitField (roWextend32OptionHiBit val) 0
+
+mkRoWextend32 :: Word32 -> RoWextend32
+mkRoWextend32 w =
+  RoWextend32 (fromIntegral $ extract roWextend32SbitField w)
+              (fromIntegral $ extract roWextend32OptionHiBitField w)
+
+roWextend32Operand :: OperandPayload
+roWextend32Operand =
+  OperandPayload { opTypeT = [t| RoWextend32 |]
+                 , opConE  = Just (varE 'mkRoWextend32)
+                 , opWordE = Just (varE 'roWextend32ToBits)
+                 }
+
+data RoWextend64 = RoWextend64 { roWextend64Sbit :: Word8
+                               , roWextend64OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoWextend64 where
+  pPrint _ = PP.text "RoWextend64: not implemented"
+
+instance A.Arbitrary RoWextend64 where
+  arbitrary g = RoWextend64 <$> A.arbitrary g <*> A.arbitrary g
+
+roWextend64SbitField :: Field
+roWextend64SbitField = Field 1 0
+
+roWextend64OptionHiBitField :: Field
+roWextend64OptionHiBitField = Field 1 1
+
+roWextend64ToBits :: RoWextend64 -> Word32
+roWextend64ToBits val =
+  insert roWextend64SbitField (roWextend64Sbit val) $
+  insert roWextend64OptionHiBitField (roWextend64OptionHiBit val) 0
+
+mkRoWextend64 :: Word32 -> RoWextend64
+mkRoWextend64 w =
+  RoWextend64 (fromIntegral $ extract roWextend64SbitField w)
+              (fromIntegral $ extract roWextend64OptionHiBitField w)
+
+roWextend64Operand :: OperandPayload
+roWextend64Operand =
+  OperandPayload { opTypeT = [t| RoWextend64 |]
+                 , opConE  = Just (varE 'mkRoWextend64)
+                 , opWordE = Just (varE 'roWextend64ToBits)
+                 }
+
+data RoWextend8 = RoWextend8 { roWextend8Sbit :: Word8
+                             , roWextend8OptionHiBit :: Word8
+                             } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoWextend8 where
+  pPrint _ = PP.text "RoWextend8: not implemented"
+
+instance A.Arbitrary RoWextend8 where
+  arbitrary g = RoWextend8 <$> A.arbitrary g <*> A.arbitrary g
+
+roWextend8SbitField :: Field
+roWextend8SbitField = Field 1 0
+
+roWextend8OptionHiBitField :: Field
+roWextend8OptionHiBitField = Field 1 1
+
+roWextend8ToBits :: RoWextend8 -> Word32
+roWextend8ToBits val =
+  insert roWextend8SbitField (roWextend8Sbit val) $
+  insert roWextend8OptionHiBitField (roWextend8OptionHiBit val) 0
+
+mkRoWextend8 :: Word32 -> RoWextend8
+mkRoWextend8 w =
+  RoWextend8 (fromIntegral $ extract roWextend8SbitField w)
+             (fromIntegral $ extract roWextend8OptionHiBitField w)
+
+roWextend8Operand :: OperandPayload
+roWextend8Operand =
+  OperandPayload { opTypeT = [t| RoWextend8 |]
+                 , opConE  = Just (varE 'mkRoWextend8)
+                 , opWordE = Just (varE 'roWextend8ToBits)
+                 }
+
+data RoXextend128 = RoXextend128 { roXextend128Sbit :: Word8
+                                 , roXextend128OptionHiBit :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend128 where
+  -- See C6.3.168
+  pPrint _ = PP.text "RoXextend128: not implemented"
+
+instance A.Arbitrary RoXextend128 where
+  arbitrary g = RoXextend128 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend128SbitField :: Field
+roXextend128SbitField = Field 1 0
+
+roXextend128OptionHiBitField :: Field
+roXextend128OptionHiBitField = Field 1 1
+
+roXextend128ToBits :: RoXextend128 -> Word32
+roXextend128ToBits val =
+  insert roXextend128SbitField (roXextend128Sbit val) $
+  insert roXextend128OptionHiBitField (roXextend128OptionHiBit val) 0
+
+mkRoXextend128 :: Word32 -> RoXextend128
+mkRoXextend128 w =
+  RoXextend128 (fromIntegral $ extract roXextend128SbitField w)
+               (fromIntegral $ extract roXextend128OptionHiBitField w)
+
+roXextend128Operand :: OperandPayload
+roXextend128Operand =
+  OperandPayload { opTypeT = [t| RoXextend128 |]
+                 , opConE  = Just (varE 'mkRoXextend128)
+                 , opWordE = Just (varE 'roXextend128ToBits)
+                 }
+
+data RoXextend16 = RoXextend16 { roXextend16Sbit :: Word8
+                               , roXextend16OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend16 where
+  -- See C5.6.93
+  pPrint _ = PP.text "RoXextend16: not implemented"
+
+instance A.Arbitrary RoXextend16 where
+  arbitrary g = RoXextend16 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend16SbitField :: Field
+roXextend16SbitField = Field 1 0
+
+roXextend16OptionHiBitField :: Field
+roXextend16OptionHiBitField = Field 1 1
+
+roXextend16ToBits :: RoXextend16 -> Word32
+roXextend16ToBits val =
+  insert roXextend16SbitField (roXextend16Sbit val) $
+  insert roXextend16OptionHiBitField (roXextend16OptionHiBit val) 0
+
+mkRoXextend16 :: Word32 -> RoXextend16
+mkRoXextend16 w =
+  RoXextend16 (fromIntegral $ extract roXextend16SbitField w)
+              (fromIntegral $ extract roXextend16OptionHiBitField w)
+
+roXextend16Operand :: OperandPayload
+roXextend16Operand =
+  OperandPayload { opTypeT = [t| RoXextend16 |]
+                 , opConE  = Just (varE 'mkRoXextend16)
+                 , opWordE = Just (varE 'roXextend16ToBits)
+                 }
+
+data RoXextend32 = RoXextend32 { roXextend32Sbit :: Word8
+                               , roXextend32OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend32 where
+  pPrint _ = PP.text "RoXextend32: not implemented"
+
+instance A.Arbitrary RoXextend32 where
+  arbitrary g = RoXextend32 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend32SbitField :: Field
+roXextend32SbitField = Field 1 0
+
+roXextend32OptionHiBitField :: Field
+roXextend32OptionHiBitField = Field 1 1
+
+roXextend32ToBits :: RoXextend32 -> Word32
+roXextend32ToBits val =
+  insert roXextend32SbitField (roXextend32Sbit val) $
+  insert roXextend32OptionHiBitField (roXextend32OptionHiBit val) 0
+
+mkRoXextend32 :: Word32 -> RoXextend32
+mkRoXextend32 w =
+  RoXextend32 (fromIntegral $ extract roXextend32SbitField w)
+              (fromIntegral $ extract roXextend32OptionHiBitField w)
+
+roXextend32Operand :: OperandPayload
+roXextend32Operand =
+  OperandPayload { opTypeT = [t| RoXextend32 |]
+                 , opConE  = Just (varE 'mkRoXextend32)
+                 , opWordE = Just (varE 'roXextend32ToBits)
+                 }
+
+data RoXextend64 = RoXextend64 { roXextend64Sbit :: Word8
+                               , roXextend64OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend64 where
+  pPrint _ = PP.text "RoXextend64: not implemented"
+
+instance A.Arbitrary RoXextend64 where
+  arbitrary g = RoXextend64 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend64SbitField :: Field
+roXextend64SbitField = Field 1 0
+
+roXextend64OptionHiBitField :: Field
+roXextend64OptionHiBitField = Field 1 1
+
+roXextend64ToBits :: RoXextend64 -> Word32
+roXextend64ToBits val =
+  insert roXextend64SbitField (roXextend64Sbit val) $
+  insert roXextend64OptionHiBitField (roXextend64OptionHiBit val) 0
+
+mkRoXextend64 :: Word32 -> RoXextend64
+mkRoXextend64 w =
+  RoXextend64 (fromIntegral $ extract roXextend64SbitField w)
+              (fromIntegral $ extract roXextend64OptionHiBitField w)
+
+roXextend64Operand :: OperandPayload
+roXextend64Operand =
+  OperandPayload { opTypeT = [t| RoXextend64 |]
+                 , opConE  = Just (varE 'mkRoXextend64)
+                 , opWordE = Just (varE 'roXextend64ToBits)
+                 }
+
+data RoXextend8 = RoXextend8 { roXextend8Sbit :: Word8
+                             , roXextend8OptionHiBit :: Word8
+                             } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend8 where
+  pPrint _ = PP.text "RoXextend8: not implemented"
+
+instance A.Arbitrary RoXextend8 where
+  arbitrary g = RoXextend8 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend8SbitField :: Field
+roXextend8SbitField = Field 1 0
+
+roXextend8OptionHiBitField :: Field
+roXextend8OptionHiBitField = Field 1 1
+
+roXextend8ToBits :: RoXextend8 -> Word32
+roXextend8ToBits val =
+  insert roXextend8SbitField (roXextend8Sbit val) $
+  insert roXextend8OptionHiBitField (roXextend8OptionHiBit val) 0
+
+mkRoXextend8 :: Word32 -> RoXextend8
+mkRoXextend8 w =
+  RoXextend8 (fromIntegral $ extract roXextend8SbitField w)
+             (fromIntegral $ extract roXextend8OptionHiBitField w)
+
+roXextend8Operand :: OperandPayload
+roXextend8Operand =
+  OperandPayload { opTypeT = [t| RoXextend8 |]
+                 , opConE  = Just (varE 'mkRoXextend8)
+                 , opWordE = Just (varE 'roXextend8ToBits)
                  }
 

@@ -93,7 +93,16 @@ isa = ISA { isaName = "AArch64"
         , ("Prfop", AArch64.prfopOperand)
         , ("Pstatefield1_op", AArch64.pstatefield1OpOperand)
         , ("Pstatefield4_op", AArch64.pstatefield4OpOperand)
+        , ("Ro_Wextend8", AArch64.roWextend8Operand)
+        , ("Ro_Wextend16", AArch64.roWextend16Operand)
+        , ("Ro_Wextend32", AArch64.roWextend32Operand)
+        , ("Ro_Wextend64", AArch64.roWextend64Operand)
         , ("Ro_Wextend128", AArch64.roWextend128Operand)
+        , ("Ro_Xextend8", AArch64.roXextend8Operand)
+        , ("Ro_Xextend16", AArch64.roXextend16Operand)
+        , ("Ro_Xextend32", AArch64.roXextend32Operand)
+        , ("Ro_Xextend64", AArch64.roXextend64Operand)
+        , ("Ro_Xextend128", AArch64.roXextend128Operand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
