@@ -103,6 +103,18 @@ isa = ISA { isaName = "AArch64"
         , ("Ro_Xextend32", AArch64.roXextend32Operand)
         , ("Ro_Xextend64", AArch64.roXextend64Operand)
         , ("Ro_Xextend128", AArch64.roXextend128Operand)
+        , ("Simm7s4", AArch64.simm7s4Operand)
+        , ("Simm7s8", AArch64.simm7s8Operand)
+        , ("Simm7s16", AArch64.simm7s16Operand)
+        , ("Simm9", AArch64.simm9Operand)
+        , ("Sys_cr_op", AArch64.sysCrOpOperand)
+        , ("Tbz_imm0_31_diag", AArch64.tbzImm031DiagOperand)
+        , ("Tbz_imm32_63", AArch64.tbzImm3263Operand)
+        , ("Uimm12s1", AArch64.uimm12s1Operand)
+        , ("Uimm12s2", AArch64.uimm12s2Operand)
+        , ("Uimm12s4", AArch64.uimm12s4Operand)
+        , ("Uimm12s8", AArch64.uimm12s8Operand)
+        , ("Uimm12s16", AArch64.uimm12s16Operand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
