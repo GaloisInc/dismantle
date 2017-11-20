@@ -48,6 +48,11 @@ isa = ISA { isaName = "AArch64"
           }
   where
 
+    word32Operand = OperandPayload { opTypeT = [t| Word32 |]
+                                   , opConE = Nothing
+                                   , opWordE = Nothing
+                                   }
+
     aarch64OperandPayloadTypes =
         [ ("FPR128", AArch64.fPR128Operand)
         , ("FPR16", AArch64.fPR16Operand)
@@ -115,6 +120,7 @@ isa = ISA { isaName = "AArch64"
         , ("Uimm12s4", AArch64.uimm12s4Operand)
         , ("Uimm12s8", AArch64.uimm12s8Operand)
         , ("Uimm12s16", AArch64.uimm12s16Operand)
+        , ("Unpredictable", word32Operand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
