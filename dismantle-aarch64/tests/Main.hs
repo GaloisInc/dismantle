@@ -42,6 +42,8 @@ normalize =
     TL.filter (not . isSpace) .
     -- Remove square brackets and "#"
     TL.filter (flip notElem ("[]#"::String)) .
+    -- Remove zero offsets that we can't properly render
+    TL.replace ", #0" "" .
     -- First, trim any trailing comments
     (fst . TL.breakOn ";")
 
@@ -58,6 +60,8 @@ skipPretty = rx (L.intercalate "|" rxes)
 
     others = [ "add[[:space:]]..,[[:space:]]pc"
              , "sub[[:space:]]..,[[:space:]]pc"
+             -- LDR with a label
+             , "ldr.*<"
              ]
 
 expectedFailures :: RE.RE
