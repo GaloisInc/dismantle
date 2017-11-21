@@ -313,8 +313,8 @@ where
 import Data.Bits
 import Data.Maybe (catMaybes)
 import Data.Monoid
-import Data.Word ( Word8, Word16, Word32 )
-import Data.Int ( Int16, Int32, Int8 )
+import Data.Word ( Word8, Word16, Word32, Word64 )
+import Data.Int ( Int16, Int32, Int64, Int8 )
 
 import Numeric (showHex)
 
@@ -1572,7 +1572,13 @@ data RoWextend32 = RoWextend32 { roWextend32Sbit :: Word8
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoWextend32 where
-  pPrint _ = PP.text "RoWextend32: not implemented"
+  pPrint (RoWextend32 s o) =
+      let ty = case o of
+            0b0 -> "uxtw"
+            0b1 -> "sxtw"
+            _   -> "ERROR"
+          amt = if s == 1 then 2 else 0
+      in PP.text ty PP.<+> PP.text (show amt)
 
 instance A.Arbitrary RoWextend32 where
   arbitrary g = RoWextend32 <$> A.arbitrary g <*> A.arbitrary g
@@ -1739,7 +1745,13 @@ data RoXextend32 = RoXextend32 { roXextend32Sbit :: Word8
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoXextend32 where
-  pPrint _ = PP.text "RoXextend32: not implemented"
+  pPrint (RoXextend32 s o) =
+      let ty = case o of
+            0b0 -> "lsl"
+            0b1 -> "sxtx"
+            _   -> "ERROR"
+          amt = if s == 1 then 2 else 0
+      in PP.text ty PP.<+> PP.text (show amt)
 
 instance A.Arbitrary RoXextend32 where
   arbitrary g = RoXextend32 <$> A.arbitrary g <*> A.arbitrary g
@@ -1772,7 +1784,13 @@ data RoXextend64 = RoXextend64 { roXextend64Sbit :: Word8
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoXextend64 where
-  pPrint _ = PP.text "RoXextend64: not implemented"
+  pPrint (RoXextend64 s o) =
+      let ty = case o of
+            0b0 -> "lsl"
+            0b1 -> "sxtx"
+            _   -> "ERROR"
+          amt = if s == 1 then 3 else 0
+      in PP.text ty PP.<+> PP.text (show amt)
 
 instance A.Arbitrary RoXextend64 where
   arbitrary g = RoXextend64 <$> A.arbitrary g <*> A.arbitrary g
@@ -2035,7 +2053,8 @@ data Uimm12s1 = Uimm12s1 { uimm12s1Imm :: Word16
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s1 where
-  pPrint _ = PP.text "Uimm12s1: not implemented"
+  pPrint (Uimm12s1 v) =
+      PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32))
 
 instance A.Arbitrary Uimm12s1 where
   arbitrary g = Uimm12s1 <$> A.arbitrary g
@@ -2089,7 +2108,8 @@ data Uimm12s2 = Uimm12s2 { uimm12s2Imm :: Word16
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s2 where
-  pPrint _ = PP.text "Uimm12s2: not implemented"
+  pPrint (Uimm12s2 v) =
+      PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32) `shiftL` 1)
 
 instance A.Arbitrary Uimm12s2 where
   arbitrary g = Uimm12s2 <$> A.arbitrary g
@@ -2116,7 +2136,8 @@ data Uimm12s4 = Uimm12s4 { uimm12s4Imm :: Word16
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s4 where
-  pPrint _ = PP.text "Uimm12s4: not implemented"
+  pPrint (Uimm12s4 v) =
+      PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32) `shiftL` 2)
 
 instance A.Arbitrary Uimm12s4 where
   arbitrary g = Uimm12s4 <$> A.arbitrary g
@@ -2143,7 +2164,8 @@ data Uimm12s8 = Uimm12s8 { uimm12s8Imm :: Word16
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s8 where
-  pPrint _ = PP.text "Uimm12s8: not implemented"
+  pPrint (Uimm12s8 v) =
+      PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32) `shiftL` 3)
 
 instance A.Arbitrary Uimm12s8 where
   arbitrary g = Uimm12s8 <$> A.arbitrary g
