@@ -7,6 +7,7 @@ module Dismantle.Tablegen (
   filterISA,
   parsableInstructions,
   parseInstruction,
+  toTypeName,
   Parser(..),
   module Dismantle.Tablegen.ISA,
   module Dismantle.Tablegen.Types
@@ -110,11 +111,6 @@ filterISA isa rs =
 -- | Extend the operands observed in the .tgen file with the operands
 -- described in the Haskell ISA.
 --
--- The the .tgen file uses lower case and the Haskell ISA uses
--- uppercase, so we make the case agree. We use the observed case
--- (lower) so that error messages later correspond to the strings that
--- actually occur in the .tgen file.
---
 -- We include the defined but not observed operand types so that we
 -- can limit the .tgen file to speed compilation without breaking code
 -- that assumes all operand types will be defined. This transformation
@@ -123,12 +119,25 @@ filterISA isa rs =
 addKnownOperandTypes :: ISA -> S.Set OperandType -> S.Set OperandType
 addKnownOperandTypes isa observedOpTys = opTys
   where
-    fromTypeName [] = error "Empty names are not allowed"
-    fromTypeName (c:cs) = toUpper c : cs
+    -- The the .tgen file uses both lower and upper case and the
+    -- Haskell ISA uses uppercase (valid type names), so we make the
+    -- case agree. We use the observed case so that error messages
+    -- later correspond to the strings that actually occur in the
+    -- .tgen file.
     knownOpTys = S.fromList $
-      map (OperandType . fromTypeName . fst)
+      map (OperandType . fst)
           (isaOperandPayloadTypes isa)
-    opTys = knownOpTys `S.union` observedOpTys
+    observedOpTysTypeNamed =
+      S.map (\(OperandType n) -> OperandType (toTypeName n))
+            observedOpTys
+    knownButUnobservedOpTys = knownOpTys S.\\ observedOpTysTypeNamed
+    opTys = knownButUnobservedOpTys `S.union` observedOpTys
+
+toTypeName :: String -> String
+toTypeName s =
+  case s of
+    [] -> error "Empty names are not allowed"
+    c:rest -> toUpper c : rest
 
 newtype FM a = FM { runFilter :: CC.ContT () (St.State FilterState) a }
   deriving (Functor,
