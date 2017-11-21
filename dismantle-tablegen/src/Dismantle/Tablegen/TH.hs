@@ -262,15 +262,14 @@ mkParserExpr isa i
     reqBytes = length (idMask i) `div` 8
     tag = ConE (mkName (toTypeName (idMnemonic i)))
     con = ConE 'Instruction
-    addOperandExpr wordName od e =
+    addOperandExpr wordName od e = do
+      operandPayload <- lookupAndValidateOperand isa (opType od)
       let OperandType tyname = opType od
           otyname = toTypeName tyname
-          err = error ("No operand descriptor payload for operand type: " ++ tyname)
-          operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           operandCon = ConE (mkName otyname)
           -- FIXME: Need to write some helpers to handle making the
           -- right operand constructor
-      in case opConE operandPayload of
+      case opConE operandPayload of
          Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(lift (opChunks od))) :> $(return e) |]
          Just conExp -> [| $(return operandCon) ($(conExp) (fieldFromWord $(varE wordName) $(lift (opChunks od)))) :> $(return e) |]
 
@@ -300,10 +299,9 @@ mkAsmCase isa i = do
   return $ Match pat (NormalB body) []
   where
     addOperand op (pat, operands) = do
+      operandPayload <- lookupAndValidateOperand isa (opType op)
       let OperandType tyname = opType op
           otyname = toTypeName tyname
-          err = error ("No operand descriptor payload for operand type: " ++ tyname)
-          operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           opToBits = fromMaybe [| id |] (opWordE operandPayload)
       chunks <- lift (opChunks op)
       vname <- newName "operand"
@@ -505,24 +503,30 @@ opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
 -- String -> (String, Q Type)
 mkOperandType :: ISA -> ISADescriptor -> Q [DecQ]
 mkOperandType isa desc = do
-  let cons = map (mkOperandCon isa) (isaOperands desc)
+  -- Don't care about payloads here, just validation.
+  mapM_ (lookupAndValidateOperand isa) (isaOperands desc)
+  let cons = map mkOperandCon (isaOperandPayloadTypes isa)
   return [ dataDCompat (cxt []) operandTypeName [KindedTV (mkName "tp") (ConT ''Symbol)] cons []
          , standaloneDerivD (cxt []) [t| Show ($(conT operandTypeName) $(varT (mkName "tp"))) |]
          , mkOperandShowFInstance
          ]
 
-mkOperandCon :: ISA -> OperandType -> Q Con
-mkOperandCon isa (OperandType origName) = do
+lookupAndValidateOperand :: ISA -> OperandType -> Q OperandPayload
+lookupAndValidateOperand isa (OperandType opUseName) =
+  maybe err return $ lookup opTyName (isaOperandPayloadTypes isa)
+  where
+    opTyName = toTypeName opUseName
+    err = error ("No operand descriptor payload for operand type: " <>
+                 opUseName)
+
+mkOperandCon :: (String, OperandPayload) -> Q Con
+mkOperandCon (opTyName, payloadDesc) = do
   argBaseTy <- opTypeT payloadDesc
   let argTy = (Bang SourceUnpack SourceStrict, argBaseTy)
   return $ GadtC [n] [argTy] ty
   where
-    name = toTypeName origName
-    payloadDesc = case lookup name (isaOperandPayloadTypes isa) of
-        Nothing -> error ("No operand descriptor payload for operand type: " <> origName)
-        Just pd -> pd
-    n = mkName name
-    ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
+    n = mkName opTyName
+    ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit opTyName)
 
 genInstances :: Q [Dec]
 genInstances = do
