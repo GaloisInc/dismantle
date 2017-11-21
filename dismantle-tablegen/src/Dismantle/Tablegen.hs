@@ -106,7 +106,8 @@ filterISA isa rs =
     registerOperands = mapMaybe isRegisterOperand dagOperands
     insns = reverse $ stInsns st1
     observedOperandTypes = foldr extractOperands S.empty insns
-    operandTypes = addKnownOperandTypes isa observedOperandTypes
+    --operandTypes = addKnownOperandTypes isa observedOperandTypes
+    operandTypes = observedOperandTypes
 
 -- | Extend the operands observed in the .tgen file with the operands
 -- described in the Haskell ISA.
