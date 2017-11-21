@@ -485,6 +485,7 @@ data GPR32 = GPR32 { gPR32Reg :: Word8
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR32 where
+  pPrint (GPR32 31) = PP.text "wzr"
   pPrint (GPR32 r) = PP.text $ "w" <> show r
 
 instance A.Arbitrary GPR32 where
