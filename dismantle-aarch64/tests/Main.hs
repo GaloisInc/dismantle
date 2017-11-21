@@ -62,6 +62,7 @@ skipPretty = rx (L.intercalate "|" rxes)
              , "sub[[:space:]]..,[[:space:]]pc"
              -- LDR with a label
              , "ldr.*<"
+             , "b.*<"
              ]
 
 expectedFailures :: RE.RE
