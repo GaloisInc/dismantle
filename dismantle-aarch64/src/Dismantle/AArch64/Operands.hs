@@ -350,7 +350,7 @@ data FPR128 = FPR128 { fPR128Reg :: Word8
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR128 where
-  pPrint (FPR128 r) = PP.text $ "Q" <> show r
+  pPrint (FPR128 r) = PP.text $ "q" <> show r
 
 instance A.Arbitrary FPR128 where
   arbitrary g = FPR128 <$> A.arbitrary g
@@ -377,7 +377,7 @@ data FPR16 = FPR16 { fPR16Reg :: Word8
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR16 where
-  pPrint (FPR16 r) = PP.text $ "H" <> show r
+  pPrint (FPR16 r) = PP.text $ "h" <> show r
 
 instance A.Arbitrary FPR16 where
   arbitrary g = FPR16 <$> A.arbitrary g
@@ -404,7 +404,7 @@ data FPR32 = FPR32 { fPR32Reg :: Word8
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR32 where
-  pPrint (FPR32 r) = PP.text $ "S" <> show r
+  pPrint (FPR32 r) = PP.text $ "s" <> show r
 
 instance A.Arbitrary FPR32 where
   arbitrary g = FPR32 <$> A.arbitrary g
@@ -431,7 +431,7 @@ data FPR64 = FPR64 { fPR64Reg :: Word8
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR64 where
-  pPrint (FPR64 r) = PP.text $ "D" <> show r
+  pPrint (FPR64 r) = PP.text $ "d" <> show r
 
 instance A.Arbitrary FPR64 where
   arbitrary g = FPR64 <$> A.arbitrary g
@@ -458,7 +458,7 @@ data FPR8 = FPR8 { fPR8Reg :: Word8
                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR8 where
-  pPrint (FPR8 r) = PP.text $ "B" <> show r
+  pPrint (FPR8 r) = PP.text $ "b" <> show r
 
 instance A.Arbitrary FPR8 where
   arbitrary g = FPR8 <$> A.arbitrary g
@@ -485,7 +485,7 @@ data GPR32 = GPR32 { gPR32Reg :: Word8
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR32 where
-  pPrint (GPR32 r) = PP.text $ "W" <> show r
+  pPrint (GPR32 r) = PP.text $ "w" <> show r
 
 instance A.Arbitrary GPR32 where
   arbitrary g = GPR32 <$> A.arbitrary g
@@ -512,7 +512,7 @@ data GPR64 = GPR64 { gPR64Reg :: Word8
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR64 where
-  pPrint (GPR64 r) = PP.text $ "X" <> show r
+  pPrint (GPR64 r) = PP.text $ "x" <> show r
 
 instance A.Arbitrary GPR64 where
   arbitrary g = GPR64 <$> A.arbitrary g
@@ -539,8 +539,8 @@ data GPR32sp = GPR32sp { gPR32spReg :: Word8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR32sp where
-  pPrint (GPR32sp 0b11111) = PP.text "WSP"
-  pPrint (GPR32sp r) = PP.text $ "W" <> show r
+  pPrint (GPR32sp 0b11111) = PP.text "wsp"
+  pPrint (GPR32sp r) = PP.text $ "w" <> show r
 
 instance A.Arbitrary GPR32sp where
   arbitrary g = GPR32sp <$> A.arbitrary g
@@ -567,8 +567,8 @@ data GPR64sp = GPR64sp { gPR64spReg :: Word8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR64sp where
-  pPrint (GPR64sp 0b11111) = PP.text "XSP"
-  pPrint (GPR64sp r) = PP.text $ "X" <> show r
+  pPrint (GPR64sp 0b11111) = PP.text "sp"
+  pPrint (GPR64sp r) = PP.text $ "x" <> show r
 
 instance A.Arbitrary GPR64sp where
   arbitrary g = GPR64sp <$> A.arbitrary g
@@ -595,7 +595,7 @@ data V128 = V128 { v128Reg :: Word8
                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty V128 where
-  pPrint (V128 r) = PP.text $ "V" <> show r
+  pPrint (V128 r) = PP.text $ "v" <> show r
 
 instance A.Arbitrary V128 where
   arbitrary g = V128 <$> A.arbitrary g
