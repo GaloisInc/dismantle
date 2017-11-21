@@ -314,7 +314,7 @@ import Data.Bits
 import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.Word ( Word8, Word16, Word32 )
-import Data.Int ( Int16, Int32 )
+import Data.Int ( Int16, Int32, Int8 )
 
 import Numeric (showHex)
 
@@ -1892,7 +1892,12 @@ data Simm7s8 = Simm7s8 { simm7s8Imm :: Word8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Simm7s8 where
-  pPrint _ = PP.text "Simm7s8: not implemented"
+  pPrint (Simm7s8 imm) =
+      let signBit = 0b1000000
+          -- Manual sign extension from a 7-bit value to 8-bit.
+          v :: Int
+          v = fromIntegral ((fromIntegral $ imm .|. ((imm .&. signBit) `shiftL` 1)) :: Int8)
+      in PP.char '#' <> (PP.text $ show $ v `shiftL` 3)
 
 instance A.Arbitrary Simm7s8 where
   arbitrary g = Simm7s8 <$> A.arbitrary g
