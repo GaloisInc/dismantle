@@ -106,33 +106,7 @@ filterISA isa rs =
     registerOperands = mapMaybe isRegisterOperand dagOperands
     insns = reverse $ stInsns st1
     observedOperandTypes = foldr extractOperands S.empty insns
-    --operandTypes = addKnownOperandTypes isa observedOperandTypes
     operandTypes = observedOperandTypes
-
--- | Extend the operands observed in the .tgen file with the operands
--- described in the Haskell ISA.
---
--- We include the defined but not observed operand types so that we
--- can limit the .tgen file to speed compilation without breaking code
--- that assumes all operand types will be defined. This transformation
--- has no effect in production where the observed and known operand
--- type sets are the same.
-addKnownOperandTypes :: ISA -> S.Set OperandType -> S.Set OperandType
-addKnownOperandTypes isa observedOpTys = opTys
-  where
-    -- The the .tgen file uses both lower and upper case and the
-    -- Haskell ISA uses uppercase (valid type names), so we make the
-    -- case agree. We use the observed case so that error messages
-    -- later correspond to the strings that actually occur in the
-    -- .tgen file.
-    knownOpTys = S.fromList $
-      map (OperandType . fst)
-          (isaOperandPayloadTypes isa)
-    observedOpTysTypeNamed =
-      S.map (\(OperandType n) -> OperandType (toTypeName n))
-            observedOpTys
-    knownButUnobservedOpTys = knownOpTys S.\\ observedOpTysTypeNamed
-    opTys = knownButUnobservedOpTys `S.union` observedOpTys
 
 toTypeName :: String -> String
 toTypeName s =
