@@ -60,9 +60,18 @@ skipPretty = rx (L.intercalate "|" rxes)
 
     others = [ "add[[:space:]]..,[[:space:]]pc"
              , "sub[[:space:]]..,[[:space:]]pc"
-             -- LDR with a label
+
+             -- Instructions with a PC-relative offset / label that we
+             -- can't resolve
              , "ldr.*<"
              , "b.*<"
+
+             -- We decode RET as RET x30. That's technically accurate
+             -- since an absent RET argument defaults to x30 (see
+             -- C5.6.148) but objdump omits the x30 argument and we
+             -- can't because our operand pretty printer doesn't know
+             -- we're rendering a RET.
+             , "ret"
              ]
 
 expectedFailures :: RE.RE
