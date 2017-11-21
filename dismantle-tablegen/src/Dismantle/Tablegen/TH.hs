@@ -21,7 +21,6 @@ import           Data.Bits
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as UBS
 import qualified Data.ByteString.Lazy as LBS
-import           Data.Char ( toUpper )
 import qualified Data.Foldable as F
 import           Data.List ( isSuffixOf )
 import qualified Data.List.Split as L
@@ -82,7 +81,7 @@ loadISA :: ISA -> FilePath -> IO ISADescriptor
 loadISA isa path = do
   txt <- TL.readFile path
   case parseTablegen path txt of
-    Left err -> fail (show err)
+    Left err -> fail err
     Right defs -> return $ filterISA isa defs
 
 tgenOverrideExtension :: String
@@ -555,12 +554,6 @@ mkOperandShowFInstance = do
                showF = show
              |]
   return showf
-
-toTypeName :: String -> String
-toTypeName s =
-  case s of
-    [] -> error "Empty names are not allowed"
-    c:rest -> toUpper c : rest
 
 mkPrettyPrinter :: ISADescriptor -> Q [Dec]
 mkPrettyPrinter desc = do
