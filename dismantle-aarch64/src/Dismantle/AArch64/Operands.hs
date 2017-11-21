@@ -147,6 +147,166 @@ module Dismantle.AArch64.Operands
   , imm32031ToBits
   , imm32031Operand
 
+  , LogicalImm32
+  , mkLogicalImm32
+  , logicalImm32ToBits
+  , logicalImm32Operand
+
+  , LogicalImm64
+  , mkLogicalImm64
+  , logicalImm64ToBits
+  , logicalImm64Operand
+
+  , Movimm32Imm
+  , mkMovimm32Imm
+  , movimm32ImmToBits
+  , movimm32ImmOperand
+
+  , Movimm32Shift
+  , mkMovimm32Shift
+  , movimm32ShiftToBits
+  , movimm32ShiftOperand
+
+  , Movimm64Shift
+  , mkMovimm64Shift
+  , movimm64ShiftToBits
+  , movimm64ShiftOperand
+
+  , MrsSysregOp
+  , mkMrsSysregOp
+  , mrsSysregOpToBits
+  , mrsSysregOpOperand
+
+  , MsrSysregOp
+  , mkMsrSysregOp
+  , msrSysregOpToBits
+  , msrSysregOpOperand
+
+  , Prfop
+  , mkPrfop
+  , prfopToBits
+  , prfopOperand
+
+  , Pstatefield1Op
+  , mkPstatefield1Op
+  , pstatefield1OpToBits
+  , pstatefield1OpOperand
+
+  , Pstatefield4Op
+  , mkPstatefield4Op
+  , pstatefield4OpToBits
+  , pstatefield4OpOperand
+
+  , RoWextend128
+  , mkRoWextend128
+  , roWextend128ToBits
+  , roWextend128Operand
+
+  , RoWextend16
+  , mkRoWextend16
+  , roWextend16ToBits
+  , roWextend16Operand
+
+  , RoWextend32
+  , mkRoWextend32
+  , roWextend32ToBits
+  , roWextend32Operand
+
+  , RoWextend64
+  , mkRoWextend64
+  , roWextend64ToBits
+  , roWextend64Operand
+
+  , RoWextend8
+  , mkRoWextend8
+  , roWextend8ToBits
+  , roWextend8Operand
+
+  , RoXextend128
+  , mkRoXextend128
+  , roXextend128ToBits
+  , roXextend128Operand
+
+  , RoXextend16
+  , mkRoXextend16
+  , roXextend16ToBits
+  , roXextend16Operand
+
+  , RoXextend32
+  , mkRoXextend32
+  , roXextend32ToBits
+  , roXextend32Operand
+
+  , RoXextend64
+  , mkRoXextend64
+  , roXextend64ToBits
+  , roXextend64Operand
+
+  , RoXextend8
+  , mkRoXextend8
+  , roXextend8ToBits
+  , roXextend8Operand
+
+  , Simm7s16
+  , mkSimm7s16
+  , simm7s16ToBits
+  , simm7s16Operand
+
+  , Simm7s4
+  , mkSimm7s4
+  , simm7s4ToBits
+  , simm7s4Operand
+
+  , Simm7s8
+  , mkSimm7s8
+  , simm7s8ToBits
+  , simm7s8Operand
+
+  , Simm9
+  , mkSimm9
+  , simm9ToBits
+  , simm9Operand
+
+  , SysCrOp
+  , mkSysCrOp
+  , sysCrOpToBits
+  , sysCrOpOperand
+
+  , TbzImm031Diag
+  , mkTbzImm031Diag
+  , tbzImm031DiagToBits
+  , tbzImm031DiagOperand
+
+  , TbzImm3263
+  , mkTbzImm3263
+  , tbzImm3263ToBits
+  , tbzImm3263Operand
+
+  , Uimm12s1
+  , mkUimm12s1
+  , uimm12s1ToBits
+  , uimm12s1Operand
+
+  , Uimm12s16
+  , mkUimm12s16
+  , uimm12s16ToBits
+  , uimm12s16Operand
+
+  , Uimm12s2
+  , mkUimm12s2
+  , uimm12s2ToBits
+  , uimm12s2Operand
+
+  , Uimm12s4
+  , mkUimm12s4
+  , uimm12s4ToBits
+  , uimm12s4Operand
+
+  , Uimm12s8
+  , mkUimm12s8
+  , uimm12s8ToBits
+  , uimm12s8Operand
+
   )
 where
 
@@ -190,7 +350,7 @@ data FPR128 = FPR128 { fPR128Reg :: Word8
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR128 where
-  pPrint (FPR128 r) = PP.text $ "Q" <> show r
+  pPrint (FPR128 r) = PP.text $ "q" <> show r
 
 instance A.Arbitrary FPR128 where
   arbitrary g = FPR128 <$> A.arbitrary g
@@ -217,7 +377,7 @@ data FPR16 = FPR16 { fPR16Reg :: Word8
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR16 where
-  pPrint (FPR16 r) = PP.text $ "H" <> show r
+  pPrint (FPR16 r) = PP.text $ "h" <> show r
 
 instance A.Arbitrary FPR16 where
   arbitrary g = FPR16 <$> A.arbitrary g
@@ -244,7 +404,7 @@ data FPR32 = FPR32 { fPR32Reg :: Word8
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR32 where
-  pPrint (FPR32 r) = PP.text $ "S" <> show r
+  pPrint (FPR32 r) = PP.text $ "s" <> show r
 
 instance A.Arbitrary FPR32 where
   arbitrary g = FPR32 <$> A.arbitrary g
@@ -271,7 +431,7 @@ data FPR64 = FPR64 { fPR64Reg :: Word8
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR64 where
-  pPrint (FPR64 r) = PP.text $ "D" <> show r
+  pPrint (FPR64 r) = PP.text $ "d" <> show r
 
 instance A.Arbitrary FPR64 where
   arbitrary g = FPR64 <$> A.arbitrary g
@@ -298,7 +458,7 @@ data FPR8 = FPR8 { fPR8Reg :: Word8
                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR8 where
-  pPrint (FPR8 r) = PP.text $ "B" <> show r
+  pPrint (FPR8 r) = PP.text $ "b" <> show r
 
 instance A.Arbitrary FPR8 where
   arbitrary g = FPR8 <$> A.arbitrary g
@@ -325,7 +485,7 @@ data GPR32 = GPR32 { gPR32Reg :: Word8
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR32 where
-  pPrint (GPR32 r) = PP.text $ "W" <> show r
+  pPrint (GPR32 r) = PP.text $ "w" <> show r
 
 instance A.Arbitrary GPR32 where
   arbitrary g = GPR32 <$> A.arbitrary g
@@ -352,7 +512,7 @@ data GPR64 = GPR64 { gPR64Reg :: Word8
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR64 where
-  pPrint (GPR64 r) = PP.text $ "X" <> show r
+  pPrint (GPR64 r) = PP.text $ "x" <> show r
 
 instance A.Arbitrary GPR64 where
   arbitrary g = GPR64 <$> A.arbitrary g
@@ -379,8 +539,8 @@ data GPR32sp = GPR32sp { gPR32spReg :: Word8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR32sp where
-  pPrint (GPR32sp 0b11111) = PP.text "WSP"
-  pPrint (GPR32sp r) = PP.text $ "W" <> show r
+  pPrint (GPR32sp 0b11111) = PP.text "wsp"
+  pPrint (GPR32sp r) = PP.text $ "w" <> show r
 
 instance A.Arbitrary GPR32sp where
   arbitrary g = GPR32sp <$> A.arbitrary g
@@ -407,8 +567,8 @@ data GPR64sp = GPR64sp { gPR64spReg :: Word8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR64sp where
-  pPrint (GPR64sp 0b11111) = PP.text "XSP"
-  pPrint (GPR64sp r) = PP.text $ "X" <> show r
+  pPrint (GPR64sp 0b11111) = PP.text "sp"
+  pPrint (GPR64sp r) = PP.text $ "x" <> show r
 
 instance A.Arbitrary GPR64sp where
   arbitrary g = GPR64sp <$> A.arbitrary g
@@ -435,7 +595,7 @@ data V128 = V128 { v128Reg :: Word8
                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty V128 where
-  pPrint (V128 r) = PP.text $ "V" <> show r
+  pPrint (V128 r) = PP.text $ "v" <> show r
 
 instance A.Arbitrary V128 where
   arbitrary g = V128 <$> A.arbitrary g
@@ -981,5 +1141,1023 @@ imm32031Operand =
   OperandPayload { opTypeT = [t| Imm32031 |]
                  , opConE  = Just (varE 'mkImm32031)
                  , opWordE = Just (varE 'imm32031ToBits)
+                 }
+
+data LogicalImm32 = LogicalImm32 { logicalImm32Imms :: Word8
+                                 , logicalImm32Immr :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty LogicalImm32 where
+  pPrint _ = PP.text "LogicalImm32: not implemented"
+
+instance A.Arbitrary LogicalImm32 where
+  arbitrary g = LogicalImm32 <$> A.arbitrary g <*> A.arbitrary g
+
+logicalImm32ImmsField :: Field
+logicalImm32ImmsField = Field 6 0
+
+logicalImm32ImmrField :: Field
+logicalImm32ImmrField = Field 6 6
+
+logicalImm32ToBits :: LogicalImm32 -> Word32
+logicalImm32ToBits val =
+  insert logicalImm32ImmsField (logicalImm32Imms val) $
+  insert logicalImm32ImmrField (logicalImm32Immr val) 0
+
+mkLogicalImm32 :: Word32 -> LogicalImm32
+mkLogicalImm32 w =
+  LogicalImm32 (fromIntegral $ extract logicalImm32ImmsField w)
+               (fromIntegral $ extract logicalImm32ImmrField w)
+
+logicalImm32Operand :: OperandPayload
+logicalImm32Operand =
+  OperandPayload { opTypeT = [t| LogicalImm32 |]
+                 , opConE  = Just (varE 'mkLogicalImm32)
+                 , opWordE = Just (varE 'logicalImm32ToBits)
+                 }
+
+data LogicalImm64 = LogicalImm64 { logicalImm64Imms :: Word8
+                                 , logicalImm64Immr :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty LogicalImm64 where
+  pPrint _ = PP.text "LogicalImm64: not implemented"
+
+instance A.Arbitrary LogicalImm64 where
+  arbitrary g = LogicalImm64 <$> A.arbitrary g <*> A.arbitrary g
+
+logicalImm64ImmsField :: Field
+logicalImm64ImmsField = Field 6 0
+
+logicalImm64ImmrField :: Field
+logicalImm64ImmrField = Field 6 6
+
+logicalImm64ToBits :: LogicalImm64 -> Word32
+logicalImm64ToBits val =
+  insert logicalImm64ImmsField (logicalImm64Imms val) $
+  insert logicalImm64ImmrField (logicalImm64Immr val) 0
+
+mkLogicalImm64 :: Word32 -> LogicalImm64
+mkLogicalImm64 w =
+  LogicalImm64 (fromIntegral $ extract logicalImm64ImmsField w)
+               (fromIntegral $ extract logicalImm64ImmrField w)
+
+logicalImm64Operand :: OperandPayload
+logicalImm64Operand =
+  OperandPayload { opTypeT = [t| LogicalImm64 |]
+                 , opConE  = Just (varE 'mkLogicalImm64)
+                 , opWordE = Just (varE 'logicalImm64ToBits)
+                 }
+
+data Movimm32Imm = Movimm32Imm { movimm32ImmImm :: Word16
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Movimm32Imm where
+  pPrint _ = PP.text "Movimm32Imm: not implemented"
+
+instance A.Arbitrary Movimm32Imm where
+  arbitrary g = Movimm32Imm <$> A.arbitrary g
+
+movimm32ImmImmField :: Field
+movimm32ImmImmField = Field 16 0
+
+movimm32ImmToBits :: Movimm32Imm -> Word32
+movimm32ImmToBits val =
+  insert movimm32ImmImmField (movimm32ImmImm val) 0
+
+mkMovimm32Imm :: Word32 -> Movimm32Imm
+mkMovimm32Imm w =
+  Movimm32Imm (fromIntegral $ extract movimm32ImmImmField w)
+
+movimm32ImmOperand :: OperandPayload
+movimm32ImmOperand =
+  OperandPayload { opTypeT = [t| Movimm32Imm |]
+                 , opConE  = Just (varE 'mkMovimm32Imm)
+                 , opWordE = Just (varE 'movimm32ImmToBits)
+                 }
+
+data Movimm32Shift = Movimm32Shift { movimm32ShiftShift :: Word8
+                                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Movimm32Shift where
+  pPrint _ = PP.text "Movimm32Shift: not implemented"
+
+instance A.Arbitrary Movimm32Shift where
+  arbitrary g = Movimm32Shift <$> A.arbitrary g
+
+movimm32ShiftShiftField :: Field
+movimm32ShiftShiftField = Field 2 4
+
+movimm32ShiftToBits :: Movimm32Shift -> Word32
+movimm32ShiftToBits val =
+  insert movimm32ShiftShiftField (movimm32ShiftShift val) 0
+
+mkMovimm32Shift :: Word32 -> Movimm32Shift
+mkMovimm32Shift w =
+  Movimm32Shift (fromIntegral $ extract movimm32ShiftShiftField w)
+
+movimm32ShiftOperand :: OperandPayload
+movimm32ShiftOperand =
+  OperandPayload { opTypeT = [t| Movimm32Shift |]
+                 , opConE  = Just (varE 'mkMovimm32Shift)
+                 , opWordE = Just (varE 'movimm32ShiftToBits)
+                 }
+
+data Movimm64Shift = Movimm64Shift { movimm64ShiftShift :: Word8
+                                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Movimm64Shift where
+  pPrint _ = PP.text "Movimm64Shift: not implemented"
+
+instance A.Arbitrary Movimm64Shift where
+  arbitrary g = Movimm64Shift <$> A.arbitrary g
+
+movimm64ShiftShiftField :: Field
+movimm64ShiftShiftField = Field 2 4
+
+movimm64ShiftToBits :: Movimm64Shift -> Word32
+movimm64ShiftToBits val =
+  insert movimm64ShiftShiftField (movimm64ShiftShift val) 0
+
+mkMovimm64Shift :: Word32 -> Movimm64Shift
+mkMovimm64Shift w =
+  Movimm64Shift (fromIntegral $ extract movimm64ShiftShiftField w)
+
+movimm64ShiftOperand :: OperandPayload
+movimm64ShiftOperand =
+  OperandPayload { opTypeT = [t| Movimm64Shift |]
+                 , opConE  = Just (varE 'mkMovimm64Shift)
+                 , opWordE = Just (varE 'movimm64ShiftToBits)
+                 }
+
+data MrsSysregOp = MrsSysregOp { mrsSysregOpOp2 :: Word8
+                               , mrsSysregOpCrm :: Word8
+                               , mrsSysregOpCrn :: Word8
+                               , mrsSysregOpOp1 :: Word8
+                               , mrsSysregOpO0 :: Word8
+                               , mrsSysregOpHibit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty MrsSysregOp where
+  pPrint _ = PP.text "MrsSysregOp: not implemented"
+
+instance A.Arbitrary MrsSysregOp where
+  arbitrary g = MrsSysregOp <$> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g
+
+mrsSysregOpOp2Field :: Field
+mrsSysregOpOp2Field = Field 3 0
+
+mrsSysregOpCrmField :: Field
+mrsSysregOpCrmField = Field 4 3
+
+mrsSysregOpCrnField :: Field
+mrsSysregOpCrnField = Field 4 7
+
+mrsSysregOpOp1Field :: Field
+mrsSysregOpOp1Field = Field 3 11
+
+mrsSysregOpO0Field :: Field
+mrsSysregOpO0Field = Field 1 14
+
+mrsSysregOpHibitField :: Field
+mrsSysregOpHibitField = Field 1 15
+
+mrsSysregOpToBits :: MrsSysregOp -> Word32
+mrsSysregOpToBits val =
+  insert mrsSysregOpOp2Field (mrsSysregOpOp2 val) $
+  insert mrsSysregOpCrmField (mrsSysregOpCrm val) $
+  insert mrsSysregOpCrnField (mrsSysregOpCrn val) $
+  insert mrsSysregOpOp1Field (mrsSysregOpOp1 val) $
+  insert mrsSysregOpO0Field (mrsSysregOpO0 val) $
+  insert mrsSysregOpHibitField (mrsSysregOpHibit val) 0
+
+mkMrsSysregOp :: Word32 -> MrsSysregOp
+mkMrsSysregOp w =
+  MrsSysregOp (fromIntegral $ extract mrsSysregOpOp2Field w)
+              (fromIntegral $ extract mrsSysregOpCrmField w)
+              (fromIntegral $ extract mrsSysregOpCrnField w)
+              (fromIntegral $ extract mrsSysregOpOp1Field w)
+              (fromIntegral $ extract mrsSysregOpO0Field w)
+              (fromIntegral $ extract mrsSysregOpHibitField w)
+
+mrsSysregOpOperand :: OperandPayload
+mrsSysregOpOperand =
+  OperandPayload { opTypeT = [t| MrsSysregOp |]
+                 , opConE  = Just (varE 'mkMrsSysregOp)
+                 , opWordE = Just (varE 'mrsSysregOpToBits)
+                 }
+
+data MsrSysregOp = MsrSysregOp { msrSysregOpOp2 :: Word8
+                               , msrSysregOpCrm :: Word8
+                               , msrSysregOpCrn :: Word8
+                               , msrSysregOpOp1 :: Word8
+                               , msrSysregOpO0 :: Word8
+                               , msrSysregOpHibit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty MsrSysregOp where
+  pPrint _ = PP.text "MsrSysregOp: not implemented"
+
+instance A.Arbitrary MsrSysregOp where
+  arbitrary g = MsrSysregOp <$> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g
+
+msrSysregOpOp2Field :: Field
+msrSysregOpOp2Field = Field 3 0
+
+msrSysregOpCrmField :: Field
+msrSysregOpCrmField = Field 4 3
+
+msrSysregOpCrnField :: Field
+msrSysregOpCrnField = Field 4 7
+
+msrSysregOpOp1Field :: Field
+msrSysregOpOp1Field = Field 3 11
+
+msrSysregOpO0Field :: Field
+msrSysregOpO0Field = Field 1 14
+
+msrSysregOpHibitField :: Field
+msrSysregOpHibitField = Field 1 15
+
+msrSysregOpToBits :: MsrSysregOp -> Word32
+msrSysregOpToBits val =
+  insert msrSysregOpOp2Field (msrSysregOpOp2 val) $
+  insert msrSysregOpCrmField (msrSysregOpCrm val) $
+  insert msrSysregOpCrnField (msrSysregOpCrn val) $
+  insert msrSysregOpOp1Field (msrSysregOpOp1 val) $
+  insert msrSysregOpO0Field (msrSysregOpO0 val) $
+  insert msrSysregOpHibitField (msrSysregOpHibit val) 0
+
+mkMsrSysregOp :: Word32 -> MsrSysregOp
+mkMsrSysregOp w =
+  MsrSysregOp (fromIntegral $ extract msrSysregOpOp2Field w)
+              (fromIntegral $ extract msrSysregOpCrmField w)
+              (fromIntegral $ extract msrSysregOpCrnField w)
+              (fromIntegral $ extract msrSysregOpOp1Field w)
+              (fromIntegral $ extract msrSysregOpO0Field w)
+              (fromIntegral $ extract msrSysregOpHibitField w)
+
+msrSysregOpOperand :: OperandPayload
+msrSysregOpOperand =
+  OperandPayload { opTypeT = [t| MsrSysregOp |]
+                 , opConE  = Just (varE 'mkMsrSysregOp)
+                 , opWordE = Just (varE 'msrSysregOpToBits)
+                 }
+
+data Prfop = Prfop { prfopType :: Word8
+                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Prfop where
+  -- See C5.6.144 for prfop values
+  pPrint _ = PP.text "Prfop: not implemented"
+
+instance A.Arbitrary Prfop where
+  arbitrary g = Prfop <$> A.arbitrary g
+
+prfopTypeField :: Field
+prfopTypeField = Field 5 0
+
+prfopToBits :: Prfop -> Word32
+prfopToBits val =
+  insert prfopTypeField (prfopType val) 0
+
+mkPrfop :: Word32 -> Prfop
+mkPrfop w =
+  Prfop (fromIntegral $ extract prfopTypeField w)
+
+prfopOperand :: OperandPayload
+prfopOperand =
+  OperandPayload { opTypeT = [t| Prfop |]
+                 , opConE  = Just (varE 'mkPrfop)
+                 , opWordE = Just (varE 'prfopToBits)
+                 }
+
+data Pstatefield1Op = Pstatefield1Op { pstatefield1OpOp1 :: Word8
+                                     , pstatefield1OpOp2 :: Word8
+                                     } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Pstatefield1Op where
+  -- See C5.6.130
+  pPrint _ = PP.text "Pstatefield1Op: not implemented"
+
+instance A.Arbitrary Pstatefield1Op where
+  arbitrary g = Pstatefield1Op <$> A.arbitrary g <*> A.arbitrary g
+
+pstatefield1OpOp1Field :: Field
+pstatefield1OpOp1Field = Field 3 3
+
+pstatefield1OpOp2Field :: Field
+pstatefield1OpOp2Field = Field 3 0
+
+pstatefield1OpToBits :: Pstatefield1Op -> Word32
+pstatefield1OpToBits val =
+  insert pstatefield1OpOp1Field (pstatefield1OpOp1 val) $
+  insert pstatefield1OpOp2Field (pstatefield1OpOp2 val) 0
+
+mkPstatefield1Op :: Word32 -> Pstatefield1Op
+mkPstatefield1Op w =
+  Pstatefield1Op (fromIntegral $ extract pstatefield1OpOp1Field w)
+                 (fromIntegral $ extract pstatefield1OpOp2Field w)
+
+pstatefield1OpOperand :: OperandPayload
+pstatefield1OpOperand =
+  OperandPayload { opTypeT = [t| Pstatefield1Op |]
+                 , opConE  = Just (varE 'mkPstatefield1Op)
+                 , opWordE = Just (varE 'pstatefield1OpToBits)
+                 }
+
+data Pstatefield4Op = Pstatefield4Op { pstatefield4OpOp1 :: Word8
+                                     , pstatefield4OpOp2 :: Word8
+                                     } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Pstatefield4Op where
+  pPrint _ = PP.text "Pstatefield4Op: not implemented"
+
+instance A.Arbitrary Pstatefield4Op where
+  arbitrary g = Pstatefield4Op <$> A.arbitrary g <*> A.arbitrary g
+
+pstatefield4OpOp1Field :: Field
+pstatefield4OpOp1Field = Field 3 3
+
+pstatefield4OpOp2Field :: Field
+pstatefield4OpOp2Field = Field 3 0
+
+pstatefield4OpToBits :: Pstatefield4Op -> Word32
+pstatefield4OpToBits val =
+  insert pstatefield4OpOp1Field (pstatefield4OpOp1 val) $
+  insert pstatefield4OpOp2Field (pstatefield4OpOp2 val) 0
+
+mkPstatefield4Op :: Word32 -> Pstatefield4Op
+mkPstatefield4Op w =
+  Pstatefield4Op (fromIntegral $ extract pstatefield4OpOp1Field w)
+                 (fromIntegral $ extract pstatefield4OpOp2Field w)
+
+pstatefield4OpOperand :: OperandPayload
+pstatefield4OpOperand =
+  OperandPayload { opTypeT = [t| Pstatefield4Op |]
+                 , opConE  = Just (varE 'mkPstatefield4Op)
+                 , opWordE = Just (varE 'pstatefield4OpToBits)
+                 }
+
+data RoWextend128 = RoWextend128 { roWextend128Sbit :: Word8
+                                 , roWextend128OptionHiBit :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoWextend128 where
+  -- See C6.3.168
+  pPrint _ = PP.text "RoWextend128: not implemented"
+
+instance A.Arbitrary RoWextend128 where
+  arbitrary g = RoWextend128 <$> A.arbitrary g <*> A.arbitrary g
+
+roWextend128SbitField :: Field
+roWextend128SbitField = Field 1 0
+
+roWextend128OptionHiBitField :: Field
+roWextend128OptionHiBitField = Field 1 1
+
+roWextend128ToBits :: RoWextend128 -> Word32
+roWextend128ToBits val =
+  insert roWextend128SbitField (roWextend128Sbit val) $
+  insert roWextend128OptionHiBitField (roWextend128OptionHiBit val) 0
+
+mkRoWextend128 :: Word32 -> RoWextend128
+mkRoWextend128 w =
+  RoWextend128 (fromIntegral $ extract roWextend128SbitField w)
+               (fromIntegral $ extract roWextend128OptionHiBitField w)
+
+roWextend128Operand :: OperandPayload
+roWextend128Operand =
+  OperandPayload { opTypeT = [t| RoWextend128 |]
+                 , opConE  = Just (varE 'mkRoWextend128)
+                 , opWordE = Just (varE 'roWextend128ToBits)
+                 }
+
+data RoWextend16 = RoWextend16 { roWextend16Sbit :: Word8
+                               , roWextend16OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoWextend16 where
+  -- See C5.6.93
+  pPrint _ = PP.text "RoWextend16: not implemented"
+
+instance A.Arbitrary RoWextend16 where
+  arbitrary g = RoWextend16 <$> A.arbitrary g <*> A.arbitrary g
+
+roWextend16SbitField :: Field
+roWextend16SbitField = Field 1 0
+
+roWextend16OptionHiBitField :: Field
+roWextend16OptionHiBitField = Field 1 1
+
+roWextend16ToBits :: RoWextend16 -> Word32
+roWextend16ToBits val =
+  insert roWextend16SbitField (roWextend16Sbit val) $
+  insert roWextend16OptionHiBitField (roWextend16OptionHiBit val) 0
+
+mkRoWextend16 :: Word32 -> RoWextend16
+mkRoWextend16 w =
+  RoWextend16 (fromIntegral $ extract roWextend16SbitField w)
+              (fromIntegral $ extract roWextend16OptionHiBitField w)
+
+roWextend16Operand :: OperandPayload
+roWextend16Operand =
+  OperandPayload { opTypeT = [t| RoWextend16 |]
+                 , opConE  = Just (varE 'mkRoWextend16)
+                 , opWordE = Just (varE 'roWextend16ToBits)
+                 }
+
+data RoWextend32 = RoWextend32 { roWextend32Sbit :: Word8
+                               , roWextend32OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoWextend32 where
+  pPrint _ = PP.text "RoWextend32: not implemented"
+
+instance A.Arbitrary RoWextend32 where
+  arbitrary g = RoWextend32 <$> A.arbitrary g <*> A.arbitrary g
+
+roWextend32SbitField :: Field
+roWextend32SbitField = Field 1 0
+
+roWextend32OptionHiBitField :: Field
+roWextend32OptionHiBitField = Field 1 1
+
+roWextend32ToBits :: RoWextend32 -> Word32
+roWextend32ToBits val =
+  insert roWextend32SbitField (roWextend32Sbit val) $
+  insert roWextend32OptionHiBitField (roWextend32OptionHiBit val) 0
+
+mkRoWextend32 :: Word32 -> RoWextend32
+mkRoWextend32 w =
+  RoWextend32 (fromIntegral $ extract roWextend32SbitField w)
+              (fromIntegral $ extract roWextend32OptionHiBitField w)
+
+roWextend32Operand :: OperandPayload
+roWextend32Operand =
+  OperandPayload { opTypeT = [t| RoWextend32 |]
+                 , opConE  = Just (varE 'mkRoWextend32)
+                 , opWordE = Just (varE 'roWextend32ToBits)
+                 }
+
+data RoWextend64 = RoWextend64 { roWextend64Sbit :: Word8
+                               , roWextend64OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoWextend64 where
+  pPrint _ = PP.text "RoWextend64: not implemented"
+
+instance A.Arbitrary RoWextend64 where
+  arbitrary g = RoWextend64 <$> A.arbitrary g <*> A.arbitrary g
+
+roWextend64SbitField :: Field
+roWextend64SbitField = Field 1 0
+
+roWextend64OptionHiBitField :: Field
+roWextend64OptionHiBitField = Field 1 1
+
+roWextend64ToBits :: RoWextend64 -> Word32
+roWextend64ToBits val =
+  insert roWextend64SbitField (roWextend64Sbit val) $
+  insert roWextend64OptionHiBitField (roWextend64OptionHiBit val) 0
+
+mkRoWextend64 :: Word32 -> RoWextend64
+mkRoWextend64 w =
+  RoWextend64 (fromIntegral $ extract roWextend64SbitField w)
+              (fromIntegral $ extract roWextend64OptionHiBitField w)
+
+roWextend64Operand :: OperandPayload
+roWextend64Operand =
+  OperandPayload { opTypeT = [t| RoWextend64 |]
+                 , opConE  = Just (varE 'mkRoWextend64)
+                 , opWordE = Just (varE 'roWextend64ToBits)
+                 }
+
+data RoWextend8 = RoWextend8 { roWextend8Sbit :: Word8
+                             , roWextend8OptionHiBit :: Word8
+                             } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoWextend8 where
+  pPrint _ = PP.text "RoWextend8: not implemented"
+
+instance A.Arbitrary RoWextend8 where
+  arbitrary g = RoWextend8 <$> A.arbitrary g <*> A.arbitrary g
+
+roWextend8SbitField :: Field
+roWextend8SbitField = Field 1 0
+
+roWextend8OptionHiBitField :: Field
+roWextend8OptionHiBitField = Field 1 1
+
+roWextend8ToBits :: RoWextend8 -> Word32
+roWextend8ToBits val =
+  insert roWextend8SbitField (roWextend8Sbit val) $
+  insert roWextend8OptionHiBitField (roWextend8OptionHiBit val) 0
+
+mkRoWextend8 :: Word32 -> RoWextend8
+mkRoWextend8 w =
+  RoWextend8 (fromIntegral $ extract roWextend8SbitField w)
+             (fromIntegral $ extract roWextend8OptionHiBitField w)
+
+roWextend8Operand :: OperandPayload
+roWextend8Operand =
+  OperandPayload { opTypeT = [t| RoWextend8 |]
+                 , opConE  = Just (varE 'mkRoWextend8)
+                 , opWordE = Just (varE 'roWextend8ToBits)
+                 }
+
+data RoXextend128 = RoXextend128 { roXextend128Sbit :: Word8
+                                 , roXextend128OptionHiBit :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend128 where
+  -- See C6.3.168
+  pPrint _ = PP.text "RoXextend128: not implemented"
+
+instance A.Arbitrary RoXextend128 where
+  arbitrary g = RoXextend128 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend128SbitField :: Field
+roXextend128SbitField = Field 1 0
+
+roXextend128OptionHiBitField :: Field
+roXextend128OptionHiBitField = Field 1 1
+
+roXextend128ToBits :: RoXextend128 -> Word32
+roXextend128ToBits val =
+  insert roXextend128SbitField (roXextend128Sbit val) $
+  insert roXextend128OptionHiBitField (roXextend128OptionHiBit val) 0
+
+mkRoXextend128 :: Word32 -> RoXextend128
+mkRoXextend128 w =
+  RoXextend128 (fromIntegral $ extract roXextend128SbitField w)
+               (fromIntegral $ extract roXextend128OptionHiBitField w)
+
+roXextend128Operand :: OperandPayload
+roXextend128Operand =
+  OperandPayload { opTypeT = [t| RoXextend128 |]
+                 , opConE  = Just (varE 'mkRoXextend128)
+                 , opWordE = Just (varE 'roXextend128ToBits)
+                 }
+
+data RoXextend16 = RoXextend16 { roXextend16Sbit :: Word8
+                               , roXextend16OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend16 where
+  -- See C5.6.93
+  pPrint _ = PP.text "RoXextend16: not implemented"
+
+instance A.Arbitrary RoXextend16 where
+  arbitrary g = RoXextend16 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend16SbitField :: Field
+roXextend16SbitField = Field 1 0
+
+roXextend16OptionHiBitField :: Field
+roXextend16OptionHiBitField = Field 1 1
+
+roXextend16ToBits :: RoXextend16 -> Word32
+roXextend16ToBits val =
+  insert roXextend16SbitField (roXextend16Sbit val) $
+  insert roXextend16OptionHiBitField (roXextend16OptionHiBit val) 0
+
+mkRoXextend16 :: Word32 -> RoXextend16
+mkRoXextend16 w =
+  RoXextend16 (fromIntegral $ extract roXextend16SbitField w)
+              (fromIntegral $ extract roXextend16OptionHiBitField w)
+
+roXextend16Operand :: OperandPayload
+roXextend16Operand =
+  OperandPayload { opTypeT = [t| RoXextend16 |]
+                 , opConE  = Just (varE 'mkRoXextend16)
+                 , opWordE = Just (varE 'roXextend16ToBits)
+                 }
+
+data RoXextend32 = RoXextend32 { roXextend32Sbit :: Word8
+                               , roXextend32OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend32 where
+  pPrint _ = PP.text "RoXextend32: not implemented"
+
+instance A.Arbitrary RoXextend32 where
+  arbitrary g = RoXextend32 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend32SbitField :: Field
+roXextend32SbitField = Field 1 0
+
+roXextend32OptionHiBitField :: Field
+roXextend32OptionHiBitField = Field 1 1
+
+roXextend32ToBits :: RoXextend32 -> Word32
+roXextend32ToBits val =
+  insert roXextend32SbitField (roXextend32Sbit val) $
+  insert roXextend32OptionHiBitField (roXextend32OptionHiBit val) 0
+
+mkRoXextend32 :: Word32 -> RoXextend32
+mkRoXextend32 w =
+  RoXextend32 (fromIntegral $ extract roXextend32SbitField w)
+              (fromIntegral $ extract roXextend32OptionHiBitField w)
+
+roXextend32Operand :: OperandPayload
+roXextend32Operand =
+  OperandPayload { opTypeT = [t| RoXextend32 |]
+                 , opConE  = Just (varE 'mkRoXextend32)
+                 , opWordE = Just (varE 'roXextend32ToBits)
+                 }
+
+data RoXextend64 = RoXextend64 { roXextend64Sbit :: Word8
+                               , roXextend64OptionHiBit :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend64 where
+  pPrint _ = PP.text "RoXextend64: not implemented"
+
+instance A.Arbitrary RoXextend64 where
+  arbitrary g = RoXextend64 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend64SbitField :: Field
+roXextend64SbitField = Field 1 0
+
+roXextend64OptionHiBitField :: Field
+roXextend64OptionHiBitField = Field 1 1
+
+roXextend64ToBits :: RoXextend64 -> Word32
+roXextend64ToBits val =
+  insert roXextend64SbitField (roXextend64Sbit val) $
+  insert roXextend64OptionHiBitField (roXextend64OptionHiBit val) 0
+
+mkRoXextend64 :: Word32 -> RoXextend64
+mkRoXextend64 w =
+  RoXextend64 (fromIntegral $ extract roXextend64SbitField w)
+              (fromIntegral $ extract roXextend64OptionHiBitField w)
+
+roXextend64Operand :: OperandPayload
+roXextend64Operand =
+  OperandPayload { opTypeT = [t| RoXextend64 |]
+                 , opConE  = Just (varE 'mkRoXextend64)
+                 , opWordE = Just (varE 'roXextend64ToBits)
+                 }
+
+data RoXextend8 = RoXextend8 { roXextend8Sbit :: Word8
+                             , roXextend8OptionHiBit :: Word8
+                             } deriving (Eq, Ord, Show)
+
+instance PP.Pretty RoXextend8 where
+  pPrint _ = PP.text "RoXextend8: not implemented"
+
+instance A.Arbitrary RoXextend8 where
+  arbitrary g = RoXextend8 <$> A.arbitrary g <*> A.arbitrary g
+
+roXextend8SbitField :: Field
+roXextend8SbitField = Field 1 0
+
+roXextend8OptionHiBitField :: Field
+roXextend8OptionHiBitField = Field 1 1
+
+roXextend8ToBits :: RoXextend8 -> Word32
+roXextend8ToBits val =
+  insert roXextend8SbitField (roXextend8Sbit val) $
+  insert roXextend8OptionHiBitField (roXextend8OptionHiBit val) 0
+
+mkRoXextend8 :: Word32 -> RoXextend8
+mkRoXextend8 w =
+  RoXextend8 (fromIntegral $ extract roXextend8SbitField w)
+             (fromIntegral $ extract roXextend8OptionHiBitField w)
+
+roXextend8Operand :: OperandPayload
+roXextend8Operand =
+  OperandPayload { opTypeT = [t| RoXextend8 |]
+                 , opConE  = Just (varE 'mkRoXextend8)
+                 , opWordE = Just (varE 'roXextend8ToBits)
+                 }
+
+data Simm7s16 = Simm7s16 { simm7s16Imm :: Word8
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Simm7s16 where
+  -- C5.6.80
+  pPrint _ = PP.text "Simm7s16: not implemented"
+
+instance A.Arbitrary Simm7s16 where
+  arbitrary g = Simm7s16 <$> A.arbitrary g
+
+simm7s16ImmField :: Field
+simm7s16ImmField = Field 7 0
+
+simm7s16ToBits :: Simm7s16 -> Word32
+simm7s16ToBits val =
+  insert simm7s16ImmField (simm7s16Imm val) 0
+
+mkSimm7s16 :: Word32 -> Simm7s16
+mkSimm7s16 w =
+  Simm7s16 (fromIntegral $ extract simm7s16ImmField w)
+
+simm7s16Operand :: OperandPayload
+simm7s16Operand =
+  OperandPayload { opTypeT = [t| Simm7s16 |]
+                 , opConE  = Just (varE 'mkSimm7s16)
+                 , opWordE = Just (varE 'simm7s16ToBits)
+                 }
+
+data Simm7s4 = Simm7s4 { simm7s4Imm :: Word8
+                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Simm7s4 where
+  pPrint _ = PP.text "Simm7s4: not implemented"
+
+instance A.Arbitrary Simm7s4 where
+  arbitrary g = Simm7s4 <$> A.arbitrary g
+
+simm7s4ImmField :: Field
+simm7s4ImmField = Field 7 0
+
+simm7s4ToBits :: Simm7s4 -> Word32
+simm7s4ToBits val =
+  insert simm7s4ImmField (simm7s4Imm val) 0
+
+mkSimm7s4 :: Word32 -> Simm7s4
+mkSimm7s4 w =
+  Simm7s4 (fromIntegral $ extract simm7s4ImmField w)
+
+simm7s4Operand :: OperandPayload
+simm7s4Operand =
+  OperandPayload { opTypeT = [t| Simm7s4 |]
+                 , opConE  = Just (varE 'mkSimm7s4)
+                 , opWordE = Just (varE 'simm7s4ToBits)
+                 }
+
+data Simm7s8 = Simm7s8 { simm7s8Imm :: Word8
+                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Simm7s8 where
+  pPrint _ = PP.text "Simm7s8: not implemented"
+
+instance A.Arbitrary Simm7s8 where
+  arbitrary g = Simm7s8 <$> A.arbitrary g
+
+simm7s8ImmField :: Field
+simm7s8ImmField = Field 7 0
+
+simm7s8ToBits :: Simm7s8 -> Word32
+simm7s8ToBits val =
+  insert simm7s8ImmField (simm7s8Imm val) 0
+
+mkSimm7s8 :: Word32 -> Simm7s8
+mkSimm7s8 w =
+  Simm7s8 (fromIntegral $ extract simm7s8ImmField w)
+
+simm7s8Operand :: OperandPayload
+simm7s8Operand =
+  OperandPayload { opTypeT = [t| Simm7s8 |]
+                 , opConE  = Just (varE 'mkSimm7s8)
+                 , opWordE = Just (varE 'simm7s8ToBits)
+                 }
+
+data Simm9 = Simm9 { simm9Imm :: Word16
+                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Simm9 where
+  -- C5.6.86
+  pPrint _ = PP.text "Simm9: not implemented"
+
+instance A.Arbitrary Simm9 where
+  arbitrary g = Simm9 <$> A.arbitrary g
+
+simm9ImmField :: Field
+simm9ImmField = Field 9 0
+
+simm9ToBits :: Simm9 -> Word32
+simm9ToBits val =
+  insert simm9ImmField (simm9Imm val) 0
+
+mkSimm9 :: Word32 -> Simm9
+mkSimm9 w =
+  Simm9 (fromIntegral $ extract simm9ImmField w)
+
+simm9Operand :: OperandPayload
+simm9Operand =
+  OperandPayload { opTypeT = [t| Simm9 |]
+                 , opConE  = Just (varE 'mkSimm9)
+                 , opWordE = Just (varE 'simm9ToBits)
+                 }
+
+data SysCrOp = SysCrOp { sysCrOpVal :: Word8
+                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty SysCrOp where
+  pPrint _ = PP.text "SysCrOp: not implemented"
+
+instance A.Arbitrary SysCrOp where
+  arbitrary g = SysCrOp <$> A.arbitrary g
+
+sysCrOpValField :: Field
+sysCrOpValField = Field 4 0
+
+sysCrOpToBits :: SysCrOp -> Word32
+sysCrOpToBits val =
+  insert sysCrOpValField (sysCrOpVal val) 0
+
+mkSysCrOp :: Word32 -> SysCrOp
+mkSysCrOp w =
+  SysCrOp (fromIntegral $ extract sysCrOpValField w)
+
+sysCrOpOperand :: OperandPayload
+sysCrOpOperand =
+  OperandPayload { opTypeT = [t| SysCrOp |]
+                 , opConE  = Just (varE 'mkSysCrOp)
+                 , opWordE = Just (varE 'sysCrOpToBits)
+                 }
+
+data TbzImm031Diag = TbzImm031Diag { tbzImm031DiagImm :: Word8
+                                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty TbzImm031Diag where
+  -- See C5.6.206
+  pPrint _ = PP.text "TbzImm031Diag: not implemented"
+
+instance A.Arbitrary TbzImm031Diag where
+  arbitrary g = TbzImm031Diag <$> A.arbitrary g
+
+tbzImm031DiagImmField :: Field
+tbzImm031DiagImmField = Field 5 0
+
+tbzImm031DiagToBits :: TbzImm031Diag -> Word32
+tbzImm031DiagToBits val =
+  insert tbzImm031DiagImmField (tbzImm031DiagImm val) 0
+
+mkTbzImm031Diag :: Word32 -> TbzImm031Diag
+mkTbzImm031Diag w =
+  TbzImm031Diag (fromIntegral $ extract tbzImm031DiagImmField w)
+
+tbzImm031DiagOperand :: OperandPayload
+tbzImm031DiagOperand =
+  OperandPayload { opTypeT = [t| TbzImm031Diag |]
+                 , opConE  = Just (varE 'mkTbzImm031Diag)
+                 , opWordE = Just (varE 'tbzImm031DiagToBits)
+                 }
+
+data TbzImm3263 = TbzImm3263 { tbzImm3263Imm :: Word8
+                             } deriving (Eq, Ord, Show)
+
+instance PP.Pretty TbzImm3263 where
+  -- See C5.6.206
+  pPrint _ = PP.text "TbzImm3263: not implemented"
+
+instance A.Arbitrary TbzImm3263 where
+  arbitrary g = TbzImm3263 <$> A.arbitrary g
+
+tbzImm3263ImmField :: Field
+tbzImm3263ImmField = Field 5 0
+
+tbzImm3263ToBits :: TbzImm3263 -> Word32
+tbzImm3263ToBits val =
+  insert tbzImm3263ImmField (tbzImm3263Imm val) 0
+
+mkTbzImm3263 :: Word32 -> TbzImm3263
+mkTbzImm3263 w =
+  TbzImm3263 (fromIntegral $ extract tbzImm3263ImmField w)
+
+tbzImm3263Operand :: OperandPayload
+tbzImm3263Operand =
+  OperandPayload { opTypeT = [t| TbzImm3263 |]
+                 , opConE  = Just (varE 'mkTbzImm3263)
+                 , opWordE = Just (varE 'tbzImm3263ToBits)
+                 }
+
+data Uimm12s1 = Uimm12s1 { uimm12s1Imm :: Word16
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Uimm12s1 where
+  pPrint _ = PP.text "Uimm12s1: not implemented"
+
+instance A.Arbitrary Uimm12s1 where
+  arbitrary g = Uimm12s1 <$> A.arbitrary g
+
+uimm12s1ImmField :: Field
+uimm12s1ImmField = Field 12 0
+
+uimm12s1ToBits :: Uimm12s1 -> Word32
+uimm12s1ToBits val =
+  insert uimm12s1ImmField (uimm12s1Imm val) 0
+
+mkUimm12s1 :: Word32 -> Uimm12s1
+mkUimm12s1 w =
+  Uimm12s1 (fromIntegral $ extract uimm12s1ImmField w)
+
+uimm12s1Operand :: OperandPayload
+uimm12s1Operand =
+  OperandPayload { opTypeT = [t| Uimm12s1 |]
+                 , opConE  = Just (varE 'mkUimm12s1)
+                 , opWordE = Just (varE 'uimm12s1ToBits)
+                 }
+
+data Uimm12s16 = Uimm12s16 { uimm12s16Imm :: Word16
+                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Uimm12s16 where
+  pPrint _ = PP.text "Uimm12s16: not implemented"
+
+instance A.Arbitrary Uimm12s16 where
+  arbitrary g = Uimm12s16 <$> A.arbitrary g
+
+uimm12s16ImmField :: Field
+uimm12s16ImmField = Field 12 0
+
+uimm12s16ToBits :: Uimm12s16 -> Word32
+uimm12s16ToBits val =
+  insert uimm12s16ImmField (uimm12s16Imm val) 0
+
+mkUimm12s16 :: Word32 -> Uimm12s16
+mkUimm12s16 w =
+  Uimm12s16 (fromIntegral $ extract uimm12s16ImmField w)
+
+uimm12s16Operand :: OperandPayload
+uimm12s16Operand =
+  OperandPayload { opTypeT = [t| Uimm12s16 |]
+                 , opConE  = Just (varE 'mkUimm12s16)
+                 , opWordE = Just (varE 'uimm12s16ToBits)
+                 }
+
+data Uimm12s2 = Uimm12s2 { uimm12s2Imm :: Word16
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Uimm12s2 where
+  pPrint _ = PP.text "Uimm12s2: not implemented"
+
+instance A.Arbitrary Uimm12s2 where
+  arbitrary g = Uimm12s2 <$> A.arbitrary g
+
+uimm12s2ImmField :: Field
+uimm12s2ImmField = Field 12 0
+
+uimm12s2ToBits :: Uimm12s2 -> Word32
+uimm12s2ToBits val =
+  insert uimm12s2ImmField (uimm12s2Imm val) 0
+
+mkUimm12s2 :: Word32 -> Uimm12s2
+mkUimm12s2 w =
+  Uimm12s2 (fromIntegral $ extract uimm12s2ImmField w)
+
+uimm12s2Operand :: OperandPayload
+uimm12s2Operand =
+  OperandPayload { opTypeT = [t| Uimm12s2 |]
+                 , opConE  = Just (varE 'mkUimm12s2)
+                 , opWordE = Just (varE 'uimm12s2ToBits)
+                 }
+
+data Uimm12s4 = Uimm12s4 { uimm12s4Imm :: Word16
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Uimm12s4 where
+  pPrint _ = PP.text "Uimm12s4: not implemented"
+
+instance A.Arbitrary Uimm12s4 where
+  arbitrary g = Uimm12s4 <$> A.arbitrary g
+
+uimm12s4ImmField :: Field
+uimm12s4ImmField = Field 12 0
+
+uimm12s4ToBits :: Uimm12s4 -> Word32
+uimm12s4ToBits val =
+  insert uimm12s4ImmField (uimm12s4Imm val) 0
+
+mkUimm12s4 :: Word32 -> Uimm12s4
+mkUimm12s4 w =
+  Uimm12s4 (fromIntegral $ extract uimm12s4ImmField w)
+
+uimm12s4Operand :: OperandPayload
+uimm12s4Operand =
+  OperandPayload { opTypeT = [t| Uimm12s4 |]
+                 , opConE  = Just (varE 'mkUimm12s4)
+                 , opWordE = Just (varE 'uimm12s4ToBits)
+                 }
+
+data Uimm12s8 = Uimm12s8 { uimm12s8Imm :: Word16
+                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Uimm12s8 where
+  pPrint _ = PP.text "Uimm12s8: not implemented"
+
+instance A.Arbitrary Uimm12s8 where
+  arbitrary g = Uimm12s8 <$> A.arbitrary g
+
+uimm12s8ImmField :: Field
+uimm12s8ImmField = Field 12 0
+
+uimm12s8ToBits :: Uimm12s8 -> Word32
+uimm12s8ToBits val =
+  insert uimm12s8ImmField (uimm12s8Imm val) 0
+
+mkUimm12s8 :: Word32 -> Uimm12s8
+mkUimm12s8 w =
+  Uimm12s8 (fromIntegral $ extract uimm12s8ImmField w)
+
+uimm12s8Operand :: OperandPayload
+uimm12s8Operand =
+  OperandPayload { opTypeT = [t| Uimm12s8 |]
+                 , opConE  = Just (varE 'mkUimm12s8)
+                 , opWordE = Just (varE 'uimm12s8ToBits)
                  }
 

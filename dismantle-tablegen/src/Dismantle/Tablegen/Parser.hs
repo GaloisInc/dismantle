@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 -- | A parser for the output of the @llvm-tablegen@ tool's dumped output.
 --
@@ -21,12 +23,44 @@ import Prelude
 
 import Dismantle.Tablegen.Parser.Types
 
+-- For testing internal functions in this module.
+{-
+import Data.Text.Lazy ( pack )
+import Text.Printf
+
+testParseTableGen file = do
+  content <- pack <$> readFile file
+  case parseTablegen "<test>" content of
+    Left e -> printf e
+    Right Records {..} -> do
+      printf "%i classes, %i defs\n" (length tblClasses) (length tblDefs)
+
+testParser :: Parser a -> Text -> IO ()
+testParser parser input = do
+  let result = St.evalState
+        (P.runParserT parser "<test>" (unpack input)) emptyState
+  case result of
+    Left e -> printf $ P.parseErrorPretty' input e
+    Right _ -> printf "success!\n"
+  where
+    emptyState = TGState M.empty
+
+-}
+
+-- | So that parse errors can be pretty printed.
+instance P.ShowErrorComponent String where
+  showErrorComponent = id
+
 parseTablegen :: String
               -- ^ The name of the file (used for error messages)
               -> Text
               -- ^ The content of the file to parse
-              -> Either (P.ParseError Char String) Records
-parseTablegen fname t = St.evalState (P.runParserT p fname (unpack t)) emptyState
+              -> Either String Records
+parseTablegen fname t =
+  case St.evalState (P.runParserT p fname (unpack t)) emptyState of
+    -- Render the parse error, including the line where it occurred.
+    Left e -> Left $ P.parseErrorPretty' t e
+    Right r -> Right r
   where
     emptyState = TGState M.empty
 
@@ -45,17 +79,32 @@ internString s = do
 type Parser = P.ParsecT String String (St.State TGState)
 
 header :: String -> Parser ()
-header hdr = sc >> P.some (P.char '-') >> sc >> symbol hdr >> sc >> P.some (P.char '-') >> sc >> return ()
+header hdr = sc >> P.some (P.char '-') >> sc >> symbol hdr >> sc >> P.some (P.char '-') >> sc
 
+-- | Parse a sequence of classes followed by a sequence of defs,
+-- skipping @/* ... */@-comments between (but not inside!).
 p :: Parser Records
 p = do
+  skipComments
   header "Classes"
-  klasses <- P.many parseClass
+  skipComments
+  klasses <- P.many (parseClass <* skipComments)
+  skipComments
   header "Defs"
-  defs <- P.many parseDef
+  skipComments
+  defs <- P.many (parseDef <* skipComments)
+  skipComments
   return Records { tblClasses = klasses
                  , tblDefs = defs
                  }
+
+-- | Skip C-style @/* ... */@ range comments. Like in the TableGen
+-- spec, and unlike in C, range comments *can* be nested.
+--
+-- Not skipping @// ...@ comments since those are meaningful in some
+-- places as metadata comments.
+skipComments :: Parser ()
+skipComments = P.skipMany (L.skipBlockCommentNested "/*" "*/" *> sc)
 
 parseClass :: Parser ClassDecl
 parseClass = do

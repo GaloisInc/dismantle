@@ -48,6 +48,11 @@ isa = ISA { isaName = "AArch64"
           }
   where
 
+    word32Operand = OperandPayload { opTypeT = [t| Word32 |]
+                                   , opConE = Nothing
+                                   , opWordE = Nothing
+                                   }
+
     aarch64OperandPayloadTypes =
         [ ("FPR128", AArch64.fPR128Operand)
         , ("FPR16", AArch64.fPR16Operand)
@@ -83,6 +88,39 @@ isa = ISA { isaName = "AArch64"
         , ("Imm0_65535", AArch64.imm065535Operand)
         , ("Imm32_0_15", AArch64.imm32015Operand)
         , ("Imm32_0_31", AArch64.imm32031Operand)
+        , ("Logical_imm32", AArch64.logicalImm32Operand)
+        , ("Logical_imm64", AArch64.logicalImm64Operand)
+        , ("Movimm32_imm", AArch64.movimm32ImmOperand)
+        , ("Movimm32_shift", AArch64.movimm32ShiftOperand)
+        , ("Movimm64_shift", AArch64.movimm64ShiftOperand)
+        , ("Mrs_sysreg_op", AArch64.mrsSysregOpOperand)
+        , ("Msr_sysreg_op", AArch64.msrSysregOpOperand)
+        , ("Prfop", AArch64.prfopOperand)
+        , ("Pstatefield1_op", AArch64.pstatefield1OpOperand)
+        , ("Pstatefield4_op", AArch64.pstatefield4OpOperand)
+        , ("Ro_Wextend8", AArch64.roWextend8Operand)
+        , ("Ro_Wextend16", AArch64.roWextend16Operand)
+        , ("Ro_Wextend32", AArch64.roWextend32Operand)
+        , ("Ro_Wextend64", AArch64.roWextend64Operand)
+        , ("Ro_Wextend128", AArch64.roWextend128Operand)
+        , ("Ro_Xextend8", AArch64.roXextend8Operand)
+        , ("Ro_Xextend16", AArch64.roXextend16Operand)
+        , ("Ro_Xextend32", AArch64.roXextend32Operand)
+        , ("Ro_Xextend64", AArch64.roXextend64Operand)
+        , ("Ro_Xextend128", AArch64.roXextend128Operand)
+        , ("Simm7s4", AArch64.simm7s4Operand)
+        , ("Simm7s8", AArch64.simm7s8Operand)
+        , ("Simm7s16", AArch64.simm7s16Operand)
+        , ("Simm9", AArch64.simm9Operand)
+        , ("Sys_cr_op", AArch64.sysCrOpOperand)
+        , ("Tbz_imm0_31_diag", AArch64.tbzImm031DiagOperand)
+        , ("Tbz_imm32_63", AArch64.tbzImm3263Operand)
+        , ("Uimm12s1", AArch64.uimm12s1Operand)
+        , ("Uimm12s2", AArch64.uimm12s2Operand)
+        , ("Uimm12s4", AArch64.uimm12s4Operand)
+        , ("Uimm12s8", AArch64.uimm12s8Operand)
+        , ("Uimm12s16", AArch64.uimm12s16Operand)
+        , ("Unpredictable", word32Operand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&

@@ -23,6 +23,7 @@ module Dismantle.AArch64 (
 
 import Data.Parameterized.ShapedList ( ShapedList(..) )
 
+import Dismantle.ARM (mkPred)
 import Dismantle.AArch64.ISA ( isa )
 import Dismantle.Instruction
 import Dismantle.Tablegen.TH ( genISA, genInstances )

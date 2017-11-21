@@ -7,6 +7,7 @@ module Dismantle.Tablegen (
   filterISA,
   parsableInstructions,
   parseInstruction,
+  toTypeName,
   Parser(..),
   module Dismantle.Tablegen.ISA,
   module Dismantle.Tablegen.Types
@@ -21,6 +22,7 @@ import Data.Tuple (swap)
 import qualified Data.ByteString.Lazy as LBS
 import Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
+import           Data.Char ( toUpper )
 import qualified Data.Foldable as F
 import qualified Data.List as L
 import qualified Data.List.NonEmpty as NL
@@ -103,8 +105,40 @@ filterISA isa rs =
     registerClasses = map (RegisterClass . defName) $ filter isRegisterClass dagOperands
     registerOperands = mapMaybe isRegisterOperand dagOperands
     insns = reverse $ stInsns st1
-    operandTypes = foldr extractOperands S.empty insns
+    observedOperandTypes = foldr extractOperands S.empty insns
+    --operandTypes = addKnownOperandTypes isa observedOperandTypes
+    operandTypes = observedOperandTypes
 
+-- | Extend the operands observed in the .tgen file with the operands
+-- described in the Haskell ISA.
+--
+-- We include the defined but not observed operand types so that we
+-- can limit the .tgen file to speed compilation without breaking code
+-- that assumes all operand types will be defined. This transformation
+-- has no effect in production where the observed and known operand
+-- type sets are the same.
+addKnownOperandTypes :: ISA -> S.Set OperandType -> S.Set OperandType
+addKnownOperandTypes isa observedOpTys = opTys
+  where
+    -- The the .tgen file uses both lower and upper case and the
+    -- Haskell ISA uses uppercase (valid type names), so we make the
+    -- case agree. We use the observed case so that error messages
+    -- later correspond to the strings that actually occur in the
+    -- .tgen file.
+    knownOpTys = S.fromList $
+      map (OperandType . fst)
+          (isaOperandPayloadTypes isa)
+    observedOpTysTypeNamed =
+      S.map (\(OperandType n) -> OperandType (toTypeName n))
+            observedOpTys
+    knownButUnobservedOpTys = knownOpTys S.\\ observedOpTysTypeNamed
+    opTys = knownButUnobservedOpTys `S.union` observedOpTys
+
+toTypeName :: String -> String
+toTypeName s =
+  case s of
+    [] -> error "Empty names are not allowed"
+    c:rest -> toUpper c : rest
 
 newtype FM a = FM { runFilter :: CC.ContT () (St.State FilterState) a }
   deriving (Functor,

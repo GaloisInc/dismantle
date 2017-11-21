@@ -56,11 +56,12 @@ skipPretty = rx (L.intercalate "|" rxes)
   where
     rxes = others
 
-    others = [
+    others = [ "add[[:space:]]..,[[:space:]]pc"
+             , "sub[[:space:]]..,[[:space:]]pc"
              ]
 
 expectedFailures :: RE.RE
 expectedFailures = rx (L.intercalate "|" rxes)
   where
-    rxes = [
+    rxes = [ "^[[:space:]]*mvnpl"
            ]

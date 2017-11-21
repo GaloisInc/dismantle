@@ -59,7 +59,7 @@ dump o = do
   t <- TL.readFile p
   case D.parseTablegen p t of
     Left err -> do
-      IO.hPutStrLn IO.stderr ("Error: " ++ show err)
+      IO.hPutStrLn IO.stderr ("Error: " ++ err)
       IO.exitFailure
     Right defs -> do
       let isa = lookupISA (parseISA o)
