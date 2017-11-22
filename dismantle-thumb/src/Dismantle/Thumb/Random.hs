@@ -10,4 +10,4 @@ import Dismantle.Thumb
 import Dismantle.Thumb.ISA ( isa )
 import Dismantle.Tablegen.TH ( genISARandomHelpers )
 
-$(genISARandomHelpers isa "data/ARM.tgen")
+$(genISARandomHelpers isa "data/ARM.tgen" ["data/overrides"])

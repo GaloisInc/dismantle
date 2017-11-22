@@ -49,19 +49,35 @@ import           Dismantle.Arbitrary as A
 import           Dismantle.Instruction
 import           Dismantle.Instruction.Random ( ArbitraryOperands(..), ArbitraryOperand(..), arbitraryShapedList )
 import           Dismantle.Tablegen
+import           Dismantle.Tablegen.Parser.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import           Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import           Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
+-- | Load an ISA from a base path and an optional collection of override
+-- paths. The resulting descriptor will have been filtered by the
+-- instruction filter of the provided ISA.
+loadISA :: ISA
+        -- ^ The ISA to use to filter the resulting instructions.
+        -> FilePath
+        -- ^ The path to the base ".tgen" file to parse.
+        -> [FilePath]
+        -- ^ A list of directories in which any ".tgen" files will be
+        -- used to override entries in the base tablegen data.
+        -> Q ISADescriptor
+loadISA isa path overridePaths = do
+  initialRecs <- runIO $ loadTablegen path
+  overrides <- loadOverrides overridePaths
+  return $ filterISA isa $ applyOverrides overrides initialRecs
+
 genISA :: ISA -> FilePath -> [FilePath] -> DecsQ
 genISA isa path overridePaths = do
-  initialDesc <- runIO $ loadISA isa path
-  overrides <- loadOverrides isa overridePaths
-  let desc = applyOverrides overrides initialDesc
+  desc <- loadISA isa path overridePaths
 
   case isaErrors desc of
     [] -> return ()
     errs -> reportWarning ("Unhandled instruction definitions for ISA: " ++ show (length errs))
+
   operandType <- mkOperandType isa desc >>= sequence
   opcodeType <- mkOpcodeType desc >>= sequence
   instrTypes <- mkInstructionAliases
@@ -76,37 +92,32 @@ genISA isa path overridePaths = do
                   , asmDef
                   ]
 
--- | Load the instructions for the given ISA
-loadISA :: ISA -> FilePath -> IO ISADescriptor
-loadISA isa path = do
+loadTablegen :: FilePath -> IO Records
+loadTablegen path = do
   txt <- TL.readFile path
   case parseTablegen path txt of
     Left err -> fail err
-    Right defs -> return $ filterISA isa defs
+    Right defs -> return defs
 
 tgenOverrideExtension :: String
 tgenOverrideExtension = ".tgen"
 
-emptyDescriptor :: ISADescriptor
-emptyDescriptor =
-    ISADescriptor { isaInstructions = []
-                  , isaOperands = []
-                  , isaErrors = []
-                  }
+emptyRecords :: Records
+emptyRecords = Records [] []
 
-loadOverrides :: ISA -> [FilePath] -> Q ISADescriptor
-loadOverrides _ [] = return emptyDescriptor
-loadOverrides isa (path:rest) = do
-    override <- loadOverridesFromDir isa path
-    desc <- loadOverrides isa rest
+loadOverrides :: [FilePath] -> Q Records
+loadOverrides [] = return emptyRecords
+loadOverrides (path:rest) = do
+    override <- loadOverridesFromDir path
+    desc <- loadOverrides rest
     return $ applyOverrides override desc
 
-loadOverridesFromDir :: ISA -> FilePath -> Q ISADescriptor
-loadOverridesFromDir isa path = do
+loadOverridesFromDir :: FilePath -> Q Records
+loadOverridesFromDir path = do
     dirEx <- runIO $ doesDirectoryExist path
 
     case dirEx of
-        False -> return emptyDescriptor
+        False -> return emptyRecords
         True -> do
             allEntries <- runIO $ getDirectoryContents path
             mFiles <- forM allEntries $ \e -> do
@@ -115,43 +126,36 @@ loadOverridesFromDir isa path = do
                          then Just $ path </> e
                          else Nothing
 
-            let go [] = return emptyDescriptor
+            let go [] = return emptyRecords
                 go (f:rest) = do
-                    overrides <- runIO $ loadISA isa f
+                    overrides <- runIO $ loadTablegen f
                     qAddDependentFile f
                     desc <- go rest
                     return $ applyOverrides overrides desc
 
             go $ catMaybes mFiles
 
--- | Given two ISA descriptors A and B, return B with any content
--- overriden by content provided in A. Content provided by A but not by
--- B will be added to B.
---
--- * Instruction descriptors in B are replaced with versions from A
---   based on their mnemonics.
--- * All other content in B but not A is added to B.
-applyOverrides :: ISADescriptor
-               -- ^ The override descriptor (A).
-               -> ISADescriptor
-               -- ^ The descriptor to be augmented/extended (B).
-               -> ISADescriptor
-applyOverrides overrideDesc oldDesc = new
+-- | Given two tablegen record collections A and B, return B with any
+-- content overriden by content provided in A. Content provided by A but
+-- not by B will be added to B. Defs and classes in B are replaced with
+-- versions from A based on their mnemonics.
+applyOverrides :: Records
+               -- ^ The override record set (A).
+               -> Records
+               -- ^ The record set to be augmented/extended (B).
+               -> Records
+applyOverrides overrideRecs oldRecs = new
     where
-        new = oldDesc { isaInstructions = overrideWith matchInstruction
-                                                       (isaInstructions overrideDesc)
-                                                       (isaInstructions oldDesc)
-                      , isaOperands = overrideWith matchesOperandType
-                                                   (isaOperands overrideDesc)
-                                                   (isaOperands oldDesc)
-                      , isaErrors = overrideWith matchesIsaError
-                                                 (isaErrors overrideDesc)
-                                                 (isaErrors oldDesc)
+        new = Records { tblDefs = overrideWith matchDef
+                                               (tblDefs overrideRecs)
+                                               (tblDefs oldRecs)
+                      , tblClasses = overrideWith matchClass
+                                                  (tblClasses overrideRecs)
+                                                  (tblClasses oldRecs)
                       }
 
-        matchInstruction a b = idMnemonic a == idMnemonic b
-        matchesOperandType (OperandType a) (OperandType b) = a == b
-        matchesIsaError (a, _) (b, _) = a == b
+        matchDef a b = defName a == defName b
+        matchClass a b = classDeclName a == classDeclName b
 
         overrideWith :: (a -> a -> Bool) -> [a] -> [a] -> [a]
         overrideWith matches overrides old =
@@ -353,9 +357,9 @@ mkOpcodeType isa = do
              ]
     cons = map mkOpcodeCon (isaInstructions isa)
 
-genISARandomHelpers :: ISA -> FilePath -> Q [Dec]
-genISARandomHelpers isa path = do
-  desc <- runIO $ loadISA isa path
+genISARandomHelpers :: ISA -> FilePath -> [FilePath] -> Q [Dec]
+genISARandomHelpers isa path overridePaths = do
+  desc <- loadISA isa path overridePaths
   genName <- newName "gen"
   opcodeName <- newName "opcode"
   let caseBody = caseE (varE opcodeName) (map (mkOpListCase genName) (isaInstructions desc))

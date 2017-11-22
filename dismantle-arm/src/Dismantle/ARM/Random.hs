@@ -10,4 +10,4 @@ import Dismantle.ARM
 import Dismantle.ARM.ISA ( isa )
 import Dismantle.Tablegen.TH ( genISARandomHelpers )
 
-$(genISARandomHelpers isa "data/ARM.tgen")
+$(genISARandomHelpers isa "data/ARM.tgen" [])
