@@ -66,10 +66,6 @@ dump o = do
       let summary = D.filterISA isa defs
       putStrLn ("ISA: " ++ D.isaName isa)
       putStrLn ("# Instructions: " ++ show (length (D.isaInstructions summary)))
-      putStrLn "Register classes:"
-      mapM_ (putStrLn . ("  "++) . show) (D.isaRegisterClasses summary)
-      putStrLn "Registers"
-      mapM_ (putStrLn . ("  "++) . show) (D.isaRegisters summary)
       putStrLn "Operand types"
       mapM_ (putStrLn . ("  "++) . show) (D.isaOperands summary)
       putStrLn "Instruction mnemonics"

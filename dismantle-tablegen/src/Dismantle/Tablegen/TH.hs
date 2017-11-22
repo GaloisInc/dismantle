@@ -90,8 +90,6 @@ tgenOverrideExtension = ".tgen"
 emptyDescriptor :: ISADescriptor
 emptyDescriptor =
     ISADescriptor { isaInstructions = []
-                  , isaRegisterClasses = []
-                  , isaRegisters = []
                   , isaOperands = []
                   , isaErrors = []
                   }
@@ -143,12 +141,6 @@ applyOverrides overrideDesc oldDesc = new
         new = oldDesc { isaInstructions = overrideWith matchInstruction
                                                        (isaInstructions overrideDesc)
                                                        (isaInstructions oldDesc)
-                      , isaRegisterClasses = overrideWith matchesRegisterClass
-                                                          (isaRegisterClasses overrideDesc)
-                                                          (isaRegisterClasses oldDesc)
-                      , isaRegisters = overrideWith matchesRegister
-                                                    (isaRegisters overrideDesc)
-                                                    (isaRegisters oldDesc)
                       , isaOperands = overrideWith matchesOperandType
                                                    (isaOperands overrideDesc)
                                                    (isaOperands oldDesc)
@@ -158,8 +150,6 @@ applyOverrides overrideDesc oldDesc = new
                       }
 
         matchInstruction a b = idMnemonic a == idMnemonic b
-        matchesRegisterClass (RegisterClass a) (RegisterClass b) = a == b
-        matchesRegister (a, _) (b, _) = a == b
         matchesOperandType (OperandType a) (OperandType b) = a == b
         matchesIsaError (a, _) (b, _) = a == b
 

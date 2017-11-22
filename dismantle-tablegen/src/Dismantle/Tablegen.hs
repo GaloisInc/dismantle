@@ -15,7 +15,7 @@ module Dismantle.Tablegen (
 
 import qualified GHC.Err.Located as L
 
-import Control.Monad ( guard, when )
+import Control.Monad ( when )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
 import Data.Tuple (swap)
@@ -91,8 +91,6 @@ data FilterState = FilterState { stErrors :: [(String, String)]
 filterISA :: ISA -> Records -> ISADescriptor
 filterISA isa rs =
   ISADescriptor { isaInstructions = insns
-                , isaRegisterClasses = registerClasses
-                , isaRegisters = registerOperands
                 , isaOperands = S.toList operandTypes
                 , isaErrors = stErrors st1
                 }
@@ -101,9 +99,6 @@ filterISA isa rs =
                       , stInsns = []
                       }
     st1 = St.execState (CC.runContT (runFilter (filterInstructions isa (tblDefs rs))) return) st0
-    dagOperands = filter isDAGOperand $ tblDefs rs
-    registerClasses = map (RegisterClass . defName) $ filter isRegisterClass dagOperands
-    registerOperands = mapMaybe isRegisterOperand dagOperands
     insns = reverse $ stInsns st1
     observedOperandTypes = foldr extractOperands S.empty insns
     operandTypes = observedOperandTypes
@@ -129,18 +124,6 @@ extractOperands i s = foldr extractOperandTypes s (idInputOperands i ++ idOutput
 
 extractOperandTypes :: OperandDescriptor -> S.Set OperandType -> S.Set OperandType
 extractOperandTypes f = S.insert (opType f)
-
-isRegisterClass :: Def -> Bool
-isRegisterClass def = Metadata "RegisterClass" `elem` defMetadata def
-
-isRegisterOperand :: Def -> Maybe (String, RegisterClass)
-isRegisterOperand def = do
-  guard (Metadata "RegisterOperand" `elem` defMetadata def)
-  Named _ (ClassItem cname) <- F.find (named "RegClass") (defDecls def)
-  return (defName def, RegisterClass cname)
-
-isDAGOperand :: Def -> Bool
-isDAGOperand d = Metadata "DAGOperand" `elem` defMetadata d
 
 toTrieBit :: Maybe BitRef -> BT.Bit
 toTrieBit br =
