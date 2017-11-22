@@ -4,7 +4,8 @@ module Parser ( parserTests ) where
 import Control.DeepSeq ( deepseq )
 import Control.Monad (when, forM)
 import Data.Monoid ((<>))
-import qualified Data.Text.Lazy.IO as TL
+import qualified Data.Text.IO as TS
+import qualified Data.Text.Lazy as TL
 import qualified Test.Tasty as T
 import qualified Test.Tasty.HUnit as T
 import qualified Text.RE.TDFA as RE
@@ -51,14 +52,13 @@ findTgenFiles = do
 
 mkTest :: FilePath -> T.TestTree
 mkTest p = T.testCase (takeFileName p) $ do
-  t <- TL.readFile p
+  t <- TS.readFile p
   re <- RE.compileRegex "^def "
   let expectedDefCount = RE.countMatches (t RE.*=~ re)
-  case D.parseTablegen p t of
+  case D.parseTablegen p (TL.fromStrict t) of
     Left err ->
         let msg = "Error parsing " <> show p <> ": " <> err
         in T.assertFailure msg
     Right rs -> do
         rs `deepseq` return ()
         T.assertEqual "Number of defs" expectedDefCount (length (D.tblDefs rs))
-
