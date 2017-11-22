@@ -485,6 +485,7 @@ data GPR32 = GPR32 { gPR32Reg :: Word8
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR32 where
+  pPrint (GPR32 31) = PP.text "wzr"
   pPrint (GPR32 r) = PP.text $ "w" <> show r
 
 instance A.Arbitrary GPR32 where
@@ -623,7 +624,12 @@ data AddsubShiftedImm32 = AddsubShiftedImm32 { addsubShiftedImm32Imm :: Word16
                                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddsubShiftedImm32 where
-  pPrint _ = PP.text "AddsubShiftedImm32: not implemented"
+  pPrint (AddsubShiftedImm32 imm shift) =
+      let i :: Word32
+          i = case shift of
+                0b0 -> fromIntegral imm
+                0b10 -> (fromIntegral imm) `shiftL` 12
+      in PP.text "#0x" <> (PP.text $ showHex i "")
 
 instance A.Arbitrary AddsubShiftedImm32 where
   arbitrary g = AddsubShiftedImm32 <$> A.arbitrary g <*> A.arbitrary g
@@ -656,7 +662,12 @@ data AddsubShiftedImm64 = AddsubShiftedImm64 { addsubShiftedImm64Imm :: Word16
                                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddsubShiftedImm64 where
-  pPrint _ = PP.text "AddsubShiftedImm64: not implemented"
+  pPrint (AddsubShiftedImm64 imm shift) =
+      let i :: Word64
+          i = case shift of
+                0b0 -> fromIntegral imm
+                0b10 -> (fromIntegral imm) `shiftL` 12
+      in PP.text "#0x" <> (PP.text $ showHex i "")
 
 instance A.Arbitrary AddsubShiftedImm64 where
   arbitrary g = AddsubShiftedImm64 <$> A.arbitrary g <*> A.arbitrary g
