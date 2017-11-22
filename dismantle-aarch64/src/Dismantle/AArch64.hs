@@ -28,7 +28,7 @@ import Dismantle.AArch64.ISA ( isa )
 import Dismantle.Instruction
 import Dismantle.Tablegen.TH ( genISA, genInstances )
 
-$(genISA isa "data/AArch64.tgen" [])
+$(genISA isa "data/AArch64.tgen" ["data/override"])
 $(return [])
 
 -- We need a separate call to generate some instances, since the helper(s) that
