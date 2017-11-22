@@ -120,6 +120,7 @@ isa = ISA { isaName = "AArch64"
         , ("Uimm12s4", AArch64.uimm12s4Operand)
         , ("Uimm12s8", AArch64.uimm12s8Operand)
         , ("Uimm12s16", AArch64.uimm12s16Operand)
+        , ("Addext", AArch64.addextOperand)
         , ("Unpredictable", word32Operand)
         ]
 

@@ -307,6 +307,11 @@ module Dismantle.AArch64.Operands
   , uimm12s8ToBits
   , uimm12s8Operand
 
+  , Addext
+  , mkAddext
+  , addextToBits
+  , addextOperand
+
   )
 where
 
@@ -2197,5 +2202,38 @@ uimm12s8Operand =
   OperandPayload { opTypeT = [t| Uimm12s8 |]
                  , opConE  = Just (varE 'mkUimm12s8)
                  , opWordE = Just (varE 'uimm12s8ToBits)
+                 }
+
+data Addext = Addext { addextImm :: Word8
+                     , addextOption :: Word8
+                     } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Addext where
+  pPrint _ = PP.text "Addext: not implemented"
+
+instance A.Arbitrary Addext where
+  arbitrary g = Addext <$> A.arbitrary g <*> A.arbitrary g
+
+addextImmField :: Field
+addextImmField = Field 3 0
+
+addextOptionField :: Field
+addextOptionField = Field 3 3
+
+addextToBits :: Addext -> Word32
+addextToBits val =
+  insert addextImmField (addextImm val) $
+  insert addextOptionField (addextOption val) 0
+
+mkAddext :: Word32 -> Addext
+mkAddext w =
+  Addext (fromIntegral $ extract addextImmField w)
+         (fromIntegral $ extract addextOptionField w)
+
+addextOperand :: OperandPayload
+addextOperand =
+  OperandPayload { opTypeT = [t| Addext |]
+                 , opConE  = Just (varE 'mkAddext)
+                 , opWordE = Just (varE 'addextToBits)
                  }
 
