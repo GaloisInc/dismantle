@@ -679,6 +679,7 @@ instance PP.Pretty AddsubShiftedImm32 where
           i = case shift of
                 0b0 -> fromIntegral imm
                 0b10 -> (fromIntegral imm) `shiftL` 12
+                _ -> error $ "Invalid AddsubShiftedImm32 value: " <> show shift
       in PP.text "#0x" <> (PP.text $ showHex i "")
 
 instance A.Arbitrary AddsubShiftedImm32 where
@@ -717,6 +718,7 @@ instance PP.Pretty AddsubShiftedImm64 where
           i = case shift of
                 0b0 -> fromIntegral imm
                 0b10 -> (fromIntegral imm) `shiftL` 12
+                _ -> error $ "invalid AddsubShiftedImm64 value: " <> show shift
       in PP.text "#0x" <> (PP.text $ showHex i "")
 
 instance A.Arbitrary AddsubShiftedImm64 where
@@ -1637,7 +1639,7 @@ instance PP.Pretty RoWextend32 where
       let ty = case o of
             0b0 -> "uxtw"
             0b1 -> "sxtw"
-            _   -> "ERROR"
+            _   -> error $ "Invalid RoWextend32 value: " <> show o
           amt = if s == 1 then 2 else 0
       in PP.text ty PP.<+> PP.text (show amt)
 
@@ -1810,7 +1812,7 @@ instance PP.Pretty RoXextend32 where
       let ty = case o of
             0b0 -> "lsl"
             0b1 -> "sxtx"
-            _   -> "ERROR"
+            _   -> error $ "Invalid RoXextend32 value: " <> show o
           amt = if s == 1 then 2 else 0
       in PP.text ty PP.<+> PP.text (show amt)
 
@@ -1849,7 +1851,7 @@ instance PP.Pretty RoXextend64 where
       let ty = case o of
             0b0 -> "lsl"
             0b1 -> "sxtx"
-            _   -> "ERROR"
+            _   -> error $ "Invalid RoXextend64 value: " <> show o
           amt = if s == 1 then 3 else 0
       in PP.text ty PP.<+> PP.text (show amt)
 
