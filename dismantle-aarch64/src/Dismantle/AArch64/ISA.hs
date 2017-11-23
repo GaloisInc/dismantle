@@ -122,6 +122,15 @@ isa = ISA { isaName = "AArch64"
         , ("Uimm12s16", AArch64.uimm12s16Operand)
         , ("Addext", AArch64.addextOperand)
         , ("Unpredictable", word32Operand)
+        , ("Fixedpoint_f32_i32", AArch64.fixedpointF32I32Operand)
+        , ("Fixedpoint_f32_i64", AArch64.fixedpointF32I64Operand)
+        , ("Fixedpoint_f16_i32", AArch64.fixedpointF16I32Operand)
+        , ("Fixedpoint_f16_i64", AArch64.fixedpointF16I64Operand)
+        , ("Fixedpoint_f64_i32", AArch64.fixedpointF64I32Operand)
+        , ("Fixedpoint_f64_i64", AArch64.fixedpointF64I64Operand)
+        , ("Fpimm16", AArch64.fpimm16Operand)
+        , ("Fpimm32", AArch64.fpimm32Operand)
+        , ("Fpimm64", AArch64.fpimm64Operand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
@@ -146,7 +155,6 @@ isa = ISA { isaName = "AArch64"
     ignoredMetadata d = any badMetadata (defMetadata d)
     badMetadata (Metadata m) =
         or [ "SIMD" `L.isInfixOf` m
-           , "FP" `L.isInfixOf` m
            , m `elem` ["BaseIntegerToFP", "BaseIntegerToFPUnscaled"]
            , "v" `L.isPrefixOf` m
            , "Vector" `L.isInfixOf` m

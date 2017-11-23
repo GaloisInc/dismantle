@@ -312,6 +312,51 @@ module Dismantle.AArch64.Operands
   , addextToBits
   , addextOperand
 
+  , FixedpointF32I32
+  , mkFixedpointF32I32
+  , fixedpointF32I32ToBits
+  , fixedpointF32I32Operand
+
+  , FixedpointF16I32
+  , mkFixedpointF16I32
+  , fixedpointF16I32ToBits
+  , fixedpointF16I32Operand
+
+  , FixedpointF16I64
+  , mkFixedpointF16I64
+  , fixedpointF16I64ToBits
+  , fixedpointF16I64Operand
+
+  , FixedpointF32I64
+  , mkFixedpointF32I64
+  , fixedpointF32I64ToBits
+  , fixedpointF32I64Operand
+
+  , FixedpointF64I32
+  , mkFixedpointF64I32
+  , fixedpointF64I32ToBits
+  , fixedpointF64I32Operand
+
+  , FixedpointF64I64
+  , mkFixedpointF64I64
+  , fixedpointF64I64ToBits
+  , fixedpointF64I64Operand
+
+  , Fpimm16
+  , mkFpimm16
+  , fpimm16ToBits
+  , fpimm16Operand
+
+  , Fpimm32
+  , mkFpimm32
+  , fpimm32ToBits
+  , fpimm32Operand
+
+  , Fpimm64
+  , mkFpimm64
+  , fpimm64ToBits
+  , fpimm64Operand
+
   )
 where
 
@@ -2235,5 +2280,248 @@ addextOperand =
   OperandPayload { opTypeT = [t| Addext |]
                  , opConE  = Just (varE 'mkAddext)
                  , opWordE = Just (varE 'addextToBits)
+                 }
+
+data FixedpointF32I32 = FixedpointF32I32 { fixedpointF32I32Scale :: Word8
+                                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty FixedpointF32I32 where
+  pPrint _ = PP.text "FixedpointF32I32: not implemented"
+
+instance A.Arbitrary FixedpointF32I32 where
+  arbitrary g = FixedpointF32I32 <$> A.arbitrary g
+
+fixedpointF32I32ScaleField :: Field
+fixedpointF32I32ScaleField = Field 5 0
+
+fixedpointF32I32ToBits :: FixedpointF32I32 -> Word32
+fixedpointF32I32ToBits val =
+  insert fixedpointF32I32ScaleField (fixedpointF32I32Scale val) 0
+
+mkFixedpointF32I32 :: Word32 -> FixedpointF32I32
+mkFixedpointF32I32 w =
+  FixedpointF32I32 (fromIntegral $ extract fixedpointF32I32ScaleField w)
+
+fixedpointF32I32Operand :: OperandPayload
+fixedpointF32I32Operand =
+  OperandPayload { opTypeT = [t| FixedpointF32I32 |]
+                 , opConE  = Just (varE 'mkFixedpointF32I32)
+                 , opWordE = Just (varE 'fixedpointF32I32ToBits)
+                 }
+
+data FixedpointF16I32 = FixedpointF16I32 { fixedpointF16I32Scale :: Word8
+                                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty FixedpointF16I32 where
+  pPrint _ = PP.text "FixedpointF16I32: not implemented"
+
+instance A.Arbitrary FixedpointF16I32 where
+  arbitrary g = FixedpointF16I32 <$> A.arbitrary g
+
+fixedpointF16I32ScaleField :: Field
+fixedpointF16I32ScaleField = Field 5 0
+
+fixedpointF16I32ToBits :: FixedpointF16I32 -> Word32
+fixedpointF16I32ToBits val =
+  insert fixedpointF16I32ScaleField (fixedpointF16I32Scale val) 0
+
+mkFixedpointF16I32 :: Word32 -> FixedpointF16I32
+mkFixedpointF16I32 w =
+  FixedpointF16I32 (fromIntegral $ extract fixedpointF16I32ScaleField w)
+
+fixedpointF16I32Operand :: OperandPayload
+fixedpointF16I32Operand =
+  OperandPayload { opTypeT = [t| FixedpointF16I32 |]
+                 , opConE  = Just (varE 'mkFixedpointF16I32)
+                 , opWordE = Just (varE 'fixedpointF16I32ToBits)
+                 }
+
+data FixedpointF16I64 = FixedpointF16I64 { fixedpointF16I64Scale :: Word8
+                                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty FixedpointF16I64 where
+  pPrint _ = PP.text "FixedpointF16I64: not implemented"
+
+instance A.Arbitrary FixedpointF16I64 where
+  arbitrary g = FixedpointF16I64 <$> A.arbitrary g
+
+fixedpointF16I64ScaleField :: Field
+fixedpointF16I64ScaleField = Field 6 0
+
+fixedpointF16I64ToBits :: FixedpointF16I64 -> Word32
+fixedpointF16I64ToBits val =
+  insert fixedpointF16I64ScaleField (fixedpointF16I64Scale val) 0
+
+mkFixedpointF16I64 :: Word32 -> FixedpointF16I64
+mkFixedpointF16I64 w =
+  FixedpointF16I64 (fromIntegral $ extract fixedpointF16I64ScaleField w)
+
+fixedpointF16I64Operand :: OperandPayload
+fixedpointF16I64Operand =
+  OperandPayload { opTypeT = [t| FixedpointF16I64 |]
+                 , opConE  = Just (varE 'mkFixedpointF16I64)
+                 , opWordE = Just (varE 'fixedpointF16I64ToBits)
+                 }
+
+data FixedpointF32I64 = FixedpointF32I64 { fixedpointF32I64Scale :: Word8
+                                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty FixedpointF32I64 where
+  pPrint _ = PP.text "FixedpointF32I64: not implemented"
+
+instance A.Arbitrary FixedpointF32I64 where
+  arbitrary g = FixedpointF32I64 <$> A.arbitrary g
+
+fixedpointF32I64ScaleField :: Field
+fixedpointF32I64ScaleField = Field 6 0
+
+fixedpointF32I64ToBits :: FixedpointF32I64 -> Word32
+fixedpointF32I64ToBits val =
+  insert fixedpointF32I64ScaleField (fixedpointF32I64Scale val) 0
+
+mkFixedpointF32I64 :: Word32 -> FixedpointF32I64
+mkFixedpointF32I64 w =
+  FixedpointF32I64 (fromIntegral $ extract fixedpointF32I64ScaleField w)
+
+fixedpointF32I64Operand :: OperandPayload
+fixedpointF32I64Operand =
+  OperandPayload { opTypeT = [t| FixedpointF32I64 |]
+                 , opConE  = Just (varE 'mkFixedpointF32I64)
+                 , opWordE = Just (varE 'fixedpointF32I64ToBits)
+                 }
+
+data FixedpointF64I32 = FixedpointF64I32 { fixedpointF64I32Scale :: Word8
+                                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty FixedpointF64I32 where
+  pPrint _ = PP.text "FixedpointF64I32: not implemented"
+
+instance A.Arbitrary FixedpointF64I32 where
+  arbitrary g = FixedpointF64I32 <$> A.arbitrary g
+
+fixedpointF64I32ScaleField :: Field
+fixedpointF64I32ScaleField = Field 5 0
+
+fixedpointF64I32ToBits :: FixedpointF64I32 -> Word32
+fixedpointF64I32ToBits val =
+  insert fixedpointF64I32ScaleField (fixedpointF64I32Scale val) 0
+
+mkFixedpointF64I32 :: Word32 -> FixedpointF64I32
+mkFixedpointF64I32 w =
+  FixedpointF64I32 (fromIntegral $ extract fixedpointF64I32ScaleField w)
+
+fixedpointF64I32Operand :: OperandPayload
+fixedpointF64I32Operand =
+  OperandPayload { opTypeT = [t| FixedpointF64I32 |]
+                 , opConE  = Just (varE 'mkFixedpointF64I32)
+                 , opWordE = Just (varE 'fixedpointF64I32ToBits)
+                 }
+
+data FixedpointF64I64 = FixedpointF64I64 { fixedpointF64I64Scale :: Word8
+                                         } deriving (Eq, Ord, Show)
+
+instance PP.Pretty FixedpointF64I64 where
+  pPrint _ = PP.text "FixedpointF64I64: not implemented"
+
+instance A.Arbitrary FixedpointF64I64 where
+  arbitrary g = FixedpointF64I64 <$> A.arbitrary g
+
+fixedpointF64I64ScaleField :: Field
+fixedpointF64I64ScaleField = Field 6 0
+
+fixedpointF64I64ToBits :: FixedpointF64I64 -> Word32
+fixedpointF64I64ToBits val =
+  insert fixedpointF64I64ScaleField (fixedpointF64I64Scale val) 0
+
+mkFixedpointF64I64 :: Word32 -> FixedpointF64I64
+mkFixedpointF64I64 w =
+  FixedpointF64I64 (fromIntegral $ extract fixedpointF64I64ScaleField w)
+
+fixedpointF64I64Operand :: OperandPayload
+fixedpointF64I64Operand =
+  OperandPayload { opTypeT = [t| FixedpointF64I64 |]
+                 , opConE  = Just (varE 'mkFixedpointF64I64)
+                 , opWordE = Just (varE 'fixedpointF64I64ToBits)
+                 }
+
+data Fpimm16 = Fpimm16 { fpimm16Imm :: Word8
+                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Fpimm16 where
+  pPrint _ = PP.text "Fpimm16: not implemented"
+
+instance A.Arbitrary Fpimm16 where
+  arbitrary g = Fpimm16 <$> A.arbitrary g
+
+fpimm16ImmField :: Field
+fpimm16ImmField = Field 8 0
+
+fpimm16ToBits :: Fpimm16 -> Word32
+fpimm16ToBits val =
+  insert fpimm16ImmField (fpimm16Imm val) 0
+
+mkFpimm16 :: Word32 -> Fpimm16
+mkFpimm16 w =
+  Fpimm16 (fromIntegral $ extract fpimm16ImmField w)
+
+fpimm16Operand :: OperandPayload
+fpimm16Operand =
+  OperandPayload { opTypeT = [t| Fpimm16 |]
+                 , opConE  = Just (varE 'mkFpimm16)
+                 , opWordE = Just (varE 'fpimm16ToBits)
+                 }
+
+data Fpimm32 = Fpimm32 { fpimm32Imm :: Word8
+                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Fpimm32 where
+  pPrint _ = PP.text "Fpimm32: not implemented"
+
+instance A.Arbitrary Fpimm32 where
+  arbitrary g = Fpimm32 <$> A.arbitrary g
+
+fpimm32ImmField :: Field
+fpimm32ImmField = Field 8 0
+
+fpimm32ToBits :: Fpimm32 -> Word32
+fpimm32ToBits val =
+  insert fpimm32ImmField (fpimm32Imm val) 0
+
+mkFpimm32 :: Word32 -> Fpimm32
+mkFpimm32 w =
+  Fpimm32 (fromIntegral $ extract fpimm32ImmField w)
+
+fpimm32Operand :: OperandPayload
+fpimm32Operand =
+  OperandPayload { opTypeT = [t| Fpimm32 |]
+                 , opConE  = Just (varE 'mkFpimm32)
+                 , opWordE = Just (varE 'fpimm32ToBits)
+                 }
+
+data Fpimm64 = Fpimm64 { fpimm64Imm :: Word8
+                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Fpimm64 where
+  pPrint _ = PP.text "Fpimm64: not implemented"
+
+instance A.Arbitrary Fpimm64 where
+  arbitrary g = Fpimm64 <$> A.arbitrary g
+
+fpimm64ImmField :: Field
+fpimm64ImmField = Field 8 0
+
+fpimm64ToBits :: Fpimm64 -> Word32
+fpimm64ToBits val =
+  insert fpimm64ImmField (fpimm64Imm val) 0
+
+mkFpimm64 :: Word32 -> Fpimm64
+mkFpimm64 w =
+  Fpimm64 (fromIntegral $ extract fpimm64ImmField w)
+
+fpimm64Operand :: OperandPayload
+fpimm64Operand =
+  OperandPayload { opTypeT = [t| Fpimm64 |]
+                 , opConE  = Just (varE 'mkFpimm64)
+                 , opWordE = Just (varE 'fpimm64ToBits)
                  }
 
