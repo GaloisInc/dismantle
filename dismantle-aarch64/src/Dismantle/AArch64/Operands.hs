@@ -2255,7 +2255,19 @@ data Addext = Addext { addextImm :: Word8
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Addext where
-  pPrint _ = PP.text "Addext: not implemented"
+  pPrint (Addext imm opt) =
+      let s = case opt of
+                0b000 -> "uxtb"
+                0b001 -> "uxth"
+                0b010 -> "uxtw"
+                0b011 -> "uxtx"
+                0b100 -> "sxtb"
+                0b101 -> "sxth"
+                0b110 -> "sxtw"
+                0b111 -> "sxtx"
+                _ -> error $ "Invalid Addext option value: " <> show opt
+          immS = if imm == 0 then "" else " #" <> show imm
+      in PP.text $ s <> immS
 
 instance A.Arbitrary Addext where
   arbitrary g = Addext <$> A.arbitrary g <*> A.arbitrary g
