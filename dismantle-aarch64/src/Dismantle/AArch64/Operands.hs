@@ -678,7 +678,7 @@ instance PP.Pretty AddsubShiftedImm32 where
       let i :: Word32
           i = case shift of
                 0b0 -> fromIntegral imm
-                0b10 -> (fromIntegral imm) `shiftL` 12
+                0b1 -> (fromIntegral imm) `shiftL` 12
                 _ -> error $ "Invalid AddsubShiftedImm32 value: " <> show shift
       in PP.text "#0x" <> (PP.text $ showHex i "")
 
@@ -714,12 +714,11 @@ data AddsubShiftedImm64 = AddsubShiftedImm64 { addsubShiftedImm64Imm :: Word16
 
 instance PP.Pretty AddsubShiftedImm64 where
   pPrint (AddsubShiftedImm64 imm shift) =
-      let i :: Word64
-          i = case shift of
-                0b0 -> fromIntegral imm
-                0b10 -> (fromIntegral imm) `shiftL` 12
+      let shiftStr = case shift of
+                0b0 -> mempty -- Default lsl #0, omit
+                0b1 -> PP.text ", lsl #12"
                 _ -> error $ "invalid AddsubShiftedImm64 value: " <> show shift
-      in PP.text "#0x" <> (PP.text $ showHex i "")
+      in (PP.text "#0x" <> PP.text (showHex imm "")) <> shiftStr
 
 instance A.Arbitrary AddsubShiftedImm64 where
   arbitrary g = AddsubShiftedImm64 <$> A.arbitrary g <*> A.arbitrary g
