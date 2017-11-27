@@ -63,7 +63,7 @@ skipPretty = rx (L.intercalate "|" rxes)
 
              -- We reassemble "mov rN, sp" as "add rN, sp, #0x0". That's
              -- equivalent but we fail the pretty print check as a result.
-             , "mov.*, sp"
+             , "mov.*sp"
 
              -- mov <reg>, <imm> gets disasssembled as "movz <reg>,
              -- <imm>[, shift]" (or "movn") but we lack sufficient
