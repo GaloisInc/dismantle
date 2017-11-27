@@ -1211,7 +1211,49 @@ data LogicalImm32 = LogicalImm32 { logicalImm32Imms :: Word8
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty LogicalImm32 where
-  pPrint _ = PP.text "LogicalImm32: not implemented"
+  pPrint (LogicalImm32 s r) =
+      let (imm, _) = decodeBitMasks 32 0 (fromIntegral s) (fromIntegral r) True
+      in PP.text $ "#0x" <> showHex imm ""
+
+-- See ARM DDI 0487A.a, AppxG-4907, "aarch64/instrs/integer/bitmasks"
+decodeBitMasks :: Int -> Word64 -> Word64 -> Word64 -> Bool -> (Word64, Word64)
+decodeBitMasks nBits immN imms immr immediate =
+    -- Compute log2 of element size
+    -- 2^len must be in range [2, M]
+    let len = highestSetBit $ (immN `shiftL` 6) .|. ((complement imms) .&. (ones 6))
+
+        -- Determine S, R and S - R parameters
+        levels = ones len
+
+        -- For logical immediates an all-ones value of S is reserved
+        -- since it would generate a useless all-ones result (many times)
+        -- if immediate && (imms .&. levels) == levels then
+        --     ReservedValue();
+
+        s = imms .&. levels
+        r = immr .&. levels
+        diff = s - r -- 6-bit subtract with borrow
+
+        esize = 1 `shiftL` len
+        d = diff .&. ones len
+        welem = ones $ fromIntegral $ s + 1
+        telem = ones $ fromIntegral $ d + 1
+        wmask = replicateBits nBits esize welem'
+        welem' = if nBits == 64 then welem `rotateR` (fromIntegral r)
+                                else fromIntegral (((fromIntegral welem) `rotateR` (fromIntegral r)) :: Word32)
+        tmask = replicateBits nBits esize telem
+    in (wmask, tmask)
+
+highestSetBit :: Word64 -> Int
+highestSetBit w = 63 - countLeadingZeros w
+
+ones :: Int -> Word64
+ones n = foldr (.|.) 0 (bit <$> [0..n-1])
+
+replicateBits :: Int -> Int -> Word64 -> Word64
+replicateBits total toReplicate val =
+    let offsets = (* toReplicate) <$> [0..(total `div` toReplicate) - 1]
+    in foldr (\offset old -> old .|. (val `shiftL` offset)) 0 offsets
 
 instance A.Arbitrary LogicalImm32 where
   arbitrary g = LogicalImm32 <$> A.arbitrary g <*> A.arbitrary g
