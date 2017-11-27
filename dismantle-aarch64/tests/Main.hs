@@ -65,6 +65,12 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- equivalent but we fail the pretty print check as a result.
              , "mov.*, sp"
 
+             -- mov <reg>, <imm> gets disasssembled as "movz <reg>,
+             -- <imm>[, shift]" but we lack sufficient information in
+             -- the pretty printer to remove the "z" when there is no
+             -- shift.
+             , "mov[[:space:]]+[wx][[:digit:]]+,[[:space:]]#0x[[:digit:]]+[^,]"
+
              -- Instructions with a PC-relative offset / label that we
              -- can't resolve
              , "ldr.*<"
