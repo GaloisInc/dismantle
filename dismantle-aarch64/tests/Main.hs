@@ -61,20 +61,24 @@ skipPretty = rx (L.intercalate "|" rxes)
     others = [ "add[[:space:]]..,[[:space:]]pc"
              , "sub[[:space:]]..,[[:space:]]pc"
 
-             -- We reassemble "mov rN, sp" as "add rN, sp, #0x0". That's
-             -- equivalent but we fail the pretty print check as a result.
-             , "mov.*sp"
-
-             -- mov <reg>, <imm> gets disasssembled as "movz <reg>,
-             -- <imm>[, shift]" (or "movn") but we lack sufficient
-             -- information in the pretty printer to remove the "z" when
-             -- there is no shift.
-             , "mov[[:space:]]+[wx][[:digit:]]+,[[:space:]]#0x[0-9a-f]+[^,]"
+             -- We reassemble "mov rN, sp" as "add rN, sp, #0x0" and
+             -- similarly for "cmp", "mov", and other instructions
+             -- with alternative forms. The resulting assemblies are
+             -- equivalent but we have to ignore the pretty prints
+             -- because we don't have enough context to represent them
+             -- the way objdump does.
+             , "^mov"
+             , "^cmp"
+             , "^mul"
+             , "^lsl"
+             , "^nop"
+             , "^sxtw"
 
              -- Instructions with a PC-relative offset / label that we
              -- can't resolve
              , "ldr.*<"
              , "b.*<"
+             , "adrp.*<"
 
              -- We decode RET as RET x30. That's technically accurate
              -- since an absent RET argument defaults to x30 (see
