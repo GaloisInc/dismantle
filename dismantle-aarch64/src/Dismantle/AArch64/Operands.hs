@@ -1275,7 +1275,7 @@ data Movimm32Imm = Movimm32Imm { movimm32ImmImm :: Word16
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Movimm32Imm where
-  pPrint _ = PP.text "Movimm32Imm: not implemented"
+  pPrint (Movimm32Imm i) = PP.text $ "#0x" <> (showHex i "")
 
 instance A.Arbitrary Movimm32Imm where
   arbitrary g = Movimm32Imm <$> A.arbitrary g
@@ -1302,7 +1302,10 @@ data Movimm32Shift = Movimm32Shift { movimm32ShiftShift :: Word8
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Movimm32Shift where
-  pPrint _ = PP.text "Movimm32Shift: not implemented"
+  pPrint (Movimm32Shift s) =
+      if s == 0
+      then mempty
+      else PP.text $ ", lsl #" <> show (s * 16)
 
 instance A.Arbitrary Movimm32Shift where
   arbitrary g = Movimm32Shift <$> A.arbitrary g
@@ -1329,7 +1332,10 @@ data Movimm64Shift = Movimm64Shift { movimm64ShiftShift :: Word8
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Movimm64Shift where
-  pPrint _ = PP.text "Movimm64Shift: not implemented"
+  pPrint (Movimm64Shift s) =
+      if s == 0
+      then mempty
+      else PP.text $ ", lsl #" <> show (s * 16)
 
 instance A.Arbitrary Movimm64Shift where
   arbitrary g = Movimm64Shift <$> A.arbitrary g
