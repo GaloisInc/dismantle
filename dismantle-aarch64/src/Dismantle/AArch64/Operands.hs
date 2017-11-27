@@ -2267,7 +2267,7 @@ instance PP.Pretty Addext where
                 0b111 -> "sxtx"
                 _ -> error $ "Invalid Addext option value: " <> show opt
           immS = if imm == 0 then "" else " #" <> show imm
-      in PP.text $ s <> immS
+      in PP.text $ ", " <> s <> immS
 
 instance A.Arbitrary Addext where
   arbitrary g = Addext <$> A.arbitrary g <*> A.arbitrary g
