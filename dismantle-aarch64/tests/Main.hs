@@ -61,6 +61,10 @@ skipPretty = rx (L.intercalate "|" rxes)
     others = [ "add[[:space:]]..,[[:space:]]pc"
              , "sub[[:space:]]..,[[:space:]]pc"
 
+             -- We reassemble "mov rN, sp" as "add rN, sp, #0x0". That's
+             -- equivalent but we fail the pretty print check as a result.
+             , "mov.*, sp"
+
              -- Instructions with a PC-relative offset / label that we
              -- can't resolve
              , "ldr.*<"
