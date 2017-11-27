@@ -2537,4 +2537,3 @@ fpimm64Operand =
                  , opConE  = Just (varE 'mkFpimm64)
                  , opWordE = Just (varE 'fpimm64ToBits)
                  }
-
