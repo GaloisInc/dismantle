@@ -133,6 +133,8 @@ isa = ISA { isaName = "AArch64"
         , ("Fpimm64", AArch64.fpimm64Operand)
         , ("Logical_shifted_reg32", AArch64.gPR32Operand)
         , ("Logical_shifted_reg64", AArch64.gPR64Operand)
+        , ("Arith_shifted_reg32", AArch64.gPR32Operand)
+        , ("Arith_shifted_reg64", AArch64.gPR64Operand)
         ]
 
     aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
