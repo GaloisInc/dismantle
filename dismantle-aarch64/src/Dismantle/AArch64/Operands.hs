@@ -563,6 +563,7 @@ data GPR64 = GPR64 { gPR64Reg :: Word8
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR64 where
+  pPrint (GPR64 31) = PP.text "xzr"
   pPrint (GPR64 r) = PP.text $ "x" <> show r
 
 instance A.Arbitrary GPR64 where
