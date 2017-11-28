@@ -2065,7 +2065,17 @@ data Simm9 = Simm9 { simm9Imm :: Word16
 
 instance PP.Pretty Simm9 where
   -- C5.6.86
-  pPrint _ = PP.text "Simm9: not implemented"
+  pPrint (Simm9 imm) =
+      let signBit = 0b100000000
+          signBitExtension = 0xff00
+          v' :: Word16
+          v' = if imm .&. signBit == signBit
+               then fromIntegral imm .|. signBitExtension
+               else imm
+          -- Manual sign extension from a 7-bit value to 8-bit.
+          v :: Int16
+          v = fromIntegral v'
+      in PP.char '#' <> (PP.text $ show v)
 
 instance A.Arbitrary Simm9 where
   arbitrary g = Simm9 <$> A.arbitrary g
