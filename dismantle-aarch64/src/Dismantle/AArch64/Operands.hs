@@ -2203,7 +2203,8 @@ data Uimm12s16 = Uimm12s16 { uimm12s16Imm :: Word16
                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s16 where
-  pPrint _ = PP.text "Uimm12s16: not implemented"
+  pPrint (Uimm12s16 v) =
+    PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32) `shiftL` 4)
 
 instance A.Arbitrary Uimm12s16 where
   arbitrary g = Uimm12s16 <$> A.arbitrary g
