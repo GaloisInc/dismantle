@@ -121,6 +121,7 @@ isa = ISA { isaName = "AArch64"
         , ("Uimm12s8", AArch64.uimm12s8Operand)
         , ("Uimm12s16", AArch64.uimm12s16Operand)
         , ("Addext", AArch64.addextOperand)
+        , ("Addshift64", AArch64.addshift64Operand)
         , ("Unpredictable", word32Operand)
         , ("Fixedpoint_f32_i32", AArch64.fixedpointF32I32Operand)
         , ("Fixedpoint_f32_i64", AArch64.fixedpointF32I64Operand)

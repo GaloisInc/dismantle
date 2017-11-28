@@ -357,6 +357,10 @@ module Dismantle.AArch64.Operands
   , fpimm64ToBits
   , fpimm64Operand
 
+  , Addshift64
+  , mkAddshift64
+  , addshift64ToBits
+  , addshift64Operand
   )
 where
 
@@ -2608,3 +2612,45 @@ fpimm64Operand =
                  , opConE  = Just (varE 'mkFpimm64)
                  , opWordE = Just (varE 'fpimm64ToBits)
                  }
+
+data Addshift64 = Addshift64 { addshift64Imm :: Word8
+                             , addshift64Shift :: Word8
+                             } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Addshift64 where
+  pPrint (Addshift64 imm s) =
+      if imm == 0
+      then mempty
+      else let ty = case s of
+                      0b0 -> "lsl"
+                      0b1 -> "lsr"
+                      0b10 -> "asr"
+                      _ -> "<reserved>"
+           in PP.text $ ", " <> ty <> " " <> show imm
+
+instance A.Arbitrary Addshift64 where
+  arbitrary g = Addshift64 <$> A.arbitrary g <*> A.arbitrary g
+
+addshift64ImmField :: Field
+addshift64ImmField = Field 6 0
+
+addshift64ShiftField :: Field
+addshift64ShiftField = Field 2 6
+
+addshift64ToBits :: Addshift64 -> Word32
+addshift64ToBits val =
+  insert addshift64ImmField (addshift64Imm val) $
+  insert addshift64ShiftField (addshift64Shift val) 0
+
+mkAddshift64 :: Word32 -> Addshift64
+mkAddshift64 w =
+  Addshift64 (fromIntegral $ extract addshift64ImmField w)
+             (fromIntegral $ extract addshift64ShiftField w)
+
+addshift64Operand :: OperandPayload
+addshift64Operand =
+  OperandPayload { opTypeT = [t| Addshift64 |]
+                 , opConE  = Just (varE 'mkAddshift64)
+                 , opWordE = Just (varE 'addshift64ToBits)
+                 }
+
