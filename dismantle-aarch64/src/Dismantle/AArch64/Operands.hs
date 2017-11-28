@@ -2072,7 +2072,7 @@ instance PP.Pretty Simm9 where
           v' = if imm .&. signBit == signBit
                then fromIntegral imm .|. signBitExtension
                else imm
-          -- Manual sign extension from a 7-bit value to 8-bit.
+          -- Manual sign extension from a 9-bit value to 16-bit.
           v :: Int16
           v = fromIntegral v'
       in PP.char '#' <> (PP.text $ show v)
