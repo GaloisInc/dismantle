@@ -74,6 +74,15 @@ skipPretty = rx (L.intercalate "|" rxes)
              , "^nop"
              , "^sxtw"
 
+             -- ASR is an alias for SBFM
+             , "asr"
+
+             -- UBFX is an alias for UBFM
+             , "ubfx"
+
+             -- LSR is represented as UBFM
+             , "lsr"
+
              -- Instructions with a PC-relative offset / label that we
              -- can't resolve
              , "ldr.*<"
