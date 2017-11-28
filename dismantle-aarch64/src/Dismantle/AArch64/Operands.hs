@@ -1283,13 +1283,16 @@ logicalImm32Operand =
 
 data LogicalImm64 = LogicalImm64 { logicalImm64Imms :: Word8
                                  , logicalImm64Immr :: Word8
+                                 , logicalImm64ImmN :: Word8
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty LogicalImm64 where
-  pPrint _ = PP.text "LogicalImm64: not implemented"
+  pPrint (LogicalImm64 s r n) =
+      let (imm, _) = decodeBitMasks 64 (fromIntegral n) (fromIntegral s) (fromIntegral r) True
+      in PP.text $ "#0x" <> showHex imm ""
 
 instance A.Arbitrary LogicalImm64 where
-  arbitrary g = LogicalImm64 <$> A.arbitrary g <*> A.arbitrary g
+  arbitrary g = LogicalImm64 <$> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g
 
 logicalImm64ImmsField :: Field
 logicalImm64ImmsField = Field 6 0
@@ -1297,15 +1300,20 @@ logicalImm64ImmsField = Field 6 0
 logicalImm64ImmrField :: Field
 logicalImm64ImmrField = Field 6 6
 
+logicalImm64ImmNField :: Field
+logicalImm64ImmNField = Field 1 12
+
 logicalImm64ToBits :: LogicalImm64 -> Word32
 logicalImm64ToBits val =
   insert logicalImm64ImmsField (logicalImm64Imms val) $
+  insert logicalImm64ImmNField (logicalImm64ImmN val) $
   insert logicalImm64ImmrField (logicalImm64Immr val) 0
 
 mkLogicalImm64 :: Word32 -> LogicalImm64
 mkLogicalImm64 w =
   LogicalImm64 (fromIntegral $ extract logicalImm64ImmsField w)
                (fromIntegral $ extract logicalImm64ImmrField w)
+               (fromIntegral $ extract logicalImm64ImmNField w)
 
 logicalImm64Operand :: OperandPayload
 logicalImm64Operand =
