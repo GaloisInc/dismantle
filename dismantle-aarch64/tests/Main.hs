@@ -6,8 +6,6 @@ import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
 import qualified Text.RE.TDFA as RE
-import Data.Monoid ((<>))
-import qualified Text.PrettyPrint.HughesPJClass as PP
 import Data.Word (Word64)
 
 import Dismantle.Testing
