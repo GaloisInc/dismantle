@@ -913,7 +913,10 @@ data ArithExtendlsl64 = ArithExtendlsl64 { arithExtendlsl64Shift :: Word8
                                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty ArithExtendlsl64 where
-  pPrint _ = PP.text "ArithExtendlsl64: not implemented"
+  pPrint (ArithExtendlsl64 s) =
+      if s == 0
+      then mempty
+      else PP.text $ ", lsl " <> (show s)
 
 instance A.Arbitrary ArithExtendlsl64 where
   arbitrary g = ArithExtendlsl64 <$> A.arbitrary g
