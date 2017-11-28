@@ -82,6 +82,13 @@ skipPretty = rx (L.intercalate "|" rxes)
 
              -- Alias for BFM
              , "bfi"
+             , "bfxil"
+
+             -- Alias for CSINC
+             , "cset"
+
+             -- Alias for ADDS
+             , "cmn"
 
              -- Alias for SUB
              , "neg"
@@ -93,7 +100,7 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- can't resolve
              , "ldr.*<"
              , "b.*<"
-             , "adrp.*<"
+             , "adr.*<"
 
              -- We decode RET as RET x30. That's technically accurate
              -- since an absent RET argument defaults to x30 (see
