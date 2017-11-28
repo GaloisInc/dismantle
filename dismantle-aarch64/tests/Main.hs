@@ -6,8 +6,6 @@ import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
 import qualified Text.RE.TDFA as RE
-import Data.Monoid ((<>))
-import qualified Text.PrettyPrint.HughesPJClass as PP
 import Data.Word (Word64)
 
 import Dismantle.Testing
@@ -77,8 +75,23 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- ASR is an alias for SBFM
              , "asr"
 
-             -- UBFX is an alias for UBFM
+             -- Aliases for UBFM
              , "ubfx"
+             , "uxtb"
+             , "uxth"
+
+             -- Alias for BFM
+             , "bfi"
+             , "bfxil"
+
+             -- Alias for CSINC
+             , "cset"
+
+             -- Alias for ADDS
+             , "cmn"
+
+             -- Alias for SUB
+             , "neg"
 
              -- LSR is represented as UBFM
              , "lsr"
@@ -87,7 +100,7 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- can't resolve
              , "ldr.*<"
              , "b.*<"
-             , "adrp.*<"
+             , "adr.*<"
 
              -- We decode RET as RET x30. That's technically accurate
              -- since an absent RET argument defaults to x30 (see

@@ -185,7 +185,9 @@ isDataDirective t =  or [ TL.pack ".long" `TL.isInfixOf` t
                         ]
 
 isUndefinedInstruction :: TL.Text -> Bool
-isUndefinedInstruction t =  TL.pack "UNDEFINED" `TL.isInfixOf` t
+isUndefinedInstruction t =
+    TL.pack "UNDEFINED" `TL.isInfixOf` t ||
+    TL.pack "undefined" `TL.isInfixOf` t
 
 -- | These are the markers for where symbols point in the decoded
 -- stream.  Even stripped binaries tend to have at least a few (at the
