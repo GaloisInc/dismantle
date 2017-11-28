@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Dismantle.ARM.ISA (
-  isa
+  isa,
+  predOperand
   ) where
 
 import qualified Data.Binary.Get as B
@@ -27,6 +28,12 @@ asWord32 = B.runGet B.getWord32be
 
 fromWord32 :: Word32 -> LBS.ByteString
 fromWord32 = B.runPut . B.putWord32be
+
+predOperand :: OperandPayload
+predOperand = OperandPayload { opTypeT = [t| ARM.Pred |]
+                             , opConE = Just (varE 'ARM.mkPred)
+                             , opWordE = Just (varE 'ARM.predToBits)
+                             }
 
 isa :: ISA
 isa = ISA { isaName = "ARM"
@@ -90,10 +97,6 @@ isa = ISA { isaName = "ARM"
                            , opConE = Just (varE 'ARM.mkImm16)
                            , opWordE = Just (varE 'ARM.imm16ToBits)
                            }
-    predOperand = OperandPayload { opTypeT = [t| ARM.Pred |]
-                                 , opConE = Just (varE 'ARM.mkPred)
-                                 , opWordE = Just (varE 'ARM.predToBits)
-                                 }
     adrLabelOperand = OperandPayload { opTypeT = [t| ARM.AdrLabel |]
                                      , opConE = Just (varE 'ARM.mkAdrLabel)
                                      , opWordE = Just (varE 'ARM.adrLabelToBits)

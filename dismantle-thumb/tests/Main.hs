@@ -36,8 +36,20 @@ main = do
   tg <- binaryTestSuite thumb "tests/bin"
   T.defaultMain tg
 
+remove :: TL.Text -> TL.Text -> TL.Text
+remove needle s =
+    let (h, t) = TL.breakOn ".w" s
+    in if needle `TL.isPrefixOf` t
+       then h <> (TL.drop (TL.length needle) t)
+       else h
+
 normalize :: TL.Text -> TL.Text
 normalize =
+    -- Then, because objdump and tablegen don't always agree on when to
+    -- append the ".w" instruction name suffix, we strip it. This means
+    -- we at least get to test that operand pretty printing works in
+    -- those cases rather than ignoring the entire instruction.
+    remove ".w" .
     -- Then remove whitespace
     TL.filter (not . isSpace) .
     -- Remove square brackets and "#"
@@ -77,6 +89,12 @@ skipPretty = rx (L.intercalate "|" rxes)
                 "bls"
               , "bl"
               , "b"
+              , "b.n"
+              , "cb"
+
+              -- These get represented as RSBS (see ARM ARM, DDI
+              -- 0406C.b, A8.8.118 NEG)
+              , "negs?"
 
               -- These get represented as load/store multiple with sp
               -- mutation; push and pop are not even mentioned in the
@@ -118,6 +136,7 @@ skipPretty = rx (L.intercalate "|" rxes)
               -- Ignored because the Tgen format string uses "ldm" for
               -- this instruction and objdump uses "ldmfd".
               , "ldmfd"
+              , "ldmia"
 
               -- Ignored because the Tgen format string for these
               -- reference an implied operand that isn't mentioned
@@ -145,12 +164,76 @@ skipPretty = rx (L.intercalate "|" rxes)
 
               -- We show nop as "mov r0, r0"
               , "nop"
+
+              -- Tablegen format string has an undefined variable
+              -- for this one (tMUL). We could ignore that, but it
+              -- still leaves a trailing comma in the pretty-printed
+              -- instruction that would still fail to match the objdump
+              -- output.
+              , "muls"
+              , "mulcs"
+
+              -- Ignore instructions where objdump used a preceding "it"
+              -- instruction to get condition hints about subsequent
+              -- instructions. Those get pretty-printed by objdump as
+              -- ARM-style instructions with predication suffixes and
+              -- that isn't legal, so we can safely ignore those in
+              -- thiese Thumb tests.
+              , "mov" <> conditions
+              , "mul" <> conditions
+              , "utxb" <> conditions
+              , "add" <> conditions
+              , "sub" <> conditions
+              , "uxtb" <> conditions
+              , "rsb" <> conditions
+              , "cmp" <> conditions
+              , "ldrb" <> conditions
+              , "ldr" <> conditions
+              , "orr" <> conditions
+              , "str" <> conditions
+              , "ubfx" <> conditions
+              , "and" <> conditions
+              , "strh" <> conditions
+              , "mvn" <> conditions
+              , "ldrsb" <> conditions
+              , "ldrh" <> conditions
+              , "sdiv" <> conditions
+              , "umull" <> conditions
+              , "eor" <> conditions
+              , "udiv" <> conditions
+              , "addw" <> conditions
+              , "clz" <> conditions
+              , "uxth" <> conditions
+              , "sxth" <> conditions
+              , "rev" <> conditions
+              , "movw" <> conditions
+
+              -- We render this as ADR
+              , "addw.*pc.*"
+
+              -- We render this as a shift instruction
+              , "mov.*lsl.*"
+              , "mov.*lsr.*"
+              , "mov.*asr.*"
+              , "mov.*ror.*"
+              , "mov.*rrx.*"
+
+              -- We can't decode "it" branching instructions because
+              -- we need information from multiple operands at once to
+              -- render the instruction correctly, but the Tablegen
+              -- parser only lets us pretty-print at the operand level.
+              -- There are many t/e condition flags that can follow
+              -- the "it" instruction name, but rather than write out
+              -- a regular expression to handle them all, I decided to
+              -- just write out an expression to handle just the ones
+              -- we've encountered. -JTD
+              , "ite?"
               ]
 
-    matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> suffix <> "[[:space:]]?)"
+    matchInstruction name = "(^[[:space:]]*" <> name <> conditions <> "?" <> suffix <> "[[:space:]]?)"
 
     conditions = "(" <> (concat $ L.intersperse "|"
-                  (PP.render <$> PP.pPrint <$> Thumb.mkPred <$> [0..13])) <> ")?"
+                  (PP.render <$> PP.pPrint <$> Thumb.mkPred <$> [0..13])) <> ")"
     suffix = "(.n)?"
 
 expectedFailures :: RE.RE

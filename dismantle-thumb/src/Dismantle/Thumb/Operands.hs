@@ -17,6 +17,18 @@ module Dismantle.Thumb.Operands (
   mkBit,
   bitToBits,
 
+  Imm065535,
+  mkImm065535,
+  imm065535ToBits,
+
+  RotImm,
+  mkRotImm,
+  rotImmToBits,
+
+  Imm1_32,
+  mkImm1_32,
+  imm1_32ToBits,
+
   ITMask,
   mkITMask,
   itMaskToBits,
@@ -256,7 +268,10 @@ instance PP.Pretty T2AddrModeImm8S4Pre where
     pPrint _ = PP.text "not implemented 1"
 
 mkT2AddrModeImm8S4Pre :: Word32 -> T2AddrModeImm8S4Pre
-mkT2AddrModeImm8S4Pre w = T2AddrModeImm8S4Pre (fromIntegral add) (fromIntegral imm8) (GPR $ fromIntegral reg)
+mkT2AddrModeImm8S4Pre w =
+    T2AddrModeImm8S4Pre (fromIntegral add)
+                        (fromIntegral imm8)
+                        (GPR $ fromIntegral reg)
   where
     add = extract (Field 1 8) w
     reg = extract (Field 4 9) w
@@ -299,7 +314,10 @@ instance PP.Pretty T2AddrModeImm8S4 where
     pPrint _ = PP.text "not implemented 3"
 
 mkT2AddrModeImm8S4 :: Word32 -> T2AddrModeImm8S4
-mkT2AddrModeImm8S4 w = T2AddrModeImm8S4 (fromIntegral add) (fromIntegral imm8) (GPR $ fromIntegral reg)
+mkT2AddrModeImm8S4 w =
+    T2AddrModeImm8S4 (fromIntegral add)
+                     (fromIntegral imm8)
+                     (GPR $ fromIntegral reg)
   where
     add = extract (Field 1 8) w
     reg = extract (Field 4 9) w
@@ -347,7 +365,7 @@ data AddrModeIs2 =
 
 instance PP.Pretty AddrModeIs2 where
   pPrint m =
-      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs2Imm m `shiftL` 2))
+      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ addrModeIs2Imm m `shiftL` 1))
       in PP.brackets $ PP.pPrint (addrModeIs2Reg m) <> suf
 
 addrModeIs2RegField :: Field
@@ -598,36 +616,101 @@ bfInvMaskImmToBits (BfInvMaskImm l m) =
     insert bfInvMaskImmLsbitsField l 0
 
 data T2AddrModeSoReg =
-    T2AddrModeSoReg { t2AddrModeSoRegShiftType :: ARM.ShiftType
+    T2AddrModeSoReg { t2AddrModeSoRegShiftAmt  :: Word8
                     , t2AddrModeSoRegRm        :: GPR
                     , t2AddrModeSoRegRn        :: GPR
                     }
                     deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeSoReg where
-    pPrint _ = PP.text "not implemented 5"
+    pPrint (T2AddrModeSoReg s rm rn) =
+        PP.brackets $ (PP.pPrint rn <> PP.char ',') PP.<+>
+                      (PP.pPrint rm <>
+                       (if s == 0
+                        then mempty
+                        else PP.text ", lsl #" <> PP.pPrint s))
 
 t2AddrModeSoRegRmField :: Field
-t2AddrModeSoRegRmField = Field 4 0
+t2AddrModeSoRegRmField = Field 4 2
 
-t2AddrModeSoRegShiftTypeField :: Field
-t2AddrModeSoRegShiftTypeField = Field 2 4
+t2AddrModeSoRegShiftAmtField :: Field
+t2AddrModeSoRegShiftAmtField = Field 2 0
 
 t2AddrModeSoRegRnField :: Field
 t2AddrModeSoRegRnField = Field 4 6
 
 mkT2AddrModeSoReg :: Word32 -> T2AddrModeSoReg
-mkT2AddrModeSoReg w = T2AddrModeSoReg st (GPR $ fromIntegral rm) (GPR $ fromIntegral rn)
+mkT2AddrModeSoReg w = T2AddrModeSoReg (fromIntegral s) (GPR $ fromIntegral rm) (GPR $ fromIntegral rn)
   where
       rm  = extract t2AddrModeSoRegRmField w
       rn  = extract t2AddrModeSoRegRnField w
-      st  = ARM.decodeShiftType $ extract t2AddrModeSoRegShiftTypeField w
+      s   = extract t2AddrModeSoRegShiftAmtField w
 
 t2AddrModeSoRegToBits :: T2AddrModeSoReg -> Word32
-t2AddrModeSoRegToBits (T2AddrModeSoReg st (GPR rm) (GPR rn)) =
+t2AddrModeSoRegToBits (T2AddrModeSoReg s (GPR rm) (GPR rn)) =
     insert t2AddrModeSoRegRmField rm $
     insert t2AddrModeSoRegRnField rn $
-    insert t2AddrModeSoRegShiftTypeField (ARM.encodeShiftType st) 0
+    insert t2AddrModeSoRegShiftAmtField s 0
+
+data Imm065535 = Imm065535 { unImm065535 :: Word16
+                           }
+                           deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm065535 where
+  pPrint (Imm065535 v) = PP.char '#' <> PP.pPrint v
+
+imm065535Field :: Field
+imm065535Field = Field 16 0
+
+mkImm065535 :: Word32 -> Imm065535
+mkImm065535 w = Imm065535 $ fromIntegral i
+  where
+    i = extract imm065535Field w
+
+imm065535ToBits :: Imm065535 -> Word32
+imm065535ToBits (Imm065535 i) =
+    insert imm065535Field i 0
+
+data RotImm = RotImm { unRotImm :: Word8
+                     }
+                     deriving (Eq, Ord, Show)
+
+instance PP.Pretty RotImm where
+  pPrint (RotImm v) =
+      if v == 0
+      then mempty
+      else PP.char ',' PP.<+> (PP.char '#' <> (PP.pPrint v))
+
+rotImmField :: Field
+rotImmField = Field 2 0
+
+mkRotImm :: Word32 -> RotImm
+mkRotImm w = RotImm $ fromIntegral i
+  where
+    i = extract rotImmField w
+
+rotImmToBits :: RotImm -> Word32
+rotImmToBits (RotImm i) =
+    insert rotImmField (fromIntegral i) 0
+
+data Imm1_32 = Imm1_32 { unImm1_32 :: Word8
+                       }
+                       deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm1_32 where
+  pPrint v = PP.char '#' <> (PP.pPrint (unImm1_32 v + 1))
+
+imm1_32Field :: Field
+imm1_32Field = Field 5 0
+
+mkImm1_32 :: Word32 -> Imm1_32
+mkImm1_32 w = Imm1_32 $ fromIntegral i
+  where
+    i = extract imm1_32Field w
+
+imm1_32ToBits :: Imm1_32 -> Word32
+imm1_32ToBits (Imm1_32 i) =
+    insert imm1_32Field (fromIntegral i) 0
 
 data T2SoReg =
     T2SoReg { t2SoRegImm5      :: Word8
@@ -637,7 +720,10 @@ data T2SoReg =
             deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2SoReg where
-    pPrint _ = PP.text "not implemented 6"
+    pPrint (T2SoReg imm ty rm) =
+        (PP.pPrint rm <> PP.char ',') PP.<+>
+        PP.pPrint ty PP.<+>
+        (PP.char '#' <> PP.pPrint imm)
 
 t2SoRegImm3Field :: Field
 t2SoRegImm3Field = Field 3 9
@@ -657,8 +743,8 @@ mkT2SoReg w = T2SoReg (fromIntegral imm) st (GPR $ fromIntegral reg)
       reg  = extract t2SoRegRmField w
       imm2 = extract t2SoRegImm2Field w
       imm3 = extract t2SoRegImm3Field w
-      imm = (imm3 `shiftL` 2) .|. imm2
-      st   = ARM.decodeShiftType $ extract t2SoRegShiftTypeField w
+      imm' = (imm3 `shiftL` 2) .|. imm2
+      (st, imm)   = ARM.decodeImmShift (extract t2SoRegShiftTypeField w) imm'
 
 t2SoRegToBits :: T2SoReg -> Word32
 t2SoRegToBits (T2SoReg imm st (GPR reg)) =
@@ -766,7 +852,7 @@ thumbBlTargetToBits (ThumbBlTarget s imm10 j1 j2 imm11) =
     insert thumbBlTargetImm11Field imm11 0
 
 data TBrTarget =
-    TBrTarget { tBrTargetImm :: Word8
+    TBrTarget { tBrTargetImm :: Word16
               }
               deriving (Eq, Ord, Show)
 
@@ -774,7 +860,7 @@ instance PP.Pretty TBrTarget where
   pPrint m = PP.pPrint (((fromIntegral $ tBrTargetImm m) :: Word32) `shiftL` 2)
 
 tBrTargetImmField :: Field
-tBrTargetImmField = Field 8 0
+tBrTargetImmField = Field 11 0
 
 mkTBrTarget :: Word32 -> TBrTarget
 mkTBrTarget w = TBrTarget (fromIntegral imm)
@@ -783,7 +869,7 @@ mkTBrTarget w = TBrTarget (fromIntegral imm)
 
 tBrTargetToBits :: TBrTarget -> Word32
 tBrTargetToBits (TBrTarget imm) =
-    insert addrModeIs4ImmField imm 0
+    insert tBrTargetImmField imm 0
 
 -- | An T2AddrMode_Imm8Pre memory reference for a load or store instruction
 -- (with a 8-bit immediate)
@@ -794,7 +880,10 @@ data T2AddrModeImm8Pre = T2AddrModeImm8Pre { t2AddrModeImm8PreRn   :: GPR
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeImm8Pre where
-  pPrint _ = PP.text "not implemented 9"
+  pPrint (T2AddrModeImm8Pre rn imm u) =
+      let s = PP.text $ if u == 0 then "-" else ""
+      in PP.brackets $ (PP.pPrint rn <> PP.char ',') PP.<+>
+                       (PP.char '#' <> s <> PP.pPrint imm)
 
 t2AddrModeImm8PreRegField :: Field
 t2AddrModeImm8PreRegField = Field 4 9
@@ -806,7 +895,10 @@ t2AddrModeImm8PreImmField :: Field
 t2AddrModeImm8PreImmField = Field 8 0
 
 mkT2AddrModeImm8Pre :: Word32 -> T2AddrModeImm8Pre
-mkT2AddrModeImm8Pre w = T2AddrModeImm8Pre (GPR $ fromIntegral reg) (fromIntegral imm) (fromIntegral u)
+mkT2AddrModeImm8Pre w =
+    T2AddrModeImm8Pre (GPR $ fromIntegral reg)
+                      (fromIntegral imm)
+                      (fromIntegral u)
   where
     reg = extract t2AddrModeImm8PreRegField w
     imm = extract t2AddrModeImm8PreImmField w
@@ -827,19 +919,25 @@ data T2AddrModeNegImm8 = T2AddrModeNegImm8 { t2AddrModeNegImm8Register  :: GPR
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeNegImm8 where
-  pPrint _ = PP.text "not implemented 10"
+  pPrint (T2AddrModeNegImm8 reg imm add) =
+      let s = PP.text $ if add == 0 then "-" else ""
+      in PP.brackets $ (PP.pPrint reg <> PP.char ',') PP.<+>
+         (PP.char '#' <> s <> PP.pPrint imm)
 
 t2AddrModeNegImm8RegField :: Field
 t2AddrModeNegImm8RegField = Field 4 9
 
 t2AddrModeNegImm8AddField :: Field
-t2AddrModeNegImm8AddField = Field 1 9
+t2AddrModeNegImm8AddField = Field 1 8
 
 t2AddrModeNegImm8ImmField :: Field
 t2AddrModeNegImm8ImmField = Field 8 0
 
 mkT2AddrModeNegImm8 :: Word32 -> T2AddrModeNegImm8
-mkT2AddrModeNegImm8 w = T2AddrModeNegImm8 (GPR $ fromIntegral reg) (fromIntegral imm) (fromIntegral a)
+mkT2AddrModeNegImm8 w =
+    T2AddrModeNegImm8 (GPR $ fromIntegral reg)
+                      (fromIntegral imm)
+                      (fromIntegral a)
   where
     reg = extract t2AddrModeNegImm8RegField w
     a   = extract t2AddrModeNegImm8AddField w
@@ -869,7 +967,8 @@ t2AddrModeImm8S4OffsetImmField :: Field
 t2AddrModeImm8S4OffsetImmField = Field 8 0
 
 mkT2AddrModeImm8S4Offset :: Word32 -> T2AddrModeImm8S4Offset
-mkT2AddrModeImm8S4Offset w = T2AddrModeImm8S4Offset (fromIntegral add) (fromIntegral imm)
+mkT2AddrModeImm8S4Offset w =
+    T2AddrModeImm8S4Offset (fromIntegral add) (fromIntegral imm)
   where
     add = extract t2AddrModeImm8S4OffsetAddField w
     imm = extract t2AddrModeImm8S4OffsetImmField w
@@ -888,7 +987,9 @@ data T2AddrModeImm8Offset =
                          deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2AddrModeImm8Offset where
-  pPrint _ = PP.text "not implemented 12"
+  pPrint (T2AddrModeImm8Offset add imm) =
+      let s = PP.text $ if add == 0 then "-" else ""
+      in PP.char ',' PP.<+> (PP.char '#' <> s <> PP.pPrint imm)
 
 t2AddrModeImm8OffsetAddField :: Field
 t2AddrModeImm8OffsetAddField = Field 1 8
@@ -897,7 +998,8 @@ t2AddrModeImm8OffsetImmField :: Field
 t2AddrModeImm8OffsetImmField = Field 8 0
 
 mkT2AddrModeImm8Offset :: Word32 -> T2AddrModeImm8Offset
-mkT2AddrModeImm8Offset w = T2AddrModeImm8Offset (fromIntegral add) (fromIntegral imm)
+mkT2AddrModeImm8Offset w =
+    T2AddrModeImm8Offset (fromIntegral add) (fromIntegral imm)
   where
     add = extract t2AddrModeImm8OffsetAddField w
     imm = extract t2AddrModeImm8OffsetImmField w
@@ -926,7 +1028,8 @@ t2AddrModeImm8ImmField :: Field
 t2AddrModeImm8ImmField = Field 8 0
 
 mkT2AddrModeImm8 :: Word32 -> T2AddrModeImm8
-mkT2AddrModeImm8 w = T2AddrModeImm8 (GPR $ fromIntegral reg) (fromIntegral imm)
+mkT2AddrModeImm8 w =
+    T2AddrModeImm8 (GPR $ fromIntegral reg) (fromIntegral imm)
   where
     reg = extract t2AddrModeImm8RegField w
     imm = extract t2AddrModeImm8ImmField w
@@ -945,7 +1048,9 @@ data T2AddrModeImm12 = T2AddrModeImm12 { t2AddrModeImm12Register  :: GPR
 
 instance PP.Pretty T2AddrModeImm12 where
   pPrint m =
-      let suf = PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ t2AddrModeImm12Immediate m))
+      let suf = if t2AddrModeImm12Immediate m == 0
+                then mempty
+                else PP.char ',' PP.<+> ((PP.char '#') <> (PP.pPrint $ t2AddrModeImm12Immediate m))
       in PP.brackets $ PP.pPrint (t2AddrModeImm12Register m) <> suf
 
 t2AddrModeImm12RegField :: Field
@@ -955,7 +1060,8 @@ t2AddrModeImm12ImmField :: Field
 t2AddrModeImm12ImmField = Field 12 0
 
 mkT2AddrModeImm12 :: Word32 -> T2AddrModeImm12
-mkT2AddrModeImm12 w = T2AddrModeImm12 (GPR $ fromIntegral reg) (fromIntegral imm)
+mkT2AddrModeImm12 w =
+    T2AddrModeImm12 (GPR $ fromIntegral reg) (fromIntegral imm)
   where
     reg = extract t2AddrModeImm12RegField w
     imm = extract t2AddrModeImm12ImmField w
@@ -1009,7 +1115,8 @@ addrModeImm01020S4ImmField :: Field
 addrModeImm01020S4ImmField = Field 8 0
 
 mkAddrModeImm01020S4 :: Word32 -> AddrModeImm01020S4
-mkAddrModeImm01020S4 w = AddrModeImm01020S4 (GPR $ fromIntegral rm) (fromIntegral imm)
+mkAddrModeImm01020S4 w =
+    AddrModeImm01020S4 (GPR $ fromIntegral rm) (fromIntegral imm)
   where
     rm = extract addrModeImm01020S4RegField w
     imm = extract addrModeImm01020S4ImmField w
@@ -1190,6 +1297,15 @@ instance A.Arbitrary TImm0508S4 where
 
 instance A.Arbitrary TImm01020S4 where
   arbitrary g = TImm01020S4 <$> A.arbitrary g
+
+instance A.Arbitrary Imm1_32 where
+  arbitrary g = Imm1_32 <$> A.arbitrary g
+
+instance A.Arbitrary Imm065535 where
+  arbitrary g = Imm065535 <$> A.arbitrary g
+
+instance A.Arbitrary RotImm where
+  arbitrary g = RotImm <$> A.arbitrary g
 
 instance A.Arbitrary BfInvMaskImm where
   arbitrary g = BfInvMaskImm <$> A.arbitrary g

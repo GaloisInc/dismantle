@@ -127,7 +127,9 @@ module Dismantle.ARM.Operands (
 
   ShiftType(..),
   decodeShiftType,
-  encodeShiftType
+  encodeShiftType,
+
+  decodeImmShift
   ) where
 
 import Data.Bits
@@ -796,7 +798,7 @@ data Imm5 = Imm5 { unImm5 :: Word8
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm5 where
-  pPrint = PP.pPrint . unImm5
+  pPrint v = PP.char '#' <> (PP.pPrint $ unImm5 v)
 
 imm5Field :: Field
 imm5Field = Field 5 0

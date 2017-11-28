@@ -7,6 +7,7 @@ module Dismantle.Tablegen (
   filterISA,
   parsableInstructions,
   parseInstruction,
+  toTypeName,
   Parser(..),
   module Dismantle.Tablegen.ISA,
   module Dismantle.Tablegen.Types
@@ -14,13 +15,14 @@ module Dismantle.Tablegen (
 
 import qualified GHC.Err.Located as L
 
-import Control.Monad ( guard, when )
+import Control.Monad ( when )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
 import Data.Tuple (swap)
 import qualified Data.ByteString.Lazy as LBS
 import Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
+import           Data.Char ( toUpper )
 import qualified Data.Foldable as F
 import qualified Data.List as L
 import qualified Data.List.NonEmpty as NL
@@ -89,8 +91,6 @@ data FilterState = FilterState { stErrors :: [(String, String)]
 filterISA :: ISA -> Records -> ISADescriptor
 filterISA isa rs =
   ISADescriptor { isaInstructions = insns
-                , isaRegisterClasses = registerClasses
-                , isaRegisters = registerOperands
                 , isaOperands = S.toList operandTypes
                 , isaErrors = stErrors st1
                 }
@@ -99,12 +99,15 @@ filterISA isa rs =
                       , stInsns = []
                       }
     st1 = St.execState (CC.runContT (runFilter (filterInstructions isa (tblDefs rs))) return) st0
-    dagOperands = filter isDAGOperand $ tblDefs rs
-    registerClasses = map (RegisterClass . defName) $ filter isRegisterClass dagOperands
-    registerOperands = mapMaybe isRegisterOperand dagOperands
     insns = reverse $ stInsns st1
-    operandTypes = foldr extractOperands S.empty insns
+    observedOperandTypes = foldr extractOperands S.empty insns
+    operandTypes = observedOperandTypes
 
+toTypeName :: String -> String
+toTypeName s =
+  case s of
+    [] -> error "Empty names are not allowed"
+    c:rest -> toUpper c : rest
 
 newtype FM a = FM { runFilter :: CC.ContT () (St.State FilterState) a }
   deriving (Functor,
@@ -121,18 +124,6 @@ extractOperands i s = foldr extractOperandTypes s (idInputOperands i ++ idOutput
 
 extractOperandTypes :: OperandDescriptor -> S.Set OperandType -> S.Set OperandType
 extractOperandTypes f = S.insert (opType f)
-
-isRegisterClass :: Def -> Bool
-isRegisterClass def = Metadata "RegisterClass" `elem` defMetadata def
-
-isRegisterOperand :: Def -> Maybe (String, RegisterClass)
-isRegisterOperand def = do
-  guard (Metadata "RegisterOperand" `elem` defMetadata def)
-  Named _ (ClassItem cname) <- F.find (named "RegClass") (defDecls def)
-  return (defName def, RegisterClass cname)
-
-isDAGOperand :: Def -> Bool
-isDAGOperand d = Metadata "DAGOperand" `elem` defMetadata d
 
 toTrieBit :: Maybe BitRef -> BT.Bit
 toTrieBit br =

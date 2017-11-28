@@ -15,15 +15,16 @@ module Dismantle.Tablegen.TH (
 
 import           GHC.TypeLits ( Symbol )
 
+import           Control.Monad ( forM )
 import           Data.Monoid ((<>))
 import           Data.Bits
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as UBS
 import qualified Data.ByteString.Lazy as LBS
-import           Data.Char ( toUpper )
 import qualified Data.Foldable as F
+import           Data.List ( isSuffixOf )
 import qualified Data.List.Split as L
-import           Data.Maybe ( fromMaybe )
+import           Data.Maybe ( fromMaybe, catMaybes )
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Type.Equality as E
@@ -33,6 +34,8 @@ import           Language.Haskell.TH
 import           Language.Haskell.TH.Datatype
 import           Language.Haskell.TH.Syntax ( Lift(..), qAddDependentFile, Name(..) )
 import           System.IO.Unsafe ( unsafePerformIO )
+import           System.Directory ( doesFileExist, doesDirectoryExist, getDirectoryContents )
+import           System.FilePath ( (</>) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import           Data.Parameterized.Lift ( LiftF(..) )
@@ -46,16 +49,35 @@ import           Dismantle.Arbitrary as A
 import           Dismantle.Instruction
 import           Dismantle.Instruction.Random ( ArbitraryOperands(..), ArbitraryOperand(..), arbitraryShapedList )
 import           Dismantle.Tablegen
+import           Dismantle.Tablegen.Parser.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import           Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import           Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
-genISA :: ISA -> FilePath -> DecsQ
-genISA isa path = do
-  desc <- runIO $ loadISA isa path
+-- | Load an ISA from a base path and an optional collection of override
+-- paths. The resulting descriptor will have been filtered by the
+-- instruction filter of the provided ISA.
+loadISA :: ISA
+        -- ^ The ISA to use to filter the resulting instructions.
+        -> FilePath
+        -- ^ The path to the base ".tgen" file to parse.
+        -> [FilePath]
+        -- ^ A list of directories in which any ".tgen" files will be
+        -- used to override entries in the base tablegen data.
+        -> Q ISADescriptor
+loadISA isa path overridePaths = do
+  initialRecs <- runIO $ loadTablegen path
+  overrides <- loadOverrides overridePaths
+  return $ filterISA isa $ applyOverrides overrides initialRecs
+
+genISA :: ISA -> FilePath -> [FilePath] -> DecsQ
+genISA isa path overridePaths = do
+  desc <- loadISA isa path overridePaths
+
   case isaErrors desc of
     [] -> return ()
     errs -> reportWarning ("Unhandled instruction definitions for ISA: " ++ show (length errs))
+
   operandType <- mkOperandType isa desc >>= sequence
   opcodeType <- mkOpcodeType desc >>= sequence
   instrTypes <- mkInstructionAliases
@@ -70,13 +92,75 @@ genISA isa path = do
                   , asmDef
                   ]
 
--- | Load the instructions for the given ISA
-loadISA :: ISA -> FilePath -> IO ISADescriptor
-loadISA isa path = do
+loadTablegen :: FilePath -> IO Records
+loadTablegen path = do
   txt <- TL.readFile path
   case parseTablegen path txt of
-    Left err -> fail (show err)
-    Right defs -> return $ filterISA isa defs
+    Left err -> fail err
+    Right defs -> return defs
+
+tgenOverrideExtension :: String
+tgenOverrideExtension = ".tgen"
+
+emptyRecords :: Records
+emptyRecords = Records [] []
+
+loadOverrides :: [FilePath] -> Q Records
+loadOverrides [] = return emptyRecords
+loadOverrides (path:rest) = do
+    override <- loadOverridesFromDir path
+    desc <- loadOverrides rest
+    return $ applyOverrides override desc
+
+loadOverridesFromDir :: FilePath -> Q Records
+loadOverridesFromDir path = do
+    dirEx <- runIO $ doesDirectoryExist path
+
+    case dirEx of
+        False -> return emptyRecords
+        True -> do
+            allEntries <- runIO $ getDirectoryContents path
+            mFiles <- forM allEntries $ \e -> do
+                ex <- runIO $ doesFileExist $ path </> e
+                return $ if ex && tgenOverrideExtension `isSuffixOf` e
+                         then Just $ path </> e
+                         else Nothing
+
+            let go [] = return emptyRecords
+                go (f:rest) = do
+                    overrides <- runIO $ loadTablegen f
+                    qAddDependentFile f
+                    desc <- go rest
+                    return $ applyOverrides overrides desc
+
+            go $ catMaybes mFiles
+
+-- | Given two tablegen record collections A and B, return B with any
+-- content overriden by content provided in A. Content provided by A but
+-- not by B will be added to B. Defs and classes in B are replaced with
+-- versions from A based on their mnemonics.
+applyOverrides :: Records
+               -- ^ The override record set (A).
+               -> Records
+               -- ^ The record set to be augmented/extended (B).
+               -> Records
+applyOverrides overrideRecs oldRecs = new
+    where
+        new = Records { tblDefs = overrideWith matchDef
+                                               (tblDefs overrideRecs)
+                                               (tblDefs oldRecs)
+                      , tblClasses = overrideWith matchClass
+                                                  (tblClasses overrideRecs)
+                                                  (tblClasses oldRecs)
+                      }
+
+        matchDef a b = defName a == defName b
+        matchClass a b = classDeclName a == classDeclName b
+
+        overrideWith :: (a -> a -> Bool) -> [a] -> [a] -> [a]
+        overrideWith matches overrides old =
+            let unmatched = filter (\val -> not $ any (matches val) overrides) old
+            in overrides <> unmatched
 
 opcodeTypeName :: Name
 opcodeTypeName = mkName "Opcode"
@@ -172,15 +256,14 @@ mkParserExpr isa i
     reqBytes = length (idMask i) `div` 8
     tag = ConE (mkName (toTypeName (idMnemonic i)))
     con = ConE 'Instruction
-    addOperandExpr wordName od e =
+    addOperandExpr wordName od e = do
+      operandPayload <- lookupAndValidateOperand isa (opType od)
       let OperandType tyname = opType od
           otyname = toTypeName tyname
-          err = error ("No operand descriptor payload for operand type: " ++ tyname)
-          operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           operandCon = ConE (mkName otyname)
           -- FIXME: Need to write some helpers to handle making the
           -- right operand constructor
-      in case opConE operandPayload of
+      case opConE operandPayload of
          Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(lift (opChunks od))) :> $(return e) |]
          Just conExp -> [| $(return operandCon) ($(conExp) (fieldFromWord $(varE wordName) $(lift (opChunks od)))) :> $(return e) |]
 
@@ -210,10 +293,9 @@ mkAsmCase isa i = do
   return $ Match pat (NormalB body) []
   where
     addOperand op (pat, operands) = do
+      operandPayload <- lookupAndValidateOperand isa (opType op)
       let OperandType tyname = opType op
           otyname = toTypeName tyname
-          err = error ("No operand descriptor payload for operand type: " ++ tyname)
-          operandPayload = fromMaybe err $ lookup otyname (isaOperandPayloadTypes isa)
           opToBits = fromMaybe [| id |] (opWordE operandPayload)
       chunks <- lift (opChunks op)
       vname <- newName "operand"
@@ -275,9 +357,9 @@ mkOpcodeType isa = do
              ]
     cons = map mkOpcodeCon (isaInstructions isa)
 
-genISARandomHelpers :: ISA -> FilePath -> Q [Dec]
-genISARandomHelpers isa path = do
-  desc <- runIO $ loadISA isa path
+genISARandomHelpers :: ISA -> FilePath -> [FilePath] -> Q [Dec]
+genISARandomHelpers isa path overridePaths = do
+  desc <- loadISA isa path overridePaths
   genName <- newName "gen"
   opcodeName <- newName "opcode"
   let caseBody = caseE (varE opcodeName) (map (mkOpListCase genName) (isaInstructions desc))
@@ -415,24 +497,30 @@ opcodeShape i = foldr addField PromotedNilT (canonicalOperands i)
 -- String -> (String, Q Type)
 mkOperandType :: ISA -> ISADescriptor -> Q [DecQ]
 mkOperandType isa desc = do
-  let cons = map (mkOperandCon isa) (isaOperands desc)
+  -- Don't care about payloads here, just validation.
+  mapM_ (lookupAndValidateOperand isa) (isaOperands desc)
+  let cons = map mkOperandCon (isaOperandPayloadTypes isa)
   return [ dataDCompat (cxt []) operandTypeName [KindedTV (mkName "tp") (ConT ''Symbol)] cons []
          , standaloneDerivD (cxt []) [t| Show ($(conT operandTypeName) $(varT (mkName "tp"))) |]
          , mkOperandShowFInstance
          ]
 
-mkOperandCon :: ISA -> OperandType -> Q Con
-mkOperandCon isa (OperandType origName) = do
+lookupAndValidateOperand :: ISA -> OperandType -> Q OperandPayload
+lookupAndValidateOperand isa (OperandType opUseName) =
+  maybe err return $ lookup opTyName (isaOperandPayloadTypes isa)
+  where
+    opTyName = toTypeName opUseName
+    err = error ("No operand descriptor payload for operand type: " <>
+                 opUseName)
+
+mkOperandCon :: (String, OperandPayload) -> Q Con
+mkOperandCon (opTyName, payloadDesc) = do
   argBaseTy <- opTypeT payloadDesc
   let argTy = (Bang SourceUnpack SourceStrict, argBaseTy)
   return $ GadtC [n] [argTy] ty
   where
-    name = toTypeName origName
-    payloadDesc = case lookup name (isaOperandPayloadTypes isa) of
-        Nothing -> error ("No operand descriptor payload for operand type: " <> origName)
-        Just pd -> pd
-    n = mkName name
-    ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit name)
+    n = mkName opTyName
+    ty = ConT (mkName "Operand") `AppT` LitT (StrTyLit opTyName)
 
 genInstances :: Q [Dec]
 genInstances = do
@@ -464,12 +552,6 @@ mkOperandShowFInstance = do
                showF = show
              |]
   return showf
-
-toTypeName :: String -> String
-toTypeName s =
-  case s of
-    [] -> error "Empty names are not allowed"
-    c:rest -> toUpper c : rest
 
 mkPrettyPrinter :: ISADescriptor -> Q [Dec]
 mkPrettyPrinter desc = do

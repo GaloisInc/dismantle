@@ -82,8 +82,6 @@ data RegisterClass = RegisterClass String
 
 data ISADescriptor =
   ISADescriptor { isaInstructions :: [InstructionDescriptor]
-                , isaRegisterClasses :: [RegisterClass]
-                , isaRegisters :: [(String, RegisterClass)]
                 , isaOperands :: [OperandType]
                 -- ^ All of the operand types used in an ISA.
                 , isaErrors :: [(String, String)]

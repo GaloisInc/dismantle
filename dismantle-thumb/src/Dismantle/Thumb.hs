@@ -28,7 +28,7 @@ import Dismantle.Instruction
 import Dismantle.Tablegen.TH ( genISA, genInstances )
 import Dismantle.Thumb.Operands (mkPred)
 
-$(genISA isa "data/ARM.tgen")
+$(genISA isa "data/ARM.tgen" ["data/overrides"])
 $(return [])
 
 -- We need a separate call to generate some instances, since the helper(s) that

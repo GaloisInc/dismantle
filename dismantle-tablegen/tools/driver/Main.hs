@@ -59,17 +59,13 @@ dump o = do
   t <- TL.readFile p
   case D.parseTablegen p t of
     Left err -> do
-      IO.hPutStrLn IO.stderr ("Error: " ++ show err)
+      IO.hPutStrLn IO.stderr ("Error: " ++ err)
       IO.exitFailure
     Right defs -> do
       let isa = lookupISA (parseISA o)
       let summary = D.filterISA isa defs
       putStrLn ("ISA: " ++ D.isaName isa)
       putStrLn ("# Instructions: " ++ show (length (D.isaInstructions summary)))
-      putStrLn "Register classes:"
-      mapM_ (putStrLn . ("  "++) . show) (D.isaRegisterClasses summary)
-      putStrLn "Registers"
-      mapM_ (putStrLn . ("  "++) . show) (D.isaRegisters summary)
       putStrLn "Operand types"
       mapM_ (putStrLn . ("  "++) . show) (D.isaOperands summary)
       putStrLn "Instruction mnemonics"

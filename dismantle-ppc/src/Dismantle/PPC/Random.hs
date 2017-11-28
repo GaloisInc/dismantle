@@ -10,4 +10,4 @@ import Dismantle.PPC
 import Dismantle.PPC.ISA ( isa )
 import Dismantle.Tablegen.TH ( genISARandomHelpers )
 
-$(genISARandomHelpers isa "data/PPC.tgen")
+$(genISARandomHelpers isa "data/PPC.tgen" [])

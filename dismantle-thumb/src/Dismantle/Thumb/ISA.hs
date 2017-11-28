@@ -78,6 +78,7 @@ isa = ISA { isaName = "Thumb"
   where
     defaultPP = [ ("p", "")
                 , ("Rdn", "")
+                , ("s", "s")
                 , ("sp", "sp")
                 ]
 
@@ -205,10 +206,18 @@ isa = ISA { isaName = "Thumb"
                                    , opConE = Just (varE 'Thumb.mkOpcode)
                                    , opWordE = Just (varE 'Thumb.opcodeToBits)
                                    }
+    rotImm = OperandPayload { opTypeT = [t| Thumb.RotImm |]
+                            , opConE = Just (varE 'Thumb.mkRotImm)
+                            , opWordE = Just (varE 'Thumb.rotImmToBits)
+                            }
     word8Operand = OperandPayload { opTypeT = [t| Word8 |]
                                   , opConE = Nothing
                                   , opWordE = Just [| fromIntegral |]
                                   }
+    imm065535 = OperandPayload { opTypeT = [t| Thumb.Imm065535 |]
+                               , opConE = Just (varE 'Thumb.mkImm065535)
+                               , opWordE = Just (varE 'Thumb.imm065535ToBits)
+                               }
     word16Operand = OperandPayload { opTypeT = [t| Word16 |]
                                    , opConE = Nothing
                                    , opWordE = Just [| fromIntegral |]
@@ -241,6 +250,10 @@ isa = ISA { isaName = "Thumb"
                           , opConE = Just (varE 'ARM.mkImm5)
                           , opWordE = Just (varE 'ARM.imm5ToBits)
                           }
+    imm1_32 = OperandPayload { opTypeT = [t| Thumb.Imm1_32 |]
+                             , opConE = Just (varE 'Thumb.mkImm1_32)
+                             , opWordE = Just (varE 'Thumb.imm1_32ToBits)
+                             }
     msrMask = OperandPayload { opTypeT = [t| ARM.MSRMask |]
                              , opConE = Just (varE 'ARM.mkMSRMask)
                              , opWordE = Just (varE 'ARM.msrMaskToBits)
@@ -295,8 +308,8 @@ isa = ISA { isaName = "Thumb"
         , ("GPRnopc"              , gpRegister)
         , ("Iflags_op"            , word8Operand)
         , ("Imm0_4095"            , word16Operand)
-        , ("Imm0_65535"           , word16Operand)
-        , ("Imm0_65535_expr"      , word16Operand)
+        , ("Imm0_65535"           , imm065535)
+        , ("Imm0_65535_expr"      , imm065535)
         , ("Imm0_1"               , bit)
         , ("Imm0_7"               , opcodeOperand)
         , ("Imm0_15"              , opcodeOperand)
@@ -305,7 +318,7 @@ isa = ISA { isaName = "Thumb"
         , ("Imm0_239"             , word8Operand)
         , ("Imm0_255"             , word8Operand)
         , ("Imm1_16"              , word8Operand)
-        , ("Imm1_32"              , imm5)
+        , ("Imm1_32"              , imm1_32)
         , ("Imm_sr"               , word8Operand)
         , ("Imod_op"              , word8Operand)
         , ("Instsyncb_opt"        , word8Operand)
@@ -316,7 +329,7 @@ isa = ISA { isaName = "Thumb"
         , ("P_imm"                , word8Operand)
         , ("Pkh_asr_amt"          , word8Operand)
         , ("Pkh_lsl_amt"          , word8Operand)
-        , ("Rot_imm"              , word8Operand)
+        , ("Rot_imm"              , rotImm)
         , ("T2_shift_imm"         , word8Operand)
         , ("T2_so_imm"            , t2SoImmOperand)
         , ("Postidx_imm8s4"       , imm8s4)
@@ -334,6 +347,7 @@ isa = ISA { isaName = "Thumb"
 
     thumbFilter = hasNamedString "Namespace" "ARM" &&&
                   (hasNamedString "DecoderNamespace" "Thumb" |||
+                   hasNamedString "DecoderNamespace" "ThumbSBit" |||
                    hasNamedString "DecoderNamespace" "Thumb2") &&&
                   (not . isPseudo) &&&
                   (not . ignoredDef) &&&
@@ -474,7 +488,9 @@ isa = ISA { isaName = "Thumb"
         , ("t2LDRi8",           FormOverride [("p", Ignore)])
         , ("t2LDRpci",          FormOverride [("p", Ignore)])
         , ("t2LDRs",            FormOverride [("p", Ignore)])
+        , ("tLSLri",            FormOverride [("p", Ignore), ("s", Ignore)])
         , ("t2LSLri",           FormOverride [("p", Ignore)])
+        , ("tLSLrr",            FormOverride [("p", Ignore), ("s", Ignore), ("Rn", Ignore)])
         , ("t2LSLrr",           FormOverride [("p", Ignore)])
         , ("t2LSRri",           FormOverride [("p", Ignore)])
         , ("t2LSRrr",           FormOverride [("p", Ignore)])
@@ -718,6 +734,29 @@ isa = ISA { isaName = "Thumb"
         , ("t2UXTB",            FormOverride [("p", Ignore)])
         , ("t2UXTB16",          FormOverride [("p", Ignore)])
         , ("t2UXTH",            FormOverride [("p", Ignore)])
+        , ("tADC",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tBIC",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tEOR",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tLSLri",            FormOverride [("s", Ignore), ("s", Ignore), ("s", Ignore)])
+        , ("tLSLrr",            FormOverride [("s", Ignore), ("s", Ignore), ("s", Ignore)])
+        , ("tLSRri",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tLSRrr",            FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tMOVi8",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tMUL",              FormOverride [("s", Ignore), ("Rm", Ignore), ("p", Ignore)])
+        , ("tMVN",              FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tORR",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tROR",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tRSB",              FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tSBC",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tSUBi3",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tSUBi8",            FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tSUBrr",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tADDi3",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tADDi8",            FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tADDrr",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tASRri",            FormOverride [("s", Ignore), ("p", Ignore)])
+        , ("tASRrr",            FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
+        , ("tAND",              FormOverride [("s", Ignore), ("Rn", Ignore), ("p", Ignore)])
         , ("tADDhirr"           , FormOverride [("Rn", Ignore), ("p"  , Ignore)])
         , ("tADDrSP"            , FormOverride [("sp", Ignore), ("Rn" , Ignore), ("p", Ignore)])
         , ("tADDrSPi"           , FormOverride [("sp", Ignore), ("p"  , Ignore)])
@@ -774,4 +813,5 @@ isa = ISA { isaName = "Thumb"
 
     prettyOverrides =
         [ ("tSUBspi", [("Rdn", "sp")])
+        , ("tADDspi", [("Rdn", "sp")])
         ]

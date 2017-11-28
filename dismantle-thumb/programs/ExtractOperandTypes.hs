@@ -109,7 +109,7 @@ main = do
     content <- TL.readFile tgenFile
     case parseTablegen tgenFile content of
         Left e -> do
-            putStrLn $ "Error: " <> show e
+            putStrLn $ "Error: " <> e
             exitFailure
         Right result -> do
             -- Create a map of class name to class so we can do
