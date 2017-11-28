@@ -75,8 +75,16 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- ASR is an alias for SBFM
              , "asr"
 
-             -- UBFX is an alias for UBFM
+             -- Aliases for UBFM
              , "ubfx"
+             , "uxtb"
+             , "uxth"
+
+             -- Alias for BFM
+             , "bfi"
+
+             -- Alias for SUB
+             , "neg"
 
              -- LSR is represented as UBFM
              , "lsr"
