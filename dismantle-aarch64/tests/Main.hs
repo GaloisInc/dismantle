@@ -96,6 +96,9 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- LSR is represented as UBFM
              , "lsr"
 
+             -- Floating-point immediates are hard to pretty-print
+             , "fmov"
+
              -- Instructions with a PC-relative offset / label that we
              -- can't resolve
              , "ldr.*<"
