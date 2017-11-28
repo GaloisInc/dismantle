@@ -78,6 +78,8 @@ isa = ISA { isaName = "PPC"
         "g8rc" -> "gprc"
         "f4rc" -> "fprc"
         "f8rc" -> "fprc"
+        "vsfrc" -> "vsrc"
+        "vssrc" -> "vsrc"
         _ -> s
 
 ppcFormOverrides :: [(String, FormOverride)]
@@ -363,9 +365,7 @@ ppcOperandPayloadTypes =
   , ("Memrix16", memRIX)
   , ("Pred", gpRegister)
   , ("Vrrc", vecRegister)
-  , ("Vsfrc", vsRegister)
   , ("Vsrc", vsRegister)
-  , ("Vssrc", vsRegister)
   ]
   where
     absoluteAddress = OperandPayload { opTypeT = [t| PPC.AbsBranchTarget |]
