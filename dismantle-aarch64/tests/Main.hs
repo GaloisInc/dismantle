@@ -84,6 +84,9 @@ skipPretty = rx (L.intercalate "|" rxes)
              , "sxtb"
              , "sxth"
 
+             -- Alias for ORN
+             , "mvn"
+
              -- Alias for BFM
              , "bfi"
              , "bfxil"
