@@ -1191,7 +1191,7 @@ data Imm32031 = Imm32031 { imm32031Imm :: Word8
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm32031 where
-  pPrint _ = PP.text "Imm32031: not implemented"
+  pPrint (Imm32031 v) = PP.text $ "#0x" <> showHex v ""
 
 instance A.Arbitrary Imm32031 where
   arbitrary g = Imm32031 <$> A.arbitrary g
