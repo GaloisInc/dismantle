@@ -1987,7 +1987,17 @@ data Simm7s16 = Simm7s16 { simm7s16Imm :: Word8
 
 instance PP.Pretty Simm7s16 where
   -- C5.6.80
-  pPrint _ = PP.text "Simm7s16: not implemented"
+  pPrint (Simm7s16 imm) =
+      let signBit = 0b1000000
+          signBitExtension = 0xffc0
+          v' :: Word16
+          v' = if imm .&. signBit == signBit
+               then fromIntegral imm .|. signBitExtension
+               else fromIntegral imm
+          -- Manual sign extension from a 7-bit value to 16-bit.
+          v :: Int16
+          v = fromIntegral v'
+      in PP.char '#' <> (PP.text $ show $ v `shiftL` 4)
 
 instance A.Arbitrary Simm7s16 where
   arbitrary g = Simm7s16 <$> A.arbitrary g
@@ -2014,7 +2024,12 @@ data Simm7s4 = Simm7s4 { simm7s4Imm :: Word8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Simm7s4 where
-  pPrint _ = PP.text "Simm7s4: not implemented"
+  pPrint (Simm7s4 imm) =
+      let signBit = 0b1000000
+          -- Manual sign extension from a 7-bit value to 8-bit.
+          v :: Int
+          v = fromIntegral ((fromIntegral $ imm .|. ((imm .&. signBit) `shiftL` 1)) :: Int8)
+      in PP.char '#' <> (PP.text $ show $ v `shiftL` 2)
 
 instance A.Arbitrary Simm7s4 where
   arbitrary g = Simm7s4 <$> A.arbitrary g
