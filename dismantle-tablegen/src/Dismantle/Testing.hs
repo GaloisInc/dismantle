@@ -126,7 +126,10 @@ insnTestCase normalize disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unp
       let roundtripMsg = printf "Roundtrip %s (parsed as %s):\n\tOriginal Bytes:%s\n\tReassembled As:%s" (show txt) (show (pp i)) (binaryRep bytes) (binaryRep (asm i))
       T.assertBool roundtripMsg (bytes == asm i)
       unless (maybe False (txt RE.=~) skipPrettyRE) $ do
-        let prettyMsg = printf "Pretty Printing comparison failed.\n\tExpected: '%s'\n\tActual:   '%s'" (TL.unpack txt) (show (pp i))
+        let prettyMsg = printf fmt (TL.unpack txt) (show (pp i))
+            fmt = "Pretty Printing comparison failed (bytes: " <>
+                  binaryRep bytes <>
+                  ").\n\tExpected: '%s'\n\tActual:   '%s'"
         T.assertBool prettyMsg (normalize txt == normalize (TL.pack (show (pp i))))
 
 -- | Given an architecture-specific configuration and a directory containing
