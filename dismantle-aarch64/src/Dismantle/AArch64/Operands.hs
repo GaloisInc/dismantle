@@ -1109,7 +1109,7 @@ data Imm065535 = Imm065535 { imm065535Imm :: Word16
                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm065535 where
-  pPrint _ = PP.text "Imm065535: not implemented"
+  pPrint (Imm065535 v) = PP.text $ "#0x" <> showHex v ""
 
 instance A.Arbitrary Imm065535 where
   arbitrary g = Imm065535 <$> A.arbitrary g
@@ -1877,7 +1877,9 @@ instance PP.Pretty RoXextend32 where
             0b1 -> "sxtx"
             _   -> error $ "Invalid RoXextend32 value: " <> show o
           amt = if s == 1 then 2 else 0
-      in PP.text ty PP.<+> PP.text (show amt)
+      in if amt == 0
+         then mempty
+         else PP.text ty PP.<+> PP.text (show amt)
 
 instance A.Arbitrary RoXextend32 where
   arbitrary g = RoXextend32 <$> A.arbitrary g <*> A.arbitrary g
@@ -1916,7 +1918,9 @@ instance PP.Pretty RoXextend64 where
             0b1 -> "sxtx"
             _   -> error $ "Invalid RoXextend64 value: " <> show o
           amt = if s == 1 then 3 else 0
-      in PP.text ty PP.<+> PP.text (show amt)
+      in if amt == 0
+         then mempty
+         else PP.text ty PP.<+> PP.text (show amt)
 
 instance A.Arbitrary RoXextend64 where
   arbitrary g = RoXextend64 <$> A.arbitrary g <*> A.arbitrary g

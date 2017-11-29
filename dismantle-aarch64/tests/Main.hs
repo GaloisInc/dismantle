@@ -7,9 +7,12 @@ import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
 import qualified Text.RE.TDFA as RE
 import Data.Word (Word64)
+import Data.Monoid ((<>))
+import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Testing
 
+import qualified Dismantle.ARM as ARM
 import qualified Dismantle.AArch64 as AArch64
 
 ignored :: [(FilePath, [Word64])]
@@ -106,11 +109,26 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- Floating-point immediates are hard to pretty-print
              , "fmov"
 
+             -- Alias for ANDS
+             , "tst"
+
+             -- Have you even seen how many possible values there are
+             -- for system register operands?
+             , "mrs"
+             , "msr"
+
+             -- Some variants of STR have broken formatting strings in
+             -- tgen
+             , "str"
+
              -- Instructions with a PC-relative offset / label that we
              -- can't resolve
-             , "ldr.*<"
-             , "b.*<"
-             , "adr.*<"
+             , "ldr"
+             , "bl?[[:space:]]"
+             , "b." <> conditions <> "[[:space:]]"
+             , "adrp?"
+             , "cbn?z"
+             , "tbn?z"
 
              -- We decode RET as RET x30. That's technically accurate
              -- since an absent RET argument defaults to x30 (see
@@ -119,6 +137,9 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- we're rendering a RET.
              , "ret"
              ]
+
+    conditions = "(" <> (concat $ L.intersperse "|"
+                  (PP.render <$> PP.pPrint <$> ARM.mkPred <$> [0..13])) <> ")?"
 
 expectedFailures :: RE.RE
 expectedFailures = rx (L.intercalate "|" rxes)

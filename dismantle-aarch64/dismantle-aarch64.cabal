@@ -36,6 +36,7 @@ test-suite dismantle-aarch64-tests
   build-depends: base,
                  dismantle-tablegen,
                  dismantle-aarch64,
+                 dismantle-arm,
                  tasty,
                  regex >= 1 && < 2,
                  pretty,
