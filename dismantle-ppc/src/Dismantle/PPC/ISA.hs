@@ -325,8 +325,6 @@ ppcOperandPayloadTypes =
   , ("Directbrtarget", relativeOffset)
   , ("Calltarget", relativeOffset)
   , ("Abscalltarget", absoluteAddress)
-  , ("Tlscall", relativeOffset)
-  , ("Tlscall32", relativeOffset)
   , ("Crbitm", crbitm)  -- I think these following 3 are correct now.
   , ("Crbitrc", crbitrc)
   , ("Crrc", crrc) -- 4 bit
@@ -347,8 +345,6 @@ ppcOperandPayloadTypes =
   , ("S17imm", s16Imm)
   , ("S17imm64", s16Imm)
   , ("S5imm", signedImmediate (Proxy :: Proxy 5))
-  , ("Tlsreg", gpRegister)
-  , ("Tlsreg32", gpRegister)
   , ("U1imm", unsignedImmediate (Proxy :: Proxy 1))
   , ("U2imm", unsignedImmediate (Proxy :: Proxy 2))
   , ("U4imm", unsignedImmediate (Proxy :: Proxy 4))
