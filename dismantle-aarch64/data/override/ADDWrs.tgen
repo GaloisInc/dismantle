@@ -6,8 +6,8 @@ def ADDWrs {	// Instruction AArch64Inst EncodedI I Sched BaseAddSubSReg Wrs
   field bits<32> SoftFail = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   string Namespace = "AArch64";
   dag OutOperandList = (outs GPR32:$dst);
-  dag InOperandList = (ins GPR32:$src1, GPR32:$src2);
-  string AsmString = "add	$dst, $src1, $src2";
+  dag InOperandList = (ins GPR32:$src1, GPR32:$src2, addshift64:$shift);
+  string AsmString = "add	$dst, $src1, $src2$shift";
   list<dag> Pattern = [(set GPR32:$dst, (add GPR32:$src1, GPR32:$src2))];
   list<Register> Uses = [];
   list<Register> Defs = [];
