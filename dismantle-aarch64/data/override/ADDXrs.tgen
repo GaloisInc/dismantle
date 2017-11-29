@@ -7,7 +7,7 @@ def ADDXrs {	// Instruction AArch64Inst EncodedI I Sched BaseAddSubSReg Xrs
   string Namespace = "AArch64";
   dag OutOperandList = (outs GPR64:$dst);
   dag InOperandList = (ins GPR64:$src1, GPR64:$src2, addshift64:$shift);
-  string AsmString = "add	$dst, $src1, $src2";
+  string AsmString = "add	$dst, $src1, $src2$shift";
   list<dag> Pattern = [(set GPR64:$dst, (add GPR64:$src1, GPR64:$src2))];
   list<Register> Uses = [];
   list<Register> Defs = [];
