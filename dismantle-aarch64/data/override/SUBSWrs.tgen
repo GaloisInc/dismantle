@@ -7,7 +7,7 @@ def SUBSWrs {	// Instruction AArch64Inst EncodedI I Sched BaseAddSubSReg Wrs
   string Namespace = "AArch64";
   dag OutOperandList = (outs GPR32:$dst);
   dag InOperandList = (ins GPR32:$src1, arith_shifted_reg32:$src2);
-  string AsmString = "subs	$dst, $src1, $src2";
+  string AsmString = "subs	$dst, $src1, $src2$shift";
   list<dag> Pattern = [(set GPR32:$dst, (AArch64sub_flag GPR32:$src1, arith_shifted_reg32:$src2))];
   list<Register> Uses = [];
   list<Register> Defs = [NZCV];
