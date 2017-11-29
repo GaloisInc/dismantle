@@ -83,6 +83,9 @@ skipPretty = rx (L.intercalate "|" rxes)
              , "uxtb"
              , "uxth"
 
+             -- Alias for CSINC
+             , "cinc"
+
              -- Aliases for SBFM
              , "sxtb"
              , "sxth"
