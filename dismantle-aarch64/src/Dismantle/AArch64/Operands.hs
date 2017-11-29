@@ -1055,7 +1055,7 @@ data Imm031 = Imm031 { imm031Imm :: Word8
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm031 where
-  pPrint (Imm031 i) = PP.char '#' <> (PP.text $ show i)
+  pPrint (Imm031 i) = PP.text $ "#0x" <> showHex i ""
 
 instance A.Arbitrary Imm031 where
   arbitrary g = Imm031 <$> A.arbitrary g
@@ -1163,7 +1163,8 @@ data Imm32015 = Imm32015 { imm32015Nzcv :: Word8
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm32015 where
-  pPrint _ = PP.text "Imm32015: not implemented"
+  pPrint (Imm32015 v) =
+      PP.text $ "#0x" <> showHex v ""
 
 instance A.Arbitrary Imm32015 where
   arbitrary g = Imm32015 <$> A.arbitrary g
