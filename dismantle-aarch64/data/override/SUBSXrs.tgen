@@ -6,8 +6,8 @@ def SUBSXrs {	// Instruction AArch64Inst EncodedI I Sched BaseAddSubSReg Xrs
   field bits<32> SoftFail = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   string Namespace = "AArch64";
   dag OutOperandList = (outs GPR64:$dst);
-  dag InOperandList = (ins GPR64:$src1, arith_shifted_reg64:$src2);
-  string AsmString = "subs	$dst, $src1, $src2";
+  dag InOperandList = (ins GPR64:$src1, arith_shifted_reg64:$src2, addshift64:$shift);
+  string AsmString = "subs	$dst, $src1, $src2$shift";
   list<dag> Pattern = [(set GPR64:$dst, (AArch64sub_flag GPR64:$src1, arith_shifted_reg64:$src2))];
   list<Register> Uses = [];
   list<Register> Defs = [NZCV];
