@@ -75,9 +75,6 @@ skipPretty = rx (L.intercalate "|" rxes)
              , "^nop"
              , "^sxtw"
 
-             -- ASR is an alias for SBFM
-             , "asr"
-
              -- Aliases for UBFM
              , "ubfx"
              , "uxtb"
@@ -87,8 +84,16 @@ skipPretty = rx (L.intercalate "|" rxes)
              , "cinc"
 
              -- Aliases for SBFM
+             , "asr"
+             , "sbfx"
              , "sxtb"
              , "sxth"
+
+             -- Alias for umaddl
+             , "umull"
+
+             -- Alias for saddl
+             , "smull"
 
              -- Alias for ORN
              , "mvn"
@@ -108,6 +113,9 @@ skipPretty = rx (L.intercalate "|" rxes)
 
              -- LSR is represented as UBFM
              , "lsr"
+
+             -- ROR is an alias for EXTR
+             , "ror"
 
              -- Floating-point immediates are hard to pretty-print
              , "fmov"
