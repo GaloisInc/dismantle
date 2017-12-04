@@ -83,6 +83,7 @@ isa = ISA { isaName = "AArch64"
         , ("Imm0_7", AArch64.imm07Operand)
         , ("Imm0_15", AArch64.imm015Operand)
         , ("Imm0_31", AArch64.imm031Operand)
+        , ("Imm0_31b", AArch64.imm031bOperand)
         , ("Imm0_63", AArch64.imm063Operand)
         , ("Imm0_127", AArch64.imm0127Operand)
         , ("Imm0_65535", AArch64.imm065535Operand)

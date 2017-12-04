@@ -122,6 +122,11 @@ module Dismantle.AArch64.Operands
   , imm031ToBits
   , imm031Operand
 
+  , Imm031b
+  , mkImm031b
+  , imm031bToBits
+  , imm031bOperand
+
   , Imm063
   , mkImm063
   , imm063ToBits
@@ -1049,6 +1054,33 @@ imm015Operand =
   OperandPayload { opTypeT = [t| Imm015 |]
                  , opConE  = Just (varE 'mkImm015)
                  , opWordE = Just (varE 'imm015ToBits)
+                 }
+
+data Imm031b = Imm031b { imm031bImm :: Word8
+                     } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm031b where
+  pPrint (Imm031b i) = PP.text $ "#" <> show i
+
+instance A.Arbitrary Imm031b where
+  arbitrary g = Imm031b <$> A.arbitrary g
+
+imm031bImmField :: Field
+imm031bImmField = Field 5 0
+
+imm031bToBits :: Imm031b -> Word32
+imm031bToBits val =
+  insert imm031bImmField (imm031bImm val) 0
+
+mkImm031b :: Word32 -> Imm031b
+mkImm031b w =
+  Imm031b (fromIntegral $ extract imm031bImmField w)
+
+imm031bOperand :: OperandPayload
+imm031bOperand =
+  OperandPayload { opTypeT = [t| Imm031b |]
+                 , opConE  = Just (varE 'mkImm031b)
+                 , opWordE = Just (varE 'imm031bToBits)
                  }
 
 data Imm031 = Imm031 { imm031Imm :: Word8
