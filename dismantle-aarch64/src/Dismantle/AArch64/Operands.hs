@@ -1278,8 +1278,7 @@ decodeBitMasks nBits immN imms immr immediate =
         welem = ones $ fromIntegral $ s + 1
         telem = ones $ fromIntegral $ d + 1
         wmask = replicateBits nBits esize welem'
-        welem' = if nBits == 64 then welem `rotateR` (fromIntegral r)
-                                else fromIntegral (((fromIntegral welem) `rotateR` (fromIntegral r)) :: Word32)
+        welem' = fromIntegral $ rotateRight esize (fromIntegral r) welem
         tmask = replicateBits nBits esize telem
     in (wmask, tmask)
 
@@ -1293,6 +1292,19 @@ replicateBits :: Int -> Int -> Word64 -> Word64
 replicateBits total toReplicate val =
     let offsets = (* toReplicate) <$> [0..(total `div` toReplicate) - 1]
     in foldr (\offset old -> old .|. (val `shiftL` offset)) 0 offsets
+
+-- Rotate right with respect to a specific number of bits (rather than
+-- using the word size as the number of bits).
+rotateRight :: Int
+            -- ^ Total bits in the value to be rotated
+            -> Int
+            -- ^ Amount of right rotation
+            -> Word64
+            -- ^ Value to rotate
+            -> Word64
+rotateRight nBits amt val =
+    (val `shiftR` amt) .|.
+    ((val .&. (ones amt)) `shiftL` (nBits - amt))
 
 instance A.Arbitrary LogicalImm32 where
   arbitrary g = LogicalImm32 <$> A.arbitrary g <*> A.arbitrary g
