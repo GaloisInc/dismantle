@@ -6,7 +6,7 @@ def SUBSXrx {	// Instruction AArch64Inst EncodedI I Sched BaseAddSubEReg Xrx
   field bits<32> SoftFail = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   string Namespace = "AArch64";
   dag OutOperandList = (outs GPR64:$Rd);
-  dag InOperandList = (ins GPR64sp:$Rn, GPR64:$Rm);
+  dag InOperandList = (ins GPR64sp:$Rn, GPR64:$Rm, addext:$ext);
   string AsmString = "subs	$Rd, $Rn, $Rm";
   list<dag> Pattern = [(set GPR64:$Rd, (AArch64sub_flag GPR64sp:$Rn, SUBSanonymous_792:$Rm))];
   list<Register> Uses = [];
