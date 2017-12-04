@@ -2,7 +2,7 @@
 ------------- Defs -----------------
 def STXRW {	// Instruction AArch64Inst EncodedI I BaseLoadStoreExclusive Sched StoreExclusive
   field bits<32> Inst = { 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, Ws{4}, Ws{3}, Ws{2}, Ws{1}, Ws{0}, 0, 1, 1, 1, 1, 1, Rn{4}, Rn{3}, Rn{2}, Rn{1}, Rn{0}, Rt{4}, Rt{3}, Rt{2}, Rt{1}, Rt{0} };
-  field bits<32> Unpredictable = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  field bits<32> Unpredictable = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   field bits<32> SoftFail = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   string Namespace = "AArch64";
   dag OutOperandList = (outs GPR32:$Ws);
