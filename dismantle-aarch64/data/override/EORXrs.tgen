@@ -7,7 +7,7 @@ def EORXrs {	// Instruction AArch64Inst EncodedI I Sched BaseLogicalSReg Xrs
   string Namespace = "AArch64";
   dag OutOperandList = (outs GPR64:$dst);
   dag InOperandList = (ins GPR64:$src1, logical_shifted_reg64:$src2, addshift64:$shift);
-  string AsmString = "eor	$dst, $src1, $src2";
+  string AsmString = "eor	$dst, $src1, $src2$shift";
   list<dag> Pattern = [(set GPR64:$dst, (xor GPR64:$src1, logical_shifted_reg64:$src2))];
   list<Register> Uses = [];
   list<Register> Defs = [];
