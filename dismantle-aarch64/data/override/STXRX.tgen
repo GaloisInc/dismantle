@@ -1,14 +1,14 @@
 ------------- Classes -----------------
 ------------- Defs -----------------
-def ANDWrs {	// Instruction AArch64Inst EncodedI I Sched BaseLogicalSReg Wrs
-  field bits<32> Inst = { 0, 0, 0, 0, 1, 0, 1, 0, shift{7}, shift{6}, 0, src2{4}, src2{3}, src2{2}, src2{1}, src2{0}, shift{5}, shift{4}, shift{3}, shift{2}, shift{1}, shift{0}, src1{4}, src1{3}, src1{2}, src1{1}, src1{0}, dst{4}, dst{3}, dst{2}, dst{1}, dst{0} };
+def STXRX {	// Instruction AArch64Inst EncodedI I BaseLoadStoreExclusive Sched StoreExclusive
+  field bits<32> Inst = { 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, Ws{4}, Ws{3}, Ws{2}, Ws{1}, Ws{0}, 0, 1, 1, 1, 1, 1, Rn{4}, Rn{3}, Rn{2}, Rn{1}, Rn{0}, Rt{4}, Rt{3}, Rt{2}, Rt{1}, Rt{0} };
   field bits<32> Unpredictable = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   field bits<32> SoftFail = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   string Namespace = "AArch64";
-  dag OutOperandList = (outs GPR32:$dst);
-  dag InOperandList = (ins GPR32:$src1, logical_shifted_reg32:$src2, addshift64:$shift);
-  string AsmString = "and	$dst, $src1, $src2$shift";
-  list<dag> Pattern = [(set GPR32:$dst, (and GPR32:$src1, logical_shifted_reg32:$src2))];
+  dag OutOperandList = (outs GPR32:$Ws);
+  dag InOperandList = (ins GPR64:$Rt, GPR64sp0:$Rn);
+  string AsmString = "stxr	$Ws, $Rt, [$Rn]";
+  list<dag> Pattern = [];
   list<Register> Uses = [];
   list<Register> Defs = [];
   list<Predicate> Predicates = [];
@@ -26,8 +26,8 @@ def ANDWrs {	// Instruction AArch64Inst EncodedI I Sched BaseLogicalSReg Wrs
   bit isBarrier = 0;
   bit isCall = 0;
   bit canFoldAsLoad = 0;
-  bit mayLoad = ?;
-  bit mayStore = ?;
+  bit mayLoad = 1;
+  bit mayStore = 1;
   bit isConvertibleToThreeAddress = 0;
   bit isCommutable = 0;
   bit isTerminator = 0;
@@ -46,16 +46,16 @@ def ANDWrs {	// Instruction AArch64Inst EncodedI I Sched BaseLogicalSReg Wrs
   bit isPseudo = 0;
   bit isExtractSubreg = 0;
   bit isInsertSubreg = 0;
-  bit hasSideEffects = ?;
+  bit hasSideEffects = 1;
   bit isCodeGenOnly = 0;
   bit isAsmParserOnly = 0;
   bit hasNoSchedulingInfo = 0;
   InstrItinClass Itinerary = NoItinerary;
-  list<SchedReadWrite> SchedRW = [WriteISReg, ReadI, ReadISReg];
-  string Constraints = "";
+  list<SchedReadWrite> SchedRW = [WriteSTX];
+  string Constraints = "@earlyclobber $Ws";
   string DisableEncoding = "";
-  string PostEncoderMethod = "";
-  string DecoderMethod = "DecodeThreeAddrSRegInstruction";
+  string PostEncoderMethod = "fixLoadStoreExclusive<1,0>";
+  string DecoderMethod = "DecodeExclusiveLdStInstruction";
   bit hasCompleteDecoder = 1;
   bits<64> TSFlags = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
   string AsmMatchConverter = "";
@@ -63,9 +63,8 @@ def ANDWrs {	// Instruction AArch64Inst EncodedI I Sched BaseLogicalSReg Wrs
   bit UseNamedOperandTable = 0;
   Format F = NormalFrm;
   bits<2> Form = { 0, 1 };
-  bits<5> dst = { ?, ?, ?, ?, ? };
-  bits<5> src1 = { ?, ?, ?, ?, ? };
-  bits<5> src2 = { ?, ?, ?, ?, ? };
-  bits<8> shift = { ?, ?, ?, ?, ?, ?, ?, ? };
-  string NAME = "AND";
+  bits<5> Ws = { ?, ?, ?, ?, ? };
+  bits<5> Rt = { ?, ?, ?, ?, ? };
+  bits<5> Rn = { ?, ?, ?, ?, ? };
+  string NAME = ?;
 }
