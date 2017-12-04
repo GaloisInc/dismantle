@@ -127,6 +127,7 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- for system register operands?
              , "mrs"
              , "msr"
+             , "dc"
 
              -- Some variants of STR have broken formatting strings in
              -- tgen
