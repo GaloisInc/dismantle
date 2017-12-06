@@ -52,6 +52,11 @@ module Dismantle.AArch64.Operands
   , v128ToBits
   , v128Operand
 
+  , V64
+  , mkV64
+  , v64ToBits
+  , v64Operand
+
   , AddsubShiftedImm32
   , mkAddsubShiftedImm32
   , addsubShiftedImm32ToBits
@@ -347,6 +352,11 @@ module Dismantle.AArch64.Operands
   , fixedpointF64I64ToBits
   , fixedpointF64I64Operand
 
+  , Fpimm8
+  , mkFpimm8
+  , fpimm8ToBits
+  , fpimm8Operand
+
   , Fpimm16
   , mkFpimm16
   , fpimm16ToBits
@@ -366,6 +376,192 @@ module Dismantle.AArch64.Operands
   , mkAddshift64
   , addshift64ToBits
   , addshift64Operand
+
+  , VecListFourb
+  , mkVecListFourb
+  , vecListFourbToBits
+  , vecListFourbOperand
+
+  , VecListFourd
+  , mkVecListFourd
+  , vecListFourdToBits
+  , vecListFourdOperand
+
+  , VecListFourh
+  , mkVecListFourh
+  , vecListFourhToBits
+  , vecListFourhOperand
+
+  , VecListFours
+  , mkVecListFours
+  , vecListFoursToBits
+  , vecListFoursOperand
+
+  , VecListOneb
+  , mkVecListOneb
+  , vecListOnebToBits
+  , vecListOnebOperand
+
+  , VecListOned
+  , mkVecListOned
+  , vecListOnedToBits
+  , vecListOnedOperand
+
+  , VecListOneh
+  , mkVecListOneh
+  , vecListOnehToBits
+  , vecListOnehOperand
+
+  , VecListOnes
+  , mkVecListOnes
+  , vecListOnesToBits
+  , vecListOnesOperand
+
+  , VecListThreeb
+  , mkVecListThreeb
+  , vecListThreebToBits
+  , vecListThreebOperand
+
+  , VecListThreed
+  , mkVecListThreed
+  , vecListThreedToBits
+  , vecListThreedOperand
+
+  , VecListThreeh
+  , mkVecListThreeh
+  , vecListThreehToBits
+  , vecListThreehOperand
+
+  , VecListThrees
+  , mkVecListThrees
+  , vecListThreesToBits
+  , vecListThreesOperand
+
+  , VecListTwob
+  , mkVecListTwob
+  , vecListTwobToBits
+  , vecListTwobOperand
+
+  , VecListTwod
+  , mkVecListTwod
+  , vecListTwodToBits
+  , vecListTwodOperand
+
+  , VecListTwos
+  , mkVecListTwos
+  , vecListTwosToBits
+  , vecListTwosOperand
+
+  , VecListTwoh
+  , mkVecListTwoh
+  , vecListTwohToBits
+  , vecListTwohOperand
+
+  , VectorIndexS
+  , mkVectorIndexS
+  , vectorIndexSToBits
+  , vectorIndexSOperand
+
+  , VectorIndexD
+  , mkVectorIndexD
+  , vectorIndexDToBits
+  , vectorIndexDOperand
+
+  , VectorIndexB
+  , mkVectorIndexB
+  , vectorIndexBToBits
+  , vectorIndexBOperand
+
+  , VectorIndexH
+  , mkVectorIndexH
+  , vectorIndexHToBits
+  , vectorIndexHOperand
+
+  , Simdimmtype10
+  , mkSimdimmtype10
+  , simdimmtype10ToBits
+  , simdimmtype10Operand
+
+  , VecshiftL16
+  , mkVecshiftL16
+  , vecshiftL16ToBits
+  , vecshiftL16Operand
+
+  , VecshiftL8
+  , mkVecshiftL8
+  , vecshiftL8ToBits
+  , vecshiftL8Operand
+
+  , VecshiftL32
+  , mkVecshiftL32
+  , vecshiftL32ToBits
+  , vecshiftL32Operand
+
+  , VecshiftL64
+  , mkVecshiftL64
+  , vecshiftL64ToBits
+  , vecshiftL64Operand
+
+  , VecshiftR16
+  , mkVecshiftR16
+  , vecshiftR16ToBits
+  , vecshiftR16Operand
+
+  , VecshiftR8
+  , mkVecshiftR8
+  , vecshiftR8ToBits
+  , vecshiftR8Operand
+
+  , VecshiftR32
+  , mkVecshiftR32
+  , vecshiftR32ToBits
+  , vecshiftR32Operand
+
+  , VecshiftR64
+  , mkVecshiftR64
+  , vecshiftR64ToBits
+  , vecshiftR64Operand
+
+  , I32imm
+  , mkI32imm
+  , i32immToBits
+  , i32immOperand
+
+  , Imm0255
+  , mkImm0255
+  , imm0255ToBits
+  , imm0255Operand
+
+  , LogicalVecHwShift
+  , mkLogicalVecHwShift
+  , logicalVecHwShiftToBits
+  , logicalVecHwShiftOperand
+
+  , LogicalVecShift
+  , mkLogicalVecShift
+  , logicalVecShiftToBits
+  , logicalVecShiftOperand
+
+  , MoveVecShift
+  , mkMoveVecShift
+  , moveVecShiftToBits
+  , moveVecShiftOperand
+
+  , VecshiftR16Narrow
+  , mkVecshiftR16Narrow
+  , vecshiftR16NarrowToBits
+  , vecshiftR16NarrowOperand
+
+  , VecshiftR32Narrow
+  , mkVecshiftR32Narrow
+  , vecshiftR32NarrowToBits
+  , vecshiftR32NarrowOperand
+
+  , VecshiftR64Narrow
+  , mkVecshiftR64Narrow
+  , vecshiftR64NarrowToBits
+  , vecshiftR64NarrowOperand
+
   )
 where
 
@@ -2595,6 +2791,33 @@ fixedpointF64I64Operand =
                  , opWordE = Just (varE 'fixedpointF64I64ToBits)
                  }
 
+data Fpimm8 = Fpimm8 { fpimm8Imm :: Word8
+                     } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Fpimm8 where
+  pPrint _ = PP.text "Fpimm8: not implemented"
+
+instance A.Arbitrary Fpimm8 where
+  arbitrary g = Fpimm8 <$> A.arbitrary g
+
+fpimm8ImmField :: Field
+fpimm8ImmField = Field 8 0
+
+fpimm8ToBits :: Fpimm8 -> Word32
+fpimm8ToBits val =
+  insert fpimm8ImmField (fpimm8Imm val) 0
+
+mkFpimm8 :: Word32 -> Fpimm8
+mkFpimm8 w =
+  Fpimm8 (fromIntegral $ extract fpimm8ImmField w)
+
+fpimm8Operand :: OperandPayload
+fpimm8Operand =
+  OperandPayload { opTypeT = [t| Fpimm8 |]
+                 , opConE  = Just (varE 'mkFpimm8)
+                 , opWordE = Just (varE 'fpimm8ToBits)
+                 }
+
 data Fpimm16 = Fpimm16 { fpimm16Imm :: Word8
                        } deriving (Eq, Ord, Show)
 
@@ -2715,5 +2938,1031 @@ addshift64Operand =
   OperandPayload { opTypeT = [t| Addshift64 |]
                  , opConE  = Just (varE 'mkAddshift64)
                  , opWordE = Just (varE 'addshift64ToBits)
+                 }
+
+data V64 = V64 { v64Reg :: Word8
+               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty V64 where
+  pPrint _ = PP.text "V64: not implemented"
+
+instance A.Arbitrary V64 where
+  arbitrary g = V64 <$> A.arbitrary g
+
+v64RegField :: Field
+v64RegField = Field 5 0
+
+v64ToBits :: V64 -> Word32
+v64ToBits val =
+  insert v64RegField (v64Reg val) 0
+
+mkV64 :: Word32 -> V64
+mkV64 w =
+  V64 (fromIntegral $ extract v64RegField w)
+
+v64Operand :: OperandPayload
+v64Operand =
+  OperandPayload { opTypeT = [t| V64 |]
+                 , opConE  = Just (varE 'mkV64)
+                 , opWordE = Just (varE 'v64ToBits)
+                 }
+
+data VecListFourb = VecListFourb { vecListFourbReg :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListFourb where
+  pPrint _ = PP.text "VecListFourb: not implemented"
+
+instance A.Arbitrary VecListFourb where
+  arbitrary g = VecListFourb <$> A.arbitrary g
+
+vecListFourbRegField :: Field
+vecListFourbRegField = Field 5 0
+
+vecListFourbToBits :: VecListFourb -> Word32
+vecListFourbToBits val =
+  insert vecListFourbRegField (vecListFourbReg val) 0
+
+mkVecListFourb :: Word32 -> VecListFourb
+mkVecListFourb w =
+  VecListFourb (fromIntegral $ extract vecListFourbRegField w)
+
+vecListFourbOperand :: OperandPayload
+vecListFourbOperand =
+  OperandPayload { opTypeT = [t| VecListFourb |]
+                 , opConE  = Just (varE 'mkVecListFourb)
+                 , opWordE = Just (varE 'vecListFourbToBits)
+                 }
+
+data VecListFourd = VecListFourd { vecListFourdReg :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListFourd where
+  pPrint _ = PP.text "VecListFourd: not implemented"
+
+instance A.Arbitrary VecListFourd where
+  arbitrary g = VecListFourd <$> A.arbitrary g
+
+vecListFourdRegField :: Field
+vecListFourdRegField = Field 5 0
+
+vecListFourdToBits :: VecListFourd -> Word32
+vecListFourdToBits val =
+  insert vecListFourdRegField (vecListFourdReg val) 0
+
+mkVecListFourd :: Word32 -> VecListFourd
+mkVecListFourd w =
+  VecListFourd (fromIntegral $ extract vecListFourdRegField w)
+
+vecListFourdOperand :: OperandPayload
+vecListFourdOperand =
+  OperandPayload { opTypeT = [t| VecListFourd |]
+                 , opConE  = Just (varE 'mkVecListFourd)
+                 , opWordE = Just (varE 'vecListFourdToBits)
+                 }
+
+data VecListFourh = VecListFourh { vecListFourhReg :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListFourh where
+  pPrint _ = PP.text "VecListFourh: not implemented"
+
+instance A.Arbitrary VecListFourh where
+  arbitrary g = VecListFourh <$> A.arbitrary g
+
+vecListFourhRegField :: Field
+vecListFourhRegField = Field 5 0
+
+vecListFourhToBits :: VecListFourh -> Word32
+vecListFourhToBits val =
+  insert vecListFourhRegField (vecListFourhReg val) 0
+
+mkVecListFourh :: Word32 -> VecListFourh
+mkVecListFourh w =
+  VecListFourh (fromIntegral $ extract vecListFourhRegField w)
+
+vecListFourhOperand :: OperandPayload
+vecListFourhOperand =
+  OperandPayload { opTypeT = [t| VecListFourh |]
+                 , opConE  = Just (varE 'mkVecListFourh)
+                 , opWordE = Just (varE 'vecListFourhToBits)
+                 }
+
+data VecListFours = VecListFours { vecListFoursReg :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListFours where
+  pPrint _ = PP.text "VecListFours: not implemented"
+
+instance A.Arbitrary VecListFours where
+  arbitrary g = VecListFours <$> A.arbitrary g
+
+vecListFoursRegField :: Field
+vecListFoursRegField = Field 5 0
+
+vecListFoursToBits :: VecListFours -> Word32
+vecListFoursToBits val =
+  insert vecListFoursRegField (vecListFoursReg val) 0
+
+mkVecListFours :: Word32 -> VecListFours
+mkVecListFours w =
+  VecListFours (fromIntegral $ extract vecListFoursRegField w)
+
+vecListFoursOperand :: OperandPayload
+vecListFoursOperand =
+  OperandPayload { opTypeT = [t| VecListFours |]
+                 , opConE  = Just (varE 'mkVecListFours)
+                 , opWordE = Just (varE 'vecListFoursToBits)
+                 }
+
+data VecListOneb = VecListOneb { vecListOnebReg :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListOneb where
+  pPrint _ = PP.text "VecListOneb: not implemented"
+
+instance A.Arbitrary VecListOneb where
+  arbitrary g = VecListOneb <$> A.arbitrary g
+
+vecListOnebRegField :: Field
+vecListOnebRegField = Field 5 0
+
+vecListOnebToBits :: VecListOneb -> Word32
+vecListOnebToBits val =
+  insert vecListOnebRegField (vecListOnebReg val) 0
+
+mkVecListOneb :: Word32 -> VecListOneb
+mkVecListOneb w =
+  VecListOneb (fromIntegral $ extract vecListOnebRegField w)
+
+vecListOnebOperand :: OperandPayload
+vecListOnebOperand =
+  OperandPayload { opTypeT = [t| VecListOneb |]
+                 , opConE  = Just (varE 'mkVecListOneb)
+                 , opWordE = Just (varE 'vecListOnebToBits)
+                 }
+
+data VecListOned = VecListOned { vecListOnedReg :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListOned where
+  pPrint _ = PP.text "VecListOned: not implemented"
+
+instance A.Arbitrary VecListOned where
+  arbitrary g = VecListOned <$> A.arbitrary g
+
+vecListOnedRegField :: Field
+vecListOnedRegField = Field 5 0
+
+vecListOnedToBits :: VecListOned -> Word32
+vecListOnedToBits val =
+  insert vecListOnedRegField (vecListOnedReg val) 0
+
+mkVecListOned :: Word32 -> VecListOned
+mkVecListOned w =
+  VecListOned (fromIntegral $ extract vecListOnedRegField w)
+
+vecListOnedOperand :: OperandPayload
+vecListOnedOperand =
+  OperandPayload { opTypeT = [t| VecListOned |]
+                 , opConE  = Just (varE 'mkVecListOned)
+                 , opWordE = Just (varE 'vecListOnedToBits)
+                 }
+
+data VecListOneh = VecListOneh { vecListOnehReg :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListOneh where
+  pPrint _ = PP.text "VecListOneh: not implemented"
+
+instance A.Arbitrary VecListOneh where
+  arbitrary g = VecListOneh <$> A.arbitrary g
+
+vecListOnehRegField :: Field
+vecListOnehRegField = Field 5 0
+
+vecListOnehToBits :: VecListOneh -> Word32
+vecListOnehToBits val =
+  insert vecListOnehRegField (vecListOnehReg val) 0
+
+mkVecListOneh :: Word32 -> VecListOneh
+mkVecListOneh w =
+  VecListOneh (fromIntegral $ extract vecListOnehRegField w)
+
+vecListOnehOperand :: OperandPayload
+vecListOnehOperand =
+  OperandPayload { opTypeT = [t| VecListOneh |]
+                 , opConE  = Just (varE 'mkVecListOneh)
+                 , opWordE = Just (varE 'vecListOnehToBits)
+                 }
+
+data VecListOnes = VecListOnes { vecListOnesReg :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListOnes where
+  pPrint _ = PP.text "VecListOnes: not implemented"
+
+instance A.Arbitrary VecListOnes where
+  arbitrary g = VecListOnes <$> A.arbitrary g
+
+vecListOnesRegField :: Field
+vecListOnesRegField = Field 5 0
+
+vecListOnesToBits :: VecListOnes -> Word32
+vecListOnesToBits val =
+  insert vecListOnesRegField (vecListOnesReg val) 0
+
+mkVecListOnes :: Word32 -> VecListOnes
+mkVecListOnes w =
+  VecListOnes (fromIntegral $ extract vecListOnesRegField w)
+
+vecListOnesOperand :: OperandPayload
+vecListOnesOperand =
+  OperandPayload { opTypeT = [t| VecListOnes |]
+                 , opConE  = Just (varE 'mkVecListOnes)
+                 , opWordE = Just (varE 'vecListOnesToBits)
+                 }
+
+data VecListThreeb = VecListThreeb { vecListThreebReg :: Word8
+                                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListThreeb where
+  pPrint _ = PP.text "VecListThreeb: not implemented"
+
+instance A.Arbitrary VecListThreeb where
+  arbitrary g = VecListThreeb <$> A.arbitrary g
+
+vecListThreebRegField :: Field
+vecListThreebRegField = Field 5 0
+
+vecListThreebToBits :: VecListThreeb -> Word32
+vecListThreebToBits val =
+  insert vecListThreebRegField (vecListThreebReg val) 0
+
+mkVecListThreeb :: Word32 -> VecListThreeb
+mkVecListThreeb w =
+  VecListThreeb (fromIntegral $ extract vecListThreebRegField w)
+
+vecListThreebOperand :: OperandPayload
+vecListThreebOperand =
+  OperandPayload { opTypeT = [t| VecListThreeb |]
+                 , opConE  = Just (varE 'mkVecListThreeb)
+                 , opWordE = Just (varE 'vecListThreebToBits)
+                 }
+
+data VecListThreed = VecListThreed { vecListThreedReg :: Word8
+                                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListThreed where
+  pPrint _ = PP.text "VecListThreed: not implemented"
+
+instance A.Arbitrary VecListThreed where
+  arbitrary g = VecListThreed <$> A.arbitrary g
+
+vecListThreedRegField :: Field
+vecListThreedRegField = Field 5 0
+
+vecListThreedToBits :: VecListThreed -> Word32
+vecListThreedToBits val =
+  insert vecListThreedRegField (vecListThreedReg val) 0
+
+mkVecListThreed :: Word32 -> VecListThreed
+mkVecListThreed w =
+  VecListThreed (fromIntegral $ extract vecListThreedRegField w)
+
+vecListThreedOperand :: OperandPayload
+vecListThreedOperand =
+  OperandPayload { opTypeT = [t| VecListThreed |]
+                 , opConE  = Just (varE 'mkVecListThreed)
+                 , opWordE = Just (varE 'vecListThreedToBits)
+                 }
+
+data VecListThreeh = VecListThreeh { vecListThreehReg :: Word8
+                                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListThreeh where
+  pPrint _ = PP.text "VecListThreeh: not implemented"
+
+instance A.Arbitrary VecListThreeh where
+  arbitrary g = VecListThreeh <$> A.arbitrary g
+
+vecListThreehRegField :: Field
+vecListThreehRegField = Field 5 0
+
+vecListThreehToBits :: VecListThreeh -> Word32
+vecListThreehToBits val =
+  insert vecListThreehRegField (vecListThreehReg val) 0
+
+mkVecListThreeh :: Word32 -> VecListThreeh
+mkVecListThreeh w =
+  VecListThreeh (fromIntegral $ extract vecListThreehRegField w)
+
+vecListThreehOperand :: OperandPayload
+vecListThreehOperand =
+  OperandPayload { opTypeT = [t| VecListThreeh |]
+                 , opConE  = Just (varE 'mkVecListThreeh)
+                 , opWordE = Just (varE 'vecListThreehToBits)
+                 }
+
+data VecListThrees = VecListThrees { vecListThreesReg :: Word8
+                                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListThrees where
+  pPrint _ = PP.text "VecListThrees: not implemented"
+
+instance A.Arbitrary VecListThrees where
+  arbitrary g = VecListThrees <$> A.arbitrary g
+
+vecListThreesRegField :: Field
+vecListThreesRegField = Field 5 0
+
+vecListThreesToBits :: VecListThrees -> Word32
+vecListThreesToBits val =
+  insert vecListThreesRegField (vecListThreesReg val) 0
+
+mkVecListThrees :: Word32 -> VecListThrees
+mkVecListThrees w =
+  VecListThrees (fromIntegral $ extract vecListThreesRegField w)
+
+vecListThreesOperand :: OperandPayload
+vecListThreesOperand =
+  OperandPayload { opTypeT = [t| VecListThrees |]
+                 , opConE  = Just (varE 'mkVecListThrees)
+                 , opWordE = Just (varE 'vecListThreesToBits)
+                 }
+
+data VecListTwob = VecListTwob { vecListTwobReg :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListTwob where
+  pPrint _ = PP.text "VecListTwob: not implemented"
+
+instance A.Arbitrary VecListTwob where
+  arbitrary g = VecListTwob <$> A.arbitrary g
+
+vecListTwobRegField :: Field
+vecListTwobRegField = Field 5 0
+
+vecListTwobToBits :: VecListTwob -> Word32
+vecListTwobToBits val =
+  insert vecListTwobRegField (vecListTwobReg val) 0
+
+mkVecListTwob :: Word32 -> VecListTwob
+mkVecListTwob w =
+  VecListTwob (fromIntegral $ extract vecListTwobRegField w)
+
+vecListTwobOperand :: OperandPayload
+vecListTwobOperand =
+  OperandPayload { opTypeT = [t| VecListTwob |]
+                 , opConE  = Just (varE 'mkVecListTwob)
+                 , opWordE = Just (varE 'vecListTwobToBits)
+                 }
+
+data VecListTwod = VecListTwod { vecListTwodReg :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListTwod where
+  pPrint _ = PP.text "VecListTwod: not implemented"
+
+instance A.Arbitrary VecListTwod where
+  arbitrary g = VecListTwod <$> A.arbitrary g
+
+vecListTwodRegField :: Field
+vecListTwodRegField = Field 5 0
+
+vecListTwodToBits :: VecListTwod -> Word32
+vecListTwodToBits val =
+  insert vecListTwodRegField (vecListTwodReg val) 0
+
+mkVecListTwod :: Word32 -> VecListTwod
+mkVecListTwod w =
+  VecListTwod (fromIntegral $ extract vecListTwodRegField w)
+
+vecListTwodOperand :: OperandPayload
+vecListTwodOperand =
+  OperandPayload { opTypeT = [t| VecListTwod |]
+                 , opConE  = Just (varE 'mkVecListTwod)
+                 , opWordE = Just (varE 'vecListTwodToBits)
+                 }
+
+data VecListTwoh = VecListTwoh { vecListTwohReg :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListTwoh where
+  pPrint _ = PP.text "VecListTwoh: not implemented"
+
+instance A.Arbitrary VecListTwoh where
+  arbitrary g = VecListTwoh <$> A.arbitrary g
+
+vecListTwohRegField :: Field
+vecListTwohRegField = Field 5 0
+
+vecListTwohToBits :: VecListTwoh -> Word32
+vecListTwohToBits val =
+  insert vecListTwohRegField (vecListTwohReg val) 0
+
+mkVecListTwoh :: Word32 -> VecListTwoh
+mkVecListTwoh w =
+  VecListTwoh (fromIntegral $ extract vecListTwohRegField w)
+
+vecListTwohOperand :: OperandPayload
+vecListTwohOperand =
+  OperandPayload { opTypeT = [t| VecListTwoh |]
+                 , opConE  = Just (varE 'mkVecListTwoh)
+                 , opWordE = Just (varE 'vecListTwohToBits)
+                 }
+
+data VecListTwos = VecListTwos { vecListTwosReg :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecListTwos where
+  pPrint _ = PP.text "VecListTwos: not implemented"
+
+instance A.Arbitrary VecListTwos where
+  arbitrary g = VecListTwos <$> A.arbitrary g
+
+vecListTwosRegField :: Field
+vecListTwosRegField = Field 5 0
+
+vecListTwosToBits :: VecListTwos -> Word32
+vecListTwosToBits val =
+  insert vecListTwosRegField (vecListTwosReg val) 0
+
+mkVecListTwos :: Word32 -> VecListTwos
+mkVecListTwos w =
+  VecListTwos (fromIntegral $ extract vecListTwosRegField w)
+
+vecListTwosOperand :: OperandPayload
+vecListTwosOperand =
+  OperandPayload { opTypeT = [t| VecListTwos |]
+                 , opConE  = Just (varE 'mkVecListTwos)
+                 , opWordE = Just (varE 'vecListTwosToBits)
+                 }
+
+data VectorIndexD = VectorIndexD { vectorIndexDVal :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VectorIndexD where
+  pPrint _ = PP.text "VectorIndexD: not implemented"
+
+instance A.Arbitrary VectorIndexD where
+  arbitrary g = VectorIndexD <$> A.arbitrary g
+
+vectorIndexDValField :: Field
+vectorIndexDValField = Field 1 0
+
+vectorIndexDToBits :: VectorIndexD -> Word32
+vectorIndexDToBits val =
+  insert vectorIndexDValField (vectorIndexDVal val) 0
+
+mkVectorIndexD :: Word32 -> VectorIndexD
+mkVectorIndexD w =
+  VectorIndexD (fromIntegral $ extract vectorIndexDValField w)
+
+vectorIndexDOperand :: OperandPayload
+vectorIndexDOperand =
+  OperandPayload { opTypeT = [t| VectorIndexD |]
+                 , opConE  = Just (varE 'mkVectorIndexD)
+                 , opWordE = Just (varE 'vectorIndexDToBits)
+                 }
+
+data VectorIndexB = VectorIndexB { vectorIndexBVal :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VectorIndexB where
+  pPrint _ = PP.text "VectorIndexB: not implemented"
+
+instance A.Arbitrary VectorIndexB where
+  arbitrary g = VectorIndexB <$> A.arbitrary g
+
+vectorIndexBValField :: Field
+vectorIndexBValField = Field 3 0
+
+vectorIndexBToBits :: VectorIndexB -> Word32
+vectorIndexBToBits val =
+  insert vectorIndexBValField (vectorIndexBVal val) 0
+
+mkVectorIndexB :: Word32 -> VectorIndexB
+mkVectorIndexB w =
+  VectorIndexB (fromIntegral $ extract vectorIndexBValField w)
+
+vectorIndexBOperand :: OperandPayload
+vectorIndexBOperand =
+  OperandPayload { opTypeT = [t| VectorIndexB |]
+                 , opConE  = Just (varE 'mkVectorIndexB)
+                 , opWordE = Just (varE 'vectorIndexBToBits)
+                 }
+
+data VectorIndexH = VectorIndexH { vectorIndexHVal :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VectorIndexH where
+  pPrint _ = PP.text "VectorIndexH: not implemented"
+
+instance A.Arbitrary VectorIndexH where
+  arbitrary g = VectorIndexH <$> A.arbitrary g
+
+vectorIndexHValField :: Field
+vectorIndexHValField = Field 3 0
+
+vectorIndexHToBits :: VectorIndexH -> Word32
+vectorIndexHToBits val =
+  insert vectorIndexHValField (vectorIndexHVal val) 0
+
+mkVectorIndexH :: Word32 -> VectorIndexH
+mkVectorIndexH w =
+  VectorIndexH (fromIntegral $ extract vectorIndexHValField w)
+
+vectorIndexHOperand :: OperandPayload
+vectorIndexHOperand =
+  OperandPayload { opTypeT = [t| VectorIndexH |]
+                 , opConE  = Just (varE 'mkVectorIndexH)
+                 , opWordE = Just (varE 'vectorIndexHToBits)
+                 }
+
+data VectorIndexS = VectorIndexS { vectorIndexSVal :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VectorIndexS where
+  pPrint _ = PP.text "VectorIndexS: not implemented"
+
+instance A.Arbitrary VectorIndexS where
+  arbitrary g = VectorIndexS <$> A.arbitrary g
+
+vectorIndexSValField :: Field
+vectorIndexSValField = Field 2 0
+
+vectorIndexSToBits :: VectorIndexS -> Word32
+vectorIndexSToBits val =
+  insert vectorIndexSValField (vectorIndexSVal val) 0
+
+mkVectorIndexS :: Word32 -> VectorIndexS
+mkVectorIndexS w =
+  VectorIndexS (fromIntegral $ extract vectorIndexSValField w)
+
+vectorIndexSOperand :: OperandPayload
+vectorIndexSOperand =
+  OperandPayload { opTypeT = [t| VectorIndexS |]
+                 , opConE  = Just (varE 'mkVectorIndexS)
+                 , opWordE = Just (varE 'vectorIndexSToBits)
+                 }
+
+data Simdimmtype10 = Simdimmtype10 { simdimmtype10Imm :: Word8
+                                   } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Simdimmtype10 where
+  pPrint _ = PP.text "Simdimmtype10: not implemented"
+
+instance A.Arbitrary Simdimmtype10 where
+  arbitrary g = Simdimmtype10 <$> A.arbitrary g
+
+simdimmtype10ImmField :: Field
+simdimmtype10ImmField = Field 8 0
+
+simdimmtype10ToBits :: Simdimmtype10 -> Word32
+simdimmtype10ToBits val =
+  insert simdimmtype10ImmField (simdimmtype10Imm val) 0
+
+mkSimdimmtype10 :: Word32 -> Simdimmtype10
+mkSimdimmtype10 w =
+  Simdimmtype10 (fromIntegral $ extract simdimmtype10ImmField w)
+
+simdimmtype10Operand :: OperandPayload
+simdimmtype10Operand =
+  OperandPayload { opTypeT = [t| Simdimmtype10 |]
+                 , opConE  = Just (varE 'mkSimdimmtype10)
+                 , opWordE = Just (varE 'simdimmtype10ToBits)
+                 }
+
+data VecshiftL16 = VecshiftL16 { vecshiftL16Imm :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftL16 where
+  pPrint _ = PP.text "VecshiftL16: not implemented"
+
+instance A.Arbitrary VecshiftL16 where
+  arbitrary g = VecshiftL16 <$> A.arbitrary g
+
+vecshiftL16ImmField :: Field
+vecshiftL16ImmField = Field 4 0
+
+vecshiftL16ToBits :: VecshiftL16 -> Word32
+vecshiftL16ToBits val =
+  insert vecshiftL16ImmField (vecshiftL16Imm val) 0
+
+mkVecshiftL16 :: Word32 -> VecshiftL16
+mkVecshiftL16 w =
+  VecshiftL16 (fromIntegral $ extract vecshiftL16ImmField w)
+
+vecshiftL16Operand :: OperandPayload
+vecshiftL16Operand =
+  OperandPayload { opTypeT = [t| VecshiftL16 |]
+                 , opConE  = Just (varE 'mkVecshiftL16)
+                 , opWordE = Just (varE 'vecshiftL16ToBits)
+                 }
+
+data VecshiftL8 = VecshiftL8 { vecshiftL8Imm :: Word8
+                             } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftL8 where
+  pPrint _ = PP.text "VecshiftL8: not implemented"
+
+instance A.Arbitrary VecshiftL8 where
+  arbitrary g = VecshiftL8 <$> A.arbitrary g
+
+vecshiftL8ImmField :: Field
+vecshiftL8ImmField = Field 3 0
+
+vecshiftL8ToBits :: VecshiftL8 -> Word32
+vecshiftL8ToBits val =
+  insert vecshiftL8ImmField (vecshiftL8Imm val) 0
+
+mkVecshiftL8 :: Word32 -> VecshiftL8
+mkVecshiftL8 w =
+  VecshiftL8 (fromIntegral $ extract vecshiftL8ImmField w)
+
+vecshiftL8Operand :: OperandPayload
+vecshiftL8Operand =
+  OperandPayload { opTypeT = [t| VecshiftL8 |]
+                 , opConE  = Just (varE 'mkVecshiftL8)
+                 , opWordE = Just (varE 'vecshiftL8ToBits)
+                 }
+
+data VecshiftL32 = VecshiftL32 { vecshiftL32Imm :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftL32 where
+  pPrint _ = PP.text "VecshiftL32: not implemented"
+
+instance A.Arbitrary VecshiftL32 where
+  arbitrary g = VecshiftL32 <$> A.arbitrary g
+
+vecshiftL32ImmField :: Field
+vecshiftL32ImmField = Field 5 0
+
+vecshiftL32ToBits :: VecshiftL32 -> Word32
+vecshiftL32ToBits val =
+  insert vecshiftL32ImmField (vecshiftL32Imm val) 0
+
+mkVecshiftL32 :: Word32 -> VecshiftL32
+mkVecshiftL32 w =
+  VecshiftL32 (fromIntegral $ extract vecshiftL32ImmField w)
+
+vecshiftL32Operand :: OperandPayload
+vecshiftL32Operand =
+  OperandPayload { opTypeT = [t| VecshiftL32 |]
+                 , opConE  = Just (varE 'mkVecshiftL32)
+                 , opWordE = Just (varE 'vecshiftL32ToBits)
+                 }
+
+data VecshiftL64 = VecshiftL64 { vecshiftL64Imm :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftL64 where
+  pPrint _ = PP.text "VecshiftL64: not implemented"
+
+instance A.Arbitrary VecshiftL64 where
+  arbitrary g = VecshiftL64 <$> A.arbitrary g
+
+vecshiftL64ImmField :: Field
+vecshiftL64ImmField = Field 6 0
+
+vecshiftL64ToBits :: VecshiftL64 -> Word32
+vecshiftL64ToBits val =
+  insert vecshiftL64ImmField (vecshiftL64Imm val) 0
+
+mkVecshiftL64 :: Word32 -> VecshiftL64
+mkVecshiftL64 w =
+  VecshiftL64 (fromIntegral $ extract vecshiftL64ImmField w)
+
+vecshiftL64Operand :: OperandPayload
+vecshiftL64Operand =
+  OperandPayload { opTypeT = [t| VecshiftL64 |]
+                 , opConE  = Just (varE 'mkVecshiftL64)
+                 , opWordE = Just (varE 'vecshiftL64ToBits)
+                 }
+
+data VecshiftR16 = VecshiftR16 { vecshiftR16Imm :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftR16 where
+  pPrint _ = PP.text "VecshiftR16: not implemented"
+
+instance A.Arbitrary VecshiftR16 where
+  arbitrary g = VecshiftR16 <$> A.arbitrary g
+
+vecshiftR16ImmField :: Field
+vecshiftR16ImmField = Field 4 0
+
+vecshiftR16ToBits :: VecshiftR16 -> Word32
+vecshiftR16ToBits val =
+  insert vecshiftR16ImmField (vecshiftR16Imm val) 0
+
+mkVecshiftR16 :: Word32 -> VecshiftR16
+mkVecshiftR16 w =
+  VecshiftR16 (fromIntegral $ extract vecshiftR16ImmField w)
+
+vecshiftR16Operand :: OperandPayload
+vecshiftR16Operand =
+  OperandPayload { opTypeT = [t| VecshiftR16 |]
+                 , opConE  = Just (varE 'mkVecshiftR16)
+                 , opWordE = Just (varE 'vecshiftR16ToBits)
+                 }
+
+data VecshiftR64 = VecshiftR64 { vecshiftR64Imm :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftR64 where
+  pPrint _ = PP.text "VecshiftR64: not implemented"
+
+instance A.Arbitrary VecshiftR64 where
+  arbitrary g = VecshiftR64 <$> A.arbitrary g
+
+vecshiftR64ImmField :: Field
+vecshiftR64ImmField = Field 6 0
+
+vecshiftR64ToBits :: VecshiftR64 -> Word32
+vecshiftR64ToBits val =
+  insert vecshiftR64ImmField (vecshiftR64Imm val) 0
+
+mkVecshiftR64 :: Word32 -> VecshiftR64
+mkVecshiftR64 w =
+  VecshiftR64 (fromIntegral $ extract vecshiftR64ImmField w)
+
+vecshiftR64Operand :: OperandPayload
+vecshiftR64Operand =
+  OperandPayload { opTypeT = [t| VecshiftR64 |]
+                 , opConE  = Just (varE 'mkVecshiftR64)
+                 , opWordE = Just (varE 'vecshiftR64ToBits)
+                 }
+
+data VecshiftR32 = VecshiftR32 { vecshiftR32Imm :: Word8
+                               } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftR32 where
+  pPrint _ = PP.text "VecshiftR32: not implemented"
+
+instance A.Arbitrary VecshiftR32 where
+  arbitrary g = VecshiftR32 <$> A.arbitrary g
+
+vecshiftR32ImmField :: Field
+vecshiftR32ImmField = Field 5 0
+
+vecshiftR32ToBits :: VecshiftR32 -> Word32
+vecshiftR32ToBits val =
+  insert vecshiftR32ImmField (vecshiftR32Imm val) 0
+
+mkVecshiftR32 :: Word32 -> VecshiftR32
+mkVecshiftR32 w =
+  VecshiftR32 (fromIntegral $ extract vecshiftR32ImmField w)
+
+vecshiftR32Operand :: OperandPayload
+vecshiftR32Operand =
+  OperandPayload { opTypeT = [t| VecshiftR32 |]
+                 , opConE  = Just (varE 'mkVecshiftR32)
+                 , opWordE = Just (varE 'vecshiftR32ToBits)
+                 }
+
+data VecshiftR8 = VecshiftR8 { vecshiftR8Imm :: Word8
+                             } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftR8 where
+  pPrint _ = PP.text "VecshiftR8: not implemented"
+
+instance A.Arbitrary VecshiftR8 where
+  arbitrary g = VecshiftR8 <$> A.arbitrary g
+
+vecshiftR8ImmField :: Field
+vecshiftR8ImmField = Field 3 0
+
+vecshiftR8ToBits :: VecshiftR8 -> Word32
+vecshiftR8ToBits val =
+  insert vecshiftR8ImmField (vecshiftR8Imm val) 0
+
+mkVecshiftR8 :: Word32 -> VecshiftR8
+mkVecshiftR8 w =
+  VecshiftR8 (fromIntegral $ extract vecshiftR8ImmField w)
+
+vecshiftR8Operand :: OperandPayload
+vecshiftR8Operand =
+  OperandPayload { opTypeT = [t| VecshiftR8 |]
+                 , opConE  = Just (varE 'mkVecshiftR8)
+                 , opWordE = Just (varE 'vecshiftR8ToBits)
+                 }
+
+data I32imm = I32imm { i32immImm :: Word8
+                     } deriving (Eq, Ord, Show)
+
+instance PP.Pretty I32imm where
+  pPrint _ = PP.text "I32imm: not implemented"
+
+instance A.Arbitrary I32imm where
+  arbitrary g = I32imm <$> A.arbitrary g
+
+i32immImmField :: Field
+i32immImmField = Field 4 0
+
+i32immToBits :: I32imm -> Word32
+i32immToBits val =
+  insert i32immImmField (i32immImm val) 0
+
+mkI32imm :: Word32 -> I32imm
+mkI32imm w =
+  I32imm (fromIntegral $ extract i32immImmField w)
+
+i32immOperand :: OperandPayload
+i32immOperand =
+  OperandPayload { opTypeT = [t| I32imm |]
+                 , opConE  = Just (varE 'mkI32imm)
+                 , opWordE = Just (varE 'i32immToBits)
+                 }
+
+data Imm0255 = Imm0255 { imm0255Imm :: Word8
+                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty Imm0255 where
+  pPrint _ = PP.text "Imm0255: not implemented"
+
+instance A.Arbitrary Imm0255 where
+  arbitrary g = Imm0255 <$> A.arbitrary g
+
+imm0255ImmField :: Field
+imm0255ImmField = Field 8 0
+
+imm0255ToBits :: Imm0255 -> Word32
+imm0255ToBits val =
+  insert imm0255ImmField (imm0255Imm val) 0
+
+mkImm0255 :: Word32 -> Imm0255
+mkImm0255 w =
+  Imm0255 (fromIntegral $ extract imm0255ImmField w)
+
+imm0255Operand :: OperandPayload
+imm0255Operand =
+  OperandPayload { opTypeT = [t| Imm0255 |]
+                 , opConE  = Just (varE 'mkImm0255)
+                 , opWordE = Just (varE 'imm0255ToBits)
+                 }
+
+data LogicalVecHwShift = LogicalVecHwShift { logicalVecHwShiftVal :: Word8
+                                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty LogicalVecHwShift where
+  pPrint _ = PP.text "LogicalVecHwShift: not implemented"
+
+instance A.Arbitrary LogicalVecHwShift where
+  arbitrary g = LogicalVecHwShift <$> A.arbitrary g
+
+logicalVecHwShiftValField :: Field
+logicalVecHwShiftValField = Field 1 0
+
+logicalVecHwShiftToBits :: LogicalVecHwShift -> Word32
+logicalVecHwShiftToBits val =
+  insert logicalVecHwShiftValField (logicalVecHwShiftVal val) 0
+
+mkLogicalVecHwShift :: Word32 -> LogicalVecHwShift
+mkLogicalVecHwShift w =
+  LogicalVecHwShift (fromIntegral $ extract logicalVecHwShiftValField w)
+
+logicalVecHwShiftOperand :: OperandPayload
+logicalVecHwShiftOperand =
+  OperandPayload { opTypeT = [t| LogicalVecHwShift |]
+                 , opConE  = Just (varE 'mkLogicalVecHwShift)
+                 , opWordE = Just (varE 'logicalVecHwShiftToBits)
+                 }
+
+data LogicalVecShift = LogicalVecShift { logicalVecShiftVal :: Word8
+                                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty LogicalVecShift where
+  pPrint _ = PP.text "LogicalVecShift: not implemented"
+
+instance A.Arbitrary LogicalVecShift where
+  arbitrary g = LogicalVecShift <$> A.arbitrary g
+
+logicalVecShiftValField :: Field
+logicalVecShiftValField = Field 2 0
+
+logicalVecShiftToBits :: LogicalVecShift -> Word32
+logicalVecShiftToBits val =
+  insert logicalVecShiftValField (logicalVecShiftVal val) 0
+
+mkLogicalVecShift :: Word32 -> LogicalVecShift
+mkLogicalVecShift w =
+  LogicalVecShift (fromIntegral $ extract logicalVecShiftValField w)
+
+logicalVecShiftOperand :: OperandPayload
+logicalVecShiftOperand =
+  OperandPayload { opTypeT = [t| LogicalVecShift |]
+                 , opConE  = Just (varE 'mkLogicalVecShift)
+                 , opWordE = Just (varE 'logicalVecShiftToBits)
+                 }
+
+data MoveVecShift = MoveVecShift { moveVecShiftVal :: Word8
+                                 } deriving (Eq, Ord, Show)
+
+instance PP.Pretty MoveVecShift where
+  pPrint _ = PP.text "MoveVecShift: not implemented"
+
+instance A.Arbitrary MoveVecShift where
+  arbitrary g = MoveVecShift <$> A.arbitrary g
+
+moveVecShiftValField :: Field
+moveVecShiftValField = Field 1 0
+
+moveVecShiftToBits :: MoveVecShift -> Word32
+moveVecShiftToBits val =
+  insert moveVecShiftValField (moveVecShiftVal val) 0
+
+mkMoveVecShift :: Word32 -> MoveVecShift
+mkMoveVecShift w =
+  MoveVecShift (fromIntegral $ extract moveVecShiftValField w)
+
+moveVecShiftOperand :: OperandPayload
+moveVecShiftOperand =
+  OperandPayload { opTypeT = [t| MoveVecShift |]
+                 , opConE  = Just (varE 'mkMoveVecShift)
+                 , opWordE = Just (varE 'moveVecShiftToBits)
+                 }
+
+data VecshiftR16Narrow = VecshiftR16Narrow { vecshiftR16NarrowImm :: Word8
+                                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftR16Narrow where
+  pPrint _ = PP.text "VecshiftR16Narrow: not implemented"
+
+instance A.Arbitrary VecshiftR16Narrow where
+  arbitrary g = VecshiftR16Narrow <$> A.arbitrary g
+
+vecshiftR16NarrowImmField :: Field
+vecshiftR16NarrowImmField = Field 3 0
+
+vecshiftR16NarrowToBits :: VecshiftR16Narrow -> Word32
+vecshiftR16NarrowToBits val =
+  insert vecshiftR16NarrowImmField (vecshiftR16NarrowImm val) 0
+
+mkVecshiftR16Narrow :: Word32 -> VecshiftR16Narrow
+mkVecshiftR16Narrow w =
+  VecshiftR16Narrow (fromIntegral $ extract vecshiftR16NarrowImmField w)
+
+vecshiftR16NarrowOperand :: OperandPayload
+vecshiftR16NarrowOperand =
+  OperandPayload { opTypeT = [t| VecshiftR16Narrow |]
+                 , opConE  = Just (varE 'mkVecshiftR16Narrow)
+                 , opWordE = Just (varE 'vecshiftR16NarrowToBits)
+                 }
+
+data VecshiftR32Narrow = VecshiftR32Narrow { vecshiftR32NarrowImm :: Word8
+                                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftR32Narrow where
+  pPrint _ = PP.text "VecshiftR32Narrow: not implemented"
+
+instance A.Arbitrary VecshiftR32Narrow where
+  arbitrary g = VecshiftR32Narrow <$> A.arbitrary g
+
+vecshiftR32NarrowImmField :: Field
+vecshiftR32NarrowImmField = Field 4 0
+
+vecshiftR32NarrowToBits :: VecshiftR32Narrow -> Word32
+vecshiftR32NarrowToBits val =
+  insert vecshiftR32NarrowImmField (vecshiftR32NarrowImm val) 0
+
+mkVecshiftR32Narrow :: Word32 -> VecshiftR32Narrow
+mkVecshiftR32Narrow w =
+  VecshiftR32Narrow (fromIntegral $ extract vecshiftR32NarrowImmField w)
+
+vecshiftR32NarrowOperand :: OperandPayload
+vecshiftR32NarrowOperand =
+  OperandPayload { opTypeT = [t| VecshiftR32Narrow |]
+                 , opConE  = Just (varE 'mkVecshiftR32Narrow)
+                 , opWordE = Just (varE 'vecshiftR32NarrowToBits)
+                 }
+
+data VecshiftR64Narrow = VecshiftR64Narrow { vecshiftR64NarrowImm :: Word8
+                                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty VecshiftR64Narrow where
+  pPrint _ = PP.text "VecshiftR64Narrow: not implemented"
+
+instance A.Arbitrary VecshiftR64Narrow where
+  arbitrary g = VecshiftR64Narrow <$> A.arbitrary g
+
+vecshiftR64NarrowImmField :: Field
+vecshiftR64NarrowImmField = Field 5 0
+
+vecshiftR64NarrowToBits :: VecshiftR64Narrow -> Word32
+vecshiftR64NarrowToBits val =
+  insert vecshiftR64NarrowImmField (vecshiftR64NarrowImm val) 0
+
+mkVecshiftR64Narrow :: Word32 -> VecshiftR64Narrow
+mkVecshiftR64Narrow w =
+  VecshiftR64Narrow (fromIntegral $ extract vecshiftR64NarrowImmField w)
+
+vecshiftR64NarrowOperand :: OperandPayload
+vecshiftR64NarrowOperand =
+  OperandPayload { opTypeT = [t| VecshiftR64Narrow |]
+                 , opConE  = Just (varE 'mkVecshiftR64Narrow)
+                 , opWordE = Just (varE 'vecshiftR64NarrowToBits)
                  }
 
