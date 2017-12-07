@@ -38,6 +38,7 @@ import           System.Directory ( doesFileExist, doesDirectoryExist, getDirect
 import           System.FilePath ( (</>) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
+import           Data.Parameterized.Some ( Some(..) )
 import           Data.Parameterized.Lift ( LiftF(..) )
 import           Data.Parameterized.HasRepr ( HasRepr(..) )
 import           Data.Parameterized.ShapedList ( ShapedList(..), ShapeRepr )
@@ -274,14 +275,47 @@ mkAssembler :: ISA -> ISADescriptor -> Q [Dec]
 mkAssembler isa desc = do
   insnName <- newName "insn"
   unparserTy <- [t| $(conT (mkName "Instruction")) -> LBS.ByteString |]
+  insTagTy <- [t| $(conT (mkName "Instruction")) -> Some $(conT (mkName "Opcode") `appT` (conT (mkName "Operand"))) |]
+  pairsTy <- [t| [(Some $(conT (mkName "Opcode") `appT` (conT (mkName "Operand"))), $(conT (mkName "Instruction")) -> LBS.ByteString)] |]
   cases <- mapM (mkAsmCase isa) (isaInstructions desc)
-  let body = CaseE (VarE insnName) cases
-  return [ SigD unparserName unparserTy
-         , FunD unparserName [Clause [VarP insnName] (NormalB body) []]
-         ]
 
-mkAsmCase :: ISA -> InstructionDescriptor -> Q Match
+  let (pairs, declLists) = unzip cases
+      decls = concat declLists
+
+  let pairsExprName = mkName "instructionAssemblyHandlers"
+      insnTagName = mkName "getInstructionTag"
+      mkTuple (opExpr, fun) =
+          -- TupE [ConE (mkName "Some") `AppE` opExpr, VarE fun]
+          [e| (Some $(return opExpr), $(return $ VarE fun)) |]
+
+  pairsBody <- ListE <$> mapM mkTuple pairs
+  tagExpr <- [e| Some $(varE $ mkName "t") |]
+
+  -- maybe (error "") ($ i) lookup (getOpcode isnName) (Data.Map.fromList pairs)
+  let body = VarE 'maybe `AppE` (VarE 'error `AppE` (LitE $ StringL "BUG: unhandled instruction in assembler"))
+                         `AppE` (InfixE Nothing (VarE (mkName "$")) (Just $ VarE insnName))
+                         `AppE` (VarE 'lookup `AppE` (VarE insnTagName `AppE` (VarE insnName))
+                                              `AppE` (VarE pairsExprName))
+      pairsExpr = [ SigD pairsExprName pairsTy
+                  , ValD (VarP pairsExprName) (NormalB pairsBody) []
+                  ]
+      insTagExpr = [ SigD insnTagName insTagTy
+                   , FunD insnTagName [Clause [ConP 'Instruction [VarP (mkName "t"), WildP]] (NormalB tagExpr) []]
+                   ]
+
+
+  return $ decls <>
+           pairsExpr <>
+           insTagExpr <>
+           [ SigD unparserName unparserTy
+           , FunD unparserName [Clause [VarP insnName] (NormalB body) []]
+           ]
+
+mkAsmCase :: ISA -> InstructionDescriptor -> Q ((Exp, Name), [Dec])
 mkAsmCase isa i = do
+  let fName = mkName ("assemble" ++ idMnemonic i)
+  fTy <- [t| $(conT (mkName "Instruction")) -> LBS.ByteString |]
+
   -- We use the byte-swapped version of the mask here because the call
   -- to the 'isaInsnWordFromBytes' to convert the mask into a word
   -- will re-byte swap.
@@ -290,7 +324,14 @@ mkAsmCase isa i = do
   (opsPat, operands) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
   let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
   body <- [| $(varE (isaInsnWordToBytes isa)) (assembleBits $(return trueMaskE) $(return (ListE operands))) |]
-  return $ Match pat (NormalB body) []
+
+  let decls = [ SigD fName fTy
+              , FunD fName [ Clause [pat] (NormalB body) []
+                           , Clause [WildP] (NormalB $ VarE 'error `AppE` (LitE $ StringL "BUG: assembly function called with wrong instruction")) []
+                           ]
+              ]
+
+  return ((ConE (mkName (toTypeName (idMnemonic i))), fName), decls)
   where
     addOperand op (pat, operands) = do
       operandPayload <- lookupAndValidateOperand isa (opType op)
