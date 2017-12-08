@@ -154,6 +154,10 @@ The overrides are processed as follows:
   the override file even if you only need to modify a single entry in
   the def or class.
 
+* Override files may also provide entries that are not already present
+  in the main TableGen file; in this case those entries will be added to
+  the overall collection of TableGen records.
+
 Generating TableGen Files
 =========================
 
