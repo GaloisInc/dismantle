@@ -24,6 +24,52 @@ The ``dismantle-tablegen`` library provides tools for parsing the LLVM TableGen
 data, as well as top-level helpers to generate assemblers and disassemblers in
 Template Haskell.
 
+Stability Notes
+===============
+
+Please note that the various architecture-specific ISA packages (such as
+``dismantle-arm``) may be incomplete or incorrect for some instructions,
+operands, or pretty-printed representations. This is because the
+degree to which any of these backend packages has been completed is
+a function of the particular binaries we used to test them (i.e.
+the binaries found in ``tests/bin`` in each package). As a result
+it's possible that when using ``dismantle`` with new binaries, some
+instructions may not be supported by the disassembler, may reassemble
+to incorrect bit sequences, or may have erroneous pretty-printing
+representations when compared to the output of ``objdump``. As new
+binaries are used with this software, code coverage of the ISA in
+question may increase, revealing as-yet-unimplemented or incorrect
+operand type implementations.
+
+If any of the above cases are encountered, the operand type(s) and
+instruction(s) in question will need to be supported. Fixing this
+involves:
+
+ * Determining which Tablegen descriptor entry is associated with the
+   offending input byte sequence. If an instruction fails any checks,
+   its bit pattern will be printed by the test suite; the bit pattern
+   can then be checked against both the Tablegen descriptors and
+   architecture reference manual to identify the instruction and its
+   operand semantics.
+
+ * If the byte sequence fails to disassemble, ensure that the descriptor
+   is not blacklisted by the ISA (e.g. due to metadata or other
+   filtering). For this, check the ``isaInstructionFilter`` behavior.
+
+ * Ensure that all operand types required by the descriptor have been
+   added to the ISA operand type list. For this, check the
+   ``isaOperandPayloadTypes`` list. Note that the entries in mapping
+   must match the operand type names used in the Tablegen descriptors
+   except that their first letters must be capitalized (since they get
+   used to construct Haskell types).
+
+ * Ensure that the operand types decode the proper bit fields as
+   indicated by the descriptor's bit pattern.
+
+ * Ensure that the operand types provide pretty printers that
+   recover the original instruction operands and match the ``objdump``
+   representation.
+
 Generating TableGen Files
 =========================
 
