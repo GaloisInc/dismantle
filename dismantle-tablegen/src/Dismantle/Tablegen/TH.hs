@@ -163,6 +163,9 @@ applyOverrides overrideRecs oldRecs = new
             let unmatched = filter (\val -> not $ any (matches val) overrides) old
             in overrides <> unmatched
 
+insnTagName :: Name
+insnTagName = mkName "getInstructionTag"
+
 opcodeTypeName :: Name
 opcodeTypeName = mkName "Opcode"
 
@@ -283,7 +286,6 @@ mkAssembler isa desc = do
       decls = concat declLists
 
   let pairsExprName = mkName "instructionAssemblyHandlers"
-      insnTagName = mkName "getInstructionTag"
       mkTuple (opExpr, fun) =
           -- TupE [ConE (mkName "Some") `AppE` opExpr, VarE fun]
           [e| (Some $(return opExpr), $(return $ VarE fun)) |]
@@ -597,11 +599,29 @@ mkOperandShowFInstance = do
 mkPrettyPrinter :: ISADescriptor -> Q [Dec]
 mkPrettyPrinter desc = do
   iname <- newName "i"
-  patterns <- mapM mkOpcodePrettyPrinter (isaInstructions desc)
-  let ex = CaseE (VarE iname) patterns
-      body = Clause [VarP iname] (NormalB ex) []
-      pp = FunD ppName [body]
-  return [sig, pp]
+  cases <- mapM mkOpcodePrettyPrinter (isaInstructions desc)
+  pairsTy <- [t| [(Some $(conT (mkName "Opcode") `appT` (conT (mkName "Operand"))), $(conT (mkName "Instruction")) -> PP.Doc)] |]
+
+  let (pairs, declLists) = unzip cases
+      decls = concat declLists
+
+  let pairsExprName = mkName "instructionPPHandlers"
+      mkTuple (opExpr, fun) = [e| (Some $(return opExpr), $(return $ VarE fun)) |]
+
+  pairsBody <- ListE <$> mapM mkTuple pairs
+
+  -- maybe (error "") ($ i) lookup (getOpcode isnName) (Data.Map.fromList pairs)
+  let body = VarE 'maybe `AppE` (VarE 'error `AppE` (LitE $ StringL "BUG: unhandled instruction in pretty printer"))
+                         `AppE` (InfixE Nothing (VarE (mkName "$")) (Just $ VarE iname))
+                         `AppE` (VarE 'lookup `AppE` (VarE insnTagName `AppE` (VarE iname))
+                                              `AppE` (VarE pairsExprName))
+      pairsExpr = [ SigD pairsExprName pairsTy
+                  , ValD (VarP pairsExprName) (NormalB pairsBody) []
+                  ]
+
+  let pp = FunD ppName [Clause [VarP iname] (NormalB body) []]
+  return $ decls <> pairsExpr <> [sig, pp]
+
   where
     ppName = mkName "ppInstruction"
     ty = ArrowT `AppT` ConT (mkName "Instruction") `AppT` ConT ''PP.Doc
@@ -616,15 +636,26 @@ mkPrettyPrinter desc = do
 canonicalOperands :: InstructionDescriptor -> [OperandDescriptor]
 canonicalOperands i = idOutputOperands i ++ idInputOperands i
 
-mkOpcodePrettyPrinter :: InstructionDescriptor -> Q Match
+mkOpcodePrettyPrinter :: InstructionDescriptor -> Q ((Exp, Name), [Dec])
 mkOpcodePrettyPrinter i = do
   (opsPat, prettyOps) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
-  let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
+  fTy <- [t| $(conT (mkName "Instruction")) -> PP.Doc |]
+
+  let fName = mkName $ "pp_" <> idMnemonic i
+      pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
       body = VarE 'prettyInstruction `AppE` ListE defaults `AppE` LitE (StringL (idAsmString i)) `AppE` ListE prettyOps
       defaults = (mkDefault <$> idPrettyVariableOverrides i) <>
                  (mkDefault <$> idDefaultPrettyVariableValues i)
       mkDefault (varName, pretty) = TupE [LitE $ StringL varName, LitE $ StringL pretty]
-  return $ Match pat (NormalB body) []
+
+  let decls = [ SigD fName fTy
+              , FunD fName [ Clause [pat] (NormalB body) []
+                           , Clause [WildP] (NormalB $ VarE 'error `AppE` (LitE $ StringL "BUG: pretty printer called with wrong instruction")) []
+                           ]
+              ]
+
+  return ((ConE (mkName (toTypeName (idMnemonic i))), fName), decls)
+
   where
     addOperand op (pat, pret) = do
       vname <- newName "operand"
