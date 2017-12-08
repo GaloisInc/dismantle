@@ -21,25 +21,20 @@ Instruction Set Architectures (ISA) that we care about. Moreover, it
 includes the encodings of those instructions, as well as their operands
 and types of operands.
 
-The ``dismantle-tablegen`` library provides tools for parsing the LLVM
-TableGen data, as well as top-level helpers to generate assemblers and
-disassemblers in Template Haskell.
-
 Repository Layout
 =================
 
 This repository contains a core ``dismantle-tablegen`` Haskell package
 and various architecture-specific packages named ``dismantle-$ARCH``.
-The ``dismantle-tablegen`` package provides Template Haskell functions
-to generate assemblers, disassemblers, and pretty printers from LLVM
-TableGen data. The architecture-specific packages then use that
-functionality to produce architecture-specific implementations from LLVM
-TableGen files for each architecture. Each package includes its own test
-suite that uses comment testing functionality from the core package to
-test the generated (dis)assembler and prety printer on various input
-binaries (see ``tests/bin`` in each package for those). It also tests
-the pretty printer output against what ``objdump`` produces for the same
-binaries.
+The ``dismantle-tablegen`` package provides a TableGen parser, Template
+Haskell functions to generate assemblers, disassemblers, and pretty
+printers from LLVM TableGen data, and common testing functionality. The
+architecture-specific packages then use that functionality to produce
+architecture-specific implementations from LLVM TableGen files for each
+architecture. Each package includes its own test suite to test the
+generated (dis)assembler and prety printer on various input binaries
+(see ``tests/bin`` in each package for those). It also tests the pretty
+printer output against what ``objdump`` produces for the same binaries.
 
 Stability Notes
 ===============
