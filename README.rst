@@ -58,13 +58,19 @@ involves:
 
 * Ensure that all operand types required by the descriptor have been
   added to the ISA operand type list. For this, check the
-  ``isaOperandPayloadTypes`` list. Note that the entries in mapping must
+  ``isaOperandPayloadTypes`` list to be sure that it includes all
+  operand types mentioned in the descriptor's ``OutOperandList`` and
+  ``InOperandList`` fields. Note that the entries in mapping must
   match the operand type names used in the Tablegen descriptors except
-  that their first letters must be capitalized (since they get used to
-  construct Haskell types).
+  that their first letters must be capitalized (since they get used
+  to construct Haskell types). For example, an ``OutOperandList`` of
+  ``(outs QPR:$Vd)`` indicates that a single operand ``$Vd`` has type
+  ``QPR``, so ``QPR`` needs an entry in the ``isaOperandPayloadTypes``
+  and we should also see ``$Vd`` in the bit pattern (``Bits``) and the
+  format string (``AsmString``).
 
 * Ensure that the operand types decode the proper bit fields as
-  indicated by the descriptor's bit pattern.
+  indicated by the descriptor's bit pattern in its ``Inst`` field.
 
 * Ensure that the operand types provide pretty printers that
   recover the original instruction operands and match the ``objdump``
