@@ -256,7 +256,8 @@ makePayload patterns byteIndex byte =
           -- than all of the others, take the most specific pattern
           return (byte, mostSpecificEltIdx)
       | otherwise -> do
-          -- Otherwise, the patterns overlap and we have no way to choose a winner, so error out
+          -- Otherwise, the patterns overlap and we have no way to
+          -- choose a winner, so fail
           mapping <- St.gets tsPatternMnemonics
 
           let pats = map fst (M.toList matchingPatterns)
