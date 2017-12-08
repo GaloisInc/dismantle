@@ -104,6 +104,11 @@ In these cases a variety of failure modes can manifest:
   because an operand was mentioned in the bit pattern but not mentioned
   in either the input or output operand list.
 
+Ideally these problems would not exist, and if they do, ideally we'd
+file bug reports with LLVM and wait for those reports to be addressed.
+But in the mean time, we may need to continue development and fix the
+problems ourselves.
+
 To resolve this, we provide a TableGen entry override feature. This
 entails creating a new file with a ``.tgen`` suffix containing repaired
 versions of the appropriate defs or classes, placing it in a
