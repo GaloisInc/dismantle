@@ -72,7 +72,7 @@ involves one or more of the following tasks:
   added to the ISA operand type list. For this, check the
   ``isaOperandPayloadTypes`` list to be sure that it includes all
   operand types mentioned in the descriptor's ``OutOperandList`` and
-  ``InOperandList`` fields. Note that the entries in mapping must
+  ``InOperandList`` fields. Note that the entries in the mapping must
   match the operand type names used in the Tablegen descriptors except
   that their first letters must be capitalized (since they get used
   to construct Haskell types). For example, an ``OutOperandList`` of
