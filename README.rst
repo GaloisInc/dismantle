@@ -45,30 +45,30 @@ If any of the above cases are encountered, the operand type(s) and
 instruction(s) in question will need to be supported. Fixing this
 involves:
 
- * Determining which Tablegen descriptor entry is associated with the
-   offending input byte sequence. If an instruction fails any checks,
-   its bit pattern will be printed by the test suite; the bit pattern
-   can then be checked against both the Tablegen descriptors and
-   architecture reference manual to identify the instruction and its
-   operand semantics.
+* Determining which Tablegen descriptor entry is associated with the
+  offending input byte sequence. If an instruction fails any checks,
+  its bit pattern will be printed by the test suite; the bit pattern
+  can then be checked against both the Tablegen descriptors and
+  architecture reference manual to identify the instruction and its
+  operand semantics.
 
- * If the byte sequence fails to disassemble, ensure that the descriptor
-   is not blacklisted by the ISA (e.g. due to metadata or other
-   filtering). For this, check the ``isaInstructionFilter`` behavior.
+* If the byte sequence fails to disassemble, ensure that the descriptor
+  is not blacklisted by the ISA (e.g. due to metadata or other
+  filtering). For this, check the ``isaInstructionFilter`` behavior.
 
- * Ensure that all operand types required by the descriptor have been
-   added to the ISA operand type list. For this, check the
-   ``isaOperandPayloadTypes`` list. Note that the entries in mapping
-   must match the operand type names used in the Tablegen descriptors
-   except that their first letters must be capitalized (since they get
-   used to construct Haskell types).
+* Ensure that all operand types required by the descriptor have been
+  added to the ISA operand type list. For this, check the
+  ``isaOperandPayloadTypes`` list. Note that the entries in mapping must
+  match the operand type names used in the Tablegen descriptors except
+  that their first letters must be capitalized (since they get used to
+  construct Haskell types).
 
- * Ensure that the operand types decode the proper bit fields as
-   indicated by the descriptor's bit pattern.
+* Ensure that the operand types decode the proper bit fields as
+  indicated by the descriptor's bit pattern.
 
- * Ensure that the operand types provide pretty printers that
-   recover the original instruction operands and match the ``objdump``
-   representation.
+* Ensure that the operand types provide pretty printers that
+  recover the original instruction operands and match the ``objdump``
+  representation.
 
 Generating TableGen Files
 =========================
