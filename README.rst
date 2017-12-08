@@ -1,5 +1,5 @@
-This is a collection of libraries implementing assemblers and disassemblers for
-several architectures based on LLVM TableGen data.
+This is a collection of libraries implementing assemblers and
+disassemblers for several architectures based on LLVM TableGen data.
 
 Setup
 =====
@@ -7,22 +7,23 @@ Setup
 This package is supported on Ubuntu Xenial (16.04 LTS) and depends on
 the following packages:
 
- * binutils-multiarch
+* ``binutils-multiarch``
 
-To configure your system to build this package, run `setup.sh`.
+To configure your system to build this package, run ``setup.sh``.
 
 Library Concept
 ===============
 
-The high level idea of this library is to generate assemblers and disassemblers
-from the data provided by LLVM TableGen.  Among other things, this data includes
-lists of all of the instructions for the Instruction Set Architectures (ISA)
-that we care about.  Moreover, it includes the encodings of those instructions,
-as well as their operands and types of operands.
+The high level idea of this library is to generate assemblers and
+disassemblers from the data provided by LLVM TableGen. Among other
+things, this data includes lists of all of the instructions for the
+Instruction Set Architectures (ISA) that we care about. Moreover, it
+includes the encodings of those instructions, as well as their operands
+and types of operands.
 
-The ``dismantle-tablegen`` library provides tools for parsing the LLVM TableGen
-data, as well as top-level helpers to generate assemblers and disassemblers in
-Template Haskell.
+The ``dismantle-tablegen`` library provides tools for parsing the LLVM
+TableGen data, as well as top-level helpers to generate assemblers and
+disassemblers in Template Haskell.
 
 Stability Notes
 ===============
