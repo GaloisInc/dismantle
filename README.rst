@@ -80,6 +80,76 @@ involves one or more of the following tasks:
   descriptor in the ``AsmString`` field to see how the operands are
   formatted in the overall pretty-printed output.
 
+Repairing TableGen Entries
+==========================
+
+In rare cases, LLVM's TableGen data can be broken in a variety of ways:
+
+* An operand may appear some but not all of: the format string, bit
+  pattern, or operand lists.
+
+* An operand name may not be consistent across the format string, bit
+  pattern, or operand lists.
+
+In these cases a variety of failure modes can manifest:
+
+* The pretty-printed instruction produced by ``dismantle`` will entirely
+  lack some portion of the instruction and thus disagree with both
+  ``objdump`` and the architecture reference manual.
+
+* The instruction will be pretty-printed with ``UndefinedVar`` errors in
+  place of any undefined variables.
+
+* The instruction may reassemble but fail to preserve some input bits
+  because an operand was mentioned in the bit pattern but not defined in
+  either the input or output operand list.
+
+To resolve this, we provide a TableGen entry override feature. This
+entails creating a new file with a ``.tgen`` suffix, placing it a
+directory, and then adding that directory's path (relative to the
+architecture-specific package root) to a list of override paths to the
+Template Haskell functions ``genISA`` and ``genISARandomHelpers``. For
+example, for the ``dismantle-aarch64`` package, we have some ``.tgen``
+files in ``dismantle-aarch64/data/override/`` and then we have::
+
+  $(genISA isa "data/AArch64.tgen" ["data/override"])
+  $(genISARandomHelpers isa "data/AArch64.tgen" ["data/override"])
+
+It's important to pass the same override paths to each of the above
+Template Haskell functions to ensure that the same overrides are applied
+to both code generation steps.
+
+The overrides are processed as follows:
+
+* All overrides (files with ``.tgen`` suffix) are loaded from all
+  override paths. Override paths are not searched recursively. Files not
+  ending in a ``.tgen`` extension are ignored.
+
+* Each override file must be a valid standalone ``.tgen`` file, which
+  means that it must take the following form::
+
+    ------------- Classes -----------------
+    (zero or more classes)
+    ------------- Defs -----------------
+    (zero or more defs)
+
+* The override files are loaded in an undefined order. Every override
+  file must provide defs or classes disjoint from all other override
+  files; if not, it is undefined which duplicate def or class will
+  affect the final ISA result.
+
+* The override files will be combined to form a collection of defs
+  and classes that will override the same defs and classes in the
+  main ``.tgen`` file for the architecture; overriding is done on a
+  name basis, so if a def named ``foo`` is present in both the main
+  architecture TableGen file and in an override file, the version from
+  the override file will be used.
+
+* The defs and classes in the overrides *completely replace* the ones in
+  the original TableGen file. So if you need to repair a defective def
+  or class, the entire entry (``def ... { ... }``) must be copied even
+  if you only need to modify a single entry in the def or class.
+
 Generating TableGen Files
 =========================
 
