@@ -98,14 +98,15 @@ In these cases a variety of failure modes can manifest:
   ``objdump`` and the architecture reference manual.
 
 * The instruction will be pretty-printed with ``UndefinedVar`` errors in
-  place of any undefined variables.
+  place of any undefined operand variables.
 
 * The instruction may reassemble but fail to preserve some input bits
-  because an operand was mentioned in the bit pattern but not defined in
-  either the input or output operand list.
+  because an operand was mentioned in the bit pattern but not mentioned
+  in either the input or output operand list.
 
 To resolve this, we provide a TableGen entry override feature. This
-entails creating a new file with a ``.tgen`` suffix, placing it a
+entails creating a new file with a ``.tgen`` suffix containing repaired
+versions of the appropriate defs or classes, placing it in a
 directory, and then adding that directory's path (relative to the
 architecture-specific package root) to a list of override paths to the
 Template Haskell functions ``genISA`` and ``genISARandomHelpers``. For
@@ -136,7 +137,9 @@ The overrides are processed as follows:
 * The override files are loaded in an undefined order. Every override
   file must provide defs or classes disjoint from all other override
   files; if not, it is undefined which duplicate def or class will
-  affect the final ISA result.
+  affect the final ISA result. One way to avoid this problem is to
+  provide each def or class in its own override file and use the class
+  name or def name to name the file.
 
 * The override files will be combined to form a collection of defs
   and classes that will override the same defs and classes in the
@@ -147,8 +150,9 @@ The overrides are processed as follows:
 
 * The defs and classes in the overrides *completely replace* the ones in
   the original TableGen file. So if you need to repair a defective def
-  or class, the entire entry (``def ... { ... }``) must be copied even
-  if you only need to modify a single entry in the def or class.
+  or class, the entire entry (``def ... { ... }``) must be provided in
+  the override file even if you only need to modify a single entry in
+  the def or class.
 
 Generating TableGen Files
 =========================
