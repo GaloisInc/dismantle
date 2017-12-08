@@ -43,7 +43,7 @@ operand type implementations.
 
 If any of the above cases are encountered, the operand type(s) and
 instruction(s) in question will need to be supported. Fixing this
-involves:
+involves one or more of the following tasks:
 
 * Determine which Tablegen descriptor entry is associated with the
   offending input byte sequence. If an instruction fails any checks,
