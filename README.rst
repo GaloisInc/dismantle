@@ -80,6 +80,34 @@ involves one or more of the following tasks:
   descriptor in the ``AsmString`` field to see how the operands are
   formatted in the overall pretty-printed output.
 
+Generating TableGen Files
+=========================
+
+The file we take as inputs to this suite of tools are not actually in the
+TableGen format (extension ``.td``); instead, we consume the output of the
+``llvm-tblgen`` tool, which reads the real TableGen files and pre-processes
+them. We use data files generated from sources of LLVM 3.9.
+
+The real TableGen files are included in the LLVM source distribution.
+
+.. code-block:: shell
+
+   # Assuming that the LLVM source has been unpacked to ${LLVM_ROOT}
+   cd ${LLVM_ROOT}/lib/Target
+
+   # Choose the architecture you want to process, assume PowerPC
+   cd PowerPC
+
+   # Run tablegen
+   llvm-tblgen -I${LLVM_ROOT}/include PPC.td > PPC.tgen
+
+
+The ``.tgen`` extension is made up for this project, and not something
+from LLVM.  The default output of the ``llvm-tblgen`` tool is a fully-expanded
+version of the input TableGen files.  It is reasonably easy to parse, and the
+format we consume in the ``dismantle-tablegen`` library to produce assemblers
+and disassemblers.
+
 Repairing TableGen Entries
 ==========================
 
@@ -162,34 +190,6 @@ The overrides are processed as follows:
 * Override files may also provide entries that are not already present
   in the main TableGen file; in this case those entries will be added to
   the overall collection of TableGen records.
-
-Generating TableGen Files
-=========================
-
-The file we take as inputs to this suite of tools are not actually in the
-TableGen format (extension ``.td``); instead, we consume the output of the
-``llvm-tblgen`` tool, which reads the real TableGen files and pre-processes
-them. We use data files generated from sources of LLVM 3.9.
-
-The real TableGen files are included in the LLVM source distribution.
-
-.. code-block:: shell
-
-   # Assuming that the LLVM source has been unpacked to ${LLVM_ROOT}
-   cd ${LLVM_ROOT}/lib/Target
-
-   # Choose the architecture you want to process, assume PowerPC
-   cd PowerPC
-
-   # Run tablegen
-   llvm-tblgen -I${LLVM_ROOT}/include PPC.td > PPC.tgen
-
-
-The ``.tgen`` extension is made up for this project, and not something
-from LLVM.  The default output of the ``llvm-tblgen`` tool is a fully-expanded
-version of the input TableGen files.  It is reasonably easy to parse, and the
-format we consume in the ``dismantle-tablegen`` library to produce assemblers
-and disassemblers.
 
 Developing in Template Haskell
 ==============================
