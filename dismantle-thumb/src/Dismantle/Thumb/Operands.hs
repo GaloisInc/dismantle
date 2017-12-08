@@ -1,5 +1,6 @@
 {-# OPTIONS_HADDOCK not-home #-}
 {-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Dismantle.Thumb.Operands (
   GPR,
   gpr,
@@ -148,12 +149,25 @@ module Dismantle.Thumb.Operands (
   T2SoReg,
   mkT2SoReg,
   t2SoRegToBits
+
+  , MembOpt
+  , mkMembOpt
+  , membOptToBits
+  , membOptOperand
+
+  , MsrMask10
+  , mkMsrMask10
+  , msrMask10ToBits
+  , msrMask10Operand
+
   ) where
 
 import Data.Bits
 import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.Word ( Word8, Word16, Word32 )
+import Dismantle.Tablegen.ISA
+import Language.Haskell.TH hiding (Pred)
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
@@ -1310,3 +1324,74 @@ instance A.Arbitrary RotImm where
 instance A.Arbitrary BfInvMaskImm where
   arbitrary g = BfInvMaskImm <$> A.arbitrary g
                              <*> A.arbitrary g
+
+data MembOpt = MembOpt { membOptVal :: Word8
+                       } deriving (Eq, Ord, Show)
+
+instance PP.Pretty MembOpt where
+  pPrint (MembOpt 0b0000) = PP.text "<reserved>"
+  pPrint (MembOpt 0b0001) = PP.text "oshld"
+  pPrint (MembOpt 0b0010) = PP.text "oshst"
+  pPrint (MembOpt 0b0011) = PP.text "osh"
+  pPrint (MembOpt 0b0100) = PP.text "<reserved>"
+  pPrint (MembOpt 0b0101) = PP.text "nshld"
+  pPrint (MembOpt 0b0110) = PP.text "nshst"
+  pPrint (MembOpt 0b0111) = PP.text "nsh"
+  pPrint (MembOpt 0b1000) = PP.text "<reserved>"
+  pPrint (MembOpt 0b1001) = PP.text "ishld"
+  pPrint (MembOpt 0b1010) = PP.text "ishst"
+  pPrint (MembOpt 0b1011) = PP.text "ish"
+  pPrint (MembOpt 0b1100) = PP.text "<reserved>"
+  pPrint (MembOpt 0b1101) = PP.text "ld"
+  pPrint (MembOpt 0b1110) = PP.text "st"
+  pPrint (MembOpt 0b1111) = PP.text "sy"
+  pPrint (MembOpt i)      = PP.text $ "<invalid MembOpt: " <> show i <> ">"
+
+instance A.Arbitrary MembOpt where
+  arbitrary g = MembOpt <$> A.arbitrary g
+
+membOptValField :: Field
+membOptValField = Field 4 0
+
+membOptToBits :: MembOpt -> Word32
+membOptToBits val =
+  insert membOptValField (membOptVal val) 0
+
+mkMembOpt :: Word32 -> MembOpt
+mkMembOpt w =
+  MembOpt (fromIntegral $ extract membOptValField w)
+
+membOptOperand :: OperandPayload
+membOptOperand =
+  OperandPayload { opTypeT = [t| MembOpt |]
+                 , opConE  = Just (varE 'mkMembOpt)
+                 , opWordE = Just (varE 'membOptToBits)
+                 }
+
+data MsrMask10 = MsrMask10 { msrMask10Val :: Word16
+                           } deriving (Eq, Ord, Show)
+
+instance PP.Pretty MsrMask10 where
+  pPrint _ = PP.text "MsrMask10: not implemented"
+
+instance A.Arbitrary MsrMask10 where
+  arbitrary g = MsrMask10 <$> A.arbitrary g
+
+msrMask10ValField :: Field
+msrMask10ValField = Field 12 0
+
+msrMask10ToBits :: MsrMask10 -> Word32
+msrMask10ToBits val =
+  insert msrMask10ValField (msrMask10Val val) 0
+
+mkMsrMask10 :: Word32 -> MsrMask10
+mkMsrMask10 w =
+  MsrMask10 (fromIntegral $ extract msrMask10ValField w)
+
+msrMask10Operand :: OperandPayload
+msrMask10Operand =
+  OperandPayload { opTypeT = [t| MsrMask10 |]
+                 , opConE  = Just (varE 'mkMsrMask10)
+                 , opWordE = Just (varE 'msrMask10ToBits)
+                 }
+

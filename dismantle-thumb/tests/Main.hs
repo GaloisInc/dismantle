@@ -24,7 +24,7 @@ thumb = ATC { archName = "thumb"
             , disassemble = Thumb.disassembleInstruction
             , assemble = Thumb.assembleInstruction
             , prettyPrint = Thumb.ppInstruction
-            , expectFailure = Just expectedFailures
+            , expectFailure = Nothing
             , instructionFilter = ((/= FullWord) . insnLayout)
             , skipPrettyCheck = Just skipPretty
             , ignoreAddresses = ignored
@@ -91,6 +91,10 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "b"
               , "b.n"
               , "cb"
+
+              , "mrs"
+              , "msr"
+              , "cpsie"
 
               -- These get represented as RSBS (see ARM ARM, DDI
               -- 0406C.b, A8.8.118 NEG)
@@ -207,6 +211,39 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "sxth" <> conditions
               , "rev" <> conditions
               , "movw" <> conditions
+              , "teq" <> conditions
+              , "subs" <> conditions <> ".w"
+              , "rsbs" <> conditions
+              , "cmn" <> conditions <> ".w"
+              , "orrs" <> conditions <> ".w"
+              , "mvns" <> conditions <> ".w"
+              , "ands" <> conditions <> ".w"
+              , "mls" <> conditions
+              , "orn" <> conditions
+
+              -- We can't pretty-print VFP instructions
+              , "vmov"
+              , "vmul"
+              , "vldr"
+              , "vadd"
+              , "vpop"
+              , "vpush"
+              , "vmrs"
+              , "vcmpe"
+              , "vfma"
+              , "vsub"
+              , "vfnms"
+              , "vnmul"
+              , "vcvt"
+              , "vneg"
+              , "vldmdb"
+              , "vstmdb"
+              , "vldmia"
+              , "vstmia"
+              , "vfms"
+              , "vcmp"
+              , "vdiv"
+              , "vabs"
 
               -- We render this as ADR
               , "addw.*pc.*"
@@ -235,15 +272,3 @@ skipPretty = rx (L.intercalate "|" rxes)
     conditions = "(" <> (concat $ L.intersperse "|"
                   (PP.render <$> PP.pPrint <$> Thumb.mkPred <$> [0..13])) <> ")"
     suffix = "(.n)?"
-
-expectedFailures :: RE.RE
-expectedFailures = rx (L.intercalate "|" rxes)
-  where
-    rxes = [ -- The tablegen data for MVN is currently incorrect
-             -- w.r.t. unpredictable bits. The only variant of
-             -- MVN that we've encountered that actually sets
-             -- some unpredictable bits is 'mvnpl'. A bug has been
-             -- submitted upstream. In the mean time, for details, see
-             -- https://bugs.llvm.org/show_bug.cgi?id=33011
-             "^[[:space:]]*mvnpl"
-           ]
