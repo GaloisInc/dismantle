@@ -67,8 +67,9 @@ involves one or more of the following tasks:
   to construct Haskell types). For example, an ``OutOperandList`` of
   ``(outs QPR:$Vd)`` indicates that a single operand ``$Vd`` has type
   ``QPR``, so ``QPR`` needs an entry in the ``isaOperandPayloadTypes``
-  and we should also see ``$Vd`` in the bit pattern (``Bits``) and the
-  format string (``AsmString``).
+  and we should also see ``$Vd`` in the bit pattern (``Bits``). We might
+  also see it in the format string (``AsmString``), although not all
+  operands will necessarily appear there.
 
 * Ensure that the operand types decode the proper bit fields as
   indicated by the descriptor's bit pattern in its ``Inst`` field.
