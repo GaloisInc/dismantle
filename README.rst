@@ -211,7 +211,11 @@ do not type check as expected.  Some tips:
       stack clean dismantle-ppc
       stack build dismantle-ppc --ghc-options=-ddump-splices
 
-  and then find them with::
+  Or you can enable these options in the module using the TH functions::
+
+      {-# OPTIONS_GHC -ddump-splices -ddump-to-file #-}
+
+  Then you can find the splice files with::
 
       find .stack-work -name '*.dump-splices'
 
