@@ -68,7 +68,9 @@ involves:
 
 * Ensure that the operand types provide pretty printers that
   recover the original instruction operands and match the ``objdump``
-  representation.
+  representation. For this, also see the format string given by the
+  descriptor in the ``AsmString`` field to see how the operands are
+  formatted in the overall pretty-printed output.
 
 Generating TableGen Files
 =========================
