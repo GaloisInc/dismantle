@@ -246,11 +246,7 @@ isa = ISA { isaName = "AArch64"
         ]
 
     ignoredMetadata d = any badMetadata (defMetadata d)
-    badMetadata (Metadata m) =
-        or [ "SIMD" `L.isInfixOf` m
-           , "v" `L.isPrefixOf` m
-           , "Vector" `L.isInfixOf` m
-           ]
+    badMetadata = const False
 
     overrides =
         [ ("ADDHNv2i64_v4i32", FormOverride [("dst", Ignore)])
