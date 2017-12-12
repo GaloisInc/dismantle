@@ -3673,7 +3673,9 @@ data VecshiftR64 = VecshiftR64 { vecshiftR64Imm :: Word8
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftR64 where
-  pPrint _ = PP.text "VecshiftR64: not implemented"
+  pPrint (VecshiftR64 imm) =
+      let v = 128 - ((0b1 `shiftL` 6) .|. imm)
+      in PP.text $ "#" <> show v
 
 instance A.Arbitrary VecshiftR64 where
   arbitrary g = VecshiftR64 <$> A.arbitrary g
