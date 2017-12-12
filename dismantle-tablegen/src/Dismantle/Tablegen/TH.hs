@@ -408,16 +408,27 @@ genISARandomHelpers isa path overridePaths = do
   desc <- loadISA isa path overridePaths
   genName <- newName "gen"
   opcodeName <- newName "opcode"
-  let caseBody = caseE (varE opcodeName) (map (mkOpListCase genName) (isaInstructions desc))
-  let f = funD 'arbitraryOperands [clause [varP genName, varP opcodeName] (normalB caseBody) []]
+  ioSLWrapperType <- [d| newtype IOSLWrapper f tps = IOSLWrapper { unwrapIOSL :: IO (ShapedList f tps) } |]
+
+  let pairs = mkOpListCase genName <$> isaInstructions desc
+      pairsExprName = mkName "pairs"
+      pairsBody = [e| PM.fromList $(listE pairs) |]
+      arbitraryOpsMapping = valD (varP pairsExprName) (normalB pairsBody) []
+      body = varE 'maybe `appE` (varE 'error `appE` (litE $ StringL "BUG: unhandled opcode in ArbitraryOperands instance"))
+                         `appE` (varE (mkName "unwrapIOSL"))
+                         `appE` (varE 'PM.lookup `appE` (varE opcodeName)
+                                                 `appE` (varE pairsExprName))
+
+  let f = funD 'arbitraryOperands [clause [varP genName, varP opcodeName] (normalB body)
+                                  [arbitraryOpsMapping]]
   arbOperandsInst <- instanceD (return []) [t| ArbitraryOperands $(conT opcodeTypeName) $(conT operandTypeName) |] [f]
   arbitraryInstances <- mapM mkArbitraryInstanceForOperand (isaOperands desc)
   arbOperandInst <- mkArbitraryOperandInstance desc
-  return (arbOperandsInst : arbOperandInst : arbitraryInstances)
+  return (ioSLWrapperType <> (arbOperandsInst : arbOperandInst : arbitraryInstances))
   where
     mkOpListCase genName i =
       let conName = mkName (toTypeName (idMnemonic i))
-      in match (conP conName []) (normalB [| arbitraryShapedList $(varE genName) |]) []
+      in [e| PM.Pair $(conE conName) ($(conE (mkName "IOSLWrapper")) $ arbitraryShapedList $(varE genName)) |]
 
     mkArbitraryInstanceForOperand (OperandType origOperandName) = do
       let symbol = toTypeName origOperandName
