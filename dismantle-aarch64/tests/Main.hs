@@ -148,6 +148,12 @@ skipPretty = rx (L.intercalate "|" rxes)
              -- can't because our operand pretty printer doesn't know
              -- we're rendering a RET.
              , "ret"
+
+             -- Impossible to pretty print because the format strings
+             -- are more than we currently know how to handle
+             , "addp"
+             , "dup"
+             , "add.*v"
              ]
 
     conditions = "(" <> (concat $ L.intersperse "|"
