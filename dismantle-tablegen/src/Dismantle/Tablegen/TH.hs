@@ -39,6 +39,7 @@ import           System.FilePath ( (</>) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import           Data.Parameterized.Some ( Some(..) )
+import qualified Data.Parameterized.Map as PM
 import           Data.Parameterized.Lift ( LiftF(..) )
 import           Data.Parameterized.HasRepr ( HasRepr(..) )
 import           Data.Parameterized.ShapedList ( ShapedList(..), ShapeRepr )
@@ -82,11 +83,13 @@ genISA isa path overridePaths = do
   operandType <- mkOperandType isa desc >>= sequence
   opcodeType <- mkOpcodeType desc >>= sequence
   instrTypes <- mkInstructionAliases
+  setWrapperType <- [d| newtype NESetWrapper o p = NESetWrapper { unwrapNESet :: (NES.Set ($(conT $ mkName "Opcode") o p)) } |]
   ppDef <- mkPrettyPrinter desc
   parserDef <- mkParser isa desc path
   asmDef <- mkAssembler isa desc
   return $ concat [ operandType
                   , opcodeType
+                  , setWrapperType
                   , instrTypes
                   , ppDef
                   , parserDef
@@ -445,12 +448,22 @@ mkEnumFInstance desc = do
   let enumfCase = caseE (varE enumfArgName) (zipWith mkEnumFMatch [0..] (isaInstructions desc))
   enumfDec <- funD 'enumF [clause [varP enumfArgName] (normalB enumfCase) []]
 
-  let congruentfCase = caseE (varE enumfArgName) [ mkCongruentFCase elt eltsList
-                                                 | (_shape, elts) <- M.toList congruenceClasses
-                                                 , let eltsList = F.toList elts
-                                                 , elt <- eltsList
-                                                 ]
-  congruentfDec <- funD 'congruentF [clause [varP enumfArgName] (normalB congruentfCase) []]
+  let pairsExprName = mkName "enumfMapping"
+      pairs = [ mkCongruentFCase elt eltsList
+              | (_shape, elts) <- M.toList congruenceClasses
+              , let eltsList = F.toList elts
+              , elt <- eltsList
+              ]
+
+  let pairsBody = [e| PM.fromList $(listE pairs) |]
+      congruentfMapping = valD (varP pairsExprName) (normalB pairsBody) []
+      body = varE 'maybe `appE` (varE 'error `appE` (litE $ StringL "BUG: unhandled instruction in EnumF instance"))
+                         `appE` (varE (mkName "unwrapNESet"))
+                         `appE` (varE 'PM.lookup `appE` ([e| $(varE enumfArgName) |])
+                                                 `appE` (varE pairsExprName))
+
+  congruentfDec <- funD 'congruentF [clause [varP enumfArgName] (normalB body)
+                                    [congruentfMapping]]
   return (InstanceD Nothing [] enumfTy [enumfDec, congruentfDec])
   where
     congruenceClasses :: M.Map [OperandType] (S.Set Name)
@@ -465,7 +478,7 @@ mkEnumFInstance desc = do
       match (conP conName []) (normalB (litE (integerL i))) []
 
     mkCongruentFCase eltName eltNames =
-      match (conP eltName []) (normalB [| NES.fromList $(conE eltName) $(listE (map conE eltNames)) |]) []
+      [e| PM.Pair $(conE eltName) ($(conE (mkName "NESetWrapper")) $ NES.fromList $(conE eltName) $(listE (map conE eltNames))) |]
 
 instructionShape :: InstructionDescriptor -> [OperandType]
 instructionShape i = [ opType op | op <- canonicalOperands i ]
