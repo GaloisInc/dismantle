@@ -41,8 +41,9 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 import           Data.Parameterized.Some ( Some(..) )
 import qualified Data.Parameterized.Map as PM
 import           Data.Parameterized.Lift ( LiftF(..) )
+import qualified Data.Parameterized.SymbolRepr as SR
 import           Data.Parameterized.HasRepr ( HasRepr(..) )
-import           Data.Parameterized.ShapedList ( ShapedList(..), ShapeRepr )
+import qualified Data.Parameterized.List as SL
 import qualified Data.Parameterized.TH.GADT as PTH
 import           Data.EnumF ( EnumF(..), enumCompareF )
 import qualified Data.Set.NonEmpty as NES
@@ -249,11 +250,11 @@ mkParserExpr isa i
   | null (canonicalOperands i) = do
     -- If we have no operands, make a much simpler constructor (so we
     -- don't have an unused bytestring parameter)
-    [| Parser reqBytes (\_ -> $(return con) $(return tag) Nil) |]
+    [| Parser reqBytes (\_ -> $(return con) $(return tag) SL.Nil) |]
   | otherwise = do
     bsName <- newName "bytestring"
     wordName <- newName "w"
-    opList <- F.foldrM (addOperandExpr wordName) (ConE 'Nil) (canonicalOperands i)
+    opList <- F.foldrM (addOperandExpr wordName) (ConE 'SL.Nil) (canonicalOperands i)
     let insnCon = con `AppE` tag `AppE` opList
     [| Parser reqBytes (\ $(varP bsName) ->
                  case $(varE (isaInsnWordFromBytes isa)) $(varE bsName) of
@@ -271,8 +272,8 @@ mkParserExpr isa i
           -- FIXME: Need to write some helpers to handle making the
           -- right operand constructor
       case opConE operandPayload of
-         Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(lift (opChunks od))) :> $(return e) |]
-         Just conExp -> [| $(return operandCon) ($(conExp) (fieldFromWord $(varE wordName) $(lift (opChunks od)))) :> $(return e) |]
+         Nothing -> [| $(return operandCon) (fieldFromWord $(varE wordName) $(lift (opChunks od))) SL.:< $(return e) |]
+         Just conExp -> [| $(return operandCon) ($(conExp) (fieldFromWord $(varE wordName) $(lift (opChunks od)))) SL.:< $(return e) |]
 
 unparserName :: Name
 unparserName = mkName "assembleInstruction"
@@ -326,7 +327,7 @@ mkAsmCase isa i = do
   -- will re-byte swap.
   let (_, trueMask) = bitSpecAsBytes (idMask i)
   trueMaskE <- [| $(varE (isaInsnWordFromBytes isa)) (LBS.fromStrict (unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (stringPrimL trueMask))))) |]
-  (opsPat, operands) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
+  (opsPat, operands) <- F.foldrM addOperand ((ConP 'SL.Nil []), []) (canonicalOperands i)
   let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
   body <- [| $(varE (isaInsnWordToBytes isa)) (assembleBits $(return trueMaskE) $(return (ListE operands))) |]
 
@@ -346,7 +347,7 @@ mkAsmCase isa i = do
       chunks <- lift (opChunks op)
       vname <- newName "operand"
       asmOp <- [| ( $(opToBits) $(varE vname),  $(return chunks) ) |]
-      return (InfixP (ConP (mkName otyname) [VarP vname]) '(:>) pat, asmOp : operands)
+      return (InfixP (ConP (mkName otyname) [VarP vname]) '(SL.:<) pat, asmOp : operands)
 
 {-
 
@@ -408,7 +409,7 @@ genISARandomHelpers isa path overridePaths = do
   desc <- loadISA isa path overridePaths
   genName <- newName "gen"
   opcodeName <- newName "opcode"
-  ioSLWrapperType <- [d| newtype IOSLWrapper f tps = IOSLWrapper { unwrapIOSL :: IO (ShapedList f tps) } |]
+  ioSLWrapperType <- [d| newtype IOSLWrapper f tps = IOSLWrapper { unwrapIOSL :: IO (SL.List f tps) } |]
 
   let pairs = mkOpListCase genName <$> isaInstructions desc
       pairsExprName = mkName "pairs"
@@ -529,7 +530,7 @@ mkOpcodeShowFInstance = do
 mkHasReprInstance :: ISADescriptor -> Q Dec
 mkHasReprInstance desc = do
   operandTyVar <- newName "o"
-  hasReprTy <- [t| HasRepr ($(conT opcodeTypeName) $(varT operandTyVar)) ShapeRepr |]
+  hasReprTy <- [t| HasRepr ($(conT opcodeTypeName) $(varT operandTyVar)) (SL.List SR.SymbolRepr) |]
   let clauses = map mkHasReprCase (isaInstructions desc)
   dec <- funD 'typeRepr clauses
   return (InstanceD Nothing [] hasReprTy [dec])
@@ -662,7 +663,7 @@ canonicalOperands i = idOutputOperands i ++ idInputOperands i
 
 mkOpcodePrettyPrinter :: InstructionDescriptor -> Q ((Exp, Name), [Dec])
 mkOpcodePrettyPrinter i = do
-  (opsPat, prettyOps) <- F.foldrM addOperand ((ConP 'Nil []), []) (canonicalOperands i)
+  (opsPat, prettyOps) <- F.foldrM addOperand ((ConP 'SL.Nil []), []) (canonicalOperands i)
   fTy <- [t| $(conT (mkName "Instruction")) -> PP.Doc |]
 
   let fName = mkName $ "pp_" <> idMnemonic i
@@ -686,7 +687,7 @@ mkOpcodePrettyPrinter i = do
       let oname = opName op
           OperandType otyname = opType op
       prettyOp <- [| PrettyOperand oname $(return (VarE vname)) PP.pPrint |]
-      return (InfixP (ConP (mkName (toTypeName otyname)) [(VarP vname)]) '(:>) pat, prettyOp : pret)
+      return (InfixP (ConP (mkName (toTypeName otyname)) [(VarP vname)]) '(SL.:<) pat, prettyOp : pret)
 
 {-
 

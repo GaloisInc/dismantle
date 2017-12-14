@@ -6,7 +6,7 @@ module Dismantle.Tablegen.TH.CaptureInfo (
 
 import           Language.Haskell.TH
 import           Data.Parameterized.FreeParamF ( FreeParamF(..) )
-import qualified Data.Parameterized.ShapedList as SL
+import qualified Data.Parameterized.List as SL
 import           Data.Parameterized.Witness ( Witness(..) )
 
 data CaptureInfo c o sh =
@@ -14,7 +14,7 @@ data CaptureInfo c o sh =
               -- ^ The opcode being captured, along with a witnessed constraint
               , capturedOpcodeName :: Name
               -- ^ The TH name of the opcode
-              , capturedOperandNames :: SL.ShapedList (FreeParamF Name) sh
+              , capturedOperandNames :: SL.List (FreeParamF Name) sh
               -- ^ A list of names in the same shape as the opcode; each name is
               -- referenced by 'genCase' to generate a match expression for the
               -- operand list for the opcode

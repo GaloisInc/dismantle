@@ -12,9 +12,9 @@ import Language.Haskell.TH.Datatype
 import Language.Haskell.TH.Syntax
 import Text.Printf ( printf )
 
-import Data.Parameterized.FreeParamF ( FreeParamF(..) )
-import Data.Parameterized.ShapedList ( ShapedList(..) )
-import Data.Parameterized.Some ( Some(..) )
+import qualified Data.Parameterized.FreeParamF as FP
+import qualified Data.Parameterized.List as SL
+import qualified Data.Parameterized.Some as S
 import Data.Parameterized.Witness ( Witness(..) )
 import Dismantle.Tablegen.TH.CaptureInfo ( CaptureInfo(..) )
 
@@ -47,7 +47,7 @@ captureDictionaries p tyName = do
     unqualifiedName (Name (OccName s) _) = s
 
 captureDictionaryFor :: ConstructorInfo -> ExpQ
-captureDictionaryFor ci = [e| Some (Witness $(conE (constructorName ci))) |]
+captureDictionaryFor ci = [e| S.Some (Witness $(conE (constructorName ci))) |]
 
 -- | This is just like 'captureDictionaries', but it captures a bit more
 -- information including some 'Name's and generates a TH function to perform a
@@ -65,11 +65,11 @@ captureInfoFor ci = do
   sh <- constructorShape ci
   (names, namesE) <- allocateMatchNames sh
   let genInputE = listE [ [| ($(litE (StringL s)), mkName $(litE (StringL (show n)))) |] | (s, n) <- names]
-  [e| Some CaptureInfo { capturedOpcode = Witness $(conE (constructorName ci))
-                       , capturedOpcodeName = mkName $(litE (StringL (show (constructorName ci))))
-                       , capturedOperandNames = $(return namesE)
-                       , genCase = genMatchExpr $(genInputE)
-                       }
+  [e| S.Some CaptureInfo { capturedOpcode = Witness $(conE (constructorName ci))
+                         , capturedOpcodeName = mkName $(litE (StringL (show (constructorName ci))))
+                         , capturedOperandNames = $(return namesE)
+                         , genCase = genMatchExpr $(genInputE)
+                         }
     |]
 
 -- | Generate a case expression over the operand list with a single case, where
@@ -93,11 +93,11 @@ genMatchExpr operands operandListName body = do
     buildPattern :: [(String, Name)] -> PatQ
     buildPattern ops =
       case ops of
-        [] -> [p| Nil |]
+        [] -> [p| SL.Nil |]
         ((opConStr, operandName) : rest) -> do
           let patRest = buildPattern rest
           let p = ConP (mkName opConStr) [VarP operandName]
-          [p| $(return p) :> $(patRest) |]
+          [p| $(return p) SL.:< $(patRest) |]
 
 allocateMatchNames :: [String] -> Q ([(String, Name)], Exp)
 allocateMatchNames sh = do
@@ -114,10 +114,10 @@ allocateMatchNames sh = do
   where
     buildShapedList names =
       case names of
-        [] -> [| Nil |]
+        [] -> [| SL.Nil |]
         (name:rest) -> do
           restE <- buildShapedList rest
-          [| FreeParamF (mkName $(litE (StringL (show name)))) :> $(return restE) |]
+          [| FP.FreeParamF (mkName $(litE (StringL (show name)))) SL.:< $(return restE) |]
 
 -- | Examine a 'ConstructorInfo' for an opcode constructor (which is a
 -- type-level list of symbols) and return the shape as a list of value level

@@ -18,6 +18,7 @@ library
   other-modules: Dismantle.Thumb.Operands
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
+                       parameterized-utils >= 1 && < 2,
                        dismantle-tablegen,
                        dismantle-arm,
                        bytestring,

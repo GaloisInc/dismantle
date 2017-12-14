@@ -11,7 +11,7 @@ module Dismantle.ARM (
   Instruction,
   AnnotatedInstruction,
   GenericInstruction(..),
-  ShapedList(..),
+  List(..),
   Annotated(..),
   Operand(..),
   Opcode(..),
@@ -21,7 +21,7 @@ module Dismantle.ARM (
   ppInstruction
   )where
 
-import Data.Parameterized.ShapedList ( ShapedList(..) )
+import Data.Parameterized.List ( List(..) )
 
 import Dismantle.ARM.ISA ( isa )
 import Dismantle.Instruction

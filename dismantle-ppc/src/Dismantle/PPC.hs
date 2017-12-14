@@ -11,7 +11,7 @@ module Dismantle.PPC (
   Instruction,
   AnnotatedInstruction,
   GenericInstruction(..),
-  ShapedList(..),
+  List(..),
   Annotated(..),
   Operand(..),
   Opcode(..),
@@ -21,7 +21,7 @@ module Dismantle.PPC (
   ppInstruction
   )where
 
-import Data.Parameterized.ShapedList ( ShapedList(..) )
+import Data.Parameterized.List ( List(..) )
 
 import Dismantle.Instruction
 import Dismantle.PPC.Operands

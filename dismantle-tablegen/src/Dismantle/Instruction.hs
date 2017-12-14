@@ -21,7 +21,7 @@ import Data.Typeable ( Typeable )
 import Data.EnumF ( EnumF(..) )
 import Data.Parameterized.Classes ( ShowF(..), OrdF(..) )
 import Data.Parameterized.Some ( Some(..) )
-import Data.Parameterized.ShapedList ( ShapedList )
+import Data.Parameterized.List ( List )
 
 -- | A wrapper to allow operands to be easily annotated with arbitrary
 -- data (of kind '*' for now).
@@ -65,9 +65,9 @@ instance (Show a, ShowF o) => ShowF (Annotated a o)
 -- The name is 'GenericInstruction' so that specific aliases can be
 -- instantiated as just 'Instruction'
 data GenericInstruction (t :: (k -> *) -> [k] -> *) (o :: k -> *) where
-  Instruction :: t o sh -> ShapedList o sh -> GenericInstruction t o
+  Instruction :: t o sh -> List o sh -> GenericInstruction t o
 
-instance (E.TestEquality o, OrdF (t o), OrdF (ShapedList o)) => Ord (GenericInstruction t o) where
+instance (E.TestEquality o, OrdF (t o), OrdF (List o)) => Ord (GenericInstruction t o) where
   Instruction op1 args1 `compare` Instruction op2 args2 =
     (Some op1, Some args1) `compare` (Some op2, Some args2)
 

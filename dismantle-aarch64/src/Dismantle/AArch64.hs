@@ -11,7 +11,7 @@ module Dismantle.AArch64 (
   Instruction,
   AnnotatedInstruction,
   GenericInstruction(..),
-  ShapedList(..),
+  List(..),
   Annotated(..),
   Operand(..),
   Opcode(..),
@@ -21,7 +21,7 @@ module Dismantle.AArch64 (
   ppInstruction
   )where
 
-import Data.Parameterized.ShapedList ( ShapedList(..) )
+import Data.Parameterized.List ( List(..) )
 
 import Dismantle.ARM (mkPred)
 import Dismantle.AArch64.ISA ( isa )
