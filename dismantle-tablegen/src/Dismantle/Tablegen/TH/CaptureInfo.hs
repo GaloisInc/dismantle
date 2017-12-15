@@ -7,10 +7,9 @@ module Dismantle.Tablegen.TH.CaptureInfo (
 import           Language.Haskell.TH
 import           Data.Parameterized.FreeParamF ( FreeParamF(..) )
 import qualified Data.Parameterized.List as SL
-import           Data.Parameterized.Witness ( Witness(..) )
 
-data CaptureInfo c o sh =
-  CaptureInfo { capturedOpcode :: Witness c o sh
+data CaptureInfo o sh =
+  CaptureInfo { capturedOpcode :: o sh
               -- ^ The opcode being captured, along with a witnessed constraint
               , capturedOpcodeName :: Name
               -- ^ The TH name of the opcode

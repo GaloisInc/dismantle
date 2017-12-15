@@ -15,7 +15,6 @@ import Text.Printf ( printf )
 import qualified Data.Parameterized.FreeParamF as FP
 import qualified Data.Parameterized.List as SL
 import qualified Data.Parameterized.Some as S
-import Data.Parameterized.Witness ( Witness(..) )
 import Dismantle.Tablegen.TH.CaptureInfo ( CaptureInfo(..) )
 
 -- | For the named data type, generate a list of witnesses for that datatype
@@ -31,7 +30,7 @@ import Dismantle.Tablegen.TH.CaptureInfo ( CaptureInfo(..) )
 --
 -- will generate an expression the type
 --
--- > [Some (Witness klass Opcode)]
+-- > [Some Opcode]
 --
 --
 -- The class for which dictionaries are captured is set by a type signature
@@ -47,7 +46,7 @@ captureDictionaries p tyName = do
     unqualifiedName (Name (OccName s) _) = s
 
 captureDictionaryFor :: ConstructorInfo -> ExpQ
-captureDictionaryFor ci = [e| S.Some (Witness $(conE (constructorName ci))) |]
+captureDictionaryFor ci = [e| S.Some $(conE (constructorName ci)) |]
 
 -- | This is just like 'captureDictionaries', but it captures a bit more
 -- information including some 'Name's and generates a TH function to perform a
@@ -65,7 +64,7 @@ captureInfoFor ci = do
   sh <- constructorShape ci
   (names, namesE) <- allocateMatchNames sh
   let genInputE = listE [ [| ($(litE (StringL s)), mkName $(litE (StringL (show n)))) |] | (s, n) <- names]
-  [e| S.Some CaptureInfo { capturedOpcode = Witness $(conE (constructorName ci))
+  [e| S.Some CaptureInfo { capturedOpcode = $(conE (constructorName ci))
                          , capturedOpcodeName = mkName $(litE (StringL (show (constructorName ci))))
                          , capturedOperandNames = $(return namesE)
                          , genCase = genMatchExpr $(genInputE)
