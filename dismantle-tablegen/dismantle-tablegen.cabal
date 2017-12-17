@@ -34,7 +34,6 @@ library
                    Data.Parameterized.FreeParamF
                    Data.Parameterized.HasRepr
                    Data.Parameterized.Lift
-                   Data.Parameterized.Witness
                    Data.Set.NonEmpty
                    Data.Word.Indexed
   build-depends:       base >=4.8 && <4.11,
