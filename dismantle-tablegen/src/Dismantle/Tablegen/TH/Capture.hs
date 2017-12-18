@@ -7,12 +7,12 @@ module Dismantle.Tablegen.TH.Capture (
   ) where
 
 import Data.Char ( toLower )
+import qualified Data.Functor.Const as C
 import Language.Haskell.TH
 import Language.Haskell.TH.Datatype
 import Language.Haskell.TH.Syntax
 import Text.Printf ( printf )
 
-import qualified Data.Parameterized.FreeParamF as FP
 import qualified Data.Parameterized.List as SL
 import qualified Data.Parameterized.Some as S
 import Dismantle.Tablegen.TH.CaptureInfo ( CaptureInfo(..) )
@@ -116,7 +116,7 @@ allocateMatchNames sh = do
         [] -> [| SL.Nil |]
         (name:rest) -> do
           restE <- buildShapedList rest
-          [| FP.FreeParamF (mkName $(litE (StringL (show name)))) SL.:< $(return restE) |]
+          [| C.Const (mkName $(litE (StringL (show name)))) SL.:< $(return restE) |]
 
 -- | Examine a 'ConstructorInfo' for an opcode constructor (which is a
 -- type-level list of symbols) and return the shape as a list of value level

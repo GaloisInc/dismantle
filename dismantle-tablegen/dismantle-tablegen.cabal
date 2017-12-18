@@ -31,7 +31,6 @@ library
                    Dismantle.Testing.Parser
                    Data.EnumF
                    Data.Int.Indexed
-                   Data.Parameterized.FreeParamF
                    Data.Parameterized.HasRepr
                    Data.Parameterized.Lift
                    Data.Set.NonEmpty
