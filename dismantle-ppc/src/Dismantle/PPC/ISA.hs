@@ -359,7 +359,6 @@ ppcOperandPayloadTypes =
   , ("Memri", memRI)
   , ("Memrix", memRIX)
   , ("Memrix16", memRIX)
-  , ("Pred", gpRegister)
   , ("Vrrc", vecRegister)
   , ("Vsrc", vsRegister)
   ]
