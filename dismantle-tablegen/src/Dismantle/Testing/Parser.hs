@@ -99,8 +99,32 @@ tryParseInstruction =
   tryOne [ parseAddressOutOfBounds
          , parseEllipses
          , parseFunctionHeading
+         , parseJunkData
          , parseInstruction
          ]
+
+parseJunkData :: Parser (Maybe Instruction)
+parseJunkData = do
+  P.skipMany (P.char ' ')
+  void parseAddress
+  void $ P.char ':'
+  P.space
+
+  -- We have seen character data lines like these and want to ignore
+  -- them:
+  --
+  -- 80800000:       b8 00 00 ea 14 f0 9f e5 14 f0 9f e5 14 f0 9f e5     <char data>
+  -- 8084f118:       20494249 54535953 00020005 00000018     <char data>
+  let parseWord = void parseHalfWord >> void parseHalfWord
+  tryOne [ replicateM_ 15 (parseByte >> void (P.char ' ')) >> void parseByte
+         , replicateM_ 3 (parseWord >> void (P.char ' ')) >> void parseWord
+         , parseWord >> void (P.char ' ') >> void parseWord
+         ]
+
+  void $ P.manyTill P.anyChar P.eol
+  void $ P.optional P.eol
+
+  return Nothing
 
 parseEllipses :: Parser (Maybe a)
 parseEllipses = tryOne [ P.space >> P.string (TL.pack "...") >> P.eol >> P.eol >> return Nothing
