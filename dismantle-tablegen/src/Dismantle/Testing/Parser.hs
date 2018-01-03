@@ -206,6 +206,7 @@ isDataDirective t =  or [ TL.pack ".long" `TL.isInfixOf` t
                         , TL.pack ".word" `TL.isInfixOf` t
                         , TL.pack ".short" `TL.isInfixOf` t
                         , TL.pack ".byte" `TL.isInfixOf` t
+                        , TL.pack ".inst" `TL.isInfixOf` t
                         ]
 
 isUndefinedInstruction :: TL.Text -> Bool
