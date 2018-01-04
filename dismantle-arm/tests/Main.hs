@@ -121,7 +121,7 @@ arm = ATC { archName = "arm"
           , skipPrettyCheck = Just skipPretty
           , ignoreAddresses = ignored
           , normalizePretty = normalize
-          , instructionFilter = const True
+          , instructionFilter = ((== FullWord) . insnLayout)
           }
 
 main :: IO ()
