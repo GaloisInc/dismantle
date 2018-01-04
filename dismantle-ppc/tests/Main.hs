@@ -17,6 +17,7 @@ ppc = ATC { archName = "ppc"
           , assemble = PPC.assembleInstruction
           , prettyPrint = PPC.ppInstruction
           , expectFailure = Nothing
+          , customObjdumpArgs = []
           , skipPrettyCheck = Just skipPrettyRE
           , ignoreAddresses = []
           , normalizePretty = normalize

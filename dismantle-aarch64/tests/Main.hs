@@ -27,6 +27,8 @@ aarch64 = ATC { archName = "aarch64"
               , prettyPrint = AArch64.ppInstruction
               , expectFailure = Just expectedFailures
               , skipPrettyCheck = Just skipPretty
+              , customObjdumpArgs =
+                  [("tests/bin/xen-4.6-arm64", ["-b", "binary", "-m", "aarch64", "-D"])]
               , ignoreAddresses = ignored
               , normalizePretty = normalize
               , instructionFilter = const True

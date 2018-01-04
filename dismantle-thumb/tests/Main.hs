@@ -29,6 +29,7 @@ thumb = ATC { archName = "thumb"
             , skipPrettyCheck = Just skipPretty
             , ignoreAddresses = ignored
             , normalizePretty = normalize
+            , customObjdumpArgs = []
             }
 
 main :: IO ()

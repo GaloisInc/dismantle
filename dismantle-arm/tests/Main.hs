@@ -120,6 +120,7 @@ arm = ATC { archName = "arm"
           , expectFailure = Just expectedFailures
           , skipPrettyCheck = Just skipPretty
           , ignoreAddresses = ignored
+          , customObjdumpArgs = []
           , normalizePretty = normalize
           , instructionFilter = ((== FullWord) . insnLayout)
           }
