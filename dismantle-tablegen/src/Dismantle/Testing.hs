@@ -14,7 +14,7 @@ module Dismantle.Testing (
 
 import Control.Monad ( unless )
 import Data.Char ( intToDigit )
-import Data.Maybe ( catMaybes )
+import Data.Maybe ( catMaybes, fromMaybe )
 import Data.Word ( Word8, Word64 )
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List as L
@@ -67,6 +67,12 @@ data ArchTestConfig = forall i .
       -- is typically used when we know that some locations contain data
       -- bytes and we don't want to test instruction parses of those
       -- bytes.
+      , customObjdumpArgs :: [(FilePath, [String])]
+      -- ^ Custom arguments to objdump to disassemble the specified file.
+      -- Files not present in this mapping will be disassembled with
+      -- default objdump arguments. Entries in this mapping must provide
+      -- all arguments to objdump up to but not including the file name,
+      -- so this includes the disassembly flag (-d/-D).
       , normalizePretty :: TL.Text -> TL.Text
       -- ^ A function to normalize a pretty-printed instruction to a
       -- form suitable for comparison. This typically needs to remove
@@ -141,7 +147,8 @@ insnTestCase normalize disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unp
 -- matches the instruction under test.
 binaryTestSuite :: ArchTestConfig -> FilePath -> IO T.TestTree
 binaryTestSuite atc dir = do
-  testsByFile <- withInstructions objdumpParser dir (instructionFilter atc) (mkTestCase atc)
+  testsByFile <- withInstructions objdumpParser dir (customObjdumpArgs atc)
+                   (instructionFilter atc) (mkTestCase atc)
 
   -- Filter out the Nothing test cases for each file, since those were
   -- ignored by the ArchTestConfig. If no tests remain for a given file
@@ -162,23 +169,27 @@ withInstructions :: Parser Disassembly
                  -- ^ The parser to use to parse the objdump output
                  -> FilePath
                  -- ^ A directory containing executables (that can be objdumped)
+                 -> [(FilePath, [String])]
+                 -- ^ Custom objdump disassembly arguments for binaries
+                 -- that need them
                  -> (Instruction -> Bool)
                  -- ^ Instruction filter
                  -> (FilePath -> Word64 -> LBS.ByteString -> TL.Text -> a)
                  -- ^ Turn a disassembled instruction into data
                  -> IO [(FilePath, [a])]
-withInstructions parser dir filterInstruction con = do
+withInstructions parser dir customArgs filterInstruction con = do
   files <- namesMatching (dir </> "*")
   mapM disassembleFile files
   where
     disassembleFile f = do
-      insns <- withDisassembledFile parser f $ \d -> do
+      let fileCustomArgs = lookup f customArgs
+      insns <- withDisassembledFile parser fileCustomArgs f $ \d -> do
         T.forM (filter filterInstruction $ concatMap instructions (sections d)) $ \i ->
             return (con f (insnAddress i) (insnBytes i) (insnText i))
       return (f, insns)
 
-withDisassembledFile :: Parser Disassembly -> FilePath -> (Disassembly -> IO a) -> IO a
-withDisassembledFile parser f k = do
+withDisassembledFile :: Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
+withDisassembledFile parser customArgs f k = do
   (_, Just hout, _, ph) <- Proc.createProcess p1
   t <- TL.hGetContents hout
   case P.runParser parser f t of
@@ -192,7 +203,9 @@ withDisassembledFile parser f k = do
       _ <- Proc.waitForProcess ph
       return res
   where
-    p0 = Proc.proc "objdump" ["-d", f]
+    p0 = Proc.proc "objdump" args
+    args = (fromMaybe defaultArgs customArgs) <> [f]
+    defaultArgs = ["-d"]
     p1 = p0 { Proc.std_out = Proc.CreatePipe
             }
 
