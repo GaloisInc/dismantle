@@ -6,6 +6,7 @@
 module Dismantle.Arbitrary (
   Gen,
   Arbitrary(..),
+  arbitraryWord,
   categorical,
   categoricalChoose,
   choose,
@@ -21,6 +22,7 @@ import Control.Monad ( replicateM )
 import Data.Bits
 import qualified Data.Foldable as F
 import Data.Int ( Int16, Int32 )
+import qualified Data.Parameterized.NatRepr as NR
 import Data.Proxy ( Proxy(..) )
 import qualified Data.Set as S
 import Data.Word ( Word8, Word16, Word32, Word64 )
@@ -84,18 +86,21 @@ categoricalChoose weightedElems gen = do
   index <- categorical weights gen
   return $ elems !! index
 
-instance forall n . (KnownNat n) => Arbitrary (W.W n) where
-  arbitrary (Gen g) = do
-    chunks :: [Word64]
-           <- replicateM nChunks (R.uniform g)
-    let (n, _) = F.foldl' shiftOr (0, 0) chunks
-    return (W.w (n .&. mask))
-    where
-      nBits = fromIntegral (natVal (Proxy :: Proxy n))
-      mask = (1 `shiftL` nBits) - 1
-      (nWords, leftoverBits) = nBits `divMod` 64
-      nChunks = nWords + if leftoverBits == 0 then 0 else 1
-      shiftOr (n, ix) c = (n .|. (fromIntegral c `shiftL` (ix * 64)), ix + 1)
+instance (KnownNat n) => Arbitrary (W.W n) where
+  arbitrary (Gen g) = arbitraryWord (Gen g) NR.knownNat
+
+arbitraryWord :: Gen -> NR.NatRepr n -> IO (W.W n)
+arbitraryWord (Gen g) nr = do
+  chunks :: [Word64]
+         <- replicateM nChunks (R.uniform g)
+  let (n, _) = F.foldl' shiftOr (0, 0) chunks
+  return (W.wRep nr (n .&. mask))
+  where
+    nBits = fromIntegral (NR.natValue nr)
+    mask = (1 `shiftL` nBits) - 1
+    (nWords, leftoverBits) = nBits `divMod` 64
+    nChunks = nWords + if leftoverBits == 0 then 0 else 1
+    shiftOr (n, ix) c = (n .|. (fromIntegral c `shiftL` (ix * 64)), ix + 1)
 
 instance forall n . (KnownNat n) => Arbitrary (I.I n) where
   arbitrary (Gen g) = I.I <$> R.uniformR (-maxVal - 1, maxVal) g
