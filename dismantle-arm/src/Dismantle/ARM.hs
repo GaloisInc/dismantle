@@ -14,6 +14,8 @@ module Dismantle.ARM (
   List(..),
   Annotated(..),
   Operand(..),
+  OperandRepr(..),
+  operandReprString,
   Opcode(..),
   mkPred,
   disassembleInstruction,

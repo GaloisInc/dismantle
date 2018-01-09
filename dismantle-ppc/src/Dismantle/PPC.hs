@@ -14,6 +14,8 @@ module Dismantle.PPC (
   List(..),
   Annotated(..),
   Operand(..),
+  OperandRepr(..),
+  operandReprString,
   Opcode(..),
   module Dismantle.PPC.Operands,
   disassembleInstruction,

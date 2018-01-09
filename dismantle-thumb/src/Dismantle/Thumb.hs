@@ -14,6 +14,8 @@ module Dismantle.Thumb (
   List(..),
   Annotated(..),
   Operand(..),
+  OperandRepr(..),
+  operandReprString,
   Opcode(..),
   mkPred,
   disassembleInstruction,

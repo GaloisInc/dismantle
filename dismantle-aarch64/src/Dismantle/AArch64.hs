@@ -14,6 +14,8 @@ module Dismantle.AArch64 (
   List(..),
   Annotated(..),
   Operand(..),
+  OperandRepr(..),
+  operandReprString,
   Opcode(..),
   mkPred,
   disassembleInstruction,
