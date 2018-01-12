@@ -13,8 +13,7 @@ import qualified Dismantle.PPC as PPC
 import qualified Dismantle.PPC.ISA as PPC
 
 ppc :: ArchTestConfig
-ppc = ATC { archName = "ppc"
-          , testingISA = PPC.isa
+ppc = ATC { testingISA = PPC.isa
           , disassemble = PPC.disassembleInstruction
           , assemble = PPC.assembleInstruction
           , prettyPrint = PPC.ppInstruction

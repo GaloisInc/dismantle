@@ -21,8 +21,7 @@ ignored =
     ]
 
 thumb :: ArchTestConfig
-thumb = ATC { archName = "thumb"
-            , testingISA = Thumb.isa
+thumb = ATC { testingISA = Thumb.isa
             , disassemble = Thumb.disassembleInstruction
             , assemble = Thumb.assembleInstruction
             , prettyPrint = Thumb.ppInstruction

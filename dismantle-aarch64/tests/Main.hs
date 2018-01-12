@@ -22,8 +22,7 @@ ignored =
     ]
 
 aarch64 :: ArchTestConfig
-aarch64 = ATC { archName = "aarch64"
-              , testingISA = AArch64.isa
+aarch64 = ATC { testingISA = AArch64.isa
               , disassemble = AArch64.disassembleInstruction
               , assemble = AArch64.assembleInstruction
               , prettyPrint = AArch64.ppInstruction

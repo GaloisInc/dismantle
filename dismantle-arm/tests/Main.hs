@@ -114,8 +114,7 @@ ignored =
     ]
 
 arm :: ArchTestConfig
-arm = ATC { archName = "arm"
-          , testingISA = ARM.isa
+arm = ATC { testingISA = ARM.isa
           , disassemble = ARM.disassembleInstruction
           , assemble = ARM.assembleInstruction
           , prettyPrint = ARM.ppInstruction

@@ -37,7 +37,7 @@ import qualified Test.Tasty.HUnit as T
 import qualified Test.Tasty.ExpectedFailure as T
 
 import Dismantle.Testing.Parser
-import Dismantle.Tablegen.ISA (ISA(isaInputEndianness), Endianness(Little))
+import Dismantle.Tablegen.ISA (ISA(isaInputEndianness, isaName), Endianness(Little))
 
 import Prelude
 
@@ -63,8 +63,6 @@ data ArchTestConfig = forall i .
       -- ^ A regular expression run against the text of an instruction (from
       -- objdump); if the regular expression matches, the output of the pretty
       -- printer is not compared against the original text provided by objdump.
-      , archName :: String
-      -- ^ A name for the ISA to appear in test output
       , ignoreAddresses :: [(FilePath, [Word64])]
       -- ^ A list of files and addresses in those files to ignore. This
       -- is typically used when we know that some locations contain data
@@ -163,7 +161,7 @@ binaryTestSuite atc dir = do
            then Nothing
            else Just $ T.testGroup f tests
 
-  return (T.testGroup (archName atc) (catMaybes mTestCases))
+  return (T.testGroup (isaName $ testingISA atc) (catMaybes mTestCases))
 
 -- | Convert a directory of executables into a list of data, where
 -- each data item is constructed by a callback called on one
