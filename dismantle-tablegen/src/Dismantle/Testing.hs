@@ -37,12 +37,15 @@ import qualified Test.Tasty.HUnit as T
 import qualified Test.Tasty.ExpectedFailure as T
 
 import Dismantle.Testing.Parser
+import Dismantle.Tablegen.ISA (ISA(isaInputEndianness), Endianness(Little))
 
 import Prelude
 
 -- | Configuration to drive the shared testing infrastructure
 data ArchTestConfig = forall i .
-  ATC { disassemble :: LBS.ByteString -> (Int, Maybe i)
+  ATC { testingISA :: ISA
+      -- ^ The ISA associated with the test input
+      , disassemble :: LBS.ByteString -> (Int, Maybe i)
       -- ^ The disassembly function for the ISA
       , assemble :: i -> LBS.ByteString
       -- ^ The re-assembly function for the ISA
@@ -147,7 +150,7 @@ insnTestCase normalize disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unp
 -- matches the instruction under test.
 binaryTestSuite :: ArchTestConfig -> FilePath -> IO T.TestTree
 binaryTestSuite atc dir = do
-  testsByFile <- withInstructions objdumpParser dir (customObjdumpArgs atc)
+  testsByFile <- withInstructions atc objdumpParser dir (customObjdumpArgs atc)
                    (instructionFilter atc) (mkTestCase atc)
 
   -- Filter out the Nothing test cases for each file, since those were
@@ -165,7 +168,9 @@ binaryTestSuite atc dir = do
 -- | Convert a directory of executables into a list of data, where
 -- each data item is constructed by a callback called on one
 -- instruction disassembled by objdump.
-withInstructions :: Parser Disassembly
+withInstructions :: ArchTestConfig
+                 -- ^ The architecture testing configuration
+                 -> Parser Disassembly
                  -- ^ The parser to use to parse the objdump output
                  -> FilePath
                  -- ^ A directory containing executables (that can be objdumped)
@@ -177,14 +182,25 @@ withInstructions :: Parser Disassembly
                  -> (FilePath -> Word64 -> LBS.ByteString -> TL.Text -> a)
                  -- ^ Turn a disassembled instruction into data
                  -> IO [(FilePath, [a])]
-withInstructions parser dir customArgs filterInstruction con = do
+withInstructions atc parser dir customArgs filterInstruction con = do
   files <- namesMatching (dir </> "*")
   mapM disassembleFile files
   where
     disassembleFile f = do
       let fileCustomArgs = lookup f customArgs
       insns <- withDisassembledFile parser fileCustomArgs f $ \d -> do
-        T.forM (filter filterInstruction $ concatMap instructions (sections d)) $ \i ->
+
+        -- We assume that objdump always produces instruction
+        -- bytestrings in big-endian format. If the ISA expects
+        -- little-endian input, we need to rewrite the test case inputs.
+        let rewriteDisassembly = case isaInputEndianness (testingISA atc) of
+              Little swapBytes _ -> fmap (rewriteSection swapBytes)
+              _ -> id
+            rewriteSection fn s = s { instructions = rewriteInstruction fn <$> instructions s }
+            rewriteInstruction fn i = i { insnBytes = fn $ insnBytes i }
+            theSections = rewriteDisassembly $ sections d
+
+        T.forM (filter filterInstruction $ concatMap instructions theSections) $ \i ->
             return (con f (insnAddress i) (insnBytes i) (insnText i))
       return (f, insns)
 

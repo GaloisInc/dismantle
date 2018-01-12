@@ -7,11 +7,6 @@ module Dismantle.Tablegen.ISA (
   InstFieldDescriptor(..),
   Endianness(..),
   UnusedBitsPolicy(..),
-  thumb,
-  aarch64,
-  mips,
-  avr,
-  sparc,
 
   named,
   hasNamedString,
@@ -22,16 +17,22 @@ module Dismantle.Tablegen.ISA (
 
 import qualified Data.Foldable as F
 import qualified Data.List.NonEmpty as NL
-import qualified Text.PrettyPrint.HughesPJClass as PP
+import qualified Data.ByteString.Lazy as LBS
 
 import Language.Haskell.TH
-import Language.Haskell.TH.Syntax
 
 import Dismantle.Tablegen.Types
 import Dismantle.Tablegen.Parser.Types
+import qualified Dismantle.Tablegen.ByteTrie as BT
 
-data Endianness = Little | Big
-  deriving (Eq)
+data Endianness =
+    Little (LBS.ByteString -> LBS.ByteString) ([BT.Bit] -> [BT.Bit])
+    -- ^ Two function parameters: a bytestring byte swapping
+    -- transformation and a mask bit pattern transformation. These are
+    -- used to rewrite big-endian input byte sequences and big-endian
+    -- bit patterns, respectively, in the case that the ISA requires
+    -- little-endian representations.
+    | Big
 
 -- | Fragments of AST used during code generation.
 --
@@ -144,87 +145,6 @@ data ISA =
       -- output operands or are unmentioned in the instruction's bit
       -- pattern.
       }
-
-thumb :: ISA
-thumb = ISA { isaName = "Thumb"
-            , isaInputEndianness = Little
-            , isaTgenBitPreprocess = id
-            , isaInstructionFilter = thumbFilter
-            , isaPseudoInstruction = const False
-            , isaUnusedBitsPolicy = Just Drop
-            }
-  where
-    thumbFilter = hasNamedString "DecoderNamespace" "Thumb" &&&
-                  hasNamedString "Namespace" "ARM" &&&
-                  (not . isPseudo)
-
-aarch64 :: ISA
-aarch64 = ISA { isaName = "AArch64"
-              , isaInputEndianness = Big
-              , isaTgenBitPreprocess = id
-              , isaInstructionFilter = aarch64Filter
-              , isaPseudoInstruction = const False
-              , isaUnusedBitsPolicy = Nothing
-              }
-  where
-    aarch64Filter = hasNamedString "Namespace" "AArch64" &&&
-                    (not . isPseudo)
-
-unadorned :: Type -> BangType
-unadorned t = (Bang NoSourceUnpackedness NoSourceStrictness, t)
-
-mips :: ISA
-mips = ISA { isaName = "Mips"
-           , isaInputEndianness = Big
-           , isaTgenBitPreprocess = id
-           , isaInstructionFilter = mipsFilter
-           , isaPseudoInstruction = const False
-           , isaUnusedBitsPolicy = Nothing
-           }
-  where
-    mipsFilter = hasNamedString "DecoderNamespace" "Mips" &&&
-                 hasNamedString "Namespace" "Mips" &&&
-                 (not . isPseudo)
-
-avr :: ISA
-avr = ISA { isaName = "AVR"
-          , isaTgenBitPreprocess = id
-          , isaInstructionFilter = avrFilter
-          , isaPseudoInstruction = avrPsuedo
-          , isaUnusedBitsPolicy = Nothing
-          }
-  where
-    avrFilter = hasNamedString "Namespace" "AVR"
-    avrPsuedo i = idPseudo i ||
-                  idMnemonic i `elem` [ "CBRRdK" -- Clear bits, equivalent to an ANDi
-                                      , "LSLRd"  -- Equivalent to add rd, rd
-                                      , "ROLRd"
-                                      , "SBRRdK" -- Equivalent to ORi
-                                      , "TSTRd"  -- Equivalent to AND Rd,Rd
-                                      , "LDDRdPtrQ" -- Sometimes an alias of LDRdPtr, but not always...
-                                      , "BRLOk" -- brbs 0,k
-                                      , "BRLTk" -- brbs 4,k
-                                      , "BRMIk" -- brbs 2,k
-                                      , "BREQk" -- brbs 1,k
-                                      , "BRSHk" -- brbc 0,k
-                                      , "BRGEk" -- brbc 4,k
-                                      , "BRPLk" -- brbc 2,k
-                                      , "BRNEk" -- brbc 1,k
-                                      , "STDPtrQRr" -- similar to the LDDRdPtrQ above
-                                      ]
-
-sparc :: ISA
-sparc = ISA { isaName = "Sparc"
-            , isaInputEndianness = Big
-            , isaTgenBitPreprocess = id
-            , isaInstructionFilter = sparcFilter
-            , isaPseudoInstruction = const False
-            , isaUnusedBitsPolicy = Nothing
-            }
-  where
-    sparcFilter = hasNamedString "Namespace" "SP" &&&
-                  hasNamedString "DecoderNamespace" "Sparc" &&&
-                  (not . isPseudo)
 
 isPseudo :: Def -> Bool
 isPseudo def =
