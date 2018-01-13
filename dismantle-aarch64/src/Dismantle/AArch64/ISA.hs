@@ -7,6 +7,7 @@ import qualified Data.Binary.Get as B
 import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List as L
+import qualified Data.List.Split as L
 import qualified Data.Set as S
 import Data.Word ( Word8, Word16, Word32, Word64 )
 
@@ -24,15 +25,15 @@ import qualified Dismantle.AArch64.Operands as AArch64
 import qualified Dismantle.ARM.ISA as ARM
 
 asWord32 :: LBS.ByteString -> Word32
-asWord32 = B.runGet B.getWord32be
+asWord32 = B.runGet B.getWord32le
 
 fromWord32 :: Word32 -> LBS.ByteString
-fromWord32 = B.runPut . B.putWord32be
+fromWord32 = B.runPut . B.putWord32le
 
 isa :: ISA
 isa = ISA { isaName = "AArch64"
           , isaTgenBitPreprocess = id
-          , isaInputEndianness = Big
+          , isaInputEndianness = Little LBS.reverse (concat . reverse . L.chunksOf 8)
           , isaInstructionFilter = aarch64Filter
           , isaPseudoInstruction = aarch64Pseudo
           , isaOperandPayloadTypes = aarch64OperandPayloadTypes

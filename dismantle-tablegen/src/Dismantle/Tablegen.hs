@@ -419,7 +419,13 @@ finishInstructionDescriptor isa def mbits ins outs =
                             -- contains the significant entries, so drop the
                             -- unused bits.
                             Just Drop -> drop (patternLength - usedLength)
-          usedBits = map toTrieBit $ takeUsedBits mbits
+          usedBits0 = map toTrieBit $ takeUsedBits mbits
+          -- Tablegen provides big-endian patterns. Rewrite the pattern
+          -- to little-endian if the ISA requires it.
+          rewriteUsedBits = case isaInputEndianness isa of
+              Big -> id
+              Little _ rewrite -> rewrite
+          usedBits = rewriteUsedBits usedBits0
           i = InstructionDescriptor { idMask = usedBits
                                     , idDefaultPrettyVariableValues = isaDefaultPrettyVariableValues isa
                                     , idPrettyVariableOverrides = fromMaybe [] $ lookup (defName def) $ isaPrettyOverrides isa

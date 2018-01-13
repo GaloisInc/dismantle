@@ -8,6 +8,7 @@ import qualified Data.Binary.Get as B
 import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List as L
+import qualified Data.List.Split as L
 import qualified Data.Set as S
 import Data.Word ( Word8, Word16, Word32, Word64 )
 
@@ -24,10 +25,10 @@ import Dismantle.Tablegen.Parser.Types
 import qualified Dismantle.ARM.Operands as ARM
 
 asWord32 :: LBS.ByteString -> Word32
-asWord32 = B.runGet B.getWord32be
+asWord32 = B.runGet B.getWord32le
 
 fromWord32 :: Word32 -> LBS.ByteString
-fromWord32 = B.runPut . B.putWord32be
+fromWord32 = B.runPut . B.putWord32le
 
 predOperand :: OperandPayload
 predOperand = OperandPayload { opTypeT = [t| ARM.Pred |]
@@ -38,7 +39,7 @@ predOperand = OperandPayload { opTypeT = [t| ARM.Pred |]
 isa :: ISA
 isa = ISA { isaName = "ARM"
           , isaTgenBitPreprocess = id
-          , isaInputEndianness = Big
+          , isaInputEndianness = Little LBS.reverse (concat . reverse . L.chunksOf 8)
           , isaInstructionFilter = armFilter
           , isaPseudoInstruction = armPseudo
           , isaOperandPayloadTypes = armOperandPayloadTypes

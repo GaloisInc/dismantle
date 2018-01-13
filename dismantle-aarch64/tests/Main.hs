@@ -14,6 +14,7 @@ import Dismantle.Testing
 
 import qualified Dismantle.ARM as ARM
 import qualified Dismantle.AArch64 as AArch64
+import qualified Dismantle.AArch64.ISA as AArch64
 
 ignored :: [(FilePath, [Word64])]
 ignored =
@@ -21,7 +22,7 @@ ignored =
     ]
 
 aarch64 :: ArchTestConfig
-aarch64 = ATC { archName = "aarch64"
+aarch64 = ATC { testingISA = AArch64.isa
               , disassemble = AArch64.disassembleInstruction
               , assemble = AArch64.assembleInstruction
               , prettyPrint = AArch64.ppInstruction
