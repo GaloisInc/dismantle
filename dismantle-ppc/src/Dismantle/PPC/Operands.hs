@@ -211,7 +211,7 @@ mkMemRIX w
     dispMask = (1 `shiftL` 14) - 1
     regMask = (1 `shiftL` 5) - 1
     r = fromIntegral ((w `shiftR` 14) .&. regMask)
-    d = fromIntegral (w .&. dispMask) `shiftL` 2
+    d = fromIntegral (w .&. dispMask)
 
 memRIXToBits :: MemRIX -> Word32
 memRIXToBits (MemRIX mr disp) =
@@ -273,7 +273,7 @@ instance PP.Pretty MemRIX where
   pPrint (MemRIX mr d) =
     case mr of
       Nothing -> PP.pPrint d
-      Just r -> PP.int (fromIntegral (I.unI d)) <> PP.parens (PP.pPrint r)
+      Just r -> PP.int (fromIntegral (I.unI d) `shiftL` 2) <> PP.parens (PP.pPrint r)
 
 instance PP.Pretty MemRR where
   pPrint (MemRR mra rb) =
