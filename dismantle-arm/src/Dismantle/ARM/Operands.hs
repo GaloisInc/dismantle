@@ -81,7 +81,7 @@ module Dismantle.ARM.Operands (
   mkLdstSoSreg,
   ldstSoRegToBits,
 
-  AddrModeImm12,
+  AddrModeImm12(..),
   mkAddrModeImm12,
   addrModeImm12ToBits,
 
