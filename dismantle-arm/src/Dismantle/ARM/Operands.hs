@@ -93,7 +93,7 @@ module Dismantle.ARM.Operands (
   mkBranchExecuteTarget,
   branchExecuteTargetToBits,
 
-  ModImm,
+  ModImm(..),
   mkModImm,
   modImmToBits,
 
