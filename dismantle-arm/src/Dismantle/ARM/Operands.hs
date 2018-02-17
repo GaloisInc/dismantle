@@ -37,15 +37,15 @@ module Dismantle.ARM.Operands (
   mkOpcode,
   opcodeToBits,
 
-  ShiftImm,
+  ShiftImm(..),
   mkShiftImm,
   shiftImmToBits,
 
-  Imm8S4,
+  Imm8S4(..),
   mkImm8s4,
   imm8s4ToBits,
 
-  RegWithAdd,
+  RegWithAdd(..),
   mkRegWithAdd,
   regWithAddToBits,
 
@@ -57,27 +57,27 @@ module Dismantle.ARM.Operands (
   mkBankedReg,
   bankedRegToBits,
 
-  AddrMode3,
+  AddrMode3(..),
   mkAddrMode3,
   addrMode3ToBits,
 
-  AM3Offset,
+  AM3Offset(..),
   mkAM3Offset,
   am3OffsetToBits,
 
-  Am2OffsetReg,
+  Am2OffsetReg(..),
   mkAm2OffsetReg,
   am2OffsetRegToBits,
 
-  Am2OffsetImm,
+  Am2OffsetImm(..),
   mkAm2OffsetImm,
   am2OffsetImmToBits,
 
-  AddrMode5,
+  AddrMode5(..),
   mkAddrMode5,
   addrMode5ToBits,
 
-  LdstSoReg,
+  LdstSoReg(..),
   mkLdstSoSreg,
   ldstSoRegToBits,
 
@@ -105,7 +105,7 @@ module Dismantle.ARM.Operands (
   mkImm16,
   imm16ToBits,
 
-  AdrLabel,
+  AdrLabel(..),
   mkAdrLabel,
   adrLabelToBits,
 
@@ -113,15 +113,15 @@ module Dismantle.ARM.Operands (
   mkPred,
   predToBits,
 
-  MSRMask,
+  MSRMask(..),
   mkMSRMask,
   msrMaskToBits,
 
-  SoRegImm,
+  SoRegImm(..),
   mkSoRegImm,
   soRegImmToBits,
 
-  SoRegReg,
+  SoRegReg(..),
   mkSoRegReg,
   soRegRegToBits,
 
