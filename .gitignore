@@ -5,3 +5,4 @@ dist-newstyle
 .cabal-sandbox
 .stack-work/
 TAGS
+/dismantle-tablegen/regex/

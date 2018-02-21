@@ -3,6 +3,7 @@ module Parser ( parserTests ) where
 
 import Control.DeepSeq ( deepseq )
 import Control.Monad (when, forM)
+import Data.List (delete)
 import Data.Monoid ((<>))
 import qualified Data.Text.IO as TS
 import qualified Data.Text.Lazy as TL
@@ -28,7 +29,8 @@ mkParserTestGroup (pkg, files) = do
 
 requireGlob :: String -> String -> IO [FilePath]
 requireGlob ty pat = do
-    paths <- mapM canonicalizePath =<< G.namesMatching pat
+    names <- G.namesMatching pat
+    paths <- mapM canonicalizePath (delete "../dismantle-coverage" names)
     when (null paths) $ do
         die $ "Error: could not find any " <> ty <> " matching " <> show pat
     return paths

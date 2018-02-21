@@ -72,6 +72,7 @@ data InstructionDescriptor =
                         , idDecoderNamespace :: String
                         , idAsmString :: String
                         , idPseudo :: Bool
+                        , idPredicates :: [String]
                         , idDefaultPrettyVariableValues :: [(String, String)]
                         , idPrettyVariableOverrides :: [(String, String)]
                         }

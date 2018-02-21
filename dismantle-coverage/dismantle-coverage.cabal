@@ -1,0 +1,21 @@
+name:                dismantle-coverage
+version:             0.1.0.0
+synopsis:            Coverage tool for various ISAs
+license:             BSD3
+license-file:        LICENSE
+author:              Galois Inc.
+maintainer:          david@galois.com
+build-type:          Simple
+extra-source-files:  ChangeLog.md
+cabal-version:       >=1.10
+
+executable dismantle-coverage
+  main-is:             Main.hs
+  build-depends:       base
+                     , containers
+                     , text
+                     , dismantle-ppc
+                     , dismantle-tablegen
+                     , optparse-applicative
+                     , directory
+  default-language:    Haskell2010
