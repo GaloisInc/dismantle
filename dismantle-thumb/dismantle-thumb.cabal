@@ -14,8 +14,8 @@ cabal-version:       >=1.10
 library
   exposed-modules: Dismantle.Thumb
                    Dismantle.Thumb.ISA
+                   Dismantle.Thumb.Operands
                    Dismantle.Thumb.Random
-  other-modules: Dismantle.Thumb.Operands
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
                        parameterized-utils >= 1 && < 2,
