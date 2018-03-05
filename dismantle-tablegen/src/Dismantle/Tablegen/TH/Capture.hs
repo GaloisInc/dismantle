@@ -87,7 +87,10 @@ genMatchExpr :: [(String, Name)]
              -> Q Exp
 genMatchExpr operands operandListName body = do
   let m = match (buildPattern operands) (normalB (return body)) []
-  caseE (varE operandListName) [m]
+      -- error case never happens because this is generated code, but
+      -- without a complete match set for the case, GHC complains.
+      errm = match wildP (normalB [| error "invalid operands" |]) []
+  caseE (varE operandListName) [m, errm]
   where
     buildPattern :: [(String, Name)] -> PatQ
     buildPattern ops =
