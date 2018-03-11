@@ -118,7 +118,7 @@ module Dismantle.Thumb.Operands (
   mkAddrModeIs2,
   addrModeIs2ToBits,
 
-  AddrModeIs4,
+  AddrModeIs4(..),
   mkAddrModeIs4,
   addrModeIs4ToBits,
 
