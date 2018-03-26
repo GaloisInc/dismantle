@@ -33,6 +33,8 @@ matrix:
     - env: TEST_ARCH=tablegen
     - env: TEST_ARCH=ppc
     - env: TEST_ARCH=arm
+    - env: TEST_ARCH=thumb
+    - env: TEST_ARCH=aarch64
 
 script:
   - travis_wait 30 ./scripts/test.sh $TEST_ARCH

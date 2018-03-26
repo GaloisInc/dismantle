@@ -6,6 +6,8 @@ packages:
 - dismantle-tablegen/
 - dismantle-ppc/
 - dismantle-arm/
+- dismantle-thumb/
+- dismantle-aarch64/
 - deps/parameterized-utils
 extra-deps:
 - parser-combinators-0.2.0

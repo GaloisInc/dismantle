@@ -25,6 +25,12 @@ case $ARCH in
     arm)
         stack build dismantle-arm --system-ghc --test --test-arguments='--hide-successes' | cat -
         ;;
+    thumb)
+        stack build dismantle-thumb --system-ghc --test --test-arguments='--hide-successes' | cat -
+        ;;
+    aarch64)
+        stack build dismantle-aarch64 --system-ghc --test --test-arguments='--hide-successes' | cat -
+        ;;
     *)
         echo "Unrecognized TEST_ARCH=${ARCH}"
         ;;
