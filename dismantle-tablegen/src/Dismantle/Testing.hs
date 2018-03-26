@@ -17,9 +17,9 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Foldable as F
 import qualified Data.List as L
 import Data.Monoid
+import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TL
-import qualified Data.Traversable as T
 import Numeric ( showIntAtBase )
 import System.FilePath.Glob ( namesMatching )
 import System.FilePath ( (</>) )
@@ -103,7 +103,7 @@ mkDisassembledBinaryTest atc binaryPath = do
   return $ T.testCaseInfo binaryPath $ do
     let fileCustomArgs = lookup binaryPath (customObjdumpArgs atc)
     let filterInstruction = instructionFilter atc
-    withDisassembledFile objdumpParser fileCustomArgs binaryPath $ \d -> do
+    withDisassembledFile (isaInputEndianness (testingISA atc)) objdumpParser fileCustomArgs binaryPath $ \d -> do
       let insns = filter filterInstruction (concatMap instructions (sections d))
       testAgg <- F.foldrM (testInstruction atc binaryPath) emptyTestAggregate insns
       let ok = and [ null (testDisassemblyFailures testAgg)
@@ -139,15 +139,19 @@ testInstructionWith :: (TL.Text -> TL.Text)
                     -> TestAggregate
                     -> IO TestAggregate
 testInstructionWith norm disasm asm pp skipPPRE i agg = do
-  let (_consumed, minsn) = disasm (insnBytes i)
+  let bytes = insnBytes i
+  let (_consumed, minsn) = disasm bytes
   case minsn of
     Nothing -> return (agg { testDisassemblyFailures = i : testDisassemblyFailures agg
                            , testCount = testCount agg + 1
                            })
     Just insn -> do
-      case insnBytes i == asm insn of
+      case bytes == asm insn of
         False -> do
-          let failure = (i, show (pp insn), binaryRep (insnBytes i), binaryRep (asm insn))
+          let !pretty = T.pack (show (pp insn))
+          let !actualRep = T.pack (binaryRep bytes)
+          let !asmRep = T.pack (binaryRep (asm insn))
+          let failure = (i, pretty, actualRep, asmRep)
           return (agg { testRoundtripFailures = failure : testRoundtripFailures agg
                       , testCount = testCount agg + 1
                       })
@@ -156,7 +160,8 @@ testInstructionWith norm disasm asm pp skipPPRE i agg = do
             case norm (insnText i) == norm (TL.pack (show (pp insn))) of
               True -> return (agg { testCount = testCount agg + 1 })
               False -> do
-                let failure = (i, show (pp insn))
+                let !pretty = T.pack (show (pp insn))
+                let failure = (i, pretty)
                 return (agg { testPrettyFailures = failure : testPrettyFailures agg
                             , testCount = testCount agg + 1
                             })
@@ -164,8 +169,8 @@ testInstructionWith norm disasm asm pp skipPPRE i agg = do
 
 data TestAggregate =
   TestAggregate { testDisassemblyFailures :: [Instruction]
-                , testRoundtripFailures :: [(Instruction, String, String, String)]
-                , testPrettyFailures :: [(Instruction, String)]
+                , testRoundtripFailures :: [(Instruction, T.Text, T.Text, T.Text)]
+                , testPrettyFailures :: [(Instruction, T.Text)]
                 , testCount :: !Int
                 , testExpectedFailure :: !Int
                 }
@@ -198,47 +203,8 @@ formatTestFailure ta = show doc
                      | (i, actual) <- testPrettyFailures ta
                      ]
 
--- | Convert a directory of executables into a list of data, where
--- each data item is constructed by a callback called on one
--- instruction disassembled by objdump.
-withInstructions :: ArchTestConfig
-                 -- ^ The architecture testing configuration
-                 -> Parser Disassembly
-                 -- ^ The parser to use to parse the objdump output
-                 -> FilePath
-                 -- ^ A directory containing executables (that can be objdumped)
-                 -> [(FilePath, [String])]
-                 -- ^ Custom objdump disassembly arguments for binaries
-                 -- that need them
-                 -> (Instruction -> Bool)
-                 -- ^ Instruction filter
-                 -> (FilePath -> Word64 -> LBS.ByteString -> TL.Text -> a)
-                 -- ^ Turn a disassembled instruction into data
-                 -> IO [(FilePath, [a])]
-withInstructions atc parser dir customArgs filterInstruction con = do
-  files <- namesMatching (dir </> "*")
-  mapM disassembleFile files
-  where
-    disassembleFile f = do
-      let fileCustomArgs = lookup f customArgs
-      insns <- withDisassembledFile parser fileCustomArgs f $ \d -> do
-
-        -- We assume that objdump always produces instruction
-        -- bytestrings in big-endian format. If the ISA expects
-        -- little-endian input, we need to rewrite the test case inputs.
-        let rewriteDisassembly = case isaInputEndianness (testingISA atc) of
-              Little swapBytes _ -> fmap (rewriteSection swapBytes)
-              _ -> id
-            rewriteSection fn s = s { instructions = rewriteInstruction fn <$> instructions s }
-            rewriteInstruction fn i = i { insnBytes = fn $ insnBytes i }
-            theSections = rewriteDisassembly $ sections d
-
-        T.forM (filter filterInstruction $ concatMap instructions theSections) $ \i ->
-            return (con f (insnAddress i) (insnBytes i) (insnText i))
-      return (f, insns)
-
-withDisassembledFile :: Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
-withDisassembledFile parser customArgs f k = do
+withDisassembledFile :: Endianness -> Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
+withDisassembledFile endianness parser customArgs f k = do
   (_, Just hout, _, ph) <- Proc.createProcess p1
   t <- TL.hGetContents hout
   case P.runParser parser f t of
@@ -247,7 +213,13 @@ withDisassembledFile parser customArgs f k = do
       _ <- Proc.waitForProcess ph
       error $ P.parseErrorPretty err
     Right d -> do
-      res <- k d
+      let rewriteDisassembly = case endianness of
+                                 Little swapBytes _ -> fmap (rewriteSection swapBytes)
+                                 _ -> id
+          rewriteSection fn s = s { instructions = rewriteInstruction fn <$> instructions s }
+          rewriteInstruction fn i = i { insnBytes = fn $ insnBytes i }
+          d' = Disassembly { sections = rewriteDisassembly (sections d) }
+      res <- k d'
       hClose hout
       _ <- Proc.waitForProcess ph
       return res
