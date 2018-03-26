@@ -7,7 +7,6 @@ module Dismantle.Testing (
   Instruction(..),
   InstructionLayout(..),
   binaryTestSuite,
-  withInstructions,
   withDisassembledFile
   ) where
 
