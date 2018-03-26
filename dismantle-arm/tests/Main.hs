@@ -13,6 +13,7 @@ import Data.Word (Word64)
 import Dismantle.Testing
 
 import qualified Dismantle.ARM as ARM
+import qualified Dismantle.ARM.ISA as ARM
 
 ignored :: [(FilePath, [Word64])]
 ignored =
@@ -113,7 +114,7 @@ ignored =
     ]
 
 arm :: ArchTestConfig
-arm = ATC { archName = "arm"
+arm = ATC { testingISA = ARM.isa
           , disassemble = ARM.disassembleInstruction
           , assemble = ARM.assembleInstruction
           , prettyPrint = ARM.ppInstruction

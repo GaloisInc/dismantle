@@ -116,8 +116,21 @@ newtype BranchTarget = BT { unCT :: Int32 }
 newtype AbsBranchTarget = ABT { unACT :: Word32 }
   deriving (Eq, Ord, Show)
 
+-- | Truncate the signed value held in a 'Word32' to a 'Int32' of the given number of bits.
+--
+-- This is done using some shifts to preserve the sign bits.  The high bits of
+-- the 'Int32' reflect the sign, even though the underlying value is not allowed
+-- to represent an out-of-range value.
+--
+-- We change the type before the 'shiftR' so that we get sign extension.
+truncSigned :: Int -> Word32 -> Int32
+truncSigned nBits w =
+  shiftR (fromIntegral (shiftL w shiftAmount)) shiftAmount
+  where
+    shiftAmount = 32 - nBits
+
 mkBranchTarget :: Word32 -> BranchTarget
-mkBranchTarget = BT . fromIntegral . (.&. 0xffffff)
+mkBranchTarget = BT . truncSigned 24
 
 branchTargetToBits :: BranchTarget -> Word32
 branchTargetToBits = (.&. 0xffffff) . fromIntegral . unCT
@@ -136,7 +149,7 @@ newtype AbsCondBranchTarget = ACBT { unACBT :: Word32 }
   deriving (Eq, Ord, Show)
 
 mkCondBranchTarget :: Word32 -> CondBranchTarget
-mkCondBranchTarget = CBT . fromIntegral . (.&. 0x3fff)
+mkCondBranchTarget = CBT . truncSigned 14
 
 condBranchTargetToBits :: CondBranchTarget -> Word32
 condBranchTargetToBits = (.&. 0x3fff) . fromIntegral . unCBT
@@ -179,13 +192,12 @@ data MemRI = MemRI (Maybe GPR) Int16
 
 mkMemRI :: Word32 -> MemRI
 mkMemRI w
-  | reg == 0 = MemRI Nothing disp
-  | otherwise = MemRI (Just (GPR reg)) disp
+  | reg == 0 = MemRI Nothing (fromIntegral disp)
+  | otherwise = MemRI (Just (GPR reg)) (fromIntegral disp)
   where
-    dispMask = (1 `shiftL` 16) - 1
     regMask = (1 `shiftL` 5) - 1
     reg = fromIntegral ((w `shiftR` 16) .&. regMask)
-    disp = fromIntegral (w .&. dispMask)
+    disp = truncSigned 16 w
 
 memRIToBits :: MemRI -> Word32
 memRIToBits (MemRI mreg disp) =
@@ -205,13 +217,12 @@ data MemRIX = MemRIX (Maybe GPR) (I.I 14)
 
 mkMemRIX :: Word32 -> MemRIX
 mkMemRIX w
-  | r == 0 = MemRIX Nothing d
-  | otherwise = MemRIX (Just (GPR r)) d
+  | r == 0 = MemRIX Nothing (fromIntegral d)
+  | otherwise = MemRIX (Just (GPR r)) (fromIntegral d)
   where
-    dispMask = (1 `shiftL` 14) - 1
     regMask = (1 `shiftL` 5) - 1
     r = fromIntegral ((w `shiftR` 14) .&. regMask)
-    d = fromIntegral (w .&. dispMask) `shiftL` 2
+    d = truncSigned 14 w
 
 memRIXToBits :: MemRIX -> Word32
 memRIXToBits (MemRIX mr disp) =
@@ -227,7 +238,7 @@ onesMask n = (1 `shiftL` n) - 1
 
 signedImmediateToWord32 :: forall (n :: Nat) . (KnownNat n) => I.I n -> Word32
 signedImmediateToWord32 i@(I.I w) =
-  fromIntegral w .&. onesMask nBits
+  truncBits nBits w
   where
     nBits = I.width i
 
@@ -273,7 +284,7 @@ instance PP.Pretty MemRIX where
   pPrint (MemRIX mr d) =
     case mr of
       Nothing -> PP.pPrint d
-      Just r -> PP.int (fromIntegral (I.unI d)) <> PP.parens (PP.pPrint r)
+      Just r -> PP.int (fromIntegral (I.unI d) `shiftL` 2) <> PP.parens (PP.pPrint r)
 
 instance PP.Pretty MemRR where
   pPrint (MemRR mra rb) =
@@ -355,3 +366,22 @@ instance A.Arbitrary MemRIX where
       0 -> MemRIX Nothing <$> A.arbitrary g
       _ -> MemRIX (Just (GPR ano)) <$> A.arbitrary g
 
+{- Note [Truncation]
+
+We have many oddly-sized fields in operands.  As part of construction, we want
+to throw away any excess bits that would not fit in the field (since the backing
+store can actually hold and return them - if we didn't, we might get
+out-of-range values when we go to re-construct an operand).
+
+Note that in many cases, a signed value of a few bits (e.g., 3-24 or so) are
+stored in a Word32.  In an earlier version of this code, we would use a mask to
+extract only the number of bits we cared about.  This was problematic, as it
+would chop off sign bits and cause some very unfortunate errors.  The new
+approach at operand construction time involves shifts, which perform the correct
+sign extension as necessary.
+
+We still extract values from operands using masking, as we really want to get
+rid of excess sign bits.  During extraction, we are building up a Word32 that
+will be ORed into an instruction.
+
+-}

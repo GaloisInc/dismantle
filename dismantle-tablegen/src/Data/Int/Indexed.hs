@@ -1,9 +1,12 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 module Data.Int.Indexed ( I(..), width ) where
 
-import GHC.TypeLits
-import Data.Bits
+import           GHC.TypeLits
+import           Data.Bits
+import           Data.Proxy ( Proxy(..) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 newtype I (n :: Nat) = I { unI :: Int } deriving (Eq,Ord)
@@ -50,8 +53,13 @@ instance KnownNat n => Num (I n) where
   negate (I x)  = fromIntegral (negate x)
   abs           = id
   signum (I x)  = I (if x == 0 then 0 else 1)
-  fromInteger n = res
-    where res = I (fromIntegral n .&. (shiftL 1 (width res) - 1))
+  fromInteger = mkI . fromInteger
+
+mkI :: forall n . (KnownNat n) => Int -> I n
+mkI n = I i
+  where
+    shiftAmount = finiteBitSize n - fromInteger (natVal (Proxy @n))
+    i = (n `shiftL` shiftAmount) `shiftR` shiftAmount
 
 instance KnownNat n => PP.Pretty (I n) where
   pPrint = PP.integer . fromIntegral . unI

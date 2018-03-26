@@ -13,6 +13,7 @@ import Data.Word (Word64)
 import Dismantle.Testing
 
 import qualified Dismantle.Thumb as Thumb
+import qualified Dismantle.Thumb.ISA as Thumb
 
 ignored :: [(FilePath, [Word64])]
 ignored =
@@ -20,7 +21,7 @@ ignored =
     ]
 
 thumb :: ArchTestConfig
-thumb = ATC { archName = "thumb"
+thumb = ATC { testingISA = Thumb.isa
             , disassemble = Thumb.disassembleInstruction
             , assemble = Thumb.assembleInstruction
             , prettyPrint = Thumb.ppInstruction

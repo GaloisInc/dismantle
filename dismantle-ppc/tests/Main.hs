@@ -10,9 +10,10 @@ import qualified Text.RE.TDFA as RE
 import Dismantle.Testing
 
 import qualified Dismantle.PPC as PPC
+import qualified Dismantle.PPC.ISA as PPC
 
 ppc :: ArchTestConfig
-ppc = ATC { archName = "ppc"
+ppc = ATC { testingISA = PPC.isa
           , disassemble = PPC.disassembleInstruction
           , assemble = PPC.assembleInstruction
           , prettyPrint = PPC.ppInstruction

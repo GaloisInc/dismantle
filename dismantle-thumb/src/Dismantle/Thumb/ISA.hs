@@ -8,6 +8,7 @@ import qualified Data.Binary.Get as B
 import qualified Data.Binary.Put as B
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Set as S
+import qualified Data.List.Split as L
 import Data.Bits (shiftL, shiftR, (.|.), (.&.))
 import Data.Word ( Word8, Word16, Word32 )
 
@@ -32,7 +33,7 @@ fullWordStartPatterns =
 
 asWord32 :: LBS.ByteString -> Word32
 asWord32 = B.runGet $ do
-    w1 <- B.getWord16be
+    w1 <- B.getWord16le
     -- These bit patterns indicate a full word instruction so we need to
     -- parse another halfword and shift the first word left.
     --
@@ -43,7 +44,7 @@ asWord32 = B.runGet $ do
     if not fullWord
        then return $ fromIntegral w1
        else do
-           w2 <- B.getWord16be
+           w2 <- B.getWord16le
            return $ (((fromIntegral w1)::Word32) `shiftL` 16) .|.
                     (fromIntegral w2)
 
@@ -55,13 +56,21 @@ fromWord32 w =
         fullWord = any matchesPattern fullWordStartPatterns
         halfWordMask = 0xffff
     in if fullWord
-       then B.runPut $ B.putWord32be w
-       else B.runPut $ B.putWord16be (fromIntegral $ w .&. halfWordMask)
+       then B.runPut $ do
+           B.putWord16le (fromIntegral $ w `shiftR` 16)
+           B.putWord16le (fromIntegral $ w .&. halfWordMask)
+       else B.runPut $ B.putWord16le (fromIntegral $ w .&. halfWordMask)
+
+endianness :: Endianness
+endianness =
+    let rewriteBytes = LBS.pack . concat . fmap reverse . L.chunksOf 2 . LBS.unpack
+        rewriteMask = concat . fmap (concat . reverse . L.chunksOf 8) . L.chunksOf 16
+    in Little rewriteBytes rewriteMask
 
 isa :: ISA
 isa = ISA { isaName = "Thumb"
           , isaTgenBitPreprocess = id
-          , isaInputEndianness = Big
+          , isaInputEndianness = endianness
           , isaInstructionFilter = thumbFilter
           , isaPseudoInstruction = thumbPseudo
           , isaOperandPayloadTypes = thumbOperandPayloadTypes

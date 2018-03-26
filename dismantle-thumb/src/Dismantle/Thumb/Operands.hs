@@ -102,7 +102,7 @@ module Dismantle.Thumb.Operands (
   mkThumbBlTarget,
   thumbBlTargetToBits,
 
-  ThumbBlxTarget,
+  ThumbBlxTarget(..),
   mkThumbBlxTarget,
   thumbBlxTargetToBits,
 
@@ -114,11 +114,11 @@ module Dismantle.Thumb.Operands (
   mkAddrModeIs1,
   addrModeIs1ToBits,
 
-  AddrModeIs2,
+  AddrModeIs2(..),
   mkAddrModeIs2,
   addrModeIs2ToBits,
 
-  AddrModeIs4,
+  AddrModeIs4(..),
   mkAddrModeIs4,
   addrModeIs4ToBits,
 
@@ -770,11 +770,11 @@ t2SoRegToBits (T2SoReg imm st (GPR reg)) =
        insert t2SoRegShiftTypeField (ARM.encodeShiftType st) 0
 
 data ThumbBlxTarget =
-    ThumbBlxTarget { _thumbBlxTargetS      :: Word8
-                   , _thumbBlxTargetImm10H :: Word16
-                   , _thumbBlxTargetJ1     :: Word8
-                   , _thumbBlxTargetJ2     :: Word8
-                   , _thumbBlxTargetImm10L :: Word16
+    ThumbBlxTarget { thumbBlxTargetS      :: Word8
+                   , thumbBlxTargetImm10H :: Word16
+                   , thumbBlxTargetJ1     :: Word8
+                   , thumbBlxTargetJ2     :: Word8
+                   , thumbBlxTargetImm10L :: Word16
                    }
                    deriving (Eq, Ord, Show)
 
