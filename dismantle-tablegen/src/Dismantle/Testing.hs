@@ -7,16 +7,15 @@ module Dismantle.Testing (
   Instruction(..),
   InstructionLayout(..),
   binaryTestSuite,
-  mkTestCase,
   withInstructions,
   withDisassembledFile
   ) where
 
-import Control.Monad ( unless )
 import Data.Char ( intToDigit )
-import Data.Maybe ( catMaybes, fromMaybe )
+import Data.Maybe ( fromMaybe )
 import Data.Word ( Word8, Word64 )
 import qualified Data.ByteString.Lazy as LBS
+import qualified Data.Foldable as F
 import qualified Data.List as L
 import Data.Monoid
 import qualified Data.Text.Lazy as TL
@@ -34,7 +33,6 @@ import Text.Printf ( printf )
 
 import qualified Test.Tasty as T
 import qualified Test.Tasty.HUnit as T
-import qualified Test.Tasty.ExpectedFailure as T
 
 import Dismantle.Testing.Parser
 
@@ -87,57 +85,6 @@ addressIsIgnored atc file addr =
         Nothing -> False
         Just addrs -> addr `elem` addrs
 
--- | Build a test case for parsing and pretty printing for the specified
--- input. If this test case should be skipped, return Nothing.
-mkTestCase :: ArchTestConfig
-           -- ^ The testing configuration to use.
-           -> FilePath
-           -- ^ The path to the file being read.
-           -> Word64
-           -- ^ The address of the instruction being parsed.
-           -> LBS.ByteString
-           -- ^ The instruction byte sequence.
-           -> TL.Text
-           -- ^ The objdump pretty-print output for this instruction.
-           -> Maybe T.TestTree
-mkTestCase cfg file addr bytes txt
-    | not $ addressIsIgnored cfg file addr =
-        case cfg of
-          ATC { disassemble = disasm
-              , assemble = assm
-              , prettyPrint = pp
-              , skipPrettyCheck = skipPPRE
-              , expectFailure = expectFailureRE
-              , normalizePretty = norm
-              } ->
-            let tc = insnTestCase norm disasm assm pp skipPPRE bytes txt
-            in Just $ case maybe False (txt RE.=~) expectFailureRE of
-              False -> tc
-              True -> T.expectFail tc
-    | otherwise = Nothing
-
-insnTestCase :: (TL.Text -> TL.Text)
-             -> (LBS.ByteString -> (Int, Maybe i))
-             -> (i -> LBS.ByteString)
-             -> (i -> PP.Doc)
-             -> Maybe RE.RE
-             -> LBS.ByteString
-             -> TL.Text
-             -> T.TestTree
-insnTestCase normalize disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unpack txt) $ do
-  let (_consumed, minsn) = disasm bytes
-  case minsn of
-    Nothing -> T.assertFailure (printf "Failed to disassemble %s (%s)" (binaryRep bytes) (TL.unpack txt))
-    Just i -> do
-      let roundtripMsg = printf "Roundtrip %s (parsed as %s):\n\tOriginal Bytes:%s\n\tReassembled As:%s" (show txt) (show (pp i)) (binaryRep bytes) (binaryRep (asm i))
-      T.assertBool roundtripMsg (bytes == asm i)
-      unless (maybe False (txt RE.=~) skipPrettyRE) $ do
-        let prettyMsg = printf fmt (TL.unpack txt) (show (pp i))
-            fmt = "Pretty Printing comparison failed (bytes: " <>
-                  binaryRep bytes <>
-                  ").\n\tExpected: '%s'\n\tActual:   '%s'"
-        T.assertBool prettyMsg (normalize txt == normalize (TL.pack (show (pp i))))
-
 -- | Given an architecture-specific configuration and a directory containing
 -- binaries, run @objdump@ on each binary and then try to disassemble and
 -- re-assemble each instruction in those binaries (as identified by @objdump@).
@@ -147,20 +94,109 @@ insnTestCase normalize disasm asm pp skipPrettyRE bytes txt = T.testCase (TL.unp
 -- matches the instruction under test.
 binaryTestSuite :: ArchTestConfig -> FilePath -> IO T.TestTree
 binaryTestSuite atc dir = do
-  testsByFile <- withInstructions objdumpParser dir (customObjdumpArgs atc)
-                   (instructionFilter atc) (mkTestCase atc)
+  binaries <- namesMatching (dir </> "*")
+  tests <- mapM (mkDisassembledBinaryTest atc) binaries
+  return (T.testGroup (archName atc) tests)
 
-  -- Filter out the Nothing test cases for each file, since those were
-  -- ignored by the ArchTestConfig. If no tests remain for a given file
-  -- (admittedly very unlikely), just skip that file when building
-  -- testGroups.
-  let mTestCases = flip map testsByFile $ \(f, mTests) ->
-        let tests = catMaybes mTests
-        in if null tests
-           then Nothing
-           else Just $ T.testGroup f tests
+mkDisassembledBinaryTest :: ArchTestConfig -> FilePath -> IO T.TestTree
+mkDisassembledBinaryTest atc binaryPath = do
+  return $ T.testCaseInfo binaryPath $ do
+    let fileCustomArgs = lookup binaryPath (customObjdumpArgs atc)
+    let filterInstruction = instructionFilter atc
+    withDisassembledFile objdumpParser fileCustomArgs binaryPath $ \d -> do
+      let insns = filter filterInstruction (concatMap instructions (sections d))
+      testAgg <- F.foldrM (testInstruction atc binaryPath) emptyTestAggregate insns
+      let ok = and [ null (testDisassemblyFailures testAgg)
+                   , null (testRoundtripFailures testAgg)
+                   , null (testPrettyFailures testAgg)
+                   ]
+      T.assertBool (formatTestFailure testAgg) ok
+      return (printf "%s (%d/%d - tests/expected failures)" binaryPath (testCount testAgg) (testExpectedFailure testAgg))
 
-  return (T.testGroup (archName atc) (catMaybes mTestCases))
+testInstruction :: ArchTestConfig -> FilePath -> Instruction -> TestAggregate -> IO TestAggregate
+testInstruction atc binaryPath i agg
+  | addressIsIgnored atc binaryPath (insnAddress i) = return agg
+  | otherwise =
+    case atc of
+      ATC { disassemble = disasm
+          , assemble = asm
+          , prettyPrint = pp
+          , skipPrettyCheck = skipPPRE
+          , expectFailure = expectFailureRE
+          , normalizePretty = norm
+          } -> case maybe False (insnText i RE.=~) expectFailureRE of
+                 False -> testInstructionWith norm disasm asm pp skipPPRE i agg
+                 True -> return (agg { testExpectedFailure = testExpectedFailure agg + 1
+                                     , testCount = testCount agg + 1
+                                     })
+
+testInstructionWith :: (TL.Text -> TL.Text)
+                    -> (LBS.ByteString -> (Int, Maybe i))
+                    -> (i -> LBS.ByteString)
+                    -> (i -> PP.Doc)
+                    -> Maybe RE.RE
+                    -> Instruction
+                    -> TestAggregate
+                    -> IO TestAggregate
+testInstructionWith norm disasm asm pp skipPPRE i agg = do
+  let (_consumed, minsn) = disasm (insnBytes i)
+  case minsn of
+    Nothing -> return (agg { testDisassemblyFailures = i : testDisassemblyFailures agg
+                           , testCount = testCount agg + 1
+                           })
+    Just insn -> do
+      case insnBytes i == asm insn of
+        False -> do
+          let failure = (i, show (pp insn), binaryRep (insnBytes i), binaryRep (asm insn))
+          return (agg { testRoundtripFailures = failure : testRoundtripFailures agg
+                      , testCount = testCount agg + 1
+                      })
+        True
+          | not (maybe False (insnText i RE.=~) skipPPRE) ->
+            case norm (insnText i) == norm (TL.pack (show (pp insn))) of
+              True -> return (agg { testCount = testCount agg + 1 })
+              False -> do
+                let failure = (i, show (pp insn))
+                return (agg { testPrettyFailures = failure : testPrettyFailures agg
+                            , testCount = testCount agg + 1
+                            })
+          | otherwise -> return (agg { testCount = testCount agg + 1 })
+
+data TestAggregate =
+  TestAggregate { testDisassemblyFailures :: [Instruction]
+                , testRoundtripFailures :: [(Instruction, String, String, String)]
+                , testPrettyFailures :: [(Instruction, String)]
+                , testCount :: !Int
+                , testExpectedFailure :: !Int
+                }
+
+emptyTestAggregate :: TestAggregate
+emptyTestAggregate = TestAggregate { testDisassemblyFailures = []
+                                   , testRoundtripFailures = []
+                                   , testPrettyFailures = []
+                                   , testCount = 0
+                                   , testExpectedFailure = 0
+                                   }
+
+formatTestFailure :: TestAggregate -> String
+formatTestFailure ta = show doc
+  where
+    doc = PP.vcat [ "Disassembly failures:"
+                  , PP.nest 2 (PP.vcat disasmFailures)
+                  , "Roundtrip failures:"
+                  , PP.nest 2 (PP.vcat roundtripFailures)
+                  , "Pretty printing failures:"
+                  , PP.nest 2 (PP.vcat prettyFailures)
+                  ]
+    disasmFailures = [ PP.text (printf "Failed to disassemble %s (%s)" (binaryRep (insnBytes i)) (TL.unpack (insnText i)))
+                     | i <- testDisassemblyFailures ta
+                     ]
+    roundtripFailures = [ PP.text (printf "Roundtrip %s (parsed as %s):\n\tOriginal Bytes: %s\n\tReassembled as: %s" (show (insnText i)) (show parsedAs) (show origBytes) (show reassembledBytes))
+                        | (i, parsedAs, origBytes, reassembledBytes) <- testRoundtripFailures ta
+                        ]
+    prettyFailures = [ PP.text (printf "Pretty printing comparison failed (bytes: %s)\n\tExpected: '%s'\n\tActual:   '%s' " (binaryRep (insnBytes i)) (insnText i) actual)
+                     | (i, actual) <- testPrettyFailures ta
+                     ]
 
 -- | Convert a directory of executables into a list of data, where
 -- each data item is constructed by a callback called on one
