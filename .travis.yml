@@ -37,4 +37,4 @@ matrix:
     - env: TEST_ARCH=aarch64
 
 script:
-  - travis_wait 30 ./scripts/test.sh $TEST_ARCH
+  - travis_wait 45 ./scripts/test.sh $TEST_ARCH
