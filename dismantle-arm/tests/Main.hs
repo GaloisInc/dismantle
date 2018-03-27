@@ -238,6 +238,11 @@ skipPretty = rx (L.intercalate "|" rxes)
               , "stc"
               , "stc2l"
 
+              -- Ignored because I don't think we have enough control over
+              -- format strings to print the special purpose registers correctly
+              , "mrs"
+              , "msr"
+
               -- We show nop as "mov r0, r0"
               , "nop"
               ]
