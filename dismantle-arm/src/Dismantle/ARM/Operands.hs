@@ -1,5 +1,6 @@
 {-# OPTIONS_HADDOCK not-home #-}
 {-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE PatternSynonyms #-}
 module Dismantle.ARM.Operands (
   GPR,
   gpr,
@@ -129,7 +130,11 @@ module Dismantle.ARM.Operands (
   decodeShiftType,
   encodeShiftType,
 
-  decodeImmShift
+  decodeImmShift,
+
+  MemBarrierOpt(..),
+  mkMemBarrierOpt,
+  memBarrierOptToBits
   ) where
 
 import Data.Bits
@@ -1017,6 +1022,46 @@ soRegRegToBits (SoRegReg (GPR reg1) (GPR reg2) ty) =
     insert soRegRegShiftTypeField ty $
     insert soRegRegReg1Field reg1 $
     insert soRegRegReg2Field reg2 0
+
+newtype MemBarrierOpt = MemBarrierOpt Word8
+  deriving (Eq, Ord, Show)
+
+pattern SY = MemBarrierOpt 0b1111
+pattern ST = MemBarrierOpt 0b1110
+pattern ISH = MemBarrierOpt 0b1011
+pattern ISHST = MemBarrierOpt 0b1010
+pattern NSH = MemBarrierOpt 0b0111
+pattern NSHST = MemBarrierOpt 0b0110
+pattern OSH = MemBarrierOpt 0b0011
+pattern OSHST = MemBarrierOpt 0b0010
+
+instance PP.Pretty MemBarrierOpt where
+  pPrint mbo =
+    case mbo of
+      SY -> PP.text "sy"
+      ST -> PP.text "st"
+      ISH -> PP.text "ish"
+      ISHST -> PP.text "ishst"
+      NSH -> PP.text "nsh"
+      NSHST -> PP.text "nshst"
+      OSH -> PP.text "osh"
+      OSHST -> PP.text "oshst"
+      MemBarrierOpt w -> PP.text "[unknown memory barrier option:" PP.<+> PP.int (fromIntegral w)
+
+memBarrierOptField :: Field
+memBarrierOptField = Field 4 0
+
+mkMemBarrierOpt :: Word32 -> MemBarrierOpt
+mkMemBarrierOpt w = MemBarrierOpt (fromIntegral i)
+  where
+    i =  extract memBarrierOptField w
+
+memBarrierOptToBits :: MemBarrierOpt -> Word32
+memBarrierOptToBits (MemBarrierOpt w) =
+  insert memBarrierOptField (fromIntegral w) 0
+
+instance A.Arbitrary MemBarrierOpt where
+  arbitrary g = A.oneof [SY, ST, ISH, ISHST, NSH, NSHST, OSH, OSHST] g
 
 instance A.Arbitrary GPR where
   arbitrary g = GPR <$> A.uniformR (0, 15) g

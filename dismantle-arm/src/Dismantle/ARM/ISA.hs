@@ -146,6 +146,12 @@ isa = ISA { isaName = "ARM"
                               , opConE = Just (varE 'ARM.mkShiftImm)
                               , opWordE = Just (varE 'ARM.shiftImmToBits)
                               }
+
+    memBarrierOpt = OperandPayload { opTypeT = [t| ARM.MemBarrierOpt |]
+                                   , opConE = Just (varE 'ARM.mkMemBarrierOpt)
+                                   , opWordE = Just (varE 'ARM.memBarrierOptToBits)
+                                   }
+
     bit = OperandPayload { opTypeT = [t| ARM.Bit |]
                          , opConE = Just (varE 'ARM.mkBit)
                          , opWordE = Just (varE 'ARM.bitToBits)
@@ -222,9 +228,9 @@ isa = ISA { isaName = "ARM"
         , ("Imm1_32"           , imm5)
         , ("Imm24b"            , svcOperand)
         , ("Imod_op"           , word8Operand)
-        , ("Instsyncb_opt"     , word8Operand)
         , ("Ldst_so_reg"       , ldstSoRegOperand)
-        , ("Memb_opt"          , word8Operand)
+        , ("Memb_opt"          , memBarrierOpt)
+        , ("Instsyncb_opt"     , memBarrierOpt)
         , ("Mod_imm"           , modImm)
         , ("Msr_mask"          , msrMask)
         , ("P_imm"             , word8Operand)
