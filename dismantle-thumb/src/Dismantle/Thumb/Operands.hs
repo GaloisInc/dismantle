@@ -728,7 +728,7 @@ imm1_32ToBits (Imm1_32 i) =
 
 data T2SoReg =
     T2SoReg { t2SoRegImm5      :: Word8
-            , t2SoRegShiftType :: ARM.ShiftType
+            , t2SoRegShiftType :: Word8
             , t2SoRegRm        :: GPR
             }
             deriving (Eq, Ord, Show)
@@ -752,7 +752,7 @@ t2SoRegRmField :: Field
 t2SoRegRmField = Field 4 0
 
 mkT2SoReg :: Word32 -> T2SoReg
-mkT2SoReg w = T2SoReg (fromIntegral imm) st (GPR $ fromIntegral reg)
+mkT2SoReg w = T2SoReg (fromIntegral imm) (fromIntegral st) (GPR $ fromIntegral reg)
   where
       reg  = extract t2SoRegRmField w
       imm2 = extract t2SoRegImm2Field w
@@ -767,7 +767,7 @@ t2SoRegToBits (T2SoReg imm st (GPR reg)) =
     in insert t2SoRegRmField reg $
        insert t2SoRegImm2Field imm2 $
        insert t2SoRegImm3Field imm3 $
-       insert t2SoRegShiftTypeField (ARM.encodeShiftType st) 0
+       insert t2SoRegShiftTypeField st 0
 
 data ThumbBlxTarget =
     ThumbBlxTarget { thumbBlxTargetS      :: Word8

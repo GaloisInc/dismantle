@@ -126,10 +126,6 @@ module Dismantle.ARM.Operands (
   mkSoRegReg,
   soRegRegToBits,
 
-  ShiftType(..),
-  decodeShiftType,
-  encodeShiftType,
-
   decodeImmShift,
 
   MemBarrierOpt(..),
@@ -418,31 +414,24 @@ am3OffsetToBits (AM3Offset imm other add) =
     insert am3OffsetOtherField other $
     insert am3OffsetImmField imm 0
 
-data ShiftType = LSL | LSR | ASR | ROR | RRX
-               deriving (Eq, Ord, Show)
+-- data ShiftType = LSL | LSR | ASR | ROR | RRX
+--                deriving (Eq, Ord, Show)
 
-instance PP.Pretty ShiftType where
-    pPrint LSL = PP.text "lsl"
-    pPrint LSR = PP.text "lsr"
-    pPrint ASR = PP.text "asr"
-    pPrint ROR = PP.text "ror"
-    pPrint RRX = PP.text "rrx"
+-- encodeShiftType :: ShiftType -> Word32
+-- encodeShiftType LSL = 0b00
+-- encodeShiftType LSR = 0b01
+-- encodeShiftType ASR = 0b10
+-- encodeShiftType ROR = 0b11
+-- encodeShiftType RRX = 0
 
-decodeShiftType :: (Show a, Num a, Eq a) => a -> ShiftType
-decodeShiftType v =
-    case v of
-        0b00 -> LSL
-        0b01 -> LSR
-        0b10 -> ASR
-        0b11 -> ROR
-        _    -> error $ "Invalid shift type bits: " <> show v
+pattern LSL = 0b000
+pattern LSR = 0b001
+pattern ASR = 0b010
+pattern ROR = 0b011
+pattern RRX = 0b100 -- TODO: this may be the wrong thing, I'm experimenting
 
-encodeShiftType :: ShiftType -> Word32
-encodeShiftType LSL = 0b00
-encodeShiftType LSR = 0b01
-encodeShiftType ASR = 0b10
-encodeShiftType ROR = 0b11
-encodeShiftType RRX = 0
+rrx :: (Num a, Eq a) => a
+rrx = 0b100
 
 data Imm8S4 = Imm8S4 { imm8s4Add :: Word8
                      , imm8s4Immediate :: Word8
@@ -474,22 +463,22 @@ data ShiftImm = ShiftImm { shiftImmImmediate :: Word8
 
 -- See ARM ARM A8.4.3, "Pseudocode details of instruction-specified
 -- shifts and rotates"
-decodeImmShift :: (Show a, Num a, Eq a, Num b, Eq b) => a -> b -> (ShiftType, b)
+decodeImmShift :: (Show a, Num a, Eq a, Num b, Eq b) => a -> b -> (a, b)
 decodeImmShift ty imm =
-    case decodeShiftType ty of
-        LSL -> (LSL, imm)
-        LSR -> (LSR, if imm == 0 then 32 else imm)
-        ASR -> (ASR, if imm == 0 then 32 else imm)
+    case ty of
+        LSL -> (ty, imm)
+        LSR -> (ty, if imm == 0 then 32 else imm)
+        ASR -> (ty, if imm == 0 then 32 else imm)
         ROR ->
             if imm == 0
-            then (RRX, 1)
-            else (ROR, imm)
+            then (rrx, 1)
+            else (ty, imm)
         _   -> error $ "Invalid shift type bits: " <> show ty
 
 instance PP.Pretty ShiftImm where
   pPrint m =
       let (ty, amt) = decodeImmShift (shiftImmType m) (shiftImmImmediate m)
-          addAmt = if ty == RRX && amt == 1
+          addAmt = if ty == rrx && amt == 1
                    then id
                    else (PP.<+> PP.text ("#" <> show amt))
 
@@ -996,10 +985,30 @@ data SoRegReg = SoRegReg { soRegRegReg1      :: GPR
                          }
   deriving (Eq, Ord, Show)
 
+-- instance PP.Pretty ShiftType where
+--     pPrint LSL = PP.text "lsl"
+--     pPrint LSR = PP.text "lsr"
+--     pPrint ASR = PP.text "asr"
+--     pPrint ROR = PP.text "ror"
+--     pPrint RRX = PP.text "rrx"
+
+-- decodeShiftType :: (Show a, Num a, Eq a) => a -> ShiftType
+-- decodeShiftType v =
+--     case v of
+--         0b00 -> LSL
+--         0b01 -> LSR
+--         0b10 -> ASR
+--         0b11 -> ROR
+--         _    -> error $ "Invalid shift type bits: " <> show v
+
 instance PP.Pretty SoRegReg where
     pPrint (SoRegReg reg1 reg2 ty) =
-        let t = decodeShiftType ty
-        in PP.pPrint reg1 <> (PP.text "," PP.<+> PP.pPrint t PP.<+> (PP.pPrint reg2))
+        let ppShiftType = case ty of
+              0b00 -> PP.text "lsl"
+              0b01 -> PP.text "lsr"
+              0b10 -> PP.text "asr"
+              0b11 -> PP.text "ror"
+        in PP.pPrint reg1 <> (PP.text "," PP.<+> ppShiftType PP.<+> (PP.pPrint reg2))
 
 soRegRegReg2Field :: Field
 soRegRegReg2Field = Field 4 8
@@ -1176,6 +1185,3 @@ instance A.Arbitrary Reglist where
 
 instance A.Arbitrary BankedReg where
   arbitrary _ = return BankedReg
-
-instance A.Arbitrary ShiftType where
-  arbitrary g = A.oneof [LSL, LSR, ASR, ROR, RRX] g
