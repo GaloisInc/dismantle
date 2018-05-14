@@ -146,7 +146,7 @@ module Dismantle.Thumb.Operands (
   mkPred,
   predToBits,
 
-  T2SoReg,
+  T2SoReg(..),
   mkT2SoReg,
   t2SoRegToBits
 
