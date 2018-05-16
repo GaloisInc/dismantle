@@ -735,9 +735,16 @@ data T2SoReg =
 
 instance PP.Pretty T2SoReg where
     pPrint (T2SoReg imm ty rm) =
-        (PP.pPrint rm <> PP.char ',') PP.<+>
-        PP.pPrint ty PP.<+>
-        (PP.char '#' <> PP.pPrint imm)
+        let (ty', imm') = ARM.decodeImmShift ty imm
+            ppShiftType = case ty' of
+              0b00 -> PP.text "lsl"
+              0b01 -> PP.text "lsr"
+              0b10 -> PP.text "asr"
+              0b11 -> PP.text "ror"
+              _    -> PP.text $ "BUG: invalid shift type: " <> show ty
+        in (PP.pPrint rm <> PP.char ',') PP.<+>
+           ppShiftType PP.<+>
+           (PP.char '#' <> PP.pPrint imm')
 
 t2SoRegImm3Field :: Field
 t2SoRegImm3Field = Field 3 9
@@ -752,13 +759,13 @@ t2SoRegRmField :: Field
 t2SoRegRmField = Field 4 0
 
 mkT2SoReg :: Word32 -> T2SoReg
-mkT2SoReg w = T2SoReg (fromIntegral imm) (fromIntegral st) (GPR $ fromIntegral reg)
+mkT2SoReg w = T2SoReg (fromIntegral imm) (fromIntegral ty) (GPR $ fromIntegral reg)
   where
       reg  = extract t2SoRegRmField w
       imm2 = extract t2SoRegImm2Field w
       imm3 = extract t2SoRegImm3Field w
-      imm' = (imm3 `shiftL` 2) .|. imm2
-      (st, imm)   = ARM.decodeImmShift (extract t2SoRegShiftTypeField w) imm'
+      imm = (imm3 `shiftL` 2) .|. imm2
+      ty = extract t2SoRegShiftTypeField w
 
 t2SoRegToBits :: T2SoReg -> Word32
 t2SoRegToBits (T2SoReg imm st (GPR reg)) =
