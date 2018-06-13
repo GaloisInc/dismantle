@@ -6,7 +6,7 @@ module Dismantle.Tablegen.TH.Capture (
   captureInfo
   ) where
 
-import Data.Char ( toLower )
+import Data.Char ( isAlpha, isDigit, toLower )
 import qualified Data.Functor.Const as C
 import Language.Haskell.TH
 import Language.Haskell.TH.Datatype
@@ -62,7 +62,7 @@ captureInfo p tyName = do
 captureInfoFor :: ConstructorInfo -> ExpQ
 captureInfoFor ci = do
   sh <- constructorShape ci
-  (names, namesE) <- allocateMatchNames sh
+  (names, namesE) <- allocateMatchNames (show (constructorName ci)) sh
   let genInputE = listE [ [| ($(litE (StringL s)), mkName $(litE (StringL (show n)))) |] | (s, n) <- names]
   [e| S.Some CaptureInfo { capturedOpcode = $(conE (constructorName ci))
                          , capturedOpcodeName = mkName $(litE (StringL (show (constructorName ci))))
@@ -101,15 +101,21 @@ genMatchExpr operands operandListName body = do
           let p = ConP (mkName opConStr) [VarP operandName]
           [p| $(return p) SL.:< $(patRest) |]
 
-allocateMatchNames :: [String] -> Q ([(String, Name)], Exp)
-allocateMatchNames sh = do
+allocateMatchNames :: String -> [String] -> Q ([(String, Name)], Exp)
+allocateMatchNames cn sh = do
   -- We mock up names instead of using 'newName' to ensure that our
   -- serialization of names into strings doesn't break name resolution.  We have
   -- to embed the names as calls to 'mkName'.
+  --
+  -- Opcodes that aren't implemented yet tend to result in warnings about
+  -- unused variables. To aid readers in tracking down which instruction is to
+  -- blame, we include the opcode name in the variable name so that the warning
+  -- says, e.g., "Defined but not used: ''". This explains the 'cn' argument.
   let names = map (\(ix :: Int, s) ->
                      -- We have to downcase the name so that it is a valid
                      -- variable
-                     let nameToBind = map toLower (s ++ show ix)
+                     let nameToBind = map (\c -> if isAlpha c || isDigit c then toLower c else '_')
+                                          (cn ++ "_" ++ s ++ show ix)
                      in (s, mkName nameToBind)) (zip [0..] sh)
   e <- buildShapedList (map snd names)
   return (names, e)
