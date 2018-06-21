@@ -9,8 +9,6 @@ module Dismantle.Testing.Regex
     , RE.Regex
     , countMatches
     , hasMatches
-    -- , (*=~)
-    -- , (=~)
     )
     where
 
@@ -26,17 +24,12 @@ mkRegex = RE.makeRegexM
 mkRegexT :: DT.Text -> Either String RE.Regex
 mkRegexT = RE.makeRegexM . DT.unpack
 
--- (*=~) :: IsString source -> source -> RE.Regex -> RE.Match
--- (*=~) a b = RE.findAll
-
--- (=~) :: IsString source => source -> RE.Regex -> Bool
--- (=~) i r = isJust $ RE.find r (TL.toStrict $ insnText i)
--- infix 5 =~
-
-countMatches :: (IsString source, RE.RegexLike RE.Regex source) => source -> RE.Regex -> Int
+countMatches :: (IsString source, RE.RegexLike RE.Regex source) =>
+                source -> RE.Regex -> Int
 countMatches t r = RE.matchCount r t
 
-hasMatches :: (IsString source, RE.RegexLike RE.Regex source) => source -> RE.Regex -> Bool
+hasMatches :: (IsString source, RE.RegexLike RE.Regex source) =>
+              source -> RE.Regex -> Bool
 hasMatches t r = RE.matchTest r t
 
 
@@ -85,7 +78,3 @@ instance RE.RegexLike RE.Regex DLT.Text where
                             reText (x, y) = (DLT.pack x, y)
                         in subres >>= \(a,b,c) ->
                             return (DLT.pack a, fmap reText b, DLT.pack c)
-
--- (=~) :: Instruction -> RE.Regex -> Bool
--- (=~) i r = isJust $ RE.find r (DLT.toStrict $ insnText i)
--- infix 5 =~
