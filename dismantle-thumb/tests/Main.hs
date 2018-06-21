@@ -5,7 +5,7 @@ import Data.Char (isSpace)
 import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
-import qualified Text.RE.TDFA as RE
+import qualified Dismantle.Testing.Regex as RE
 import Data.Monoid ((<>))
 import qualified Text.PrettyPrint.HughesPJClass as PP
 import Data.Word (Word64)
@@ -59,13 +59,13 @@ normalize =
     -- First, trim any trailing comments
     (fst . TL.breakOn ";")
 
-rx :: String -> RE.RE
+rx :: String -> RE.Regex
 rx s =
-  case RE.compileRegex s of
-    Nothing -> error ("Invalid regex: " ++ s)
-    Just r -> r
+  case RE.mkRegex s of
+    Left e -> error ("Invalid regex: <<" ++ s ++ ">> because: " ++ e)
+    Right r -> r
 
-skipPretty :: RE.RE
+skipPretty :: RE.Regex
 skipPretty = rx (L.intercalate "|" rxes)
   where
     rxes = others <> (matchInstruction <$> skipped)

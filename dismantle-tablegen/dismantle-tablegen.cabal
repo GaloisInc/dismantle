@@ -29,6 +29,7 @@ library
                    Dismantle.Tablegen.Parser.Types
                    Dismantle.Testing
                    Dismantle.Testing.Parser
+                   Dismantle.Testing.Regex
                    Data.EnumF
                    Data.Int.Indexed
                    Data.Parameterized.HasRepr
@@ -60,7 +61,7 @@ library
                        tasty-hunit,
                        tasty-expected-failure,
                        megaparsec >= 6 && < 7,
-                       regex >= 1 && < 2,
+                       regex-tdfa,
                        mtl >= 2 && < 3,
                        parameterized-utils >= 1 && < 2
   hs-source-dirs:      src
@@ -83,7 +84,7 @@ test-suite dismantle-tests
                  tasty >= 0.10 && < 0.13,
                  tasty-hunit,
                  tasty-quickcheck >= 0.8 && < 0.10,
-                 regex >= 1 && < 2,
+                 regex-tdfa,
                  filemanip,
                  directory,
                  filepath

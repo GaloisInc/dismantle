@@ -39,6 +39,5 @@ test-suite dismantle-thumb-tests
                  dismantle-tablegen,
                  dismantle-thumb,
                  tasty,
-                 regex >= 1 && < 2,
                  pretty,
                  text

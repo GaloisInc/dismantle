@@ -38,6 +38,5 @@ test-suite dismantle-arm-tests
                  dismantle-tablegen,
                  dismantle-arm,
                  tasty,
-                 regex >= 1 && < 2,
                  pretty,
                  text

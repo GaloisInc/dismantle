@@ -8,7 +8,7 @@ import qualified Data.Text.IO as TS
 import qualified Data.Text.Lazy as TL
 import qualified Test.Tasty as T
 import qualified Test.Tasty.HUnit as T
-import qualified Text.RE.TDFA as RE
+import qualified Dismantle.Testing.Regex as RE
 import qualified System.FilePath.Glob as G
 import System.Directory (canonicalizePath)
 import System.Exit (die)
@@ -53,12 +53,12 @@ findTgenFiles = do
 mkTest :: FilePath -> T.TestTree
 mkTest p = T.testCase (takeFileName p) $ do
   t <- TS.readFile p
-  re <- RE.compileRegex "^def "
-  let expectedDefCount = RE.countMatches (t RE.*=~ re)
+  let (Right re) = RE.mkRegex "^def "
+  let expectedDefCount = RE.countMatches t re
   case D.parseTablegen p (TL.fromStrict t) of
     Left err ->
         let msg = "Error parsing " <> show p <> ": " <> err
         in T.assertFailure msg
     Right rs -> do
         rs `deepseq` return ()
-        T.assertEqual "Number of defs" expectedDefCount (length (D.tblDefs rs))
+        T.assertEqual ("Number of defs in " <> p) expectedDefCount (length (D.tblDefs rs))
