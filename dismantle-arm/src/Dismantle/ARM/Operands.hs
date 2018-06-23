@@ -414,21 +414,19 @@ am3OffsetToBits (AM3Offset imm other add) =
     insert am3OffsetOtherField other $
     insert am3OffsetImmField imm 0
 
--- data ShiftType = LSL | LSR | ASR | ROR | RRX
---                deriving (Eq, Ord, Show)
-
--- encodeShiftType :: ShiftType -> Word32
--- encodeShiftType LSL = 0b00
--- encodeShiftType LSR = 0b01
--- encodeShiftType ASR = 0b10
--- encodeShiftType ROR = 0b11
--- encodeShiftType RRX = 0
-
 pattern LSL = 0b000
 pattern LSR = 0b001
 pattern ASR = 0b010
 pattern ROR = 0b011
 pattern RRX = 0b100 -- TODO: this may be the wrong thing, I'm experimenting
+
+ppShiftType :: Word8 -> PP.Doc
+ppShiftType ty = PP.text $ case ty of
+    LSL -> "lsl"
+    LSR -> "lsr"
+    ASR -> "asr"
+    ROR -> "ror"
+    RRX -> "rrx"
 
 rrx :: (Num a, Eq a) => a
 rrx = 0b100
@@ -604,7 +602,7 @@ instance PP.Pretty Am2OffsetReg where
                        else id
           opStr = if am2OffsetRegAdd m == 1 then mempty else PP.char '-'
       in (opStr <> PP.pPrint (am2OffsetRegReg m) <>
-         (maybePrint $ addAmt $ PP.char ',' PP.<+> PP.pPrint t))
+         (maybePrint $ addAmt $ PP.char ',' PP.<+> ppShiftType t))
 
 am2OffsetRegAddField :: Field
 am2OffsetRegAddField = Field 1 12
@@ -694,7 +692,7 @@ instance PP.Pretty LdstSoReg where
                        else id
       in (PP.pPrint (ldstSoRegBaseRegister m) <> PP.char ',') PP.<+>
          (PP.pPrint (ldstSoRegOffsetRegister m) <>
-          (maybePrint $ addAmt $ PP.text "," PP.<+> (s <> PP.pPrint t)))
+          (maybePrint $ addAmt $ PP.text "," PP.<+> (s <> ppShiftType t)))
 
 ldstSoRegBaseRegField :: Field
 ldstSoRegBaseRegField = Field 4 13
@@ -955,7 +953,7 @@ instance PP.Pretty SoRegImm where
                          then const mempty
                          else id
         in PP.pPrint reg <>
-           (maybePrint $ addAmt $ PP.text "," PP.<+> PP.pPrint t)
+           (maybePrint $ addAmt $ PP.text "," PP.<+> ppShiftType t)
 
 soRegImmImmField :: Field
 soRegImmImmField = Field 5 7
@@ -984,22 +982,6 @@ data SoRegReg = SoRegReg { soRegRegReg1      :: GPR
                          , soRegRegShiftType :: Word8
                          }
   deriving (Eq, Ord, Show)
-
--- instance PP.Pretty ShiftType where
---     pPrint LSL = PP.text "lsl"
---     pPrint LSR = PP.text "lsr"
---     pPrint ASR = PP.text "asr"
---     pPrint ROR = PP.text "ror"
---     pPrint RRX = PP.text "rrx"
-
--- decodeShiftType :: (Show a, Num a, Eq a) => a -> ShiftType
--- decodeShiftType v =
---     case v of
---         0b00 -> LSL
---         0b01 -> LSR
---         0b10 -> ASR
---         0b11 -> ROR
---         _    -> error $ "Invalid shift type bits: " <> show v
 
 instance PP.Pretty SoRegReg where
     pPrint (SoRegReg reg1 reg2 ty) =
