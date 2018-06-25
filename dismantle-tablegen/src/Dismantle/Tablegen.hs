@@ -392,7 +392,7 @@ finishInstructionDescriptor :: ISA -> Def -> [Maybe BitRef] -> [OperandDescripto
 finishInstructionDescriptor isa def mbits ins outs =
   case mvals of
     Nothing -> return ()
-    Just (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly, mSz) -> do
+    Just (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly, mSz, preds') -> do
       let takeUsedBits = case mSz of
               -- The instruction descriptor didn't declare a size, so just use
               -- the entire bit pattern.
@@ -431,6 +431,7 @@ finishInstructionDescriptor isa def mbits ins outs =
                                     , idPrettyVariableOverrides = fromMaybe [] $ lookup (defName def) $ isaPrettyOverrides isa
                                     , idMnemonic = defName def
                                     , idNamespace = ns
+                                    , idPredicates = [ x | ClassItem x <- preds' ]
                                     , idDecoderNamespace = decoderNs
                                     , idAsmString = asmStr
                                     , idInputOperands = ins
@@ -445,6 +446,7 @@ finishInstructionDescriptor isa def mbits ins outs =
   where
     mvals = do
       Named _ (StringItem ns)        <- F.find (named "Namespace") (defDecls def)
+      Named _ (ListItem preds')      <- F.find (named "Predicates") (defDecls def)
       Named _ (StringItem decoderNs) <- F.find (named "DecoderNamespace") (defDecls def)
       Named _ (StringItem asmStr)    <- F.find (named "AsmString") (defDecls def)
       Named _ (BitItem b)            <- F.find (named "isPseudo") (defDecls def)
@@ -453,7 +455,7 @@ finishInstructionDescriptor isa def mbits ins outs =
       let sz = getInt =<< F.find (named "Size") (defDecls def)
           getInt (Named _ (IntItem v)) = Just v
           getInt _ = Nothing
-      return (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly, sz)
+      return (ns, decoderNs, asmStr, b, cgOnly, asmParseOnly, sz, preds')
 
 -- | Group bits in the operand bit spec into contiguous chunks.
 --
