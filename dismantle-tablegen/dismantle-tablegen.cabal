@@ -29,6 +29,7 @@ library
                    Dismantle.Tablegen.Parser.Types
                    Dismantle.Testing
                    Dismantle.Testing.Parser
+                   Dismantle.Testing.ParserTests
                    Dismantle.Testing.Regex
                    Data.EnumF
                    Data.Int.Indexed
@@ -74,8 +75,7 @@ test-suite dismantle-tests
   ghc-options: -Wall -rtsopts
   hs-source-dirs: tests
   main-is: Main.hs
-  other-modules: Parser
-                 Operands
+  other-modules: Operands
                  Trie
   build-depends: dismantle-tablegen,
                  base,
