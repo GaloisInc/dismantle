@@ -5,9 +5,10 @@ import Data.Char (isSpace)
 import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
-import qualified Dismantle.Testing.Regex as RE
 
 import Dismantle.Testing
+import Dismantle.Testing.ParserTests (parserTests)
+import qualified Dismantle.Testing.Regex as RE
 
 import qualified Dismantle.PPC as PPC
 import qualified Dismantle.PPC.ISA as PPC
@@ -28,7 +29,8 @@ ppc = ATC { testingISA = PPC.isa
 main :: IO ()
 main = do
   tg <- binaryTestSuite ppc "tests/bin"
-  T.defaultMain tg
+  pt <- parserTests
+  T.defaultMain $ T.testGroup "dismantle-ppc" [tg, pt]
 
 normalize :: TL.Text -> TL.Text
 normalize =

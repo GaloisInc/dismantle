@@ -5,12 +5,13 @@ import Data.Char (isSpace)
 import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
-import qualified Dismantle.Testing.Regex as RE
 import Data.Monoid ((<>))
 import qualified Text.PrettyPrint.HughesPJClass as PP
 import Data.Word (Word64)
 
 import Dismantle.Testing
+import Dismantle.Testing.ParserTests (parserTests)
+import qualified Dismantle.Testing.Regex as RE
 
 import qualified Dismantle.Thumb as Thumb
 import qualified Dismantle.Thumb.ISA as Thumb
@@ -36,7 +37,8 @@ thumb = ATC { testingISA = Thumb.isa
 main :: IO ()
 main = do
   tg <- binaryTestSuite thumb "tests/bin"
-  T.defaultMain tg
+  pt <- parserTests
+  T.defaultMain $ T.testGroup "dismantle-thumb" [tg, pt]
 
 remove :: TL.Text -> TL.Text -> TL.Text
 remove needle s =

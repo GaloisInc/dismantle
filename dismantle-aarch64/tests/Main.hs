@@ -5,12 +5,13 @@ import Data.Char (isSpace)
 import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
-import qualified Dismantle.Testing.Regex as RE
 import Data.Word (Word64)
 import Data.Monoid ((<>))
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Testing
+import Dismantle.Testing.ParserTests (parserTests)
+import qualified Dismantle.Testing.Regex as RE
 
 import qualified Dismantle.ARM as ARM
 import qualified Dismantle.AArch64 as AArch64
@@ -38,7 +39,8 @@ aarch64 = ATC { testingISA = AArch64.isa
 main :: IO ()
 main = do
   tg <- binaryTestSuite aarch64 "tests/bin"
-  T.defaultMain tg
+  pt <- parserTests
+  T.defaultMain $ T.testGroup "dismantle-aarch64" [tg, pt]
 
 normalize :: TL.Text -> TL.Text
 normalize =
