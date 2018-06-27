@@ -19,8 +19,9 @@ import qualified Dismantle.Tablegen.Parser.Types as D
 
 parserTests :: IO T.TestTree
 parserTests = do
-  tgenFiles <- findTgenFiles
-  return (T.testGroup "Parser" (map mkTest tgenFiles))
+  tgenFiles <- requireGlob "tgen files" "data/*.tgen"
+  overrideTgenFiles <- mapM canonicalizePath =<< G.namesMatching "data/override/*.tgen"
+  return $ T.testGroup "Parser" (map mkTest (tgenFiles <> overrideTgenFiles))
 
 requireGlob :: String -> String -> IO [FilePath]
 requireGlob ty pat = do
@@ -28,9 +29,6 @@ requireGlob ty pat = do
     when (null paths) $ do
         die $ "Error: could not find any " <> ty <> " matching " <> show pat
     return paths
-
-findTgenFiles :: IO [FilePath]
-findTgenFiles = requireGlob "tgen files" "data/*.tgen"
 
 mkTest :: FilePath -> T.TestTree
 mkTest p = T.testCase (takeFileName p) $ do
