@@ -11,6 +11,7 @@ import qualified Data.List as L
 import qualified Data.List.Split as L
 import qualified Data.Set as S
 import Data.Word ( Word8, Word16, Word32, Word64 )
+import qualified Data.Word.Indexed as W
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -56,19 +57,19 @@ isa = ISA { isaName = "ARM"
   where
     gpRegister = OperandPayload { opTypeT = [t| ARM.GPR |]
                                 , opConE = Just (varE 'ARM.gpr)
-                                , opWordE = Just [| fromIntegral . ARM.unGPR |]
+                                , opWordE = Just [| fromIntegral . W.unW . ARM.unGPR |]
                                 }
     qpRegister = OperandPayload { opTypeT = [t| ARM.QPR |]
                                 , opConE = Just (varE 'ARM.qpr)
-                                , opWordE = Just [| fromIntegral . ARM.unQPR |]
+                                , opWordE = Just [| fromIntegral . W.unW . ARM.unQPR |]
                                 }
     qqpRegister = OperandPayload { opTypeT = [t| ARM.QQPR |]
-                                 , opConE = Just (varE 'ARM.unQQPR)
-                                 , opWordE = Just [| fromIntegral . ARM.unQQPR |]
+                                 , opConE = Just (varE 'ARM.qqpr)
+                                 , opWordE = Just [| fromIntegral . W.unW . ARM.unQQPR |]
                                  }
     dpRegister = OperandPayload { opTypeT = [t| ARM.DPR |]
                                 , opConE = Just (varE 'ARM.dpr)
-                                , opWordE = Just [| fromIntegral . ARM.unDPR |]
+                                , opWordE = Just [| fromIntegral . W.unW . ARM.unDPR |]
                                 }
     addrMode3 = OperandPayload { opTypeT = [t| ARM.AddrMode3 |]
                                , opConE = Just (varE 'ARM.mkAddrMode3)
