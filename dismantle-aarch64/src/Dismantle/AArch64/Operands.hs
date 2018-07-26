@@ -1,6 +1,8 @@
 {-# OPTIONS_HADDOCK not-home #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE DataKinds #-}
 module Dismantle.AArch64.Operands
   ( FPR128
   , mkFPR128
@@ -565,11 +567,14 @@ module Dismantle.AArch64.Operands
   )
 where
 
+import GHC.TypeLits
 import Data.Bits
 import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.Word ( Word8, Word16, Word32, Word64 )
 import Data.Int ( Int16, Int32, Int64, Int8 )
+import qualified Data.Word.Indexed as W
+import qualified Data.Parameterized.NatRepr as NR
 
 import Numeric (showHex)
 
@@ -582,26 +587,33 @@ import Dismantle.Tablegen.ISA
 import qualified Dismantle.Arbitrary as A
 import Dismantle.Tablegen.TH.Pretty
 
-data Field = Field { fieldBits :: Int
-                   -- ^ The number of bits in the field
-                   , fieldOffset :: Int
-                   -- ^ The offset of the rightmost bit in the field,
-                   -- starting from zero
-                   }
+data Field n where
+    Field :: (KnownNat n)
+          => { fieldBits :: NR.NatRepr n
+             -- ^ The number of bits in the field
+             , fieldOffset :: Int
+             -- ^ The offset of the rightmost bit in the field,
+             -- starting from zero
+             } -> Field n
 
-mkMask :: Field -> Word32
-mkMask (Field bits offset) = (2 ^ bits - 1) `shiftL` offset
+field :: (KnownNat n) => Int -> Field n
+field off = Field { fieldBits = NR.knownNat
+                  , fieldOffset = off
+                  }
 
-insert :: (Integral a) => Field -> a -> Word32 -> Word32
-insert (Field bits offset) src dest =
-    dest .|. (((fromIntegral src) .&. (2 ^ bits - 1)) `shiftL` offset)
+mkMask :: Field n -> Word32
+mkMask (Field sz offset) = (2 ^ (NR.widthVal sz) - 1) `shiftL` offset
 
-extract :: Field -> Word32 -> Word32
-extract f val = (val .&. (mkMask f)) `shiftR` (fieldOffset f)
+insert :: Field n -> W.W n -> Word32 -> Word32
+insert (Field sz offset) src dest =
+    dest .|. (((fromIntegral $ W.unW src) .&. (2 ^ (NR.widthVal sz) - 1)) `shiftL` offset)
+
+extract :: (KnownNat n) => Field n -> Word32 -> W.W n
+extract f val = W.w $ fromIntegral $ (val .&. (mkMask f)) `shiftR` (fieldOffset f)
 
 -- Operand types
 
-data FPR128 = FPR128 { fPR128Reg :: Word8
+data FPR128 = FPR128 { fPR128Reg :: W.W 5
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR128 where
@@ -610,8 +622,8 @@ instance PP.Pretty FPR128 where
 instance A.Arbitrary FPR128 where
   arbitrary g = FPR128 <$> A.arbitrary g
 
-fPR128RegField :: Field
-fPR128RegField = Field 5 0
+fPR128RegField :: Field 5
+fPR128RegField = field 0
 
 fPR128ToBits :: FPR128 -> Word32
 fPR128ToBits val =
@@ -619,7 +631,7 @@ fPR128ToBits val =
 
 mkFPR128 :: Word32 -> FPR128
 mkFPR128 w =
-  FPR128 (fromIntegral $ extract fPR128RegField w)
+  FPR128 (extract fPR128RegField w)
 
 fPR128Operand :: OperandPayload
 fPR128Operand =
@@ -628,7 +640,7 @@ fPR128Operand =
                  , opWordE = Just (varE 'fPR128ToBits)
                  }
 
-data FPR16 = FPR16 { fPR16Reg :: Word8
+data FPR16 = FPR16 { fPR16Reg :: W.W 5
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR16 where
@@ -637,8 +649,8 @@ instance PP.Pretty FPR16 where
 instance A.Arbitrary FPR16 where
   arbitrary g = FPR16 <$> A.arbitrary g
 
-fPR16RegField :: Field
-fPR16RegField = Field 5 0
+fPR16RegField :: Field 5
+fPR16RegField = field 0
 
 fPR16ToBits :: FPR16 -> Word32
 fPR16ToBits val =
@@ -646,7 +658,7 @@ fPR16ToBits val =
 
 mkFPR16 :: Word32 -> FPR16
 mkFPR16 w =
-  FPR16 (fromIntegral $ extract fPR16RegField w)
+  FPR16 (extract fPR16RegField w)
 
 fPR16Operand :: OperandPayload
 fPR16Operand =
@@ -655,7 +667,7 @@ fPR16Operand =
                  , opWordE = Just (varE 'fPR16ToBits)
                  }
 
-data FPR32 = FPR32 { fPR32Reg :: Word8
+data FPR32 = FPR32 { fPR32Reg :: W.W 5
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR32 where
@@ -664,8 +676,8 @@ instance PP.Pretty FPR32 where
 instance A.Arbitrary FPR32 where
   arbitrary g = FPR32 <$> A.arbitrary g
 
-fPR32RegField :: Field
-fPR32RegField = Field 5 0
+fPR32RegField :: Field 5
+fPR32RegField = field 0
 
 fPR32ToBits :: FPR32 -> Word32
 fPR32ToBits val =
@@ -673,7 +685,7 @@ fPR32ToBits val =
 
 mkFPR32 :: Word32 -> FPR32
 mkFPR32 w =
-  FPR32 (fromIntegral $ extract fPR32RegField w)
+  FPR32 (extract fPR32RegField w)
 
 fPR32Operand :: OperandPayload
 fPR32Operand =
@@ -682,7 +694,7 @@ fPR32Operand =
                  , opWordE = Just (varE 'fPR32ToBits)
                  }
 
-data FPR64 = FPR64 { fPR64Reg :: Word8
+data FPR64 = FPR64 { fPR64Reg :: W.W 5
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR64 where
@@ -691,8 +703,8 @@ instance PP.Pretty FPR64 where
 instance A.Arbitrary FPR64 where
   arbitrary g = FPR64 <$> A.arbitrary g
 
-fPR64RegField :: Field
-fPR64RegField = Field 5 0
+fPR64RegField :: Field 5
+fPR64RegField = field 0
 
 fPR64ToBits :: FPR64 -> Word32
 fPR64ToBits val =
@@ -700,7 +712,7 @@ fPR64ToBits val =
 
 mkFPR64 :: Word32 -> FPR64
 mkFPR64 w =
-  FPR64 (fromIntegral $ extract fPR64RegField w)
+  FPR64 (extract fPR64RegField w)
 
 fPR64Operand :: OperandPayload
 fPR64Operand =
@@ -709,7 +721,7 @@ fPR64Operand =
                  , opWordE = Just (varE 'fPR64ToBits)
                  }
 
-data FPR8 = FPR8 { fPR8Reg :: Word8
+data FPR8 = FPR8 { fPR8Reg :: W.W 5
                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR8 where
@@ -718,8 +730,8 @@ instance PP.Pretty FPR8 where
 instance A.Arbitrary FPR8 where
   arbitrary g = FPR8 <$> A.arbitrary g
 
-fPR8RegField :: Field
-fPR8RegField = Field 5 0
+fPR8RegField :: Field 5
+fPR8RegField = field 0
 
 fPR8ToBits :: FPR8 -> Word32
 fPR8ToBits val =
@@ -727,7 +739,7 @@ fPR8ToBits val =
 
 mkFPR8 :: Word32 -> FPR8
 mkFPR8 w =
-  FPR8 (fromIntegral $ extract fPR8RegField w)
+  FPR8 (extract fPR8RegField w)
 
 fPR8Operand :: OperandPayload
 fPR8Operand =
@@ -736,7 +748,7 @@ fPR8Operand =
                  , opWordE = Just (varE 'fPR8ToBits)
                  }
 
-data GPR32 = GPR32 { gPR32Reg :: Word8
+data GPR32 = GPR32 { gPR32Reg :: W.W 5
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR32 where
@@ -746,8 +758,8 @@ instance PP.Pretty GPR32 where
 instance A.Arbitrary GPR32 where
   arbitrary g = GPR32 <$> A.arbitrary g
 
-gPR32RegField :: Field
-gPR32RegField = Field 5 0
+gPR32RegField :: Field 5
+gPR32RegField = field 0
 
 gPR32ToBits :: GPR32 -> Word32
 gPR32ToBits val =
@@ -755,7 +767,7 @@ gPR32ToBits val =
 
 mkGPR32 :: Word32 -> GPR32
 mkGPR32 w =
-  GPR32 (fromIntegral $ extract gPR32RegField w)
+  GPR32 (extract gPR32RegField w)
 
 gPR32Operand :: OperandPayload
 gPR32Operand =
@@ -764,7 +776,7 @@ gPR32Operand =
                  , opWordE = Just (varE 'gPR32ToBits)
                  }
 
-data GPR64 = GPR64 { gPR64Reg :: Word8
+data GPR64 = GPR64 { gPR64Reg :: W.W 5
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR64 where
@@ -774,8 +786,8 @@ instance PP.Pretty GPR64 where
 instance A.Arbitrary GPR64 where
   arbitrary g = GPR64 <$> A.arbitrary g
 
-gPR64RegField :: Field
-gPR64RegField = Field 5 0
+gPR64RegField :: Field 5
+gPR64RegField = field 0
 
 gPR64ToBits :: GPR64 -> Word32
 gPR64ToBits val =
@@ -783,7 +795,7 @@ gPR64ToBits val =
 
 mkGPR64 :: Word32 -> GPR64
 mkGPR64 w =
-  GPR64 (fromIntegral $ extract gPR64RegField w)
+  GPR64 (extract gPR64RegField w)
 
 gPR64Operand :: OperandPayload
 gPR64Operand =
@@ -792,7 +804,7 @@ gPR64Operand =
                  , opWordE = Just (varE 'gPR64ToBits)
                  }
 
-data GPR32sp = GPR32sp { gPR32spReg :: Word8
+data GPR32sp = GPR32sp { gPR32spReg :: W.W 5
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR32sp where
@@ -802,8 +814,8 @@ instance PP.Pretty GPR32sp where
 instance A.Arbitrary GPR32sp where
   arbitrary g = GPR32sp <$> A.arbitrary g
 
-gPR32spRegField :: Field
-gPR32spRegField = Field 5 0
+gPR32spRegField :: Field 5
+gPR32spRegField = field 0
 
 gPR32spToBits :: GPR32sp -> Word32
 gPR32spToBits val =
@@ -811,7 +823,7 @@ gPR32spToBits val =
 
 mkGPR32sp :: Word32 -> GPR32sp
 mkGPR32sp w =
-  GPR32sp (fromIntegral $ extract gPR32spRegField w)
+  GPR32sp (extract gPR32spRegField w)
 
 gPR32spOperand :: OperandPayload
 gPR32spOperand =
@@ -820,7 +832,7 @@ gPR32spOperand =
                  , opWordE = Just (varE 'gPR32spToBits)
                  }
 
-data GPR64sp = GPR64sp { gPR64spReg :: Word8
+data GPR64sp = GPR64sp { gPR64spReg :: W.W 5
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR64sp where
@@ -830,8 +842,8 @@ instance PP.Pretty GPR64sp where
 instance A.Arbitrary GPR64sp where
   arbitrary g = GPR64sp <$> A.arbitrary g
 
-gPR64spRegField :: Field
-gPR64spRegField = Field 5 0
+gPR64spRegField :: Field 5
+gPR64spRegField = field 0
 
 gPR64spToBits :: GPR64sp -> Word32
 gPR64spToBits val =
@@ -839,7 +851,7 @@ gPR64spToBits val =
 
 mkGPR64sp :: Word32 -> GPR64sp
 mkGPR64sp w =
-  GPR64sp $ (fromIntegral $ extract gPR64spRegField w)
+  GPR64sp $ (extract gPR64spRegField w)
 
 gPR64spOperand :: OperandPayload
 gPR64spOperand =
@@ -848,7 +860,7 @@ gPR64spOperand =
                  , opWordE = Just (varE 'gPR64spToBits)
                  }
 
-data V128 = V128 { v128Reg :: Word8
+data V128 = V128 { v128Reg :: W.W 5
                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty V128 where
@@ -857,8 +869,8 @@ instance PP.Pretty V128 where
 instance A.Arbitrary V128 where
   arbitrary g = V128 <$> A.arbitrary g
 
-v128RegField :: Field
-v128RegField = Field 5 0
+v128RegField :: Field 5
+v128RegField = field 0
 
 v128ToBits :: V128 -> Word32
 v128ToBits val =
@@ -866,7 +878,7 @@ v128ToBits val =
 
 mkV128 :: Word32 -> V128
 mkV128 w =
-  V128 $ (fromIntegral $ extract v128RegField w)
+  V128 $ (extract v128RegField w)
 
 v128Operand :: OperandPayload
 v128Operand =
@@ -875,8 +887,8 @@ v128Operand =
                  , opWordE = Just (varE 'v128ToBits)
                  }
 
-data AddsubShiftedImm32 = AddsubShiftedImm32 { addsubShiftedImm32Imm :: Word16
-                                             , addsubShiftedImm32Shift :: Word8
+data AddsubShiftedImm32 = AddsubShiftedImm32 { addsubShiftedImm32Imm :: W.W 12
+                                             , addsubShiftedImm32Shift :: W.W 2
                                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddsubShiftedImm32 where
@@ -885,16 +897,16 @@ instance PP.Pretty AddsubShiftedImm32 where
                 0b0 -> ""
                 0b1 -> ", lsl #12"
                 _ -> error $ "Invalid AddsubShiftedImm32 value: " <> show shift
-      in PP.text ("#0x" <> showHex imm "") <> i
+      in PP.text ("#0x" <> showHex (W.unW imm) "") <> i
 
 instance A.Arbitrary AddsubShiftedImm32 where
   arbitrary g = AddsubShiftedImm32 <$> A.arbitrary g <*> A.arbitrary g
 
-addsubShiftedImm32ImmField :: Field
-addsubShiftedImm32ImmField = Field 12 0
+addsubShiftedImm32ImmField :: Field 12
+addsubShiftedImm32ImmField = field 0
 
-addsubShiftedImm32ShiftField :: Field
-addsubShiftedImm32ShiftField = Field 2 12
+addsubShiftedImm32ShiftField :: Field 2
+addsubShiftedImm32ShiftField = field 12
 
 addsubShiftedImm32ToBits :: AddsubShiftedImm32 -> Word32
 addsubShiftedImm32ToBits val =
@@ -903,8 +915,8 @@ addsubShiftedImm32ToBits val =
 
 mkAddsubShiftedImm32 :: Word32 -> AddsubShiftedImm32
 mkAddsubShiftedImm32 w =
-  AddsubShiftedImm32 (fromIntegral $ extract addsubShiftedImm32ImmField w)
-                     (fromIntegral $ extract addsubShiftedImm32ShiftField w)
+  AddsubShiftedImm32 (extract addsubShiftedImm32ImmField w)
+                     (extract addsubShiftedImm32ShiftField w)
 
 addsubShiftedImm32Operand :: OperandPayload
 addsubShiftedImm32Operand =
@@ -913,8 +925,8 @@ addsubShiftedImm32Operand =
                  , opWordE = Just (varE 'addsubShiftedImm32ToBits)
                  }
 
-data AddsubShiftedImm64 = AddsubShiftedImm64 { addsubShiftedImm64Imm :: Word16
-                                             , addsubShiftedImm64Shift :: Word8
+data AddsubShiftedImm64 = AddsubShiftedImm64 { addsubShiftedImm64Imm :: W.W 12
+                                             , addsubShiftedImm64Shift :: W.W 2
                                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty AddsubShiftedImm64 where
@@ -923,16 +935,16 @@ instance PP.Pretty AddsubShiftedImm64 where
                 0b0 -> mempty -- Default lsl #0, omit
                 0b1 -> PP.text ", lsl #12"
                 _ -> error $ "invalid AddsubShiftedImm64 value: " <> show shift
-      in (PP.text "#0x" <> PP.text (showHex imm "")) <> shiftStr
+      in (PP.text "#0x" <> PP.text (showHex (W.unW imm) "")) <> shiftStr
 
 instance A.Arbitrary AddsubShiftedImm64 where
   arbitrary g = AddsubShiftedImm64 <$> A.arbitrary g <*> A.arbitrary g
 
-addsubShiftedImm64ImmField :: Field
-addsubShiftedImm64ImmField = Field 12 0
+addsubShiftedImm64ImmField :: Field 12
+addsubShiftedImm64ImmField = field 0
 
-addsubShiftedImm64ShiftField :: Field
-addsubShiftedImm64ShiftField = Field 2 12
+addsubShiftedImm64ShiftField :: Field 2
+addsubShiftedImm64ShiftField = field 12
 
 addsubShiftedImm64ToBits :: AddsubShiftedImm64 -> Word32
 addsubShiftedImm64ToBits val =
@@ -941,8 +953,8 @@ addsubShiftedImm64ToBits val =
 
 mkAddsubShiftedImm64 :: Word32 -> AddsubShiftedImm64
 mkAddsubShiftedImm64 w =
-  AddsubShiftedImm64 (fromIntegral $ extract addsubShiftedImm64ImmField w)
-                     (fromIntegral $ extract addsubShiftedImm64ShiftField w)
+  AddsubShiftedImm64 (extract addsubShiftedImm64ImmField w)
+                     (extract addsubShiftedImm64ShiftField w)
 
 addsubShiftedImm64Operand :: OperandPayload
 addsubShiftedImm64Operand =
@@ -951,7 +963,7 @@ addsubShiftedImm64Operand =
                  , opWordE = Just (varE 'addsubShiftedImm64ToBits)
                  }
 
-data Adrlabel = Adrlabel { adrlabelImm :: Word32
+data Adrlabel = Adrlabel { adrlabelImm :: W.W 21
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Adrlabel where
@@ -960,8 +972,8 @@ instance PP.Pretty Adrlabel where
 instance A.Arbitrary Adrlabel where
   arbitrary g = Adrlabel <$> A.arbitrary g
 
-adrlabelImmField :: Field
-adrlabelImmField = Field 21 0
+adrlabelImmField :: Field 21
+adrlabelImmField = field 0
 
 adrlabelToBits :: Adrlabel -> Word32
 adrlabelToBits val =
@@ -969,7 +981,7 @@ adrlabelToBits val =
 
 mkAdrlabel :: Word32 -> Adrlabel
 mkAdrlabel w =
-  Adrlabel (fromIntegral $ extract adrlabelImmField w)
+  Adrlabel (extract adrlabelImmField w)
 
 adrlabelOperand :: OperandPayload
 adrlabelOperand =
@@ -978,7 +990,7 @@ adrlabelOperand =
                  , opWordE = Just (varE 'adrlabelToBits)
                  }
 
-data Adrplabel = Adrplabel { adrplabelImm :: Word32
+data Adrplabel = Adrplabel { adrplabelImm :: W.W 21
                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Adrplabel where
@@ -987,8 +999,8 @@ instance PP.Pretty Adrplabel where
 instance A.Arbitrary Adrplabel where
   arbitrary g = Adrplabel <$> A.arbitrary g
 
-adrplabelImmField :: Field
-adrplabelImmField = Field 21 0
+adrplabelImmField :: Field 21
+adrplabelImmField = field 0
 
 adrplabelToBits :: Adrplabel -> Word32
 adrplabelToBits val =
@@ -996,7 +1008,7 @@ adrplabelToBits val =
 
 mkAdrplabel :: Word32 -> Adrplabel
 mkAdrplabel w =
-  Adrplabel (fromIntegral $ extract adrplabelImmField w)
+  Adrplabel (extract adrplabelImmField w)
 
 adrplabelOperand :: OperandPayload
 adrplabelOperand =
@@ -1005,7 +1017,7 @@ adrplabelOperand =
                  , opWordE = Just (varE 'adrplabelToBits)
                  }
 
-data AmBTarget = AmBTarget { amBTargetAddr :: Word32
+data AmBTarget = AmBTarget { amBTargetAddr :: W.W 26
                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty AmBTarget where
@@ -1014,8 +1026,8 @@ instance PP.Pretty AmBTarget where
 instance A.Arbitrary AmBTarget where
   arbitrary g = AmBTarget <$> A.arbitrary g
 
-amBTargetAddrField :: Field
-amBTargetAddrField = Field 26 0
+amBTargetAddrField :: Field 26
+amBTargetAddrField = field 0
 
 amBTargetToBits :: AmBTarget -> Word32
 amBTargetToBits val =
@@ -1023,7 +1035,7 @@ amBTargetToBits val =
 
 mkAmBTarget :: Word32 -> AmBTarget
 mkAmBTarget w =
-  AmBTarget (fromIntegral $ extract amBTargetAddrField w)
+  AmBTarget (extract amBTargetAddrField w)
 
 amBTargetOperand :: OperandPayload
 amBTargetOperand =
@@ -1032,7 +1044,7 @@ amBTargetOperand =
                  , opWordE = Just (varE 'amBTargetToBits)
                  }
 
-data AmBrcond = AmBrcond { amBrcondAddr :: Word32
+data AmBrcond = AmBrcond { amBrcondAddr :: W.W 19
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty AmBrcond where
@@ -1041,8 +1053,8 @@ instance PP.Pretty AmBrcond where
 instance A.Arbitrary AmBrcond where
   arbitrary g = AmBrcond <$> A.arbitrary g
 
-amBrcondAddrField :: Field
-amBrcondAddrField = Field 19 0
+amBrcondAddrField :: Field 19
+amBrcondAddrField = field 0
 
 amBrcondToBits :: AmBrcond -> Word32
 amBrcondToBits val =
@@ -1050,7 +1062,7 @@ amBrcondToBits val =
 
 mkAmBrcond :: Word32 -> AmBrcond
 mkAmBrcond w =
-  AmBrcond (fromIntegral $ extract amBrcondAddrField w)
+  AmBrcond (extract amBrcondAddrField w)
 
 amBrcondOperand :: OperandPayload
 amBrcondOperand =
@@ -1059,7 +1071,7 @@ amBrcondOperand =
                  , opWordE = Just (varE 'amBrcondToBits)
                  }
 
-data AmLdrlit = AmLdrlit { amLdrlitLabel :: Word32
+data AmLdrlit = AmLdrlit { amLdrlitLabel :: W.W 19
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty AmLdrlit where
@@ -1068,8 +1080,8 @@ instance PP.Pretty AmLdrlit where
 instance A.Arbitrary AmLdrlit where
   arbitrary g = AmLdrlit <$> A.arbitrary g
 
-amLdrlitLabelField :: Field
-amLdrlitLabelField = Field 19 0
+amLdrlitLabelField :: Field 19
+amLdrlitLabelField = field 0
 
 amLdrlitToBits :: AmLdrlit -> Word32
 amLdrlitToBits val =
@@ -1077,7 +1089,7 @@ amLdrlitToBits val =
 
 mkAmLdrlit :: Word32 -> AmLdrlit
 mkAmLdrlit w =
-  AmLdrlit (fromIntegral $ extract amLdrlitLabelField w)
+  AmLdrlit (extract amLdrlitLabelField w)
 
 amLdrlitOperand :: OperandPayload
 amLdrlitOperand =
@@ -1086,7 +1098,7 @@ amLdrlitOperand =
                  , opWordE = Just (varE 'amLdrlitToBits)
                  }
 
-data AmTbrcond = AmTbrcond { amTbrcondLabel :: Word16
+data AmTbrcond = AmTbrcond { amTbrcondLabel :: W.W 14
                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty AmTbrcond where
@@ -1095,8 +1107,8 @@ instance PP.Pretty AmTbrcond where
 instance A.Arbitrary AmTbrcond where
   arbitrary g = AmTbrcond <$> A.arbitrary g
 
-amTbrcondLabelField :: Field
-amTbrcondLabelField = Field 14 0
+amTbrcondLabelField :: Field 14
+amTbrcondLabelField = field 0
 
 amTbrcondToBits :: AmTbrcond -> Word32
 amTbrcondToBits val =
@@ -1104,7 +1116,7 @@ amTbrcondToBits val =
 
 mkAmTbrcond :: Word32 -> AmTbrcond
 mkAmTbrcond w =
-  AmTbrcond (fromIntegral $ extract amTbrcondLabelField w)
+  AmTbrcond (extract amTbrcondLabelField w)
 
 amTbrcondOperand :: OperandPayload
 amTbrcondOperand =
@@ -1113,7 +1125,7 @@ amTbrcondOperand =
                  , opWordE = Just (varE 'amTbrcondToBits)
                  }
 
-data ArithExtendlsl64 = ArithExtendlsl64 { arithExtendlsl64Shift :: Word8
+data ArithExtendlsl64 = ArithExtendlsl64 { arithExtendlsl64Shift :: W.W 3
                                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty ArithExtendlsl64 where
@@ -1125,8 +1137,8 @@ instance PP.Pretty ArithExtendlsl64 where
 instance A.Arbitrary ArithExtendlsl64 where
   arbitrary g = ArithExtendlsl64 <$> A.arbitrary g
 
-arithExtendlsl64ShiftField :: Field
-arithExtendlsl64ShiftField = Field 3 0
+arithExtendlsl64ShiftField :: Field 3
+arithExtendlsl64ShiftField = field 0
 
 arithExtendlsl64ToBits :: ArithExtendlsl64 -> Word32
 arithExtendlsl64ToBits val =
@@ -1134,7 +1146,7 @@ arithExtendlsl64ToBits val =
 
 mkArithExtendlsl64 :: Word32 -> ArithExtendlsl64
 mkArithExtendlsl64 w =
-  ArithExtendlsl64 (fromIntegral $ extract arithExtendlsl64ShiftField w)
+  ArithExtendlsl64 (extract arithExtendlsl64ShiftField w)
 
 arithExtendlsl64Operand :: OperandPayload
 arithExtendlsl64Operand =
@@ -1143,7 +1155,7 @@ arithExtendlsl64Operand =
                  , opWordE = Just (varE 'arithExtendlsl64ToBits)
                  }
 
-data BarrierOp = BarrierOp { barrierOpType :: Word8
+data BarrierOp = BarrierOp { barrierOpType :: W.W 4
                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty BarrierOp where
@@ -1152,8 +1164,8 @@ instance PP.Pretty BarrierOp where
 instance A.Arbitrary BarrierOp where
   arbitrary g = BarrierOp <$> A.arbitrary g
 
-barrierOpTypeField :: Field
-barrierOpTypeField = Field 4 0
+barrierOpTypeField :: Field 4
+barrierOpTypeField = field 0
 
 barrierOpToBits :: BarrierOp -> Word32
 barrierOpToBits val =
@@ -1161,7 +1173,7 @@ barrierOpToBits val =
 
 mkBarrierOp :: Word32 -> BarrierOp
 mkBarrierOp w =
-  BarrierOp (fromIntegral $ extract barrierOpTypeField w)
+  BarrierOp (extract barrierOpTypeField w)
 
 barrierOpOperand :: OperandPayload
 barrierOpOperand =
@@ -1170,7 +1182,7 @@ barrierOpOperand =
                  , opWordE = Just (varE 'barrierOpToBits)
                  }
 
-data Imm01 = Imm01 { imm01Bit :: Word8
+data Imm01 = Imm01 { imm01Bit :: W.W 1
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm01 where
@@ -1179,8 +1191,8 @@ instance PP.Pretty Imm01 where
 instance A.Arbitrary Imm01 where
   arbitrary g = Imm01 <$> A.arbitrary g
 
-imm01BitField :: Field
-imm01BitField = Field 1 0
+imm01BitField :: Field 1
+imm01BitField = field 0
 
 imm01ToBits :: Imm01 -> Word32
 imm01ToBits val =
@@ -1188,7 +1200,7 @@ imm01ToBits val =
 
 mkImm01 :: Word32 -> Imm01
 mkImm01 w =
-  Imm01 (fromIntegral $ extract imm01BitField w)
+  Imm01 (extract imm01BitField w)
 
 imm01Operand :: OperandPayload
 imm01Operand =
@@ -1197,7 +1209,7 @@ imm01Operand =
                  , opWordE = Just (varE 'imm01ToBits)
                  }
 
-data Imm0127 = Imm0127 { imm0127Imm :: Word8
+data Imm0127 = Imm0127 { imm0127Imm :: W.W 7
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm0127 where
@@ -1206,8 +1218,8 @@ instance PP.Pretty Imm0127 where
 instance A.Arbitrary Imm0127 where
   arbitrary g = Imm0127 <$> A.arbitrary g
 
-imm0127ImmField :: Field
-imm0127ImmField = Field 7 0
+imm0127ImmField :: Field 7
+imm0127ImmField = field 0
 
 imm0127ToBits :: Imm0127 -> Word32
 imm0127ToBits val =
@@ -1215,7 +1227,7 @@ imm0127ToBits val =
 
 mkImm0127 :: Word32 -> Imm0127
 mkImm0127 w =
-  Imm0127 (fromIntegral $ extract imm0127ImmField w)
+  Imm0127 (extract imm0127ImmField w)
 
 imm0127Operand :: OperandPayload
 imm0127Operand =
@@ -1224,7 +1236,7 @@ imm0127Operand =
                  , opWordE = Just (varE 'imm0127ToBits)
                  }
 
-data Imm015 = Imm015 { imm015Imm :: Word8
+data Imm015 = Imm015 { imm015Imm :: W.W 4
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm015 where
@@ -1233,8 +1245,8 @@ instance PP.Pretty Imm015 where
 instance A.Arbitrary Imm015 where
   arbitrary g = Imm015 <$> A.arbitrary g
 
-imm015ImmField :: Field
-imm015ImmField = Field 4 0
+imm015ImmField :: Field 4
+imm015ImmField = field 0
 
 imm015ToBits :: Imm015 -> Word32
 imm015ToBits val =
@@ -1242,7 +1254,7 @@ imm015ToBits val =
 
 mkImm015 :: Word32 -> Imm015
 mkImm015 w =
-  Imm015 (fromIntegral $ extract imm015ImmField w)
+  Imm015 (extract imm015ImmField w)
 
 imm015Operand :: OperandPayload
 imm015Operand =
@@ -1251,7 +1263,7 @@ imm015Operand =
                  , opWordE = Just (varE 'imm015ToBits)
                  }
 
-data Imm031b = Imm031b { imm031bImm :: Word8
+data Imm031b = Imm031b { imm031bImm :: W.W 5
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm031b where
@@ -1260,8 +1272,8 @@ instance PP.Pretty Imm031b where
 instance A.Arbitrary Imm031b where
   arbitrary g = Imm031b <$> A.arbitrary g
 
-imm031bImmField :: Field
-imm031bImmField = Field 5 0
+imm031bImmField :: Field 5
+imm031bImmField = field 0
 
 imm031bToBits :: Imm031b -> Word32
 imm031bToBits val =
@@ -1269,7 +1281,7 @@ imm031bToBits val =
 
 mkImm031b :: Word32 -> Imm031b
 mkImm031b w =
-  Imm031b (fromIntegral $ extract imm031bImmField w)
+  Imm031b (extract imm031bImmField w)
 
 imm031bOperand :: OperandPayload
 imm031bOperand =
@@ -1278,17 +1290,17 @@ imm031bOperand =
                  , opWordE = Just (varE 'imm031bToBits)
                  }
 
-data Imm031 = Imm031 { imm031Imm :: Word8
+data Imm031 = Imm031 { imm031Imm :: W.W 5
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm031 where
-  pPrint (Imm031 i) = PP.text $ "#0x" <> showHex i ""
+  pPrint (Imm031 i) = PP.text $ "#0x" <> showHex (W.unW i) ""
 
 instance A.Arbitrary Imm031 where
   arbitrary g = Imm031 <$> A.arbitrary g
 
-imm031ImmField :: Field
-imm031ImmField = Field 5 0
+imm031ImmField :: Field 5
+imm031ImmField = field 0
 
 imm031ToBits :: Imm031 -> Word32
 imm031ToBits val =
@@ -1296,7 +1308,7 @@ imm031ToBits val =
 
 mkImm031 :: Word32 -> Imm031
 mkImm031 w =
-  Imm031 (fromIntegral $ extract imm031ImmField w)
+  Imm031 (extract imm031ImmField w)
 
 imm031Operand :: OperandPayload
 imm031Operand =
@@ -1305,7 +1317,7 @@ imm031Operand =
                  , opWordE = Just (varE 'imm031ToBits)
                  }
 
-data Imm063 = Imm063 { imm063Imm :: Word8
+data Imm063 = Imm063 { imm063Imm :: W.W 6
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm063 where
@@ -1314,8 +1326,8 @@ instance PP.Pretty Imm063 where
 instance A.Arbitrary Imm063 where
   arbitrary g = Imm063 <$> A.arbitrary g
 
-imm063ImmField :: Field
-imm063ImmField = Field 6 0
+imm063ImmField :: Field 6
+imm063ImmField = field 0
 
 imm063ToBits :: Imm063 -> Word32
 imm063ToBits val =
@@ -1323,7 +1335,7 @@ imm063ToBits val =
 
 mkImm063 :: Word32 -> Imm063
 mkImm063 w =
-  Imm063 (fromIntegral $ extract imm063ImmField w)
+  Imm063 (extract imm063ImmField w)
 
 imm063Operand :: OperandPayload
 imm063Operand =
@@ -1332,17 +1344,17 @@ imm063Operand =
                  , opWordE = Just (varE 'imm063ToBits)
                  }
 
-data Imm065535 = Imm065535 { imm065535Imm :: Word16
+data Imm065535 = Imm065535 { imm065535Imm :: W.W 16
                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm065535 where
-  pPrint (Imm065535 v) = PP.text $ "#0x" <> showHex v ""
+  pPrint (Imm065535 v) = PP.text $ "#0x" <> showHex (W.unW v) ""
 
 instance A.Arbitrary Imm065535 where
   arbitrary g = Imm065535 <$> A.arbitrary g
 
-imm065535ImmField :: Field
-imm065535ImmField = Field 16 0
+imm065535ImmField :: Field 16
+imm065535ImmField = field 0
 
 imm065535ToBits :: Imm065535 -> Word32
 imm065535ToBits val =
@@ -1350,7 +1362,7 @@ imm065535ToBits val =
 
 mkImm065535 :: Word32 -> Imm065535
 mkImm065535 w =
-  Imm065535 (fromIntegral $ extract imm065535ImmField w)
+  Imm065535 (extract imm065535ImmField w)
 
 imm065535Operand :: OperandPayload
 imm065535Operand =
@@ -1359,7 +1371,7 @@ imm065535Operand =
                  , opWordE = Just (varE 'imm065535ToBits)
                  }
 
-data Imm07 = Imm07 { imm07Imm :: Word8
+data Imm07 = Imm07 { imm07Imm :: W.W 3
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm07 where
@@ -1368,8 +1380,8 @@ instance PP.Pretty Imm07 where
 instance A.Arbitrary Imm07 where
   arbitrary g = Imm07 <$> A.arbitrary g
 
-imm07ImmField :: Field
-imm07ImmField = Field 3 0
+imm07ImmField :: Field 3
+imm07ImmField = field 0
 
 imm07ToBits :: Imm07 -> Word32
 imm07ToBits val =
@@ -1377,7 +1389,7 @@ imm07ToBits val =
 
 mkImm07 :: Word32 -> Imm07
 mkImm07 w =
-  Imm07 (fromIntegral $ extract imm07ImmField w)
+  Imm07 (extract imm07ImmField w)
 
 imm07Operand :: OperandPayload
 imm07Operand =
@@ -1386,18 +1398,18 @@ imm07Operand =
                  , opWordE = Just (varE 'imm07ToBits)
                  }
 
-data Imm32015 = Imm32015 { imm32015Nzcv :: Word8
+data Imm32015 = Imm32015 { imm32015Nzcv :: W.W 4
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm32015 where
   pPrint (Imm32015 v) =
-      PP.text $ "#0x" <> showHex v ""
+      PP.text $ "#0x" <> showHex (W.unW v) ""
 
 instance A.Arbitrary Imm32015 where
   arbitrary g = Imm32015 <$> A.arbitrary g
 
-imm32015NzcvField :: Field
-imm32015NzcvField = Field 4 0
+imm32015NzcvField :: Field 4
+imm32015NzcvField = field 0
 
 imm32015ToBits :: Imm32015 -> Word32
 imm32015ToBits val =
@@ -1405,7 +1417,7 @@ imm32015ToBits val =
 
 mkImm32015 :: Word32 -> Imm32015
 mkImm32015 w =
-  Imm32015 (fromIntegral $ extract imm32015NzcvField w)
+  Imm32015 (extract imm32015NzcvField w)
 
 imm32015Operand :: OperandPayload
 imm32015Operand =
@@ -1414,17 +1426,17 @@ imm32015Operand =
                  , opWordE = Just (varE 'imm32015ToBits)
                  }
 
-data Imm32031 = Imm32031 { imm32031Imm :: Word8
+data Imm32031 = Imm32031 { imm32031Imm :: W.W 5
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm32031 where
-  pPrint (Imm32031 v) = PP.text $ "#0x" <> showHex v ""
+  pPrint (Imm32031 v) = PP.text $ "#0x" <> showHex (W.unW v) ""
 
 instance A.Arbitrary Imm32031 where
   arbitrary g = Imm32031 <$> A.arbitrary g
 
-imm32031ImmField :: Field
-imm32031ImmField = Field 5 0
+imm32031ImmField :: Field 5
+imm32031ImmField = field 0
 
 imm32031ToBits :: Imm32031 -> Word32
 imm32031ToBits val =
@@ -1432,7 +1444,7 @@ imm32031ToBits val =
 
 mkImm32031 :: Word32 -> Imm32031
 mkImm32031 w =
-  Imm32031 (fromIntegral $ extract imm32031ImmField w)
+  Imm32031 (extract imm32031ImmField w)
 
 imm32031Operand :: OperandPayload
 imm32031Operand =
@@ -1441,13 +1453,13 @@ imm32031Operand =
                  , opWordE = Just (varE 'imm32031ToBits)
                  }
 
-data LogicalImm32 = LogicalImm32 { logicalImm32Imms :: Word8
-                                 , logicalImm32Immr :: Word8
+data LogicalImm32 = LogicalImm32 { logicalImm32Imms :: W.W 6
+                                 , logicalImm32Immr :: W.W 6
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty LogicalImm32 where
   pPrint (LogicalImm32 s r) =
-      let (imm, _) = decodeBitMasks 32 0 (fromIntegral s) (fromIntegral r) True
+      let (imm, _) = decodeBitMasks 32 0 (fromIntegral $ W.unW s) (fromIntegral $ W.unW r) True
       in PP.text $ "#0x" <> showHex imm ""
 
 -- See ARM DDI 0487A.a, AppxG-4907, "aarch64/instrs/integer/bitmasks"
@@ -1505,11 +1517,11 @@ rotateRight nBits amt val =
 instance A.Arbitrary LogicalImm32 where
   arbitrary g = LogicalImm32 <$> A.arbitrary g <*> A.arbitrary g
 
-logicalImm32ImmsField :: Field
-logicalImm32ImmsField = Field 6 0
+logicalImm32ImmsField :: Field 6
+logicalImm32ImmsField = field 0
 
-logicalImm32ImmrField :: Field
-logicalImm32ImmrField = Field 6 6
+logicalImm32ImmrField :: Field 6
+logicalImm32ImmrField = field 6
 
 logicalImm32ToBits :: LogicalImm32 -> Word32
 logicalImm32ToBits val =
@@ -1518,8 +1530,8 @@ logicalImm32ToBits val =
 
 mkLogicalImm32 :: Word32 -> LogicalImm32
 mkLogicalImm32 w =
-  LogicalImm32 (fromIntegral $ extract logicalImm32ImmsField w)
-               (fromIntegral $ extract logicalImm32ImmrField w)
+  LogicalImm32 (extract logicalImm32ImmsField w)
+               (extract logicalImm32ImmrField w)
 
 logicalImm32Operand :: OperandPayload
 logicalImm32Operand =
@@ -1528,27 +1540,29 @@ logicalImm32Operand =
                  , opWordE = Just (varE 'logicalImm32ToBits)
                  }
 
-data LogicalImm64 = LogicalImm64 { logicalImm64Imms :: Word8
-                                 , logicalImm64Immr :: Word8
-                                 , logicalImm64ImmN :: Word8
+data LogicalImm64 = LogicalImm64 { logicalImm64Imms :: W.W 6
+                                 , logicalImm64Immr :: W.W 6
+                                 , logicalImm64ImmN :: W.W 1
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty LogicalImm64 where
   pPrint (LogicalImm64 s r n) =
-      let (imm, _) = decodeBitMasks 64 (fromIntegral n) (fromIntegral s) (fromIntegral r) True
+      let (imm, _) = decodeBitMasks 64 (fromIntegral $ W.unW n)
+                                       (fromIntegral $ W.unW s)
+                                       (fromIntegral $ W.unW r) True
       in PP.text $ "#0x" <> showHex imm ""
 
 instance A.Arbitrary LogicalImm64 where
   arbitrary g = LogicalImm64 <$> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g
 
-logicalImm64ImmsField :: Field
-logicalImm64ImmsField = Field 6 0
+logicalImm64ImmsField :: Field 6
+logicalImm64ImmsField = field 0
 
-logicalImm64ImmrField :: Field
-logicalImm64ImmrField = Field 6 6
+logicalImm64ImmrField :: Field 6
+logicalImm64ImmrField = field 6
 
-logicalImm64ImmNField :: Field
-logicalImm64ImmNField = Field 1 12
+logicalImm64ImmNField :: Field  1
+logicalImm64ImmNField = field 1
 
 logicalImm64ToBits :: LogicalImm64 -> Word32
 logicalImm64ToBits val =
@@ -1558,9 +1572,9 @@ logicalImm64ToBits val =
 
 mkLogicalImm64 :: Word32 -> LogicalImm64
 mkLogicalImm64 w =
-  LogicalImm64 (fromIntegral $ extract logicalImm64ImmsField w)
-               (fromIntegral $ extract logicalImm64ImmrField w)
-               (fromIntegral $ extract logicalImm64ImmNField w)
+  LogicalImm64 (extract logicalImm64ImmsField w)
+               (extract logicalImm64ImmrField w)
+               (extract logicalImm64ImmNField w)
 
 logicalImm64Operand :: OperandPayload
 logicalImm64Operand =
@@ -1569,17 +1583,17 @@ logicalImm64Operand =
                  , opWordE = Just (varE 'logicalImm64ToBits)
                  }
 
-data Movimm32Imm = Movimm32Imm { movimm32ImmImm :: Word16
+data Movimm32Imm = Movimm32Imm { movimm32ImmImm :: W.W 16
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Movimm32Imm where
-  pPrint (Movimm32Imm i) = PP.text $ "#0x" <> (showHex i "")
+  pPrint (Movimm32Imm i) = PP.text $ "#0x" <> (showHex (W.unW i) "")
 
 instance A.Arbitrary Movimm32Imm where
   arbitrary g = Movimm32Imm <$> A.arbitrary g
 
-movimm32ImmImmField :: Field
-movimm32ImmImmField = Field 16 0
+movimm32ImmImmField :: Field 16
+movimm32ImmImmField = field 0
 
 movimm32ImmToBits :: Movimm32Imm -> Word32
 movimm32ImmToBits val =
@@ -1587,7 +1601,7 @@ movimm32ImmToBits val =
 
 mkMovimm32Imm :: Word32 -> Movimm32Imm
 mkMovimm32Imm w =
-  Movimm32Imm (fromIntegral $ extract movimm32ImmImmField w)
+  Movimm32Imm (extract movimm32ImmImmField w)
 
 movimm32ImmOperand :: OperandPayload
 movimm32ImmOperand =
@@ -1596,7 +1610,7 @@ movimm32ImmOperand =
                  , opWordE = Just (varE 'movimm32ImmToBits)
                  }
 
-data Movimm32Shift = Movimm32Shift { movimm32ShiftShift :: Word8
+data Movimm32Shift = Movimm32Shift { movimm32ShiftShift :: W.W 2
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Movimm32Shift where
@@ -1608,8 +1622,8 @@ instance PP.Pretty Movimm32Shift where
 instance A.Arbitrary Movimm32Shift where
   arbitrary g = Movimm32Shift <$> A.arbitrary g
 
-movimm32ShiftShiftField :: Field
-movimm32ShiftShiftField = Field 2 4
+movimm32ShiftShiftField :: Field 2
+movimm32ShiftShiftField = field 4
 
 movimm32ShiftToBits :: Movimm32Shift -> Word32
 movimm32ShiftToBits val =
@@ -1617,7 +1631,7 @@ movimm32ShiftToBits val =
 
 mkMovimm32Shift :: Word32 -> Movimm32Shift
 mkMovimm32Shift w =
-  Movimm32Shift (fromIntegral $ extract movimm32ShiftShiftField w)
+  Movimm32Shift (extract movimm32ShiftShiftField w)
 
 movimm32ShiftOperand :: OperandPayload
 movimm32ShiftOperand =
@@ -1626,7 +1640,7 @@ movimm32ShiftOperand =
                  , opWordE = Just (varE 'movimm32ShiftToBits)
                  }
 
-data Movimm64Shift = Movimm64Shift { movimm64ShiftShift :: Word8
+data Movimm64Shift = Movimm64Shift { movimm64ShiftShift :: W.W 2
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Movimm64Shift where
@@ -1638,8 +1652,8 @@ instance PP.Pretty Movimm64Shift where
 instance A.Arbitrary Movimm64Shift where
   arbitrary g = Movimm64Shift <$> A.arbitrary g
 
-movimm64ShiftShiftField :: Field
-movimm64ShiftShiftField = Field 2 4
+movimm64ShiftShiftField :: Field 2
+movimm64ShiftShiftField = field 4
 
 movimm64ShiftToBits :: Movimm64Shift -> Word32
 movimm64ShiftToBits val =
@@ -1647,7 +1661,7 @@ movimm64ShiftToBits val =
 
 mkMovimm64Shift :: Word32 -> Movimm64Shift
 mkMovimm64Shift w =
-  Movimm64Shift (fromIntegral $ extract movimm64ShiftShiftField w)
+  Movimm64Shift (extract movimm64ShiftShiftField w)
 
 movimm64ShiftOperand :: OperandPayload
 movimm64ShiftOperand =
@@ -1656,12 +1670,12 @@ movimm64ShiftOperand =
                  , opWordE = Just (varE 'movimm64ShiftToBits)
                  }
 
-data MrsSysregOp = MrsSysregOp { mrsSysregOpOp2 :: Word8
-                               , mrsSysregOpCrm :: Word8
-                               , mrsSysregOpCrn :: Word8
-                               , mrsSysregOpOp1 :: Word8
-                               , mrsSysregOpO0 :: Word8
-                               , mrsSysregOpHibit :: Word8
+data MrsSysregOp = MrsSysregOp { mrsSysregOpOp2 :: W.W 3
+                               , mrsSysregOpCrm :: W.W 4
+                               , mrsSysregOpCrn :: W.W 4
+                               , mrsSysregOpOp1 :: W.W 3
+                               , mrsSysregOpO0 :: W.W 1
+                               , mrsSysregOpHibit :: W.W 1
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty MrsSysregOp where
@@ -1670,23 +1684,23 @@ instance PP.Pretty MrsSysregOp where
 instance A.Arbitrary MrsSysregOp where
   arbitrary g = MrsSysregOp <$> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g
 
-mrsSysregOpOp2Field :: Field
-mrsSysregOpOp2Field = Field 3 0
+mrsSysregOpOp2Field :: Field 3
+mrsSysregOpOp2Field = field 0
 
-mrsSysregOpCrmField :: Field
-mrsSysregOpCrmField = Field 4 3
+mrsSysregOpCrmField :: Field 4
+mrsSysregOpCrmField = field 3
 
-mrsSysregOpCrnField :: Field
-mrsSysregOpCrnField = Field 4 7
+mrsSysregOpCrnField :: Field 4
+mrsSysregOpCrnField = field 7
 
-mrsSysregOpOp1Field :: Field
-mrsSysregOpOp1Field = Field 3 11
+mrsSysregOpOp1Field :: Field 3
+mrsSysregOpOp1Field = field 11
 
-mrsSysregOpO0Field :: Field
-mrsSysregOpO0Field = Field 1 14
+mrsSysregOpO0Field :: Field 1
+mrsSysregOpO0Field = field 14
 
-mrsSysregOpHibitField :: Field
-mrsSysregOpHibitField = Field 1 15
+mrsSysregOpHibitField :: Field 1
+mrsSysregOpHibitField = field 15
 
 mrsSysregOpToBits :: MrsSysregOp -> Word32
 mrsSysregOpToBits val =
@@ -1699,12 +1713,12 @@ mrsSysregOpToBits val =
 
 mkMrsSysregOp :: Word32 -> MrsSysregOp
 mkMrsSysregOp w =
-  MrsSysregOp (fromIntegral $ extract mrsSysregOpOp2Field w)
-              (fromIntegral $ extract mrsSysregOpCrmField w)
-              (fromIntegral $ extract mrsSysregOpCrnField w)
-              (fromIntegral $ extract mrsSysregOpOp1Field w)
-              (fromIntegral $ extract mrsSysregOpO0Field w)
-              (fromIntegral $ extract mrsSysregOpHibitField w)
+  MrsSysregOp (extract mrsSysregOpOp2Field w)
+              (extract mrsSysregOpCrmField w)
+              (extract mrsSysregOpCrnField w)
+              (extract mrsSysregOpOp1Field w)
+              (extract mrsSysregOpO0Field w)
+              (extract mrsSysregOpHibitField w)
 
 mrsSysregOpOperand :: OperandPayload
 mrsSysregOpOperand =
@@ -1713,12 +1727,12 @@ mrsSysregOpOperand =
                  , opWordE = Just (varE 'mrsSysregOpToBits)
                  }
 
-data MsrSysregOp = MsrSysregOp { msrSysregOpOp2 :: Word8
-                               , msrSysregOpCrm :: Word8
-                               , msrSysregOpCrn :: Word8
-                               , msrSysregOpOp1 :: Word8
-                               , msrSysregOpO0 :: Word8
-                               , msrSysregOpHibit :: Word8
+data MsrSysregOp = MsrSysregOp { msrSysregOpOp2 :: W.W 3
+                               , msrSysregOpCrm :: W.W 4
+                               , msrSysregOpCrn :: W.W 4
+                               , msrSysregOpOp1 :: W.W 3
+                               , msrSysregOpO0 :: W.W 1
+                               , msrSysregOpHibit :: W.W 1
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty MsrSysregOp where
@@ -1727,23 +1741,23 @@ instance PP.Pretty MsrSysregOp where
 instance A.Arbitrary MsrSysregOp where
   arbitrary g = MsrSysregOp <$> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g <*> A.arbitrary g
 
-msrSysregOpOp2Field :: Field
-msrSysregOpOp2Field = Field 3 0
+msrSysregOpOp2Field :: Field 3
+msrSysregOpOp2Field = field 0
 
-msrSysregOpCrmField :: Field
-msrSysregOpCrmField = Field 4 3
+msrSysregOpCrmField :: Field 4
+msrSysregOpCrmField = field 3
 
-msrSysregOpCrnField :: Field
-msrSysregOpCrnField = Field 4 7
+msrSysregOpCrnField :: Field 4
+msrSysregOpCrnField = field 7
 
-msrSysregOpOp1Field :: Field
-msrSysregOpOp1Field = Field 3 11
+msrSysregOpOp1Field :: Field 3
+msrSysregOpOp1Field = field 11
 
-msrSysregOpO0Field :: Field
-msrSysregOpO0Field = Field 1 14
+msrSysregOpO0Field :: Field 1
+msrSysregOpO0Field = field 14
 
-msrSysregOpHibitField :: Field
-msrSysregOpHibitField = Field 1 15
+msrSysregOpHibitField :: Field 1
+msrSysregOpHibitField = field 15
 
 msrSysregOpToBits :: MsrSysregOp -> Word32
 msrSysregOpToBits val =
@@ -1756,12 +1770,12 @@ msrSysregOpToBits val =
 
 mkMsrSysregOp :: Word32 -> MsrSysregOp
 mkMsrSysregOp w =
-  MsrSysregOp (fromIntegral $ extract msrSysregOpOp2Field w)
-              (fromIntegral $ extract msrSysregOpCrmField w)
-              (fromIntegral $ extract msrSysregOpCrnField w)
-              (fromIntegral $ extract msrSysregOpOp1Field w)
-              (fromIntegral $ extract msrSysregOpO0Field w)
-              (fromIntegral $ extract msrSysregOpHibitField w)
+  MsrSysregOp (extract msrSysregOpOp2Field w)
+              (extract msrSysregOpCrmField w)
+              (extract msrSysregOpCrnField w)
+              (extract msrSysregOpOp1Field w)
+              (extract msrSysregOpO0Field w)
+              (extract msrSysregOpHibitField w)
 
 msrSysregOpOperand :: OperandPayload
 msrSysregOpOperand =
@@ -1770,7 +1784,7 @@ msrSysregOpOperand =
                  , opWordE = Just (varE 'msrSysregOpToBits)
                  }
 
-data Prfop = Prfop { prfopType :: Word8
+data Prfop = Prfop { prfopType :: W.W 5
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Prfop where
@@ -1780,8 +1794,8 @@ instance PP.Pretty Prfop where
 instance A.Arbitrary Prfop where
   arbitrary g = Prfop <$> A.arbitrary g
 
-prfopTypeField :: Field
-prfopTypeField = Field 5 0
+prfopTypeField :: Field 5
+prfopTypeField = field 0
 
 prfopToBits :: Prfop -> Word32
 prfopToBits val =
@@ -1789,7 +1803,7 @@ prfopToBits val =
 
 mkPrfop :: Word32 -> Prfop
 mkPrfop w =
-  Prfop (fromIntegral $ extract prfopTypeField w)
+  Prfop (extract prfopTypeField w)
 
 prfopOperand :: OperandPayload
 prfopOperand =
@@ -1798,8 +1812,8 @@ prfopOperand =
                  , opWordE = Just (varE 'prfopToBits)
                  }
 
-data Pstatefield1Op = Pstatefield1Op { pstatefield1OpOp1 :: Word8
-                                     , pstatefield1OpOp2 :: Word8
+data Pstatefield1Op = Pstatefield1Op { pstatefield1OpOp1 :: W.W 3
+                                     , pstatefield1OpOp2 :: W.W 3
                                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Pstatefield1Op where
@@ -1809,11 +1823,11 @@ instance PP.Pretty Pstatefield1Op where
 instance A.Arbitrary Pstatefield1Op where
   arbitrary g = Pstatefield1Op <$> A.arbitrary g <*> A.arbitrary g
 
-pstatefield1OpOp1Field :: Field
-pstatefield1OpOp1Field = Field 3 3
+pstatefield1OpOp1Field :: Field 3
+pstatefield1OpOp1Field = field 3
 
-pstatefield1OpOp2Field :: Field
-pstatefield1OpOp2Field = Field 3 0
+pstatefield1OpOp2Field :: Field 3
+pstatefield1OpOp2Field = field 0
 
 pstatefield1OpToBits :: Pstatefield1Op -> Word32
 pstatefield1OpToBits val =
@@ -1822,8 +1836,8 @@ pstatefield1OpToBits val =
 
 mkPstatefield1Op :: Word32 -> Pstatefield1Op
 mkPstatefield1Op w =
-  Pstatefield1Op (fromIntegral $ extract pstatefield1OpOp1Field w)
-                 (fromIntegral $ extract pstatefield1OpOp2Field w)
+  Pstatefield1Op (extract pstatefield1OpOp1Field w)
+                 (extract pstatefield1OpOp2Field w)
 
 pstatefield1OpOperand :: OperandPayload
 pstatefield1OpOperand =
@@ -1832,8 +1846,8 @@ pstatefield1OpOperand =
                  , opWordE = Just (varE 'pstatefield1OpToBits)
                  }
 
-data Pstatefield4Op = Pstatefield4Op { pstatefield4OpOp1 :: Word8
-                                     , pstatefield4OpOp2 :: Word8
+data Pstatefield4Op = Pstatefield4Op { pstatefield4OpOp1 :: W.W 3
+                                     , pstatefield4OpOp2 :: W.W 3
                                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Pstatefield4Op where
@@ -1842,11 +1856,11 @@ instance PP.Pretty Pstatefield4Op where
 instance A.Arbitrary Pstatefield4Op where
   arbitrary g = Pstatefield4Op <$> A.arbitrary g <*> A.arbitrary g
 
-pstatefield4OpOp1Field :: Field
-pstatefield4OpOp1Field = Field 3 3
+pstatefield4OpOp1Field :: Field 3
+pstatefield4OpOp1Field = field 3
 
-pstatefield4OpOp2Field :: Field
-pstatefield4OpOp2Field = Field 3 0
+pstatefield4OpOp2Field :: Field 3
+pstatefield4OpOp2Field = field 0
 
 pstatefield4OpToBits :: Pstatefield4Op -> Word32
 pstatefield4OpToBits val =
@@ -1855,8 +1869,8 @@ pstatefield4OpToBits val =
 
 mkPstatefield4Op :: Word32 -> Pstatefield4Op
 mkPstatefield4Op w =
-  Pstatefield4Op (fromIntegral $ extract pstatefield4OpOp1Field w)
-                 (fromIntegral $ extract pstatefield4OpOp2Field w)
+  Pstatefield4Op (extract pstatefield4OpOp1Field w)
+                 (extract pstatefield4OpOp2Field w)
 
 pstatefield4OpOperand :: OperandPayload
 pstatefield4OpOperand =
@@ -1865,8 +1879,8 @@ pstatefield4OpOperand =
                  , opWordE = Just (varE 'pstatefield4OpToBits)
                  }
 
-data RoWextend128 = RoWextend128 { roWextend128Sbit :: Word8
-                                 , roWextend128OptionHiBit :: Word8
+data RoWextend128 = RoWextend128 { roWextend128Sbit :: W.W 1
+                                 , roWextend128OptionHiBit :: W.W 1
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoWextend128 where
@@ -1876,11 +1890,11 @@ instance PP.Pretty RoWextend128 where
 instance A.Arbitrary RoWextend128 where
   arbitrary g = RoWextend128 <$> A.arbitrary g <*> A.arbitrary g
 
-roWextend128SbitField :: Field
-roWextend128SbitField = Field 1 0
+roWextend128SbitField :: Field 1
+roWextend128SbitField = field 0
 
-roWextend128OptionHiBitField :: Field
-roWextend128OptionHiBitField = Field 1 1
+roWextend128OptionHiBitField :: Field 1
+roWextend128OptionHiBitField = field 1
 
 roWextend128ToBits :: RoWextend128 -> Word32
 roWextend128ToBits val =
@@ -1889,8 +1903,8 @@ roWextend128ToBits val =
 
 mkRoWextend128 :: Word32 -> RoWextend128
 mkRoWextend128 w =
-  RoWextend128 (fromIntegral $ extract roWextend128SbitField w)
-               (fromIntegral $ extract roWextend128OptionHiBitField w)
+  RoWextend128 (extract roWextend128SbitField w)
+               (extract roWextend128OptionHiBitField w)
 
 roWextend128Operand :: OperandPayload
 roWextend128Operand =
@@ -1899,8 +1913,8 @@ roWextend128Operand =
                  , opWordE = Just (varE 'roWextend128ToBits)
                  }
 
-data RoWextend16 = RoWextend16 { roWextend16Sbit :: Word8
-                               , roWextend16OptionHiBit :: Word8
+data RoWextend16 = RoWextend16 { roWextend16Sbit :: W.W 1
+                               , roWextend16OptionHiBit :: W.W 1
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoWextend16 where
@@ -1910,11 +1924,11 @@ instance PP.Pretty RoWextend16 where
 instance A.Arbitrary RoWextend16 where
   arbitrary g = RoWextend16 <$> A.arbitrary g <*> A.arbitrary g
 
-roWextend16SbitField :: Field
-roWextend16SbitField = Field 1 0
+roWextend16SbitField :: Field 1
+roWextend16SbitField = field 0
 
-roWextend16OptionHiBitField :: Field
-roWextend16OptionHiBitField = Field 1 1
+roWextend16OptionHiBitField :: Field 1
+roWextend16OptionHiBitField = field 1
 
 roWextend16ToBits :: RoWextend16 -> Word32
 roWextend16ToBits val =
@@ -1923,8 +1937,8 @@ roWextend16ToBits val =
 
 mkRoWextend16 :: Word32 -> RoWextend16
 mkRoWextend16 w =
-  RoWextend16 (fromIntegral $ extract roWextend16SbitField w)
-              (fromIntegral $ extract roWextend16OptionHiBitField w)
+  RoWextend16 (extract roWextend16SbitField w)
+              (extract roWextend16OptionHiBitField w)
 
 roWextend16Operand :: OperandPayload
 roWextend16Operand =
@@ -1933,8 +1947,8 @@ roWextend16Operand =
                  , opWordE = Just (varE 'roWextend16ToBits)
                  }
 
-data RoWextend32 = RoWextend32 { roWextend32Sbit :: Word8
-                               , roWextend32OptionHiBit :: Word8
+data RoWextend32 = RoWextend32 { roWextend32Sbit :: W.W 1
+                               , roWextend32OptionHiBit :: W.W 1
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoWextend32 where
@@ -1949,11 +1963,11 @@ instance PP.Pretty RoWextend32 where
 instance A.Arbitrary RoWextend32 where
   arbitrary g = RoWextend32 <$> A.arbitrary g <*> A.arbitrary g
 
-roWextend32SbitField :: Field
-roWextend32SbitField = Field 1 0
+roWextend32SbitField :: Field 1
+roWextend32SbitField = field 0
 
-roWextend32OptionHiBitField :: Field
-roWextend32OptionHiBitField = Field 1 1
+roWextend32OptionHiBitField :: Field 1
+roWextend32OptionHiBitField = field 1
 
 roWextend32ToBits :: RoWextend32 -> Word32
 roWextend32ToBits val =
@@ -1962,8 +1976,8 @@ roWextend32ToBits val =
 
 mkRoWextend32 :: Word32 -> RoWextend32
 mkRoWextend32 w =
-  RoWextend32 (fromIntegral $ extract roWextend32SbitField w)
-              (fromIntegral $ extract roWextend32OptionHiBitField w)
+  RoWextend32 (extract roWextend32SbitField w)
+              (extract roWextend32OptionHiBitField w)
 
 roWextend32Operand :: OperandPayload
 roWextend32Operand =
@@ -1972,8 +1986,8 @@ roWextend32Operand =
                  , opWordE = Just (varE 'roWextend32ToBits)
                  }
 
-data RoWextend64 = RoWextend64 { roWextend64Sbit :: Word8
-                               , roWextend64OptionHiBit :: Word8
+data RoWextend64 = RoWextend64 { roWextend64Sbit :: W.W 1
+                               , roWextend64OptionHiBit :: W.W 1
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoWextend64 where
@@ -1982,11 +1996,11 @@ instance PP.Pretty RoWextend64 where
 instance A.Arbitrary RoWextend64 where
   arbitrary g = RoWextend64 <$> A.arbitrary g <*> A.arbitrary g
 
-roWextend64SbitField :: Field
-roWextend64SbitField = Field 1 0
+roWextend64SbitField :: Field 1
+roWextend64SbitField = field 0
 
-roWextend64OptionHiBitField :: Field
-roWextend64OptionHiBitField = Field 1 1
+roWextend64OptionHiBitField :: Field 1
+roWextend64OptionHiBitField = field 1
 
 roWextend64ToBits :: RoWextend64 -> Word32
 roWextend64ToBits val =
@@ -1995,8 +2009,8 @@ roWextend64ToBits val =
 
 mkRoWextend64 :: Word32 -> RoWextend64
 mkRoWextend64 w =
-  RoWextend64 (fromIntegral $ extract roWextend64SbitField w)
-              (fromIntegral $ extract roWextend64OptionHiBitField w)
+  RoWextend64 (extract roWextend64SbitField w)
+              (extract roWextend64OptionHiBitField w)
 
 roWextend64Operand :: OperandPayload
 roWextend64Operand =
@@ -2005,8 +2019,8 @@ roWextend64Operand =
                  , opWordE = Just (varE 'roWextend64ToBits)
                  }
 
-data RoWextend8 = RoWextend8 { roWextend8Sbit :: Word8
-                             , roWextend8OptionHiBit :: Word8
+data RoWextend8 = RoWextend8 { roWextend8Sbit :: W.W 1
+                             , roWextend8OptionHiBit :: W.W 1
                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoWextend8 where
@@ -2015,11 +2029,11 @@ instance PP.Pretty RoWextend8 where
 instance A.Arbitrary RoWextend8 where
   arbitrary g = RoWextend8 <$> A.arbitrary g <*> A.arbitrary g
 
-roWextend8SbitField :: Field
-roWextend8SbitField = Field 1 0
+roWextend8SbitField :: Field 1
+roWextend8SbitField = field 0
 
-roWextend8OptionHiBitField :: Field
-roWextend8OptionHiBitField = Field 1 1
+roWextend8OptionHiBitField :: Field 1
+roWextend8OptionHiBitField = field 1
 
 roWextend8ToBits :: RoWextend8 -> Word32
 roWextend8ToBits val =
@@ -2028,8 +2042,8 @@ roWextend8ToBits val =
 
 mkRoWextend8 :: Word32 -> RoWextend8
 mkRoWextend8 w =
-  RoWextend8 (fromIntegral $ extract roWextend8SbitField w)
-             (fromIntegral $ extract roWextend8OptionHiBitField w)
+  RoWextend8 (extract roWextend8SbitField w)
+             (extract roWextend8OptionHiBitField w)
 
 roWextend8Operand :: OperandPayload
 roWextend8Operand =
@@ -2038,8 +2052,8 @@ roWextend8Operand =
                  , opWordE = Just (varE 'roWextend8ToBits)
                  }
 
-data RoXextend128 = RoXextend128 { roXextend128Sbit :: Word8
-                                 , roXextend128OptionHiBit :: Word8
+data RoXextend128 = RoXextend128 { roXextend128Sbit :: W.W 1
+                                 , roXextend128OptionHiBit :: W.W 1
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoXextend128 where
@@ -2049,11 +2063,11 @@ instance PP.Pretty RoXextend128 where
 instance A.Arbitrary RoXextend128 where
   arbitrary g = RoXextend128 <$> A.arbitrary g <*> A.arbitrary g
 
-roXextend128SbitField :: Field
-roXextend128SbitField = Field 1 0
+roXextend128SbitField :: Field 1
+roXextend128SbitField = field 0
 
-roXextend128OptionHiBitField :: Field
-roXextend128OptionHiBitField = Field 1 1
+roXextend128OptionHiBitField :: Field 1
+roXextend128OptionHiBitField = field 1
 
 roXextend128ToBits :: RoXextend128 -> Word32
 roXextend128ToBits val =
@@ -2062,8 +2076,8 @@ roXextend128ToBits val =
 
 mkRoXextend128 :: Word32 -> RoXextend128
 mkRoXextend128 w =
-  RoXextend128 (fromIntegral $ extract roXextend128SbitField w)
-               (fromIntegral $ extract roXextend128OptionHiBitField w)
+  RoXextend128 (extract roXextend128SbitField w)
+               (extract roXextend128OptionHiBitField w)
 
 roXextend128Operand :: OperandPayload
 roXextend128Operand =
@@ -2072,8 +2086,8 @@ roXextend128Operand =
                  , opWordE = Just (varE 'roXextend128ToBits)
                  }
 
-data RoXextend16 = RoXextend16 { roXextend16Sbit :: Word8
-                               , roXextend16OptionHiBit :: Word8
+data RoXextend16 = RoXextend16 { roXextend16Sbit :: W.W 1
+                               , roXextend16OptionHiBit :: W.W 1
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoXextend16 where
@@ -2083,11 +2097,11 @@ instance PP.Pretty RoXextend16 where
 instance A.Arbitrary RoXextend16 where
   arbitrary g = RoXextend16 <$> A.arbitrary g <*> A.arbitrary g
 
-roXextend16SbitField :: Field
-roXextend16SbitField = Field 1 0
+roXextend16SbitField :: Field 1
+roXextend16SbitField = field 0
 
-roXextend16OptionHiBitField :: Field
-roXextend16OptionHiBitField = Field 1 1
+roXextend16OptionHiBitField :: Field 1
+roXextend16OptionHiBitField = field 1
 
 roXextend16ToBits :: RoXextend16 -> Word32
 roXextend16ToBits val =
@@ -2096,8 +2110,8 @@ roXextend16ToBits val =
 
 mkRoXextend16 :: Word32 -> RoXextend16
 mkRoXextend16 w =
-  RoXextend16 (fromIntegral $ extract roXextend16SbitField w)
-              (fromIntegral $ extract roXextend16OptionHiBitField w)
+  RoXextend16 (extract roXextend16SbitField w)
+              (extract roXextend16OptionHiBitField w)
 
 roXextend16Operand :: OperandPayload
 roXextend16Operand =
@@ -2106,8 +2120,8 @@ roXextend16Operand =
                  , opWordE = Just (varE 'roXextend16ToBits)
                  }
 
-data RoXextend32 = RoXextend32 { roXextend32Sbit :: Word8
-                               , roXextend32OptionHiBit :: Word8
+data RoXextend32 = RoXextend32 { roXextend32Sbit :: W.W 1
+                               , roXextend32OptionHiBit :: W.W 1
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoXextend32 where
@@ -2124,11 +2138,11 @@ instance PP.Pretty RoXextend32 where
 instance A.Arbitrary RoXextend32 where
   arbitrary g = RoXextend32 <$> A.arbitrary g <*> A.arbitrary g
 
-roXextend32SbitField :: Field
-roXextend32SbitField = Field 1 0
+roXextend32SbitField :: Field 1
+roXextend32SbitField = field 0
 
-roXextend32OptionHiBitField :: Field
-roXextend32OptionHiBitField = Field 1 1
+roXextend32OptionHiBitField :: Field 1
+roXextend32OptionHiBitField = field 1
 
 roXextend32ToBits :: RoXextend32 -> Word32
 roXextend32ToBits val =
@@ -2137,8 +2151,8 @@ roXextend32ToBits val =
 
 mkRoXextend32 :: Word32 -> RoXextend32
 mkRoXextend32 w =
-  RoXextend32 (fromIntegral $ extract roXextend32SbitField w)
-              (fromIntegral $ extract roXextend32OptionHiBitField w)
+  RoXextend32 (extract roXextend32SbitField w)
+              (extract roXextend32OptionHiBitField w)
 
 roXextend32Operand :: OperandPayload
 roXextend32Operand =
@@ -2147,8 +2161,8 @@ roXextend32Operand =
                  , opWordE = Just (varE 'roXextend32ToBits)
                  }
 
-data RoXextend64 = RoXextend64 { roXextend64Sbit :: Word8
-                               , roXextend64OptionHiBit :: Word8
+data RoXextend64 = RoXextend64 { roXextend64Sbit :: W.W 1
+                               , roXextend64OptionHiBit :: W.W 1
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoXextend64 where
@@ -2165,11 +2179,11 @@ instance PP.Pretty RoXextend64 where
 instance A.Arbitrary RoXextend64 where
   arbitrary g = RoXextend64 <$> A.arbitrary g <*> A.arbitrary g
 
-roXextend64SbitField :: Field
-roXextend64SbitField = Field 1 0
+roXextend64SbitField :: Field 1
+roXextend64SbitField = field 0
 
-roXextend64OptionHiBitField :: Field
-roXextend64OptionHiBitField = Field 1 1
+roXextend64OptionHiBitField :: Field 1
+roXextend64OptionHiBitField = field 1
 
 roXextend64ToBits :: RoXextend64 -> Word32
 roXextend64ToBits val =
@@ -2178,8 +2192,8 @@ roXextend64ToBits val =
 
 mkRoXextend64 :: Word32 -> RoXextend64
 mkRoXextend64 w =
-  RoXextend64 (fromIntegral $ extract roXextend64SbitField w)
-              (fromIntegral $ extract roXextend64OptionHiBitField w)
+  RoXextend64 (extract roXextend64SbitField w)
+              (extract roXextend64OptionHiBitField w)
 
 roXextend64Operand :: OperandPayload
 roXextend64Operand =
@@ -2188,8 +2202,8 @@ roXextend64Operand =
                  , opWordE = Just (varE 'roXextend64ToBits)
                  }
 
-data RoXextend8 = RoXextend8 { roXextend8Sbit :: Word8
-                             , roXextend8OptionHiBit :: Word8
+data RoXextend8 = RoXextend8 { roXextend8Sbit :: W.W 1
+                             , roXextend8OptionHiBit :: W.W 1
                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty RoXextend8 where
@@ -2198,11 +2212,11 @@ instance PP.Pretty RoXextend8 where
 instance A.Arbitrary RoXextend8 where
   arbitrary g = RoXextend8 <$> A.arbitrary g <*> A.arbitrary g
 
-roXextend8SbitField :: Field
-roXextend8SbitField = Field 1 0
+roXextend8SbitField :: Field 1
+roXextend8SbitField = field 0
 
-roXextend8OptionHiBitField :: Field
-roXextend8OptionHiBitField = Field 1 1
+roXextend8OptionHiBitField :: Field 1
+roXextend8OptionHiBitField = field 1
 
 roXextend8ToBits :: RoXextend8 -> Word32
 roXextend8ToBits val =
@@ -2211,8 +2225,8 @@ roXextend8ToBits val =
 
 mkRoXextend8 :: Word32 -> RoXextend8
 mkRoXextend8 w =
-  RoXextend8 (fromIntegral $ extract roXextend8SbitField w)
-             (fromIntegral $ extract roXextend8OptionHiBitField w)
+  RoXextend8 (extract roXextend8SbitField w)
+             (extract roXextend8OptionHiBitField w)
 
 roXextend8Operand :: OperandPayload
 roXextend8Operand =
@@ -2221,7 +2235,7 @@ roXextend8Operand =
                  , opWordE = Just (varE 'roXextend8ToBits)
                  }
 
-data Simm7s16 = Simm7s16 { simm7s16Imm :: Word8
+data Simm7s16 = Simm7s16 { simm7s16Imm :: W.W 7
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Simm7s16 where
@@ -2231,8 +2245,8 @@ instance PP.Pretty Simm7s16 where
           signBitExtension = 0xffc0
           v' :: Word16
           v' = if imm .&. signBit == signBit
-               then fromIntegral imm .|. signBitExtension
-               else fromIntegral imm
+               then fromIntegral (W.unW imm) .|. signBitExtension
+               else fromIntegral (W.unW imm)
           -- Manual sign extension from a 7-bit value to 16-bit.
           v :: Int16
           v = fromIntegral v'
@@ -2241,8 +2255,8 @@ instance PP.Pretty Simm7s16 where
 instance A.Arbitrary Simm7s16 where
   arbitrary g = Simm7s16 <$> A.arbitrary g
 
-simm7s16ImmField :: Field
-simm7s16ImmField = Field 7 0
+simm7s16ImmField :: Field 7
+simm7s16ImmField = field 0
 
 simm7s16ToBits :: Simm7s16 -> Word32
 simm7s16ToBits val =
@@ -2250,7 +2264,7 @@ simm7s16ToBits val =
 
 mkSimm7s16 :: Word32 -> Simm7s16
 mkSimm7s16 w =
-  Simm7s16 (fromIntegral $ extract simm7s16ImmField w)
+  Simm7s16 (extract simm7s16ImmField w)
 
 simm7s16Operand :: OperandPayload
 simm7s16Operand =
@@ -2259,22 +2273,23 @@ simm7s16Operand =
                  , opWordE = Just (varE 'simm7s16ToBits)
                  }
 
-data Simm7s4 = Simm7s4 { simm7s4Imm :: Word8
+data Simm7s4 = Simm7s4 { simm7s4Imm :: W.W 7
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Simm7s4 where
   pPrint (Simm7s4 imm) =
       let signBit = 0b1000000
           -- Manual sign extension from a 7-bit value to 8-bit.
+          imm' = fromIntegral $ W.unW imm
           v :: Int
-          v = fromIntegral ((fromIntegral $ imm .|. ((imm .&. signBit) `shiftL` 1)) :: Int8)
+          v = fromIntegral ((imm' .|. ((imm' .&. signBit) `shiftL` 1)) :: Int8)
       in PP.char '#' <> (PP.text $ show $ v `shiftL` 2)
 
 instance A.Arbitrary Simm7s4 where
   arbitrary g = Simm7s4 <$> A.arbitrary g
 
-simm7s4ImmField :: Field
-simm7s4ImmField = Field 7 0
+simm7s4ImmField :: Field 7
+simm7s4ImmField = field 0
 
 simm7s4ToBits :: Simm7s4 -> Word32
 simm7s4ToBits val =
@@ -2282,7 +2297,7 @@ simm7s4ToBits val =
 
 mkSimm7s4 :: Word32 -> Simm7s4
 mkSimm7s4 w =
-  Simm7s4 (fromIntegral $ extract simm7s4ImmField w)
+  Simm7s4 (extract simm7s4ImmField w)
 
 simm7s4Operand :: OperandPayload
 simm7s4Operand =
@@ -2291,22 +2306,23 @@ simm7s4Operand =
                  , opWordE = Just (varE 'simm7s4ToBits)
                  }
 
-data Simm7s8 = Simm7s8 { simm7s8Imm :: Word8
+data Simm7s8 = Simm7s8 { simm7s8Imm :: W.W 7
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Simm7s8 where
   pPrint (Simm7s8 imm) =
       let signBit = 0b1000000
           -- Manual sign extension from a 7-bit value to 8-bit.
+          imm' = fromIntegral $ W.unW imm
           v :: Int
-          v = fromIntegral ((fromIntegral $ imm .|. ((imm .&. signBit) `shiftL` 1)) :: Int8)
+          v = fromIntegral ((imm' .|. ((imm' .&. signBit) `shiftL` 1)) :: Int8)
       in PP.char '#' <> (PP.text $ show $ v `shiftL` 3)
 
 instance A.Arbitrary Simm7s8 where
   arbitrary g = Simm7s8 <$> A.arbitrary g
 
-simm7s8ImmField :: Field
-simm7s8ImmField = Field 7 0
+simm7s8ImmField :: Field 7
+simm7s8ImmField = field 0
 
 simm7s8ToBits :: Simm7s8 -> Word32
 simm7s8ToBits val =
@@ -2314,7 +2330,7 @@ simm7s8ToBits val =
 
 mkSimm7s8 :: Word32 -> Simm7s8
 mkSimm7s8 w =
-  Simm7s8 (fromIntegral $ extract simm7s8ImmField w)
+  Simm7s8 (extract simm7s8ImmField w)
 
 simm7s8Operand :: OperandPayload
 simm7s8Operand =
@@ -2323,7 +2339,7 @@ simm7s8Operand =
                  , opWordE = Just (varE 'simm7s8ToBits)
                  }
 
-data Simm9 = Simm9 { simm9Imm :: Word16
+data Simm9 = Simm9 { simm9Imm :: W.W 9
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Simm9 where
@@ -2333,8 +2349,8 @@ instance PP.Pretty Simm9 where
           signBitExtension = 0xff00
           v' :: Word16
           v' = if imm .&. signBit == signBit
-               then fromIntegral imm .|. signBitExtension
-               else imm
+               then fromIntegral (W.unW imm) .|. signBitExtension
+               else fromIntegral (W.unW imm)
           -- Manual sign extension from a 9-bit value to 16-bit.
           v :: Int16
           v = fromIntegral v'
@@ -2343,8 +2359,8 @@ instance PP.Pretty Simm9 where
 instance A.Arbitrary Simm9 where
   arbitrary g = Simm9 <$> A.arbitrary g
 
-simm9ImmField :: Field
-simm9ImmField = Field 9 0
+simm9ImmField :: Field 9
+simm9ImmField = field 0
 
 simm9ToBits :: Simm9 -> Word32
 simm9ToBits val =
@@ -2352,7 +2368,7 @@ simm9ToBits val =
 
 mkSimm9 :: Word32 -> Simm9
 mkSimm9 w =
-  Simm9 (fromIntegral $ extract simm9ImmField w)
+  Simm9 (extract simm9ImmField w)
 
 simm9Operand :: OperandPayload
 simm9Operand =
@@ -2361,7 +2377,7 @@ simm9Operand =
                  , opWordE = Just (varE 'simm9ToBits)
                  }
 
-data SysCrOp = SysCrOp { sysCrOpVal :: Word8
+data SysCrOp = SysCrOp { sysCrOpVal :: W.W 4
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty SysCrOp where
@@ -2370,8 +2386,8 @@ instance PP.Pretty SysCrOp where
 instance A.Arbitrary SysCrOp where
   arbitrary g = SysCrOp <$> A.arbitrary g
 
-sysCrOpValField :: Field
-sysCrOpValField = Field 4 0
+sysCrOpValField :: Field 4
+sysCrOpValField = field 0
 
 sysCrOpToBits :: SysCrOp -> Word32
 sysCrOpToBits val =
@@ -2379,7 +2395,7 @@ sysCrOpToBits val =
 
 mkSysCrOp :: Word32 -> SysCrOp
 mkSysCrOp w =
-  SysCrOp (fromIntegral $ extract sysCrOpValField w)
+  SysCrOp (extract sysCrOpValField w)
 
 sysCrOpOperand :: OperandPayload
 sysCrOpOperand =
@@ -2388,7 +2404,7 @@ sysCrOpOperand =
                  , opWordE = Just (varE 'sysCrOpToBits)
                  }
 
-data TbzImm031Diag = TbzImm031Diag { tbzImm031DiagImm :: Word8
+data TbzImm031Diag = TbzImm031Diag { tbzImm031DiagImm :: W.W 5
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty TbzImm031Diag where
@@ -2398,8 +2414,8 @@ instance PP.Pretty TbzImm031Diag where
 instance A.Arbitrary TbzImm031Diag where
   arbitrary g = TbzImm031Diag <$> A.arbitrary g
 
-tbzImm031DiagImmField :: Field
-tbzImm031DiagImmField = Field 5 0
+tbzImm031DiagImmField :: Field 5
+tbzImm031DiagImmField = field 0
 
 tbzImm031DiagToBits :: TbzImm031Diag -> Word32
 tbzImm031DiagToBits val =
@@ -2407,7 +2423,7 @@ tbzImm031DiagToBits val =
 
 mkTbzImm031Diag :: Word32 -> TbzImm031Diag
 mkTbzImm031Diag w =
-  TbzImm031Diag (fromIntegral $ extract tbzImm031DiagImmField w)
+  TbzImm031Diag (extract tbzImm031DiagImmField w)
 
 tbzImm031DiagOperand :: OperandPayload
 tbzImm031DiagOperand =
@@ -2416,7 +2432,7 @@ tbzImm031DiagOperand =
                  , opWordE = Just (varE 'tbzImm031DiagToBits)
                  }
 
-data TbzImm3263 = TbzImm3263 { tbzImm3263Imm :: Word8
+data TbzImm3263 = TbzImm3263 { tbzImm3263Imm :: W.W 5
                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty TbzImm3263 where
@@ -2426,8 +2442,8 @@ instance PP.Pretty TbzImm3263 where
 instance A.Arbitrary TbzImm3263 where
   arbitrary g = TbzImm3263 <$> A.arbitrary g
 
-tbzImm3263ImmField :: Field
-tbzImm3263ImmField = Field 5 0
+tbzImm3263ImmField :: Field 5
+tbzImm3263ImmField = field 0
 
 tbzImm3263ToBits :: TbzImm3263 -> Word32
 tbzImm3263ToBits val =
@@ -2435,7 +2451,7 @@ tbzImm3263ToBits val =
 
 mkTbzImm3263 :: Word32 -> TbzImm3263
 mkTbzImm3263 w =
-  TbzImm3263 (fromIntegral $ extract tbzImm3263ImmField w)
+  TbzImm3263 (extract tbzImm3263ImmField w)
 
 tbzImm3263Operand :: OperandPayload
 tbzImm3263Operand =
@@ -2444,18 +2460,18 @@ tbzImm3263Operand =
                  , opWordE = Just (varE 'tbzImm3263ToBits)
                  }
 
-data Uimm12s1 = Uimm12s1 { uimm12s1Imm :: Word16
+data Uimm12s1 = Uimm12s1 { uimm12s1Imm :: W.W 12
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s1 where
   pPrint (Uimm12s1 v) =
-      PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32))
+      PP.char '#' <> (PP.text $ show $ ((fromIntegral $ W.unW v) :: Word32))
 
 instance A.Arbitrary Uimm12s1 where
   arbitrary g = Uimm12s1 <$> A.arbitrary g
 
-uimm12s1ImmField :: Field
-uimm12s1ImmField = Field 12 0
+uimm12s1ImmField :: Field 12
+uimm12s1ImmField = field 0
 
 uimm12s1ToBits :: Uimm12s1 -> Word32
 uimm12s1ToBits val =
@@ -2463,7 +2479,7 @@ uimm12s1ToBits val =
 
 mkUimm12s1 :: Word32 -> Uimm12s1
 mkUimm12s1 w =
-  Uimm12s1 (fromIntegral $ extract uimm12s1ImmField w)
+  Uimm12s1 (extract uimm12s1ImmField w)
 
 uimm12s1Operand :: OperandPayload
 uimm12s1Operand =
@@ -2472,18 +2488,18 @@ uimm12s1Operand =
                  , opWordE = Just (varE 'uimm12s1ToBits)
                  }
 
-data Uimm12s16 = Uimm12s16 { uimm12s16Imm :: Word16
+data Uimm12s16 = Uimm12s16 { uimm12s16Imm :: W.W 12
                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s16 where
   pPrint (Uimm12s16 v) =
-    PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32) `shiftL` 4)
+    PP.char '#' <> (PP.text $ show $ ((fromIntegral $ W.unW v) :: Word32) `shiftL` 4)
 
 instance A.Arbitrary Uimm12s16 where
   arbitrary g = Uimm12s16 <$> A.arbitrary g
 
-uimm12s16ImmField :: Field
-uimm12s16ImmField = Field 12 0
+uimm12s16ImmField :: Field 12
+uimm12s16ImmField = field 0
 
 uimm12s16ToBits :: Uimm12s16 -> Word32
 uimm12s16ToBits val =
@@ -2491,7 +2507,7 @@ uimm12s16ToBits val =
 
 mkUimm12s16 :: Word32 -> Uimm12s16
 mkUimm12s16 w =
-  Uimm12s16 (fromIntegral $ extract uimm12s16ImmField w)
+  Uimm12s16 (extract uimm12s16ImmField w)
 
 uimm12s16Operand :: OperandPayload
 uimm12s16Operand =
@@ -2500,18 +2516,18 @@ uimm12s16Operand =
                  , opWordE = Just (varE 'uimm12s16ToBits)
                  }
 
-data Uimm12s2 = Uimm12s2 { uimm12s2Imm :: Word16
+data Uimm12s2 = Uimm12s2 { uimm12s2Imm :: W.W 12
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s2 where
   pPrint (Uimm12s2 v) =
-      PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32) `shiftL` 1)
+      PP.char '#' <> (PP.text $ show $ ((fromIntegral $ W.unW v) :: Word32) `shiftL` 1)
 
 instance A.Arbitrary Uimm12s2 where
   arbitrary g = Uimm12s2 <$> A.arbitrary g
 
-uimm12s2ImmField :: Field
-uimm12s2ImmField = Field 12 0
+uimm12s2ImmField :: Field 12
+uimm12s2ImmField = field 0
 
 uimm12s2ToBits :: Uimm12s2 -> Word32
 uimm12s2ToBits val =
@@ -2519,7 +2535,7 @@ uimm12s2ToBits val =
 
 mkUimm12s2 :: Word32 -> Uimm12s2
 mkUimm12s2 w =
-  Uimm12s2 (fromIntegral $ extract uimm12s2ImmField w)
+  Uimm12s2 (extract uimm12s2ImmField w)
 
 uimm12s2Operand :: OperandPayload
 uimm12s2Operand =
@@ -2528,18 +2544,18 @@ uimm12s2Operand =
                  , opWordE = Just (varE 'uimm12s2ToBits)
                  }
 
-data Uimm12s4 = Uimm12s4 { uimm12s4Imm :: Word16
+data Uimm12s4 = Uimm12s4 { uimm12s4Imm :: W.W 12
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s4 where
   pPrint (Uimm12s4 v) =
-      PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32) `shiftL` 2)
+      PP.char '#' <> (PP.text $ show $ ((fromIntegral $ W.unW v) :: Word32) `shiftL` 2)
 
 instance A.Arbitrary Uimm12s4 where
   arbitrary g = Uimm12s4 <$> A.arbitrary g
 
-uimm12s4ImmField :: Field
-uimm12s4ImmField = Field 12 0
+uimm12s4ImmField :: Field 12
+uimm12s4ImmField = field 0
 
 uimm12s4ToBits :: Uimm12s4 -> Word32
 uimm12s4ToBits val =
@@ -2547,7 +2563,7 @@ uimm12s4ToBits val =
 
 mkUimm12s4 :: Word32 -> Uimm12s4
 mkUimm12s4 w =
-  Uimm12s4 (fromIntegral $ extract uimm12s4ImmField w)
+  Uimm12s4 (extract uimm12s4ImmField w)
 
 uimm12s4Operand :: OperandPayload
 uimm12s4Operand =
@@ -2556,18 +2572,18 @@ uimm12s4Operand =
                  , opWordE = Just (varE 'uimm12s4ToBits)
                  }
 
-data Uimm12s8 = Uimm12s8 { uimm12s8Imm :: Word16
+data Uimm12s8 = Uimm12s8 { uimm12s8Imm :: W.W 12
                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Uimm12s8 where
   pPrint (Uimm12s8 v) =
-      PP.char '#' <> (PP.text $ show $ ((fromIntegral v) :: Word32) `shiftL` 3)
+      PP.char '#' <> (PP.text $ show $ ((fromIntegral $ W.unW v) :: Word32) `shiftL` 3)
 
 instance A.Arbitrary Uimm12s8 where
   arbitrary g = Uimm12s8 <$> A.arbitrary g
 
-uimm12s8ImmField :: Field
-uimm12s8ImmField = Field 12 0
+uimm12s8ImmField :: Field 12
+uimm12s8ImmField = field 0
 
 uimm12s8ToBits :: Uimm12s8 -> Word32
 uimm12s8ToBits val =
@@ -2575,7 +2591,7 @@ uimm12s8ToBits val =
 
 mkUimm12s8 :: Word32 -> Uimm12s8
 mkUimm12s8 w =
-  Uimm12s8 (fromIntegral $ extract uimm12s8ImmField w)
+  Uimm12s8 (extract uimm12s8ImmField w)
 
 uimm12s8Operand :: OperandPayload
 uimm12s8Operand =
@@ -2584,8 +2600,8 @@ uimm12s8Operand =
                  , opWordE = Just (varE 'uimm12s8ToBits)
                  }
 
-data Addext = Addext { addextImm :: Word8
-                     , addextOption :: Word8
+data Addext = Addext { addextImm :: W.W 3
+                     , addextOption :: W.W 3
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Addext where
@@ -2606,11 +2622,11 @@ instance PP.Pretty Addext where
 instance A.Arbitrary Addext where
   arbitrary g = Addext <$> A.arbitrary g <*> A.arbitrary g
 
-addextImmField :: Field
-addextImmField = Field 3 0
+addextImmField :: Field 3
+addextImmField = field 0
 
-addextOptionField :: Field
-addextOptionField = Field 3 3
+addextOptionField :: Field 3
+addextOptionField = field 3
 
 addextToBits :: Addext -> Word32
 addextToBits val =
@@ -2619,8 +2635,8 @@ addextToBits val =
 
 mkAddext :: Word32 -> Addext
 mkAddext w =
-  Addext (fromIntegral $ extract addextImmField w)
-         (fromIntegral $ extract addextOptionField w)
+  Addext (extract addextImmField w)
+         (extract addextOptionField w)
 
 addextOperand :: OperandPayload
 addextOperand =
@@ -2629,7 +2645,7 @@ addextOperand =
                  , opWordE = Just (varE 'addextToBits)
                  }
 
-data FixedpointF32I32 = FixedpointF32I32 { fixedpointF32I32Scale :: Word8
+data FixedpointF32I32 = FixedpointF32I32 { fixedpointF32I32Scale :: W.W 5
                                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FixedpointF32I32 where
@@ -2638,8 +2654,8 @@ instance PP.Pretty FixedpointF32I32 where
 instance A.Arbitrary FixedpointF32I32 where
   arbitrary g = FixedpointF32I32 <$> A.arbitrary g
 
-fixedpointF32I32ScaleField :: Field
-fixedpointF32I32ScaleField = Field 5 0
+fixedpointF32I32ScaleField :: Field 5
+fixedpointF32I32ScaleField = field 0
 
 fixedpointF32I32ToBits :: FixedpointF32I32 -> Word32
 fixedpointF32I32ToBits val =
@@ -2647,7 +2663,7 @@ fixedpointF32I32ToBits val =
 
 mkFixedpointF32I32 :: Word32 -> FixedpointF32I32
 mkFixedpointF32I32 w =
-  FixedpointF32I32 (fromIntegral $ extract fixedpointF32I32ScaleField w)
+  FixedpointF32I32 (extract fixedpointF32I32ScaleField w)
 
 fixedpointF32I32Operand :: OperandPayload
 fixedpointF32I32Operand =
@@ -2656,7 +2672,7 @@ fixedpointF32I32Operand =
                  , opWordE = Just (varE 'fixedpointF32I32ToBits)
                  }
 
-data FixedpointF16I32 = FixedpointF16I32 { fixedpointF16I32Scale :: Word8
+data FixedpointF16I32 = FixedpointF16I32 { fixedpointF16I32Scale :: W.W 5
                                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FixedpointF16I32 where
@@ -2665,8 +2681,8 @@ instance PP.Pretty FixedpointF16I32 where
 instance A.Arbitrary FixedpointF16I32 where
   arbitrary g = FixedpointF16I32 <$> A.arbitrary g
 
-fixedpointF16I32ScaleField :: Field
-fixedpointF16I32ScaleField = Field 5 0
+fixedpointF16I32ScaleField :: Field 5
+fixedpointF16I32ScaleField = field 0
 
 fixedpointF16I32ToBits :: FixedpointF16I32 -> Word32
 fixedpointF16I32ToBits val =
@@ -2674,7 +2690,7 @@ fixedpointF16I32ToBits val =
 
 mkFixedpointF16I32 :: Word32 -> FixedpointF16I32
 mkFixedpointF16I32 w =
-  FixedpointF16I32 (fromIntegral $ extract fixedpointF16I32ScaleField w)
+  FixedpointF16I32 (extract fixedpointF16I32ScaleField w)
 
 fixedpointF16I32Operand :: OperandPayload
 fixedpointF16I32Operand =
@@ -2683,7 +2699,7 @@ fixedpointF16I32Operand =
                  , opWordE = Just (varE 'fixedpointF16I32ToBits)
                  }
 
-data FixedpointF16I64 = FixedpointF16I64 { fixedpointF16I64Scale :: Word8
+data FixedpointF16I64 = FixedpointF16I64 { fixedpointF16I64Scale :: W.W 6
                                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FixedpointF16I64 where
@@ -2692,8 +2708,8 @@ instance PP.Pretty FixedpointF16I64 where
 instance A.Arbitrary FixedpointF16I64 where
   arbitrary g = FixedpointF16I64 <$> A.arbitrary g
 
-fixedpointF16I64ScaleField :: Field
-fixedpointF16I64ScaleField = Field 6 0
+fixedpointF16I64ScaleField :: Field 6
+fixedpointF16I64ScaleField = field 0
 
 fixedpointF16I64ToBits :: FixedpointF16I64 -> Word32
 fixedpointF16I64ToBits val =
@@ -2701,7 +2717,7 @@ fixedpointF16I64ToBits val =
 
 mkFixedpointF16I64 :: Word32 -> FixedpointF16I64
 mkFixedpointF16I64 w =
-  FixedpointF16I64 (fromIntegral $ extract fixedpointF16I64ScaleField w)
+  FixedpointF16I64 (extract fixedpointF16I64ScaleField w)
 
 fixedpointF16I64Operand :: OperandPayload
 fixedpointF16I64Operand =
@@ -2710,7 +2726,7 @@ fixedpointF16I64Operand =
                  , opWordE = Just (varE 'fixedpointF16I64ToBits)
                  }
 
-data FixedpointF32I64 = FixedpointF32I64 { fixedpointF32I64Scale :: Word8
+data FixedpointF32I64 = FixedpointF32I64 { fixedpointF32I64Scale :: W.W 6
                                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FixedpointF32I64 where
@@ -2719,8 +2735,8 @@ instance PP.Pretty FixedpointF32I64 where
 instance A.Arbitrary FixedpointF32I64 where
   arbitrary g = FixedpointF32I64 <$> A.arbitrary g
 
-fixedpointF32I64ScaleField :: Field
-fixedpointF32I64ScaleField = Field 6 0
+fixedpointF32I64ScaleField :: Field 6
+fixedpointF32I64ScaleField = field 0
 
 fixedpointF32I64ToBits :: FixedpointF32I64 -> Word32
 fixedpointF32I64ToBits val =
@@ -2728,7 +2744,7 @@ fixedpointF32I64ToBits val =
 
 mkFixedpointF32I64 :: Word32 -> FixedpointF32I64
 mkFixedpointF32I64 w =
-  FixedpointF32I64 (fromIntegral $ extract fixedpointF32I64ScaleField w)
+  FixedpointF32I64 (extract fixedpointF32I64ScaleField w)
 
 fixedpointF32I64Operand :: OperandPayload
 fixedpointF32I64Operand =
@@ -2737,7 +2753,7 @@ fixedpointF32I64Operand =
                  , opWordE = Just (varE 'fixedpointF32I64ToBits)
                  }
 
-data FixedpointF64I32 = FixedpointF64I32 { fixedpointF64I32Scale :: Word8
+data FixedpointF64I32 = FixedpointF64I32 { fixedpointF64I32Scale :: W.W 5
                                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FixedpointF64I32 where
@@ -2746,8 +2762,8 @@ instance PP.Pretty FixedpointF64I32 where
 instance A.Arbitrary FixedpointF64I32 where
   arbitrary g = FixedpointF64I32 <$> A.arbitrary g
 
-fixedpointF64I32ScaleField :: Field
-fixedpointF64I32ScaleField = Field 5 0
+fixedpointF64I32ScaleField :: Field 5
+fixedpointF64I32ScaleField = field 0
 
 fixedpointF64I32ToBits :: FixedpointF64I32 -> Word32
 fixedpointF64I32ToBits val =
@@ -2755,7 +2771,7 @@ fixedpointF64I32ToBits val =
 
 mkFixedpointF64I32 :: Word32 -> FixedpointF64I32
 mkFixedpointF64I32 w =
-  FixedpointF64I32 (fromIntegral $ extract fixedpointF64I32ScaleField w)
+  FixedpointF64I32 (extract fixedpointF64I32ScaleField w)
 
 fixedpointF64I32Operand :: OperandPayload
 fixedpointF64I32Operand =
@@ -2764,7 +2780,7 @@ fixedpointF64I32Operand =
                  , opWordE = Just (varE 'fixedpointF64I32ToBits)
                  }
 
-data FixedpointF64I64 = FixedpointF64I64 { fixedpointF64I64Scale :: Word8
+data FixedpointF64I64 = FixedpointF64I64 { fixedpointF64I64Scale :: W.W 6
                                          } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FixedpointF64I64 where
@@ -2773,8 +2789,8 @@ instance PP.Pretty FixedpointF64I64 where
 instance A.Arbitrary FixedpointF64I64 where
   arbitrary g = FixedpointF64I64 <$> A.arbitrary g
 
-fixedpointF64I64ScaleField :: Field
-fixedpointF64I64ScaleField = Field 6 0
+fixedpointF64I64ScaleField :: Field 6
+fixedpointF64I64ScaleField = field 0
 
 fixedpointF64I64ToBits :: FixedpointF64I64 -> Word32
 fixedpointF64I64ToBits val =
@@ -2782,7 +2798,7 @@ fixedpointF64I64ToBits val =
 
 mkFixedpointF64I64 :: Word32 -> FixedpointF64I64
 mkFixedpointF64I64 w =
-  FixedpointF64I64 (fromIntegral $ extract fixedpointF64I64ScaleField w)
+  FixedpointF64I64 (extract fixedpointF64I64ScaleField w)
 
 fixedpointF64I64Operand :: OperandPayload
 fixedpointF64I64Operand =
@@ -2791,7 +2807,7 @@ fixedpointF64I64Operand =
                  , opWordE = Just (varE 'fixedpointF64I64ToBits)
                  }
 
-data Fpimm8 = Fpimm8 { fpimm8Imm :: Word8
+data Fpimm8 = Fpimm8 { fpimm8Imm :: W.W 8
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Fpimm8 where
@@ -2800,8 +2816,8 @@ instance PP.Pretty Fpimm8 where
 instance A.Arbitrary Fpimm8 where
   arbitrary g = Fpimm8 <$> A.arbitrary g
 
-fpimm8ImmField :: Field
-fpimm8ImmField = Field 8 0
+fpimm8ImmField :: Field 8
+fpimm8ImmField = field 0
 
 fpimm8ToBits :: Fpimm8 -> Word32
 fpimm8ToBits val =
@@ -2809,7 +2825,7 @@ fpimm8ToBits val =
 
 mkFpimm8 :: Word32 -> Fpimm8
 mkFpimm8 w =
-  Fpimm8 (fromIntegral $ extract fpimm8ImmField w)
+  Fpimm8 (extract fpimm8ImmField w)
 
 fpimm8Operand :: OperandPayload
 fpimm8Operand =
@@ -2818,7 +2834,7 @@ fpimm8Operand =
                  , opWordE = Just (varE 'fpimm8ToBits)
                  }
 
-data Fpimm16 = Fpimm16 { fpimm16Imm :: Word8
+data Fpimm16 = Fpimm16 { fpimm16Imm :: W.W 8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Fpimm16 where
@@ -2827,8 +2843,8 @@ instance PP.Pretty Fpimm16 where
 instance A.Arbitrary Fpimm16 where
   arbitrary g = Fpimm16 <$> A.arbitrary g
 
-fpimm16ImmField :: Field
-fpimm16ImmField = Field 8 0
+fpimm16ImmField :: Field 8
+fpimm16ImmField = field 0
 
 fpimm16ToBits :: Fpimm16 -> Word32
 fpimm16ToBits val =
@@ -2836,7 +2852,7 @@ fpimm16ToBits val =
 
 mkFpimm16 :: Word32 -> Fpimm16
 mkFpimm16 w =
-  Fpimm16 (fromIntegral $ extract fpimm16ImmField w)
+  Fpimm16 (extract fpimm16ImmField w)
 
 fpimm16Operand :: OperandPayload
 fpimm16Operand =
@@ -2845,7 +2861,7 @@ fpimm16Operand =
                  , opWordE = Just (varE 'fpimm16ToBits)
                  }
 
-data Fpimm32 = Fpimm32 { fpimm32Imm :: Word8
+data Fpimm32 = Fpimm32 { fpimm32Imm :: W.W 8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Fpimm32 where
@@ -2854,8 +2870,8 @@ instance PP.Pretty Fpimm32 where
 instance A.Arbitrary Fpimm32 where
   arbitrary g = Fpimm32 <$> A.arbitrary g
 
-fpimm32ImmField :: Field
-fpimm32ImmField = Field 8 0
+fpimm32ImmField :: Field 8
+fpimm32ImmField = field 0
 
 fpimm32ToBits :: Fpimm32 -> Word32
 fpimm32ToBits val =
@@ -2863,7 +2879,7 @@ fpimm32ToBits val =
 
 mkFpimm32 :: Word32 -> Fpimm32
 mkFpimm32 w =
-  Fpimm32 (fromIntegral $ extract fpimm32ImmField w)
+  Fpimm32 (extract fpimm32ImmField w)
 
 fpimm32Operand :: OperandPayload
 fpimm32Operand =
@@ -2872,7 +2888,7 @@ fpimm32Operand =
                  , opWordE = Just (varE 'fpimm32ToBits)
                  }
 
-data Fpimm64 = Fpimm64 { fpimm64Imm :: Word8
+data Fpimm64 = Fpimm64 { fpimm64Imm :: W.W 8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Fpimm64 where
@@ -2881,8 +2897,8 @@ instance PP.Pretty Fpimm64 where
 instance A.Arbitrary Fpimm64 where
   arbitrary g = Fpimm64 <$> A.arbitrary g
 
-fpimm64ImmField :: Field
-fpimm64ImmField = Field 8 0
+fpimm64ImmField :: Field 8
+fpimm64ImmField = field 0
 
 fpimm64ToBits :: Fpimm64 -> Word32
 fpimm64ToBits val =
@@ -2890,7 +2906,7 @@ fpimm64ToBits val =
 
 mkFpimm64 :: Word32 -> Fpimm64
 mkFpimm64 w =
-  Fpimm64 (fromIntegral $ extract fpimm64ImmField w)
+  Fpimm64 (extract fpimm64ImmField w)
 
 fpimm64Operand :: OperandPayload
 fpimm64Operand =
@@ -2899,8 +2915,8 @@ fpimm64Operand =
                  , opWordE = Just (varE 'fpimm64ToBits)
                  }
 
-data Addshift64 = Addshift64 { addshift64Imm :: Word8
-                             , addshift64Shift :: Word8
+data Addshift64 = Addshift64 { addshift64Imm :: W.W 6
+                             , addshift64Shift :: W.W 2
                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Addshift64 where
@@ -2917,11 +2933,11 @@ instance PP.Pretty Addshift64 where
 instance A.Arbitrary Addshift64 where
   arbitrary g = Addshift64 <$> A.arbitrary g <*> A.arbitrary g
 
-addshift64ImmField :: Field
-addshift64ImmField = Field 6 0
+addshift64ImmField :: Field 6
+addshift64ImmField = field 0
 
-addshift64ShiftField :: Field
-addshift64ShiftField = Field 2 6
+addshift64ShiftField :: Field 2
+addshift64ShiftField = field 6
 
 addshift64ToBits :: Addshift64 -> Word32
 addshift64ToBits val =
@@ -2930,8 +2946,8 @@ addshift64ToBits val =
 
 mkAddshift64 :: Word32 -> Addshift64
 mkAddshift64 w =
-  Addshift64 (fromIntegral $ extract addshift64ImmField w)
-             (fromIntegral $ extract addshift64ShiftField w)
+  Addshift64 (extract addshift64ImmField w)
+             (extract addshift64ShiftField w)
 
 addshift64Operand :: OperandPayload
 addshift64Operand =
@@ -2940,7 +2956,7 @@ addshift64Operand =
                  , opWordE = Just (varE 'addshift64ToBits)
                  }
 
-data V64 = V64 { v64Reg :: Word8
+data V64 = V64 { v64Reg :: W.W 5
                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty V64 where
@@ -2949,8 +2965,8 @@ instance PP.Pretty V64 where
 instance A.Arbitrary V64 where
   arbitrary g = V64 <$> A.arbitrary g
 
-v64RegField :: Field
-v64RegField = Field 5 0
+v64RegField :: Field 5
+v64RegField = field 0
 
 v64ToBits :: V64 -> Word32
 v64ToBits val =
@@ -2958,7 +2974,7 @@ v64ToBits val =
 
 mkV64 :: Word32 -> V64
 mkV64 w =
-  V64 (fromIntegral $ extract v64RegField w)
+  V64 (extract v64RegField w)
 
 v64Operand :: OperandPayload
 v64Operand =
@@ -2967,7 +2983,7 @@ v64Operand =
                  , opWordE = Just (varE 'v64ToBits)
                  }
 
-data VecListFourb = VecListFourb { vecListFourbReg :: Word8
+data VecListFourb = VecListFourb { vecListFourbReg :: W.W 5
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListFourb where
@@ -2976,8 +2992,8 @@ instance PP.Pretty VecListFourb where
 instance A.Arbitrary VecListFourb where
   arbitrary g = VecListFourb <$> A.arbitrary g
 
-vecListFourbRegField :: Field
-vecListFourbRegField = Field 5 0
+vecListFourbRegField :: Field 5
+vecListFourbRegField = field 0
 
 vecListFourbToBits :: VecListFourb -> Word32
 vecListFourbToBits val =
@@ -2985,7 +3001,7 @@ vecListFourbToBits val =
 
 mkVecListFourb :: Word32 -> VecListFourb
 mkVecListFourb w =
-  VecListFourb (fromIntegral $ extract vecListFourbRegField w)
+  VecListFourb (extract vecListFourbRegField w)
 
 vecListFourbOperand :: OperandPayload
 vecListFourbOperand =
@@ -2994,7 +3010,7 @@ vecListFourbOperand =
                  , opWordE = Just (varE 'vecListFourbToBits)
                  }
 
-data VecListFourd = VecListFourd { vecListFourdReg :: Word8
+data VecListFourd = VecListFourd { vecListFourdReg :: W.W 5
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListFourd where
@@ -3003,8 +3019,8 @@ instance PP.Pretty VecListFourd where
 instance A.Arbitrary VecListFourd where
   arbitrary g = VecListFourd <$> A.arbitrary g
 
-vecListFourdRegField :: Field
-vecListFourdRegField = Field 5 0
+vecListFourdRegField :: Field 5
+vecListFourdRegField = field 0
 
 vecListFourdToBits :: VecListFourd -> Word32
 vecListFourdToBits val =
@@ -3012,7 +3028,7 @@ vecListFourdToBits val =
 
 mkVecListFourd :: Word32 -> VecListFourd
 mkVecListFourd w =
-  VecListFourd (fromIntegral $ extract vecListFourdRegField w)
+  VecListFourd (extract vecListFourdRegField w)
 
 vecListFourdOperand :: OperandPayload
 vecListFourdOperand =
@@ -3021,7 +3037,7 @@ vecListFourdOperand =
                  , opWordE = Just (varE 'vecListFourdToBits)
                  }
 
-data VecListFourh = VecListFourh { vecListFourhReg :: Word8
+data VecListFourh = VecListFourh { vecListFourhReg :: W.W 5
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListFourh where
@@ -3030,8 +3046,8 @@ instance PP.Pretty VecListFourh where
 instance A.Arbitrary VecListFourh where
   arbitrary g = VecListFourh <$> A.arbitrary g
 
-vecListFourhRegField :: Field
-vecListFourhRegField = Field 5 0
+vecListFourhRegField :: Field 5
+vecListFourhRegField = field 0
 
 vecListFourhToBits :: VecListFourh -> Word32
 vecListFourhToBits val =
@@ -3039,7 +3055,7 @@ vecListFourhToBits val =
 
 mkVecListFourh :: Word32 -> VecListFourh
 mkVecListFourh w =
-  VecListFourh (fromIntegral $ extract vecListFourhRegField w)
+  VecListFourh (extract vecListFourhRegField w)
 
 vecListFourhOperand :: OperandPayload
 vecListFourhOperand =
@@ -3048,7 +3064,7 @@ vecListFourhOperand =
                  , opWordE = Just (varE 'vecListFourhToBits)
                  }
 
-data VecListFours = VecListFours { vecListFoursReg :: Word8
+data VecListFours = VecListFours { vecListFoursReg :: W.W 5
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListFours where
@@ -3057,8 +3073,8 @@ instance PP.Pretty VecListFours where
 instance A.Arbitrary VecListFours where
   arbitrary g = VecListFours <$> A.arbitrary g
 
-vecListFoursRegField :: Field
-vecListFoursRegField = Field 5 0
+vecListFoursRegField :: Field 5
+vecListFoursRegField = field 0
 
 vecListFoursToBits :: VecListFours -> Word32
 vecListFoursToBits val =
@@ -3066,7 +3082,7 @@ vecListFoursToBits val =
 
 mkVecListFours :: Word32 -> VecListFours
 mkVecListFours w =
-  VecListFours (fromIntegral $ extract vecListFoursRegField w)
+  VecListFours (extract vecListFoursRegField w)
 
 vecListFoursOperand :: OperandPayload
 vecListFoursOperand =
@@ -3075,7 +3091,7 @@ vecListFoursOperand =
                  , opWordE = Just (varE 'vecListFoursToBits)
                  }
 
-data VecListOneb = VecListOneb { vecListOnebReg :: Word8
+data VecListOneb = VecListOneb { vecListOnebReg :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListOneb where
@@ -3084,8 +3100,8 @@ instance PP.Pretty VecListOneb where
 instance A.Arbitrary VecListOneb where
   arbitrary g = VecListOneb <$> A.arbitrary g
 
-vecListOnebRegField :: Field
-vecListOnebRegField = Field 5 0
+vecListOnebRegField :: Field 5
+vecListOnebRegField = field 0
 
 vecListOnebToBits :: VecListOneb -> Word32
 vecListOnebToBits val =
@@ -3093,7 +3109,7 @@ vecListOnebToBits val =
 
 mkVecListOneb :: Word32 -> VecListOneb
 mkVecListOneb w =
-  VecListOneb (fromIntegral $ extract vecListOnebRegField w)
+  VecListOneb (extract vecListOnebRegField w)
 
 vecListOnebOperand :: OperandPayload
 vecListOnebOperand =
@@ -3102,7 +3118,7 @@ vecListOnebOperand =
                  , opWordE = Just (varE 'vecListOnebToBits)
                  }
 
-data VecListOned = VecListOned { vecListOnedReg :: Word8
+data VecListOned = VecListOned { vecListOnedReg :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListOned where
@@ -3111,8 +3127,8 @@ instance PP.Pretty VecListOned where
 instance A.Arbitrary VecListOned where
   arbitrary g = VecListOned <$> A.arbitrary g
 
-vecListOnedRegField :: Field
-vecListOnedRegField = Field 5 0
+vecListOnedRegField :: Field 5
+vecListOnedRegField = field 0
 
 vecListOnedToBits :: VecListOned -> Word32
 vecListOnedToBits val =
@@ -3120,7 +3136,7 @@ vecListOnedToBits val =
 
 mkVecListOned :: Word32 -> VecListOned
 mkVecListOned w =
-  VecListOned (fromIntegral $ extract vecListOnedRegField w)
+  VecListOned (extract vecListOnedRegField w)
 
 vecListOnedOperand :: OperandPayload
 vecListOnedOperand =
@@ -3129,7 +3145,7 @@ vecListOnedOperand =
                  , opWordE = Just (varE 'vecListOnedToBits)
                  }
 
-data VecListOneh = VecListOneh { vecListOnehReg :: Word8
+data VecListOneh = VecListOneh { vecListOnehReg :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListOneh where
@@ -3138,8 +3154,8 @@ instance PP.Pretty VecListOneh where
 instance A.Arbitrary VecListOneh where
   arbitrary g = VecListOneh <$> A.arbitrary g
 
-vecListOnehRegField :: Field
-vecListOnehRegField = Field 5 0
+vecListOnehRegField :: Field 5
+vecListOnehRegField = field 0
 
 vecListOnehToBits :: VecListOneh -> Word32
 vecListOnehToBits val =
@@ -3147,7 +3163,7 @@ vecListOnehToBits val =
 
 mkVecListOneh :: Word32 -> VecListOneh
 mkVecListOneh w =
-  VecListOneh (fromIntegral $ extract vecListOnehRegField w)
+  VecListOneh (extract vecListOnehRegField w)
 
 vecListOnehOperand :: OperandPayload
 vecListOnehOperand =
@@ -3156,7 +3172,7 @@ vecListOnehOperand =
                  , opWordE = Just (varE 'vecListOnehToBits)
                  }
 
-data VecListOnes = VecListOnes { vecListOnesReg :: Word8
+data VecListOnes = VecListOnes { vecListOnesReg :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListOnes where
@@ -3165,8 +3181,8 @@ instance PP.Pretty VecListOnes where
 instance A.Arbitrary VecListOnes where
   arbitrary g = VecListOnes <$> A.arbitrary g
 
-vecListOnesRegField :: Field
-vecListOnesRegField = Field 5 0
+vecListOnesRegField :: Field 5
+vecListOnesRegField = field 0
 
 vecListOnesToBits :: VecListOnes -> Word32
 vecListOnesToBits val =
@@ -3174,7 +3190,7 @@ vecListOnesToBits val =
 
 mkVecListOnes :: Word32 -> VecListOnes
 mkVecListOnes w =
-  VecListOnes (fromIntegral $ extract vecListOnesRegField w)
+  VecListOnes (extract vecListOnesRegField w)
 
 vecListOnesOperand :: OperandPayload
 vecListOnesOperand =
@@ -3183,7 +3199,7 @@ vecListOnesOperand =
                  , opWordE = Just (varE 'vecListOnesToBits)
                  }
 
-data VecListThreeb = VecListThreeb { vecListThreebReg :: Word8
+data VecListThreeb = VecListThreeb { vecListThreebReg :: W.W 5
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListThreeb where
@@ -3192,8 +3208,8 @@ instance PP.Pretty VecListThreeb where
 instance A.Arbitrary VecListThreeb where
   arbitrary g = VecListThreeb <$> A.arbitrary g
 
-vecListThreebRegField :: Field
-vecListThreebRegField = Field 5 0
+vecListThreebRegField :: Field 5
+vecListThreebRegField = field 0
 
 vecListThreebToBits :: VecListThreeb -> Word32
 vecListThreebToBits val =
@@ -3201,7 +3217,7 @@ vecListThreebToBits val =
 
 mkVecListThreeb :: Word32 -> VecListThreeb
 mkVecListThreeb w =
-  VecListThreeb (fromIntegral $ extract vecListThreebRegField w)
+  VecListThreeb (extract vecListThreebRegField w)
 
 vecListThreebOperand :: OperandPayload
 vecListThreebOperand =
@@ -3210,7 +3226,7 @@ vecListThreebOperand =
                  , opWordE = Just (varE 'vecListThreebToBits)
                  }
 
-data VecListThreed = VecListThreed { vecListThreedReg :: Word8
+data VecListThreed = VecListThreed { vecListThreedReg :: W.W 5
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListThreed where
@@ -3219,8 +3235,8 @@ instance PP.Pretty VecListThreed where
 instance A.Arbitrary VecListThreed where
   arbitrary g = VecListThreed <$> A.arbitrary g
 
-vecListThreedRegField :: Field
-vecListThreedRegField = Field 5 0
+vecListThreedRegField :: Field 5
+vecListThreedRegField = field 0
 
 vecListThreedToBits :: VecListThreed -> Word32
 vecListThreedToBits val =
@@ -3228,7 +3244,7 @@ vecListThreedToBits val =
 
 mkVecListThreed :: Word32 -> VecListThreed
 mkVecListThreed w =
-  VecListThreed (fromIntegral $ extract vecListThreedRegField w)
+  VecListThreed (extract vecListThreedRegField w)
 
 vecListThreedOperand :: OperandPayload
 vecListThreedOperand =
@@ -3237,7 +3253,7 @@ vecListThreedOperand =
                  , opWordE = Just (varE 'vecListThreedToBits)
                  }
 
-data VecListThreeh = VecListThreeh { vecListThreehReg :: Word8
+data VecListThreeh = VecListThreeh { vecListThreehReg :: W.W 5
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListThreeh where
@@ -3246,8 +3262,8 @@ instance PP.Pretty VecListThreeh where
 instance A.Arbitrary VecListThreeh where
   arbitrary g = VecListThreeh <$> A.arbitrary g
 
-vecListThreehRegField :: Field
-vecListThreehRegField = Field 5 0
+vecListThreehRegField :: Field 5
+vecListThreehRegField = field 0
 
 vecListThreehToBits :: VecListThreeh -> Word32
 vecListThreehToBits val =
@@ -3255,7 +3271,7 @@ vecListThreehToBits val =
 
 mkVecListThreeh :: Word32 -> VecListThreeh
 mkVecListThreeh w =
-  VecListThreeh (fromIntegral $ extract vecListThreehRegField w)
+  VecListThreeh (extract vecListThreehRegField w)
 
 vecListThreehOperand :: OperandPayload
 vecListThreehOperand =
@@ -3264,7 +3280,7 @@ vecListThreehOperand =
                  , opWordE = Just (varE 'vecListThreehToBits)
                  }
 
-data VecListThrees = VecListThrees { vecListThreesReg :: Word8
+data VecListThrees = VecListThrees { vecListThreesReg :: W.W 5
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListThrees where
@@ -3273,8 +3289,8 @@ instance PP.Pretty VecListThrees where
 instance A.Arbitrary VecListThrees where
   arbitrary g = VecListThrees <$> A.arbitrary g
 
-vecListThreesRegField :: Field
-vecListThreesRegField = Field 5 0
+vecListThreesRegField :: Field 5
+vecListThreesRegField = field 0
 
 vecListThreesToBits :: VecListThrees -> Word32
 vecListThreesToBits val =
@@ -3282,7 +3298,7 @@ vecListThreesToBits val =
 
 mkVecListThrees :: Word32 -> VecListThrees
 mkVecListThrees w =
-  VecListThrees (fromIntegral $ extract vecListThreesRegField w)
+  VecListThrees (extract vecListThreesRegField w)
 
 vecListThreesOperand :: OperandPayload
 vecListThreesOperand =
@@ -3291,7 +3307,7 @@ vecListThreesOperand =
                  , opWordE = Just (varE 'vecListThreesToBits)
                  }
 
-data VecListTwob = VecListTwob { vecListTwobReg :: Word8
+data VecListTwob = VecListTwob { vecListTwobReg :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListTwob where
@@ -3300,8 +3316,8 @@ instance PP.Pretty VecListTwob where
 instance A.Arbitrary VecListTwob where
   arbitrary g = VecListTwob <$> A.arbitrary g
 
-vecListTwobRegField :: Field
-vecListTwobRegField = Field 5 0
+vecListTwobRegField :: Field 5
+vecListTwobRegField = field 0
 
 vecListTwobToBits :: VecListTwob -> Word32
 vecListTwobToBits val =
@@ -3309,7 +3325,7 @@ vecListTwobToBits val =
 
 mkVecListTwob :: Word32 -> VecListTwob
 mkVecListTwob w =
-  VecListTwob (fromIntegral $ extract vecListTwobRegField w)
+  VecListTwob (extract vecListTwobRegField w)
 
 vecListTwobOperand :: OperandPayload
 vecListTwobOperand =
@@ -3318,7 +3334,7 @@ vecListTwobOperand =
                  , opWordE = Just (varE 'vecListTwobToBits)
                  }
 
-data VecListTwod = VecListTwod { vecListTwodReg :: Word8
+data VecListTwod = VecListTwod { vecListTwodReg :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListTwod where
@@ -3327,8 +3343,8 @@ instance PP.Pretty VecListTwod where
 instance A.Arbitrary VecListTwod where
   arbitrary g = VecListTwod <$> A.arbitrary g
 
-vecListTwodRegField :: Field
-vecListTwodRegField = Field 5 0
+vecListTwodRegField :: Field 5
+vecListTwodRegField = field 0
 
 vecListTwodToBits :: VecListTwod -> Word32
 vecListTwodToBits val =
@@ -3336,7 +3352,7 @@ vecListTwodToBits val =
 
 mkVecListTwod :: Word32 -> VecListTwod
 mkVecListTwod w =
-  VecListTwod (fromIntegral $ extract vecListTwodRegField w)
+  VecListTwod (extract vecListTwodRegField w)
 
 vecListTwodOperand :: OperandPayload
 vecListTwodOperand =
@@ -3345,7 +3361,7 @@ vecListTwodOperand =
                  , opWordE = Just (varE 'vecListTwodToBits)
                  }
 
-data VecListTwoh = VecListTwoh { vecListTwohReg :: Word8
+data VecListTwoh = VecListTwoh { vecListTwohReg :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListTwoh where
@@ -3354,8 +3370,8 @@ instance PP.Pretty VecListTwoh where
 instance A.Arbitrary VecListTwoh where
   arbitrary g = VecListTwoh <$> A.arbitrary g
 
-vecListTwohRegField :: Field
-vecListTwohRegField = Field 5 0
+vecListTwohRegField :: Field 5
+vecListTwohRegField = field 0
 
 vecListTwohToBits :: VecListTwoh -> Word32
 vecListTwohToBits val =
@@ -3363,7 +3379,7 @@ vecListTwohToBits val =
 
 mkVecListTwoh :: Word32 -> VecListTwoh
 mkVecListTwoh w =
-  VecListTwoh (fromIntegral $ extract vecListTwohRegField w)
+  VecListTwoh (extract vecListTwohRegField w)
 
 vecListTwohOperand :: OperandPayload
 vecListTwohOperand =
@@ -3372,7 +3388,7 @@ vecListTwohOperand =
                  , opWordE = Just (varE 'vecListTwohToBits)
                  }
 
-data VecListTwos = VecListTwos { vecListTwosReg :: Word8
+data VecListTwos = VecListTwos { vecListTwosReg :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecListTwos where
@@ -3381,8 +3397,8 @@ instance PP.Pretty VecListTwos where
 instance A.Arbitrary VecListTwos where
   arbitrary g = VecListTwos <$> A.arbitrary g
 
-vecListTwosRegField :: Field
-vecListTwosRegField = Field 5 0
+vecListTwosRegField :: Field 5
+vecListTwosRegField = field 0
 
 vecListTwosToBits :: VecListTwos -> Word32
 vecListTwosToBits val =
@@ -3390,7 +3406,7 @@ vecListTwosToBits val =
 
 mkVecListTwos :: Word32 -> VecListTwos
 mkVecListTwos w =
-  VecListTwos (fromIntegral $ extract vecListTwosRegField w)
+  VecListTwos (extract vecListTwosRegField w)
 
 vecListTwosOperand :: OperandPayload
 vecListTwosOperand =
@@ -3399,7 +3415,7 @@ vecListTwosOperand =
                  , opWordE = Just (varE 'vecListTwosToBits)
                  }
 
-data VectorIndexD = VectorIndexD { vectorIndexDVal :: Word8
+data VectorIndexD = VectorIndexD { vectorIndexDVal :: W.W 1
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VectorIndexD where
@@ -3408,8 +3424,8 @@ instance PP.Pretty VectorIndexD where
 instance A.Arbitrary VectorIndexD where
   arbitrary g = VectorIndexD <$> A.arbitrary g
 
-vectorIndexDValField :: Field
-vectorIndexDValField = Field 1 0
+vectorIndexDValField :: Field 1
+vectorIndexDValField = field 0
 
 vectorIndexDToBits :: VectorIndexD -> Word32
 vectorIndexDToBits val =
@@ -3417,7 +3433,7 @@ vectorIndexDToBits val =
 
 mkVectorIndexD :: Word32 -> VectorIndexD
 mkVectorIndexD w =
-  VectorIndexD (fromIntegral $ extract vectorIndexDValField w)
+  VectorIndexD (extract vectorIndexDValField w)
 
 vectorIndexDOperand :: OperandPayload
 vectorIndexDOperand =
@@ -3426,7 +3442,7 @@ vectorIndexDOperand =
                  , opWordE = Just (varE 'vectorIndexDToBits)
                  }
 
-data VectorIndexB = VectorIndexB { vectorIndexBVal :: Word8
+data VectorIndexB = VectorIndexB { vectorIndexBVal :: W.W 3
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VectorIndexB where
@@ -3435,8 +3451,8 @@ instance PP.Pretty VectorIndexB where
 instance A.Arbitrary VectorIndexB where
   arbitrary g = VectorIndexB <$> A.arbitrary g
 
-vectorIndexBValField :: Field
-vectorIndexBValField = Field 3 0
+vectorIndexBValField :: Field 3
+vectorIndexBValField = field 0
 
 vectorIndexBToBits :: VectorIndexB -> Word32
 vectorIndexBToBits val =
@@ -3444,7 +3460,7 @@ vectorIndexBToBits val =
 
 mkVectorIndexB :: Word32 -> VectorIndexB
 mkVectorIndexB w =
-  VectorIndexB (fromIntegral $ extract vectorIndexBValField w)
+  VectorIndexB (extract vectorIndexBValField w)
 
 vectorIndexBOperand :: OperandPayload
 vectorIndexBOperand =
@@ -3453,7 +3469,7 @@ vectorIndexBOperand =
                  , opWordE = Just (varE 'vectorIndexBToBits)
                  }
 
-data VectorIndexH = VectorIndexH { vectorIndexHVal :: Word8
+data VectorIndexH = VectorIndexH { vectorIndexHVal :: W.W 3
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VectorIndexH where
@@ -3462,8 +3478,8 @@ instance PP.Pretty VectorIndexH where
 instance A.Arbitrary VectorIndexH where
   arbitrary g = VectorIndexH <$> A.arbitrary g
 
-vectorIndexHValField :: Field
-vectorIndexHValField = Field 3 0
+vectorIndexHValField :: Field 3
+vectorIndexHValField = field 0
 
 vectorIndexHToBits :: VectorIndexH -> Word32
 vectorIndexHToBits val =
@@ -3471,7 +3487,7 @@ vectorIndexHToBits val =
 
 mkVectorIndexH :: Word32 -> VectorIndexH
 mkVectorIndexH w =
-  VectorIndexH (fromIntegral $ extract vectorIndexHValField w)
+  VectorIndexH (extract vectorIndexHValField w)
 
 vectorIndexHOperand :: OperandPayload
 vectorIndexHOperand =
@@ -3480,7 +3496,7 @@ vectorIndexHOperand =
                  , opWordE = Just (varE 'vectorIndexHToBits)
                  }
 
-data VectorIndexS = VectorIndexS { vectorIndexSVal :: Word8
+data VectorIndexS = VectorIndexS { vectorIndexSVal :: W.W 2
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VectorIndexS where
@@ -3489,8 +3505,8 @@ instance PP.Pretty VectorIndexS where
 instance A.Arbitrary VectorIndexS where
   arbitrary g = VectorIndexS <$> A.arbitrary g
 
-vectorIndexSValField :: Field
-vectorIndexSValField = Field 2 0
+vectorIndexSValField :: Field 2
+vectorIndexSValField = field 0
 
 vectorIndexSToBits :: VectorIndexS -> Word32
 vectorIndexSToBits val =
@@ -3498,7 +3514,7 @@ vectorIndexSToBits val =
 
 mkVectorIndexS :: Word32 -> VectorIndexS
 mkVectorIndexS w =
-  VectorIndexS (fromIntegral $ extract vectorIndexSValField w)
+  VectorIndexS (extract vectorIndexSValField w)
 
 vectorIndexSOperand :: OperandPayload
 vectorIndexSOperand =
@@ -3507,7 +3523,7 @@ vectorIndexSOperand =
                  , opWordE = Just (varE 'vectorIndexSToBits)
                  }
 
-data Simdimmtype10 = Simdimmtype10 { simdimmtype10Imm :: Word8
+data Simdimmtype10 = Simdimmtype10 { simdimmtype10Imm :: W.W 8
                                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Simdimmtype10 where
@@ -3516,8 +3532,8 @@ instance PP.Pretty Simdimmtype10 where
 instance A.Arbitrary Simdimmtype10 where
   arbitrary g = Simdimmtype10 <$> A.arbitrary g
 
-simdimmtype10ImmField :: Field
-simdimmtype10ImmField = Field 8 0
+simdimmtype10ImmField :: Field 8
+simdimmtype10ImmField = field 0
 
 simdimmtype10ToBits :: Simdimmtype10 -> Word32
 simdimmtype10ToBits val =
@@ -3525,7 +3541,7 @@ simdimmtype10ToBits val =
 
 mkSimdimmtype10 :: Word32 -> Simdimmtype10
 mkSimdimmtype10 w =
-  Simdimmtype10 (fromIntegral $ extract simdimmtype10ImmField w)
+  Simdimmtype10 (extract simdimmtype10ImmField w)
 
 simdimmtype10Operand :: OperandPayload
 simdimmtype10Operand =
@@ -3534,7 +3550,7 @@ simdimmtype10Operand =
                  , opWordE = Just (varE 'simdimmtype10ToBits)
                  }
 
-data VecshiftL16 = VecshiftL16 { vecshiftL16Imm :: Word8
+data VecshiftL16 = VecshiftL16 { vecshiftL16Imm :: W.W 4
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftL16 where
@@ -3543,8 +3559,8 @@ instance PP.Pretty VecshiftL16 where
 instance A.Arbitrary VecshiftL16 where
   arbitrary g = VecshiftL16 <$> A.arbitrary g
 
-vecshiftL16ImmField :: Field
-vecshiftL16ImmField = Field 4 0
+vecshiftL16ImmField :: Field 4
+vecshiftL16ImmField = field 0
 
 vecshiftL16ToBits :: VecshiftL16 -> Word32
 vecshiftL16ToBits val =
@@ -3552,7 +3568,7 @@ vecshiftL16ToBits val =
 
 mkVecshiftL16 :: Word32 -> VecshiftL16
 mkVecshiftL16 w =
-  VecshiftL16 (fromIntegral $ extract vecshiftL16ImmField w)
+  VecshiftL16 (extract vecshiftL16ImmField w)
 
 vecshiftL16Operand :: OperandPayload
 vecshiftL16Operand =
@@ -3561,7 +3577,7 @@ vecshiftL16Operand =
                  , opWordE = Just (varE 'vecshiftL16ToBits)
                  }
 
-data VecshiftL8 = VecshiftL8 { vecshiftL8Imm :: Word8
+data VecshiftL8 = VecshiftL8 { vecshiftL8Imm :: W.W 3
                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftL8 where
@@ -3570,8 +3586,8 @@ instance PP.Pretty VecshiftL8 where
 instance A.Arbitrary VecshiftL8 where
   arbitrary g = VecshiftL8 <$> A.arbitrary g
 
-vecshiftL8ImmField :: Field
-vecshiftL8ImmField = Field 3 0
+vecshiftL8ImmField :: Field 3
+vecshiftL8ImmField = field 0
 
 vecshiftL8ToBits :: VecshiftL8 -> Word32
 vecshiftL8ToBits val =
@@ -3579,7 +3595,7 @@ vecshiftL8ToBits val =
 
 mkVecshiftL8 :: Word32 -> VecshiftL8
 mkVecshiftL8 w =
-  VecshiftL8 (fromIntegral $ extract vecshiftL8ImmField w)
+  VecshiftL8 (extract vecshiftL8ImmField w)
 
 vecshiftL8Operand :: OperandPayload
 vecshiftL8Operand =
@@ -3588,7 +3604,7 @@ vecshiftL8Operand =
                  , opWordE = Just (varE 'vecshiftL8ToBits)
                  }
 
-data VecshiftL32 = VecshiftL32 { vecshiftL32Imm :: Word8
+data VecshiftL32 = VecshiftL32 { vecshiftL32Imm :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftL32 where
@@ -3597,8 +3613,8 @@ instance PP.Pretty VecshiftL32 where
 instance A.Arbitrary VecshiftL32 where
   arbitrary g = VecshiftL32 <$> A.arbitrary g
 
-vecshiftL32ImmField :: Field
-vecshiftL32ImmField = Field 5 0
+vecshiftL32ImmField :: Field 5
+vecshiftL32ImmField = field 0
 
 vecshiftL32ToBits :: VecshiftL32 -> Word32
 vecshiftL32ToBits val =
@@ -3606,7 +3622,7 @@ vecshiftL32ToBits val =
 
 mkVecshiftL32 :: Word32 -> VecshiftL32
 mkVecshiftL32 w =
-  VecshiftL32 (fromIntegral $ extract vecshiftL32ImmField w)
+  VecshiftL32 (extract vecshiftL32ImmField w)
 
 vecshiftL32Operand :: OperandPayload
 vecshiftL32Operand =
@@ -3615,7 +3631,7 @@ vecshiftL32Operand =
                  , opWordE = Just (varE 'vecshiftL32ToBits)
                  }
 
-data VecshiftL64 = VecshiftL64 { vecshiftL64Imm :: Word8
+data VecshiftL64 = VecshiftL64 { vecshiftL64Imm :: W.W 6
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftL64 where
@@ -3624,8 +3640,8 @@ instance PP.Pretty VecshiftL64 where
 instance A.Arbitrary VecshiftL64 where
   arbitrary g = VecshiftL64 <$> A.arbitrary g
 
-vecshiftL64ImmField :: Field
-vecshiftL64ImmField = Field 6 0
+vecshiftL64ImmField :: Field 6
+vecshiftL64ImmField = field 0
 
 vecshiftL64ToBits :: VecshiftL64 -> Word32
 vecshiftL64ToBits val =
@@ -3633,7 +3649,7 @@ vecshiftL64ToBits val =
 
 mkVecshiftL64 :: Word32 -> VecshiftL64
 mkVecshiftL64 w =
-  VecshiftL64 (fromIntegral $ extract vecshiftL64ImmField w)
+  VecshiftL64 (extract vecshiftL64ImmField w)
 
 vecshiftL64Operand :: OperandPayload
 vecshiftL64Operand =
@@ -3642,7 +3658,7 @@ vecshiftL64Operand =
                  , opWordE = Just (varE 'vecshiftL64ToBits)
                  }
 
-data VecshiftR16 = VecshiftR16 { vecshiftR16Imm :: Word8
+data VecshiftR16 = VecshiftR16 { vecshiftR16Imm :: W.W 4
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftR16 where
@@ -3651,8 +3667,8 @@ instance PP.Pretty VecshiftR16 where
 instance A.Arbitrary VecshiftR16 where
   arbitrary g = VecshiftR16 <$> A.arbitrary g
 
-vecshiftR16ImmField :: Field
-vecshiftR16ImmField = Field 4 0
+vecshiftR16ImmField :: Field 4
+vecshiftR16ImmField = field 0
 
 vecshiftR16ToBits :: VecshiftR16 -> Word32
 vecshiftR16ToBits val =
@@ -3660,7 +3676,7 @@ vecshiftR16ToBits val =
 
 mkVecshiftR16 :: Word32 -> VecshiftR16
 mkVecshiftR16 w =
-  VecshiftR16 (fromIntegral $ extract vecshiftR16ImmField w)
+  VecshiftR16 (extract vecshiftR16ImmField w)
 
 vecshiftR16Operand :: OperandPayload
 vecshiftR16Operand =
@@ -3669,7 +3685,7 @@ vecshiftR16Operand =
                  , opWordE = Just (varE 'vecshiftR16ToBits)
                  }
 
-data VecshiftR64 = VecshiftR64 { vecshiftR64Imm :: Word8
+data VecshiftR64 = VecshiftR64 { vecshiftR64Imm :: W.W 6
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftR64 where
@@ -3680,8 +3696,8 @@ instance PP.Pretty VecshiftR64 where
 instance A.Arbitrary VecshiftR64 where
   arbitrary g = VecshiftR64 <$> A.arbitrary g
 
-vecshiftR64ImmField :: Field
-vecshiftR64ImmField = Field 6 0
+vecshiftR64ImmField :: Field 6
+vecshiftR64ImmField = field 0
 
 vecshiftR64ToBits :: VecshiftR64 -> Word32
 vecshiftR64ToBits val =
@@ -3689,7 +3705,7 @@ vecshiftR64ToBits val =
 
 mkVecshiftR64 :: Word32 -> VecshiftR64
 mkVecshiftR64 w =
-  VecshiftR64 (fromIntegral $ extract vecshiftR64ImmField w)
+  VecshiftR64 (extract vecshiftR64ImmField w)
 
 vecshiftR64Operand :: OperandPayload
 vecshiftR64Operand =
@@ -3698,7 +3714,7 @@ vecshiftR64Operand =
                  , opWordE = Just (varE 'vecshiftR64ToBits)
                  }
 
-data VecshiftR32 = VecshiftR32 { vecshiftR32Imm :: Word8
+data VecshiftR32 = VecshiftR32 { vecshiftR32Imm :: W.W 5
                                } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftR32 where
@@ -3707,8 +3723,8 @@ instance PP.Pretty VecshiftR32 where
 instance A.Arbitrary VecshiftR32 where
   arbitrary g = VecshiftR32 <$> A.arbitrary g
 
-vecshiftR32ImmField :: Field
-vecshiftR32ImmField = Field 5 0
+vecshiftR32ImmField :: Field 5
+vecshiftR32ImmField = field 0
 
 vecshiftR32ToBits :: VecshiftR32 -> Word32
 vecshiftR32ToBits val =
@@ -3716,7 +3732,7 @@ vecshiftR32ToBits val =
 
 mkVecshiftR32 :: Word32 -> VecshiftR32
 mkVecshiftR32 w =
-  VecshiftR32 (fromIntegral $ extract vecshiftR32ImmField w)
+  VecshiftR32 (extract vecshiftR32ImmField w)
 
 vecshiftR32Operand :: OperandPayload
 vecshiftR32Operand =
@@ -3725,7 +3741,7 @@ vecshiftR32Operand =
                  , opWordE = Just (varE 'vecshiftR32ToBits)
                  }
 
-data VecshiftR8 = VecshiftR8 { vecshiftR8Imm :: Word8
+data VecshiftR8 = VecshiftR8 { vecshiftR8Imm :: W.W 3
                              } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftR8 where
@@ -3734,8 +3750,8 @@ instance PP.Pretty VecshiftR8 where
 instance A.Arbitrary VecshiftR8 where
   arbitrary g = VecshiftR8 <$> A.arbitrary g
 
-vecshiftR8ImmField :: Field
-vecshiftR8ImmField = Field 3 0
+vecshiftR8ImmField :: Field 3
+vecshiftR8ImmField = field 0
 
 vecshiftR8ToBits :: VecshiftR8 -> Word32
 vecshiftR8ToBits val =
@@ -3743,7 +3759,7 @@ vecshiftR8ToBits val =
 
 mkVecshiftR8 :: Word32 -> VecshiftR8
 mkVecshiftR8 w =
-  VecshiftR8 (fromIntegral $ extract vecshiftR8ImmField w)
+  VecshiftR8 (extract vecshiftR8ImmField w)
 
 vecshiftR8Operand :: OperandPayload
 vecshiftR8Operand =
@@ -3752,7 +3768,7 @@ vecshiftR8Operand =
                  , opWordE = Just (varE 'vecshiftR8ToBits)
                  }
 
-data I32imm = I32imm { i32immImm :: Word8
+data I32imm = I32imm { i32immImm :: W.W 4
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty I32imm where
@@ -3761,8 +3777,8 @@ instance PP.Pretty I32imm where
 instance A.Arbitrary I32imm where
   arbitrary g = I32imm <$> A.arbitrary g
 
-i32immImmField :: Field
-i32immImmField = Field 4 0
+i32immImmField :: Field 4
+i32immImmField = field 0
 
 i32immToBits :: I32imm -> Word32
 i32immToBits val =
@@ -3770,7 +3786,7 @@ i32immToBits val =
 
 mkI32imm :: Word32 -> I32imm
 mkI32imm w =
-  I32imm (fromIntegral $ extract i32immImmField w)
+  I32imm (extract i32immImmField w)
 
 i32immOperand :: OperandPayload
 i32immOperand =
@@ -3779,7 +3795,7 @@ i32immOperand =
                  , opWordE = Just (varE 'i32immToBits)
                  }
 
-data Imm0255 = Imm0255 { imm0255Imm :: Word8
+data Imm0255 = Imm0255 { imm0255Imm :: W.W 8
                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm0255 where
@@ -3788,8 +3804,8 @@ instance PP.Pretty Imm0255 where
 instance A.Arbitrary Imm0255 where
   arbitrary g = Imm0255 <$> A.arbitrary g
 
-imm0255ImmField :: Field
-imm0255ImmField = Field 8 0
+imm0255ImmField :: Field 8
+imm0255ImmField = field 0
 
 imm0255ToBits :: Imm0255 -> Word32
 imm0255ToBits val =
@@ -3797,7 +3813,7 @@ imm0255ToBits val =
 
 mkImm0255 :: Word32 -> Imm0255
 mkImm0255 w =
-  Imm0255 (fromIntegral $ extract imm0255ImmField w)
+  Imm0255 (extract imm0255ImmField w)
 
 imm0255Operand :: OperandPayload
 imm0255Operand =
@@ -3806,7 +3822,7 @@ imm0255Operand =
                  , opWordE = Just (varE 'imm0255ToBits)
                  }
 
-data LogicalVecHwShift = LogicalVecHwShift { logicalVecHwShiftVal :: Word8
+data LogicalVecHwShift = LogicalVecHwShift { logicalVecHwShiftVal :: W.W 1
                                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty LogicalVecHwShift where
@@ -3815,8 +3831,8 @@ instance PP.Pretty LogicalVecHwShift where
 instance A.Arbitrary LogicalVecHwShift where
   arbitrary g = LogicalVecHwShift <$> A.arbitrary g
 
-logicalVecHwShiftValField :: Field
-logicalVecHwShiftValField = Field 1 0
+logicalVecHwShiftValField :: Field 1
+logicalVecHwShiftValField = field 0
 
 logicalVecHwShiftToBits :: LogicalVecHwShift -> Word32
 logicalVecHwShiftToBits val =
@@ -3824,7 +3840,7 @@ logicalVecHwShiftToBits val =
 
 mkLogicalVecHwShift :: Word32 -> LogicalVecHwShift
 mkLogicalVecHwShift w =
-  LogicalVecHwShift (fromIntegral $ extract logicalVecHwShiftValField w)
+  LogicalVecHwShift (extract logicalVecHwShiftValField w)
 
 logicalVecHwShiftOperand :: OperandPayload
 logicalVecHwShiftOperand =
@@ -3833,7 +3849,7 @@ logicalVecHwShiftOperand =
                  , opWordE = Just (varE 'logicalVecHwShiftToBits)
                  }
 
-data LogicalVecShift = LogicalVecShift { logicalVecShiftVal :: Word8
+data LogicalVecShift = LogicalVecShift { logicalVecShiftVal :: W.W 2
                                        } deriving (Eq, Ord, Show)
 
 instance PP.Pretty LogicalVecShift where
@@ -3842,8 +3858,8 @@ instance PP.Pretty LogicalVecShift where
 instance A.Arbitrary LogicalVecShift where
   arbitrary g = LogicalVecShift <$> A.arbitrary g
 
-logicalVecShiftValField :: Field
-logicalVecShiftValField = Field 2 0
+logicalVecShiftValField :: Field 2
+logicalVecShiftValField = field 0
 
 logicalVecShiftToBits :: LogicalVecShift -> Word32
 logicalVecShiftToBits val =
@@ -3851,7 +3867,7 @@ logicalVecShiftToBits val =
 
 mkLogicalVecShift :: Word32 -> LogicalVecShift
 mkLogicalVecShift w =
-  LogicalVecShift (fromIntegral $ extract logicalVecShiftValField w)
+  LogicalVecShift (extract logicalVecShiftValField w)
 
 logicalVecShiftOperand :: OperandPayload
 logicalVecShiftOperand =
@@ -3860,7 +3876,7 @@ logicalVecShiftOperand =
                  , opWordE = Just (varE 'logicalVecShiftToBits)
                  }
 
-data MoveVecShift = MoveVecShift { moveVecShiftVal :: Word8
+data MoveVecShift = MoveVecShift { moveVecShiftVal :: W.W 1
                                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty MoveVecShift where
@@ -3869,8 +3885,8 @@ instance PP.Pretty MoveVecShift where
 instance A.Arbitrary MoveVecShift where
   arbitrary g = MoveVecShift <$> A.arbitrary g
 
-moveVecShiftValField :: Field
-moveVecShiftValField = Field 1 0
+moveVecShiftValField :: Field 1
+moveVecShiftValField = field 0
 
 moveVecShiftToBits :: MoveVecShift -> Word32
 moveVecShiftToBits val =
@@ -3878,7 +3894,7 @@ moveVecShiftToBits val =
 
 mkMoveVecShift :: Word32 -> MoveVecShift
 mkMoveVecShift w =
-  MoveVecShift (fromIntegral $ extract moveVecShiftValField w)
+  MoveVecShift (extract moveVecShiftValField w)
 
 moveVecShiftOperand :: OperandPayload
 moveVecShiftOperand =
@@ -3887,7 +3903,7 @@ moveVecShiftOperand =
                  , opWordE = Just (varE 'moveVecShiftToBits)
                  }
 
-data VecshiftR16Narrow = VecshiftR16Narrow { vecshiftR16NarrowImm :: Word8
+data VecshiftR16Narrow = VecshiftR16Narrow { vecshiftR16NarrowImm :: W.W 3
                                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftR16Narrow where
@@ -3896,8 +3912,8 @@ instance PP.Pretty VecshiftR16Narrow where
 instance A.Arbitrary VecshiftR16Narrow where
   arbitrary g = VecshiftR16Narrow <$> A.arbitrary g
 
-vecshiftR16NarrowImmField :: Field
-vecshiftR16NarrowImmField = Field 3 0
+vecshiftR16NarrowImmField :: Field 3
+vecshiftR16NarrowImmField = field 0
 
 vecshiftR16NarrowToBits :: VecshiftR16Narrow -> Word32
 vecshiftR16NarrowToBits val =
@@ -3905,7 +3921,7 @@ vecshiftR16NarrowToBits val =
 
 mkVecshiftR16Narrow :: Word32 -> VecshiftR16Narrow
 mkVecshiftR16Narrow w =
-  VecshiftR16Narrow (fromIntegral $ extract vecshiftR16NarrowImmField w)
+  VecshiftR16Narrow (extract vecshiftR16NarrowImmField w)
 
 vecshiftR16NarrowOperand :: OperandPayload
 vecshiftR16NarrowOperand =
@@ -3914,7 +3930,7 @@ vecshiftR16NarrowOperand =
                  , opWordE = Just (varE 'vecshiftR16NarrowToBits)
                  }
 
-data VecshiftR32Narrow = VecshiftR32Narrow { vecshiftR32NarrowImm :: Word8
+data VecshiftR32Narrow = VecshiftR32Narrow { vecshiftR32NarrowImm :: W.W 4
                                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftR32Narrow where
@@ -3923,8 +3939,8 @@ instance PP.Pretty VecshiftR32Narrow where
 instance A.Arbitrary VecshiftR32Narrow where
   arbitrary g = VecshiftR32Narrow <$> A.arbitrary g
 
-vecshiftR32NarrowImmField :: Field
-vecshiftR32NarrowImmField = Field 4 0
+vecshiftR32NarrowImmField :: Field 4
+vecshiftR32NarrowImmField = field 0
 
 vecshiftR32NarrowToBits :: VecshiftR32Narrow -> Word32
 vecshiftR32NarrowToBits val =
@@ -3932,7 +3948,7 @@ vecshiftR32NarrowToBits val =
 
 mkVecshiftR32Narrow :: Word32 -> VecshiftR32Narrow
 mkVecshiftR32Narrow w =
-  VecshiftR32Narrow (fromIntegral $ extract vecshiftR32NarrowImmField w)
+  VecshiftR32Narrow (extract vecshiftR32NarrowImmField w)
 
 vecshiftR32NarrowOperand :: OperandPayload
 vecshiftR32NarrowOperand =
@@ -3941,7 +3957,7 @@ vecshiftR32NarrowOperand =
                  , opWordE = Just (varE 'vecshiftR32NarrowToBits)
                  }
 
-data VecshiftR64Narrow = VecshiftR64Narrow { vecshiftR64NarrowImm :: Word8
+data VecshiftR64Narrow = VecshiftR64Narrow { vecshiftR64NarrowImm :: W.W 5
                                            } deriving (Eq, Ord, Show)
 
 instance PP.Pretty VecshiftR64Narrow where
@@ -3950,8 +3966,8 @@ instance PP.Pretty VecshiftR64Narrow where
 instance A.Arbitrary VecshiftR64Narrow where
   arbitrary g = VecshiftR64Narrow <$> A.arbitrary g
 
-vecshiftR64NarrowImmField :: Field
-vecshiftR64NarrowImmField = Field 5 0
+vecshiftR64NarrowImmField :: Field 5
+vecshiftR64NarrowImmField = field 0
 
 vecshiftR64NarrowToBits :: VecshiftR64Narrow -> Word32
 vecshiftR64NarrowToBits val =
@@ -3959,7 +3975,7 @@ vecshiftR64NarrowToBits val =
 
 mkVecshiftR64Narrow :: Word32 -> VecshiftR64Narrow
 mkVecshiftR64Narrow w =
-  VecshiftR64Narrow (fromIntegral $ extract vecshiftR64NarrowImmField w)
+  VecshiftR64Narrow (extract vecshiftR64NarrowImmField w)
 
 vecshiftR64NarrowOperand :: OperandPayload
 vecshiftR64NarrowOperand =
