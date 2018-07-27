@@ -491,7 +491,7 @@ instance PP.Pretty ShiftImm where
       let (ty, amt) = decodeImmShift (shiftImmType m) (shiftImmImmediate m)
           addAmt = if ty == rrx && amt == 1
                    then id
-                   else (PP.<+> PP.text ("#" <> show amt))
+                   else (PP.<+> PP.text ("#" <> show (W.unW amt)))
 
       in (addAmt $ PP.pPrint ty)
 
@@ -609,7 +609,7 @@ instance PP.Pretty Am2OffsetReg where
       let (t, imm) = decodeImmShift (am2OffsetRegType m) (am2OffsetRegImmediate m)
           addAmt = if t == RRX && imm == 1
                    then id
-                   else (PP.<+> PP.text ("#" <> show imm))
+                   else (PP.<+> PP.text ("#" <> show (W.unW imm)))
           maybePrint = if imm == 0
                        then const mempty
                        else id
@@ -698,7 +698,7 @@ instance PP.Pretty LdstSoReg where
           s = PP.text $ if ldstSoRegAdd m == 1 then "" else "-"
           addAmt = if t == RRX && amt == 1
                    then id
-                   else (PP.<+> PP.text ("#" <> show amt))
+                   else (PP.<+> PP.text ("#" <> show (W.unW amt)))
           maybePrint = if amt == 0
                        then const mempty
                        else id
@@ -953,7 +953,7 @@ instance PP.Pretty SoRegImm where
         let (t, amt) = decodeImmShift ty imm
             addAmt = if t == RRX && amt == 1
                      then id
-                     else (PP.<+> PP.text ("#" <> show amt))
+                     else (PP.<+> PP.text ("#" <> show (W.unW amt)))
             maybePrint = if amt == 0
                          then const mempty
                          else id
