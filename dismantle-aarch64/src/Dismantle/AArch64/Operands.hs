@@ -617,7 +617,7 @@ data FPR128 = FPR128 { fPR128Reg :: W.W 5
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR128 where
-  pPrint (FPR128 r) = PP.text $ "q" <> show r
+  pPrint (FPR128 r) = PP.text $ "q" <> show (W.unW r)
 
 instance A.Arbitrary FPR128 where
   arbitrary g = FPR128 <$> A.arbitrary g
@@ -644,7 +644,7 @@ data FPR16 = FPR16 { fPR16Reg :: W.W 5
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR16 where
-  pPrint (FPR16 r) = PP.text $ "h" <> show r
+  pPrint (FPR16 r) = PP.text $ "h" <> show (W.unW r)
 
 instance A.Arbitrary FPR16 where
   arbitrary g = FPR16 <$> A.arbitrary g
@@ -671,7 +671,7 @@ data FPR32 = FPR32 { fPR32Reg :: W.W 5
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR32 where
-  pPrint (FPR32 r) = PP.text $ "s" <> show r
+  pPrint (FPR32 r) = PP.text $ "s" <> show (W.unW r)
 
 instance A.Arbitrary FPR32 where
   arbitrary g = FPR32 <$> A.arbitrary g
@@ -698,7 +698,7 @@ data FPR64 = FPR64 { fPR64Reg :: W.W 5
                    } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR64 where
-  pPrint (FPR64 r) = PP.text $ "d" <> show r
+  pPrint (FPR64 r) = PP.text $ "d" <> show (W.unW r)
 
 instance A.Arbitrary FPR64 where
   arbitrary g = FPR64 <$> A.arbitrary g
@@ -725,7 +725,7 @@ data FPR8 = FPR8 { fPR8Reg :: W.W 5
                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty FPR8 where
-  pPrint (FPR8 r) = PP.text $ "b" <> show r
+  pPrint (FPR8 r) = PP.text $ "b" <> show (W.unW r)
 
 instance A.Arbitrary FPR8 where
   arbitrary g = FPR8 <$> A.arbitrary g
@@ -753,7 +753,7 @@ data GPR32 = GPR32 { gPR32Reg :: W.W 5
 
 instance PP.Pretty GPR32 where
   pPrint (GPR32 31) = PP.text "wzr"
-  pPrint (GPR32 r) = PP.text $ "w" <> show r
+  pPrint (GPR32 r) = PP.text $ "w" <> show (W.unW r)
 
 instance A.Arbitrary GPR32 where
   arbitrary g = GPR32 <$> A.arbitrary g
@@ -781,7 +781,7 @@ data GPR64 = GPR64 { gPR64Reg :: W.W 5
 
 instance PP.Pretty GPR64 where
   pPrint (GPR64 31) = PP.text "xzr"
-  pPrint (GPR64 r) = PP.text $ "x" <> show r
+  pPrint (GPR64 r) = PP.text $ "x" <> show (W.unW r)
 
 instance A.Arbitrary GPR64 where
   arbitrary g = GPR64 <$> A.arbitrary g
@@ -809,7 +809,7 @@ data GPR32sp = GPR32sp { gPR32spReg :: W.W 5
 
 instance PP.Pretty GPR32sp where
   pPrint (GPR32sp 0b11111) = PP.text "wsp"
-  pPrint (GPR32sp r) = PP.text $ "w" <> show r
+  pPrint (GPR32sp r) = PP.text $ "w" <> show (W.unW r)
 
 instance A.Arbitrary GPR32sp where
   arbitrary g = GPR32sp <$> A.arbitrary g
@@ -837,7 +837,7 @@ data GPR64sp = GPR64sp { gPR64spReg :: W.W 5
 
 instance PP.Pretty GPR64sp where
   pPrint (GPR64sp 0b11111) = PP.text "sp"
-  pPrint (GPR64sp r) = PP.text $ "x" <> show r
+  pPrint (GPR64sp r) = PP.text $ "x" <> show (W.unW r)
 
 instance A.Arbitrary GPR64sp where
   arbitrary g = GPR64sp <$> A.arbitrary g
@@ -864,7 +864,7 @@ data V128 = V128 { v128Reg :: W.W 5
                  } deriving (Eq, Ord, Show)
 
 instance PP.Pretty V128 where
-  pPrint (V128 r) = PP.text $ "v" <> show r
+  pPrint (V128 r) = PP.text $ "v" <> show (W.unW r)
 
 instance A.Arbitrary V128 where
   arbitrary g = V128 <$> A.arbitrary g
@@ -1132,7 +1132,7 @@ instance PP.Pretty ArithExtendlsl64 where
   pPrint (ArithExtendlsl64 s) =
       if s == 0
       then mempty
-      else PP.text $ ", lsl " <> (show s)
+      else PP.text $ ", lsl " <> (show $ W.unW s)
 
 instance A.Arbitrary ArithExtendlsl64 where
   arbitrary g = ArithExtendlsl64 <$> A.arbitrary g
@@ -1267,7 +1267,7 @@ data Imm031b = Imm031b { imm031bImm :: W.W 5
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm031b where
-  pPrint (Imm031b i) = PP.text $ "#" <> show i
+  pPrint (Imm031b i) = PP.text $ "#" <> show (W.unW i)
 
 instance A.Arbitrary Imm031b where
   arbitrary g = Imm031b <$> A.arbitrary g
@@ -1321,7 +1321,7 @@ data Imm063 = Imm063 { imm063Imm :: W.W 6
                      } deriving (Eq, Ord, Show)
 
 instance PP.Pretty Imm063 where
-  pPrint (Imm063 i) = PP.char '#' <> (PP.text $ show i)
+  pPrint (Imm063 i) = PP.char '#' <> (PP.text $ show $ W.unW i)
 
 instance A.Arbitrary Imm063 where
   arbitrary g = Imm063 <$> A.arbitrary g
@@ -1617,7 +1617,7 @@ instance PP.Pretty Movimm32Shift where
   pPrint (Movimm32Shift s) =
       if s == 0
       then mempty
-      else PP.text $ ", lsl #" <> show (s * 16)
+      else PP.text $ ", lsl #" <> show (W.unW $ s * 16)
 
 instance A.Arbitrary Movimm32Shift where
   arbitrary g = Movimm32Shift <$> A.arbitrary g
@@ -1647,7 +1647,7 @@ instance PP.Pretty Movimm64Shift where
   pPrint (Movimm64Shift s) =
       if s == 0
       then mempty
-      else PP.text $ ", lsl #" <> show (s * 16)
+      else PP.text $ ", lsl #" <> show (W.unW $ s * 16)
 
 instance A.Arbitrary Movimm64Shift where
   arbitrary g = Movimm64Shift <$> A.arbitrary g
@@ -2616,7 +2616,7 @@ instance PP.Pretty Addext where
                 0b110 -> "sxtw"
                 0b111 -> "sxtx"
                 _ -> error $ "Invalid Addext option value: " <> show opt
-          immS = if imm == 0 then "" else " #" <> show imm
+          immS = if imm == 0 then "" else " #" <> show (W.unW imm)
       in PP.text $ ", " <> s <> immS
 
 instance A.Arbitrary Addext where
@@ -2928,7 +2928,7 @@ instance PP.Pretty Addshift64 where
                       0b1 -> "lsr"
                       0b10 -> "asr"
                       _ -> "<reserved>"
-           in PP.text $ ", " <> ty <> " " <> show imm
+           in PP.text $ ", " <> ty <> " " <> show (W.unW imm)
 
 instance A.Arbitrary Addshift64 where
   arbitrary g = Addshift64 <$> A.arbitrary g <*> A.arbitrary g
@@ -3691,7 +3691,7 @@ data VecshiftR64 = VecshiftR64 { vecshiftR64Imm :: W.W 6
 instance PP.Pretty VecshiftR64 where
   pPrint (VecshiftR64 imm) =
       let v = 128 - ((0b1 `shiftL` 6) .|. imm)
-      in PP.text $ "#" <> show v
+      in PP.text $ "#" <> show (W.unW v)
 
 instance A.Arbitrary VecshiftR64 where
   arbitrary g = VecshiftR64 <$> A.arbitrary g
