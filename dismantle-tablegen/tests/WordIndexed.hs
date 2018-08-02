@@ -25,28 +25,24 @@ wordIndexedTests =
     in
     [ let wi = (w 65535 :: W 5) in testCase "w constructor" $ do
                  31 @=? unW wi
-                 r  @=? rep wi
                  5  @=? width wi
                  "(31 :: W 5)" @=? show wi  -- diagnostic
                  "31" @=? (show $ PP.pPrint wi)  -- used for disassembly (pPrint)
 
     , let wi = (wRep r 65535) in testCase "wRep constructor" $ do
                  31 @=? unW wi
-                 r  @=? rep wi
                  5  @=? width wi
                  "(31 :: W 5)" @=? show wi
                  "31" @=? (show $ PP.pPrint wi)
 
     , let wi = (fromInteger 65535 :: W 5) in testCase "fromInteger constructor" $ do
                  31 @=? unW wi
-                 r  @=? rep wi
                  5  @=? width wi
                  "(31 :: W 5)" @=? show wi
                  "31" @=? (show $ PP.pPrint wi)
 
     , let wi = (fromInteger 31 :: W 5) in testCase "fromInteger constructor, smaller overflow" $ do
                  31 @=? unW wi
-                 r  @=? rep wi
                  5  @=? width wi
                  "(31 :: W 5)" @=? show wi
                  "31" @=? (show $ PP.pPrint wi)
@@ -55,7 +51,6 @@ wordIndexedTests =
                  -- n.b.  65535 is 0b111111111111111., the 2's complement (invert and add 1) is
                  -- 0b000000000000001, masked as 0b00001 or 1.
                  1  @=? unW wi
-                 r  @=? rep wi
                  5  @=? width wi
                  "(1 :: W 5)" @=? show wi
                  "1" @=? (show $ PP.pPrint wi)
@@ -65,7 +60,6 @@ wordIndexedTests =
                  -- add 1) is 0b11111100, which masked and interpreted
                  -- as unsigned is 0b11100 or 28.
                  28 @=? unW wi
-                 r  @=? rep wi
                  5  @=? width wi
                  "(28 :: W 5)" @=? show wi
                  "28" @=? (show $ PP.pPrint wi)

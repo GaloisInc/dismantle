@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
-module Data.Word.Indexed ( W, w, wRep, unW, rep, width ) where
+
+module Data.Word.Indexed ( W, w, wRep, unW, width ) where
 
 import           GHC.TypeLits
 import           Data.Bits
