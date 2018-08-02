@@ -33,8 +33,10 @@ instance Show (W n) where
                                         . showString " :: W "
                                         . shows (width me) . showChar ')'
 
+-- | Perform standard bit-wise operations.  All operations preserve
+-- the size, and require both arguments to have the same size.
 instance Bits (W n) where
-  W x _ .&. W y r       = W (x .&. y) r
+  W x _ .&. W y r       = W (x .&. y) r  -- n.b. x has rep value of r also
   W x _ .|. W y r       = W (x .|. y) r
   xor (W x _) (W y r)   = W (x `xor` y) r
   complement (W x r)  = safeW (complement x) r
