@@ -77,14 +77,17 @@ test-suite dismantle-tests
   main-is: Main.hs
   other-modules: Operands
                  Trie
-  build-depends: dismantle-tablegen,
-                 base,
-                 deepseq,
-                 text,
-                 tasty >= 0.10,
-                 tasty-hunit,
-                 tasty-quickcheck >= 0.8 && < 0.10,
-                 regex-tdfa,
-                 filemanip,
-                 directory,
-                 filepath
+                 WordIndexed
+  build-depends: base
+               , deepseq
+               , directory
+               , dismantle-tablegen
+               , filemanip
+               , filepath
+               , parameterized-utils >= 1 && < 2
+               , pretty
+               , regex-tdfa
+               , text
+               , tasty >= 0.10
+               , tasty-hunit
+               , tasty-quickcheck >= 0.8 && < 0.10
