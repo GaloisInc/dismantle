@@ -59,7 +59,7 @@ instance Bits (W n) where
     n'              = mod n w'
 
 width :: W n -> Int
-width = fromIntegral . NR.natValue . rep
+width = NR.widthVal . rep
 
 rotL :: W n -> Int -> W n
 rotL me@(W x r) n =
@@ -79,7 +79,7 @@ instance KnownNat n => Num (W n) where
   fromInteger n = safeW n NR.knownNat
 
 safeW :: Integer -> NR.NatRepr n -> W n
-safeW n nr = W (nonNeg .&. (shiftL 1 (fromIntegral (NR.natValue nr)) - 1)) nr
+safeW n nr = W (NR.toUnsigned nr nonNeg) nr
   where
     nonNeg = if n < 0 then complement (abs n) + 1 else n
 
