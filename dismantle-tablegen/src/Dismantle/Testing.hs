@@ -77,7 +77,8 @@ data ArchTestConfig = forall i .
       -- form suitable for comparison. This typically needs to remove
       -- whitespace and special characters whose presence confounds
       -- pretty-print comparisons but is otherwise unimportant for
-      -- comparison purposes.
+      -- comparison purposes.  Both the objdump and the dismantle
+      -- disassembly output are normalized.
       }
 
 addressIsIgnored :: ArchTestConfig -> FilePath -> Word64 -> Bool
@@ -193,6 +194,13 @@ formatTestFailure ta = show doc
                   , PP.nest 2 (PP.vcat roundtripFailures)
                   , "Pretty printing failures:"
                   , PP.nest 2 (PP.vcat prettyFailures)
+                  , PP.hcat [ "Total: "
+                            , PP.text (show $ testCount ta), " tests"
+                            , ", failures: "
+                            , PP.text (show $ length $ testDisassemblyFailures ta), " disassembly"
+                            , ", ", PP.text (show $ length $ testRoundtripFailures ta), " round-trip"
+                            , ", ", PP.text (show $ length $ testPrettyFailures ta), " pretty-printing"
+                            ]
                   ]
     disasmFailures = [ PP.text (printf "Failed to disassemble %s (%s)" (binaryRep (insnBytes i)) (TL.unpack (insnText i)))
                      | i <- testDisassemblyFailures ta
