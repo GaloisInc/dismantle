@@ -4,6 +4,8 @@
 
 module WordIndexed ( wordIndexedTests ) where
 
+import Control.Exception
+import GHC.Exception ( ErrorCall(..) )
 import           Data.Bits
 import           Data.Monoid ( (<>) )
 import           Test.Tasty
@@ -22,6 +24,10 @@ wordIndexedTests =
                         " got " <> (show $ compare a b) <> ", expected " <> show ex
         tstNEq a b = (a /= b) @?
                         "unexpected equality of " <> show a <> " against " <> show b
+        tstOverflow v = catch (evaluate (fromInteger v :: W 5) >>=
+                              \wv -> "expected overflow exception" @=? "success with " <> show wv)
+                              (\(ErrorCallWithLocation e _l) ->
+                                   "Value " <> show v <> " too large for Word.Indexed of size 5" @=? e)
     in
     [ let wi = (w 65535 :: W 5) in testCase "w constructor" $ do
                  31 @=? unW wi
@@ -35,11 +41,13 @@ wordIndexedTests =
                  "(31 :: W 5)" @=? show wi
                  "31" @=? (show $ PP.pPrint wi)
 
-    , let wi = (fromInteger 65535 :: W 5) in testCase "fromInteger constructor" $ do
+    , let wi = (fromInteger 31 :: W 5) in testCase "fromInteger constructor" $ do
                  31 @=? unW wi
                  5  @=? width wi
                  "(31 :: W 5)" @=? show wi
                  "31" @=? (show $ PP.pPrint wi)
+
+    , testCase "fromInteger constructor, overflow" $ tstOverflow 65535
 
     , let wi = (fromInteger 31 :: W 5) in testCase "fromInteger constructor, smaller overflow" $ do
                  31 @=? unW wi
@@ -47,7 +55,9 @@ wordIndexedTests =
                  "(31 :: W 5)" @=? show wi
                  "31" @=? (show $ PP.pPrint wi)
 
-    , let wi = (fromInteger (-65535) :: W 5) in testCase "fromInteger constructor, negative overflow" $ do
+    , testCase "fromInteger constructor, negative overflow" $ tstOverflow (-65535)
+
+    , let wi = (w (-65535) :: W 5) in testCase "w constructor, negative overflow" $ do
                  -- n.b.  65535 is 0b111111111111111., the 2's complement (invert and add 1) is
                  -- 0b000000000000001, masked as 0b00001 or 1.
                  1  @=? unW wi
@@ -55,7 +65,9 @@ wordIndexedTests =
                  "(1 :: W 5)" @=? show wi
                  "1" @=? (show $ PP.pPrint wi)
 
-    , let wi = (fromInteger (-4) :: W 5) in testCase "fromInteger constructor, negative" $ do
+    , testCase "fromInteger constructor, small negative" $ tstOverflow (-4) -- because how big is -4 :: Integer?
+
+    , let wi = (w (-4) :: W 5) in testCase "fromInteger constructor, negative" $ do
                  -- n.b. 4 is 0b11111100, the 2's complement (invert and
                  -- add 1) is 0b11111100, which masked and interpreted
                  -- as unsigned is 0b11100 or 28.
@@ -64,11 +76,11 @@ wordIndexedTests =
                  "(28 :: W 5)" @=? show wi
                  "28" @=? (show $ PP.pPrint wi)
 
-    , let wi1 = fromInteger 65535 :: W 5
-          wi2 = fromInteger 65535 :: W 4
-          wi3 = fromInteger 32767 :: W 4
-          wi4 = fromInteger 30 :: W 5
-          wi5 = fromInteger 0 :: W 5
+    , let wi1 = w 65535 :: W 5
+          wi2 = w 65535 :: W 4
+          wi3 = w 32767 :: W 4
+          wi4 = w 30 :: W 5
+          wi5 = w 0 :: W 5
       in testCase "Eq comparisons" $ do
         -- n.b. can only compare W instances with the same width,
         -- (e.g. wi1 == wi2 is a compile error).  Note that in
@@ -86,18 +98,30 @@ wordIndexedTests =
         wi1 @=? wi1
         wi2 @=? wi2
         wi5 @=? wi5
-        tstNEq wi1 65530
-        wi1 @=? 65535   -- should not succeed
-        wi1 @=? 32767   -- should not succeed
-        tstNEq 65530 wi1
-        65535 @=? wi1   -- should not succeed
-        32767 @=? wi1   -- should not succeed
 
-    , let wi1 = fromInteger 65535 :: W 5
-          wi2 = fromInteger 65535 :: W 4
-          wi3 = fromInteger 32767 :: W 4
-          wi4 = fromInteger 30 :: W 5
-          wi5 = fromInteger 0 :: W 5
+        catch (evaluate (wi1 == 65530) >>=
+               \_ -> "expected overflow exception" @=? "success with wi1 == 65530")
+              (\(ErrorCallWithLocation e _l) -> "Value 65530 too large for Word.Indexed of size 5" @=? e)
+        tstNEq wi1 (w 65530 :: W 5)
+
+        wi1 @=? (w 65535 :: W 5)
+        wi1 @=? (w 32767 :: W 5)
+        catch (evaluate (65530 == wi1) >>=
+               \_ -> "expected overflow exception" @=? "success with 65530 == wi1")
+              (\(ErrorCallWithLocation e _l) -> "Value 65530 too large for Word.Indexed of size 5" @=? e)
+        tstNEq (w 65530 :: W 5) wi1
+        (w 65535 :: W 5) @=? wi1
+        (w 32767 :: W 5) @=? wi1
+
+        catch (evaluate (wi2 == 31) >>=
+               \_ -> "expected overflow exception" @=? "success with wi2 == 31")
+              (\(ErrorCallWithLocation e _l) -> "Value 31 too large for Word.Indexed of size 4" @=? e)
+
+    , let wi1 = w 65535 :: W 5
+          wi2 = w 65535 :: W 4
+          wi3 = w 32767 :: W 4
+          wi4 = w 30 :: W 5
+          wi5 = w 0 :: W 5
       in testCase "Ord comparisons" $ do
         -- n.b. can only compare W instances with the same width,
         -- (e.g. compare wi1 wi2 is a compile error)
@@ -112,24 +136,28 @@ wordIndexedTests =
         tstOrd wi1 wi1 EQ
         tstOrd wi2 wi2 EQ
         tstOrd wi5 wi5 EQ
-        tstOrd wi1 65530 GT  -- not right
-        tstOrd wi1 31 EQ
-        tstOrd wi1 32767 EQ  -- not right
 
-    , let wi1 = fromInteger 65535 :: W 5
-          wi2 = fromInteger 65535 :: W 4
-          wi3 = fromInteger 32767 :: W 4
-          wi4 = fromInteger 30 :: W 5
-          wi5 = fromInteger 0 :: W 5
-          wi6 = fromInteger 6 :: W 5
-          wi7 = fromInteger 8 :: W 5
+        tstOrd wi1 31 EQ
+        catch (evaluate (compare wi1 65530) >>=
+               \_ -> "expected overflow exception" @=? "success with compare 65530 wi1 = GT")
+              (\(ErrorCallWithLocation e _l) -> "Value 65530 too large for Word.Indexed of size 5" @=? e)
+        tstOrd wi1 (w 65530 :: W 5) GT  -- hi bits of 65530 are dropped
+        tstOrd (w 0xffff01a :: W 5) (w 0x51f :: W 5) LT -- only low bits count
+
+    , let wi1 = w 65535 :: W 5
+          wi2 = w 65535 :: W 4
+          wi3 = w 32767 :: W 4
+          wi4 = w 30 :: W 5
+          wi5 = w 0 :: W 5
+          wi6 = w 6 :: W 5
+          wi7 = w 8 :: W 5
       in testCase "Bits operations" $ do
         30 @=? wi1 .&. wi4
         30 @=? wi4 .&. wi1
         0  @=? wi1 .&. wi5
         0  @=? wi5 .&. wi1
-        31 @=? wi2 .&. wi3
-        31 @=? wi3 .&. wi2
+        15 @=? wi2 .&. wi3
+        15 @=? wi3 .&. wi2
         31 @=? wi1 .&. wi1
         0  @=? wi5 .&. wi5
         6  @=? wi4 .&. wi6
@@ -223,18 +251,18 @@ wordIndexedTests =
         24 @=? rotate wi6 (-3)
         24 @=? rotate wi6 (-13)
 
-    , let wi1 = fromInteger 65535 :: W 5
-          wi2 = fromInteger 65535 :: W 4
-          wi3 = fromInteger 32767 :: W 4
-          wi4 = fromInteger 30 :: W 5
-          wi5 = fromInteger 0 :: W 5
-          wi6 = fromInteger 6 :: W 5
-          wi7 = fromInteger 8 :: W 5
+    , let wi1 = w 65535 :: W 5
+          wi2 = w 65535 :: W 4
+          wi3 = w 32767 :: W 4
+          wi4 = w 30 :: W 5
+          wi5 = w 0 :: W 5
+          wi6 = w 6 :: W 5
+          wi7 = w 8 :: W 5
       in testCase "Num operations" $ do
         29 @=? wi1 + wi4
         31 @=? wi1 + wi5
         30 @=? wi1 + wi1
-        30 @=? wi2 + wi3
+        14 @=? wi2 + wi3
         14 @=? wi6 + wi7
         14 @=? wi7 + wi6
         6  @=? wi6 + wi7 + wi7 + wi7 + wi7
@@ -254,8 +282,8 @@ wordIndexedTests =
         24 @=? negate wi7
 
         31 @=? abs wi1
-        31 @=? abs wi2
-        31 @=? abs wi3
+        15 @=? abs wi2
+        15 @=? abs wi3
         30 @=? abs wi4
         0  @=? abs wi5
         6  @=? abs wi6
