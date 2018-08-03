@@ -48,6 +48,14 @@ instance Show (W n) where
                                         . showString " :: W "
                                         . shows (width me) . showChar ')'
 
+instance KnownNat n => Enum (W n) where
+    toEnum = w . toInteger
+    fromEnum = fromInteger . unW
+
+instance KnownNat n => Bounded (W n) where
+    maxBound = w (toInteger (maxBound :: Int))
+    minBound = w 0
+
 -- | Perform standard bit-wise operations.  All operations preserve
 -- the size, and require both arguments to have the same size.
 instance Bits (W n) where

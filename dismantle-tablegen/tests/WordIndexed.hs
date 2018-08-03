@@ -144,6 +144,24 @@ wordIndexedTests =
         tstOrd wi1 (w 65530 :: W 5) GT  -- hi bits of 65530 are dropped
         tstOrd (w 0xffff01a :: W 5) (w 0x51f :: W 5) LT -- only low bits count
 
+    , testCase "Bounded operations" $ do
+        31 @=? (maxBound :: W 5)
+        1  @=? (maxBound :: W 1)
+        65535 @=? (maxBound :: W 16)
+
+        0 @=? (minBound :: W 1)
+        0 @=? (minBound :: W 5)
+        0 @=? (minBound :: W 16)
+
+    , testCase "Enum operations" $ do
+        31 @=? ((toEnum (31 :: Int)) :: W 5)
+        1 @=? ((toEnum (1 :: Int)) :: W 1)
+        0 @=? ((toEnum (0 :: Int)) :: W 5)
+
+        31 @=? fromEnum ((toEnum (31 :: Int)) :: W 5)
+        1 @=? fromEnum ((toEnum (1 :: Int)) :: W 1)
+        0 @=? fromEnum ((toEnum (0 :: Int)) :: W 5)
+
     , let wi1 = w 65535 :: W 5
           wi2 = w 65535 :: W 4
           wi3 = w 32767 :: W 4
