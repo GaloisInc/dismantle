@@ -34,9 +34,11 @@ test-suite dismantle-arm-tests
   ghc-options: -Wall
   hs-source-dirs: tests
   main-is: Main.hs
+  other-modules: MiscARMTests
   build-depends: base,
                  dismantle-tablegen,
                  dismantle-arm,
                  tasty,
+                 tasty-hunit,
                  pretty,
                  text
