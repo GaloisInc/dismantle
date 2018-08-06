@@ -374,7 +374,7 @@ instance PP.Pretty AddrMode3 where
               in PP.brackets $
                  PP.pPrint (addrMode3Register m) <> (PP.char ',' PP.<+> (PP.text s <> PP.pPrint r2))
           1 ->
-              -- Interpet all bits of the immediate as an immediate
+              -- Interpret all bits of the immediate as an immediate
               let addImm = if addrMode3Immediate m == 0
                            then id
                            else (<> (PP.char ',' PP.<+> (PP.char '#' <> PP.text s <> (PP.pPrint (addrMode3Immediate m)))))
