@@ -180,7 +180,7 @@ insert (Field sz offset) src dest =
     dest .|. (((fromIntegral $ W.unW src) .&. (2 ^ (NR.widthVal sz) - 1)) `shiftL` offset)
 
 extract :: (KnownNat n) => Field n -> Word32 -> W.W n
-extract f val = W.w $ fromIntegral $ (val .&. (mkMask f)) `shiftR` (fieldOffset f)
+extract f val = fromIntegral $ (val .&. (mkMask f)) `shiftR` (fieldOffset f)
 
 -- Operand data types
 
@@ -191,7 +191,7 @@ instance PP.Pretty Bit where
   pPrint (Bit v) = PP.int $ fromIntegral $ W.unW v
 
 mkBit :: Word32 -> Bit
-mkBit v = Bit $ W.w $ fromIntegral v
+mkBit = Bit . fromIntegral
 
 bitToBits :: Bit -> Word32
 bitToBits (Bit v) = fromIntegral $ W.unW v
@@ -205,7 +205,7 @@ instance PP.Pretty SBit where
   pPrint (SBit v) = error $ "Invalid SBit value: " <> show v
 
 mkSBit :: Word32 -> SBit
-mkSBit v = SBit $ W.w $ fromIntegral v
+mkSBit = SBit . fromIntegral
 
 sBitToBits :: SBit -> Word32
 sBitToBits (SBit v) = fromIntegral $ W.unW v
@@ -225,7 +225,7 @@ instance PP.Pretty Reglist where
       in PP.braces (PP.hsep $ PP.punctuate (PP.text ",") (PP.pPrint <$> regs))
 
 mkRegList :: Word32 -> Reglist
-mkRegList v = Reglist $ W.w $ fromIntegral v
+mkRegList = Reglist . fromIntegral
 
 regListToBits :: Reglist -> Word32
 regListToBits (Reglist v) = fromIntegral $ W.unW v
@@ -244,14 +244,14 @@ instance PP.Pretty GPR where
   pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral $ W.unW rno)
 
 gpr :: Word32 -> GPR
-gpr = GPR . W.w . fromIntegral
+gpr = GPR . fromIntegral
 
 -- | Coprocessor register by number
 newtype CoprocRegister = CoprocRegister { unCoprocRegister :: W.W 4 }
   deriving (Eq, Ord, Show)
 
 mkCoprocRegister :: Word32 -> CoprocRegister
-mkCoprocRegister w = CoprocRegister $ W.w $ fromIntegral w
+mkCoprocRegister w = CoprocRegister $ fromIntegral w
 
 coprocRegisterToBits :: CoprocRegister -> Word32
 coprocRegisterToBits (CoprocRegister i) = fromIntegral $ W.unW i
@@ -290,7 +290,7 @@ newtype DPR = DPR { unDPR :: W.W 5 }
   deriving (Eq, Ord, Show)
 
 dpr :: Word8 -> DPR
-dpr = DPR . W.w . fromIntegral
+dpr = DPR . fromIntegral
 
 instance PP.Pretty DPR where
   pPrint (DPR rno) = PP.char 'd' <> PP.int (fromIntegral $ W.unW rno)
@@ -300,7 +300,7 @@ newtype QPR = QPR { unQPR :: W.W 5 }
   deriving (Eq, Ord, Show)
 
 qpr :: Word32 -> QPR
-qpr = QPR . W.w . fromIntegral
+qpr = QPR . fromIntegral
 
 instance PP.Pretty QPR where
   pPrint (QPR rno) = PP.char 'q' <> PP.int (fromIntegral $ W.unW rno)
@@ -311,7 +311,7 @@ newtype QQPR = QQPR { unQQPR :: W.W 4 }
   deriving (Eq, Ord, Show)
 
 qqpr :: Word32 -> QQPR
-qqpr = QQPR . W.w . fromIntegral
+qqpr = QQPR . fromIntegral
 
 instance PP.Pretty QQPR where
   pPrint (QQPR rno) = PP.char 'q' <> PP.int (fromIntegral $ W.unW rno)
@@ -532,7 +532,7 @@ instance PP.Pretty ShiftImm where
   pPrint m =
       -- This ShiftImm has only 1 bit of shift type, which is used as
       -- the upper bit of the normal 2-bit shift value.
-      let ty = W.w (W.unW (shiftImmType m) * 2)
+      let ty = fromIntegral (W.unW (shiftImmType m) * 2)
           amt = shiftImmImmediate m
       in PP.pPrint $ ShiftImmSpec ty amt
 
@@ -938,7 +938,7 @@ instance PP.Pretty Pred where
     pPrint _             = PP.text "<UND>"
 
 mkPred :: Word32 -> Pred
-mkPred = Pred . W.w . fromIntegral
+mkPred = Pred . fromIntegral
 
 predToBits :: Pred -> Word32
 predToBits (Pred p) = fromIntegral $ W.unW p
