@@ -36,9 +36,13 @@ module Dismantle.ARM.Operands (
   mkCoprocRegister,
   coprocRegisterToBits,
 
-  Opcode,
-  mkOpcode,
-  opcodeToBits,
+  Opcode15,
+  mkOpcode15,
+  opcode15ToBits,
+
+  Opcode7,
+  mkOpcode7,
+  opcode7ToBits,
 
   ShiftImm(..),
   mkShiftImm,
@@ -255,18 +259,31 @@ coprocRegisterToBits (CoprocRegister i) = fromIntegral $ W.unW i
 instance PP.Pretty CoprocRegister where
   pPrint (CoprocRegister r) = PP.text "cr" <> PP.pPrint r
 
--- | Coprocessor operation opcode register by number
-newtype Opcode = Opcode { unOpcode :: W.W 3 }
+-- | Coprocessor operation 15-bit opcode register by number
+newtype Opcode15 = Opcode15 { unOpcode15 :: W.W 4 }
   deriving (Eq, Ord, Show)
 
-mkOpcode :: Word32 -> Opcode
-mkOpcode w = Opcode $ W.w $ fromIntegral w
+mkOpcode15 :: Word32 -> Opcode15
+mkOpcode15 w = Opcode15 $ fromIntegral w
 
-opcodeToBits :: Opcode -> Word32
-opcodeToBits (Opcode i) = fromIntegral $ W.unW i
+opcode15ToBits :: Opcode15 -> Word32
+opcode15ToBits (Opcode15 i) = fromIntegral $ W.unW i
 
-instance PP.Pretty Opcode where
-  pPrint (Opcode o) = PP.pPrint o
+instance PP.Pretty Opcode15 where
+  pPrint (Opcode15 o) = PP.pPrint o
+
+-- | Coprocessor operation 7-bit opcode register by number
+newtype Opcode7 = Opcode7 { unOpcode7 :: W.W 3 }
+  deriving (Eq, Ord, Show)
+
+mkOpcode7 :: Word32 -> Opcode7
+mkOpcode7 w = Opcode7 $ fromIntegral w
+
+opcode7ToBits :: Opcode7 -> Word32
+opcode7ToBits (Opcode7 i) = fromIntegral $ W.unW i
+
+instance PP.Pretty Opcode7 where
+  pPrint (Opcode7 o) = PP.pPrint o
 
 -- | Double-precision register by number
 newtype DPR = DPR { unDPR :: W.W 5 }
@@ -1076,8 +1093,11 @@ instance A.Arbitrary AddrModeImm12 where
 instance A.Arbitrary CoprocRegister where
   arbitrary g = CoprocRegister <$> A.arbitrary g
 
-instance A.Arbitrary Opcode where
-  arbitrary g = Opcode <$> A.arbitrary g
+instance A.Arbitrary Opcode7 where
+  arbitrary g = Opcode7 <$> A.arbitrary g
+
+instance A.Arbitrary Opcode15 where
+  arbitrary g = Opcode15 <$> A.arbitrary g
 
 instance A.Arbitrary AddrMode3 where
   arbitrary g = AddrMode3 <$> A.arbitrary g

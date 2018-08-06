@@ -115,9 +115,13 @@ isa = ISA { isaName = "ARM"
                                     , opConE = Just (varE 'ARM.mkCoprocRegister)
                                     , opWordE = Just (varE 'ARM.coprocRegisterToBits)
                                     }
-    opcodeOperand = OperandPayload { opTypeT = [t| ARM.Opcode |]
-                                   , opConE = Just (varE 'ARM.mkOpcode)
-                                   , opWordE = Just (varE 'ARM.opcodeToBits)
+    opcode15Operand = OperandPayload { opTypeT = [t| ARM.Opcode15 |]
+                                   , opConE = Just (varE 'ARM.mkOpcode15)
+                                   , opWordE = Just (varE 'ARM.opcode15ToBits)
+                                   }
+    opcode7Operand = OperandPayload { opTypeT = [t| ARM.Opcode7 |]
+                                   , opConE = Just (varE 'ARM.mkOpcode7)
+                                   , opWordE = Just (varE 'ARM.opcode7ToBits)
                                    }
     word8Operand = OperandPayload { opTypeT = [t| Word8 |]
                                   , opConE = Nothing
@@ -219,10 +223,10 @@ isa = ISA { isaName = "ARM"
         , ("GPRnopc"           , gpRegister)
         , ("Iflags_op"         , word8Operand)
         , ("Imm0_1"            , bit)
-        , ("Imm0_15"           , opcodeOperand)
+        , ("Imm0_15"           , opcode15Operand)
         , ("Imm0_31"           , imm5)
         , ("Imm0_65535"        , imm16)
-        , ("Imm0_7"            , opcodeOperand)
+        , ("Imm0_7"            , opcode7Operand)
         , ("Imm0_239"          , word8Operand)
         , ("Imm0_65535_expr"   , word16Operand)
         , ("Imm1_16"           , word8Operand)
