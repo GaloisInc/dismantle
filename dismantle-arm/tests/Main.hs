@@ -1,4 +1,27 @@
 {-# LANGUAGE OverloadedStrings #-}
+
+{-
+  Note: when a binary representation of an ARM instruction is
+        displayed, the byte order is: 6 7 4 5 2 3 0 1
+
+        In the documentation, bits 31 .... 0  correspond to bytes 0 ... 7
+
+  For example:
+
+    10001100.00110000.10010011.11100001      orrs r3, r3, ip, lsl #1
+    ----____ ----____ ----____ ----____
+      6   7    4   5    2   3    0   1
+
+    [defined on page F7.1.127, F7-2738]
+
+    Translation:
+     cond 0011 100S .rn. .rd. ..imm12....
+        rn = r3
+        rd = r3
+        lsl = 0b00
+        imm12 = 0000 1000 1100  = 0x08c
+-}
+
 module Main ( main ) where
 
 import           Data.Char (isSpace)
