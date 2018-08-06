@@ -90,4 +90,4 @@ test-suite dismantle-tests
                , text
                , tasty >= 0.10
                , tasty-hunit
-               , tasty-quickcheck >= 0.8 && < 0.10
+               , tasty-quickcheck >= 0.8 && <= 0.10
