@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
-
-module Data.Word.Indexed ( W, w, wRep, unW, width ) where
+nnn
+module Data.Word.Indexed ( W, w, wRep, unW, rep, width ) where
 
 import           Data.Bits
 import           Data.Monoid ( (<>) )
