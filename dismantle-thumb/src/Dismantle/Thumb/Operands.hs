@@ -727,24 +727,15 @@ imm1_32ToBits (Imm1_32 i) =
     insert imm1_32Field (fromIntegral i) 0
 
 data T2SoReg =
-    T2SoReg { t2SoRegImm5      :: Word8
-            , t2SoRegShiftType :: Word8
+    T2SoReg { t2SoRegImm5      :: Word8  -- n.b. should be W.W 5 when this module is converted
+            , t2SoRegShiftType :: Word8  -- n.b. should be W.W 2 when this module is converted
             , t2SoRegRm        :: GPR
             }
             deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2SoReg where
     pPrint (T2SoReg imm ty rm) =
-        let (ty', imm') = ARM.decodeImmShift ty imm
-            ppShiftType = case ty' of
-              0b00 -> PP.text "lsl"
-              0b01 -> PP.text "lsr"
-              0b10 -> PP.text "asr"
-              0b11 -> PP.text "ror"
-              _    -> PP.text $ "BUG: invalid shift type: " <> show ty
-        in (PP.pPrint rm <> PP.char ',') PP.<+>
-           ppShiftType PP.<+>
-           (PP.char '#' <> PP.pPrint imm')
+        PP.pPrint rm <> PP.pPrint (ARM.ShiftImmSpec (fromIntegral ty) (fromIntegral imm))
 
 t2SoRegImm3Field :: Field
 t2SoRegImm3Field = Field 3 9

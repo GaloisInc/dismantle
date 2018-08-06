@@ -128,7 +128,7 @@ module Dismantle.ARM.Operands (
   mkSoRegReg,
   soRegRegToBits,
 
-  decodeImmShift,
+  ShiftImmSpec(..),
 
   MemBarrierOpt(..),
   mkMemBarrierOpt,
@@ -427,22 +427,61 @@ am3OffsetToBits (AM3Offset imm other add) =
     insert am3OffsetOtherField other $
     insert am3OffsetImmField imm 0
 
-pattern LSL = 0b000
-pattern LSR = 0b001
-pattern ASR = 0b010
-pattern ROR = 0b011
-pattern RRX = 0b100 -- TODO: this may be the wrong thing, I'm experimenting
+-- Notes regarding <shift> as documented in F2.4.1, pg F2-2419,
+-- "Constant shifts", and represented by the DecodeImmShift pseudocode
+-- in F2.4.3, page F4-2420.  There are 4 main shifts (LSL, LSR, ASR,
+-- and ROR) and therefore these are represented by a 2-bit "ty" field
+-- in the opcode (in the above value order).
+---
+-- The shifts are accompanied by a shift amount, which is typically a
+-- 5-bit immediate value (thus representing values of 0-31).  Most
+-- shifts are in the range of 1-32, where an imm value of 0 indicates
+-- 32, with 2 exceptions noted below:
+--
+-- If the ty is LSL and the value is 0, then no shift is performed
+-- (instead of shifting left by 32).
+--
+-- If the ty is ROR and the value is 0, then this represents a special
+-- shift called "RRX" (rotate right 1 bit with extend.
+--
+-- To support this, there is an abstract type implemented which can be
+-- constructed with the core values and which has an instance for
+-- pretty-printing.
 
-ppShiftType :: W.W 2 -> PP.Doc
-ppShiftType ty = PP.text $ case W.unW ty of
-    LSL -> "lsl"
-    LSR -> "lsr"
-    ASR -> "asr"
-    ROR -> "ror"
-    RRX -> "rrx"
+data ShiftImmSpec = ShiftImmSpec { si_ty :: W.W 2, si_amt :: W.W 5 } deriving Eq
 
-rrx :: (Num a, Eq a) => a
-rrx = 0b100
+instance PP.Pretty ShiftImmSpec where
+    pPrint s =
+        let i = si_amt s
+            ppAmt = PP.text $ "#" <> show (if i == 0 then 32 else W.unW i)
+        in case si_ty s of
+             0b00 -> if i == 0
+                     then mempty
+                     else PP.comma <> PP.space <> (PP.text "lsl" PP.<+> ppAmt)
+             0b01 -> PP.comma <> PP.space <> (PP.text "lsr" PP.<+> ppAmt)
+             0b10 -> PP.comma <> PP.space <> (PP.text "asr" PP.<+> ppAmt)
+             0b11 -> PP.comma <> PP.space <> (if i == 0
+                                              then PP.text "rrx"
+                                              else PP.text "ror" PP.<+> ppAmt)
+
+-- Shifting from register values is different, and should use
+-- ShiftRegSpec instead of ShiftImmSpec.  (to match pseudocode
+-- DecodeRegShift).  The ShiftRegSpec only recognizes the 4 main
+-- shifts.  The actual shift operation use the Shift_C pseudocode,
+-- which implies support for RRX but the shift amount (retrieved from
+-- a register) is used unchanged (e.g. 0-31 for all shifts).
+
+data ShiftRegSpec = ShiftRegSpec { sr_ty :: W.W 2, sr_amt :: GPR } deriving Eq
+
+instance PP.Pretty ShiftRegSpec where
+    pPrint s =
+        let ppShiftType = case sr_ty s of
+              0b00 -> PP.text "lsl"
+              0b01 -> PP.text "lsr"
+              0b10 -> PP.text "asr"
+              0b11 -> PP.text "ror"
+        in ppShiftType PP.<+> (PP.pPrint $ sr_amt s)
+
 
 data Imm8S4 = Imm8S4 { imm8s4Add :: W.W 1
                      , imm8s4Immediate :: W.W 8
@@ -472,28 +511,13 @@ data ShiftImm = ShiftImm { shiftImmImmediate :: W.W 5
                          }
   deriving (Eq, Ord, Show)
 
--- See ARM ARM A8.4.3, "Pseudocode details of instruction-specified
--- shifts and rotates"
-decodeImmShift :: (Show a, Num a, Eq a, Num b, Eq b) => a -> b -> (a, b)
-decodeImmShift ty imm =
-    case ty of
-        LSL -> (ty, imm)
-        LSR -> (ty, if imm == 0 then 32 else imm)
-        ASR -> (ty, if imm == 0 then 32 else imm)
-        ROR ->
-            if imm == 0
-            then (rrx, 1)
-            else (ty, imm)
-        _   -> error $ "Invalid shift type bits: " <> show ty
-
 instance PP.Pretty ShiftImm where
   pPrint m =
-      let (ty, amt) = decodeImmShift (shiftImmType m) (shiftImmImmediate m)
-          addAmt = if ty == rrx && amt == 1
-                   then id
-                   else (PP.<+> PP.text ("#" <> show (W.unW amt)))
-
-      in (addAmt $ PP.pPrint ty)
+      -- This ShiftImm has only 1 bit of shift type, which is used as
+      -- the upper bit of the normal 2-bit shift value.
+      let ty = W.w (W.unW (shiftImmType m) * 2)
+          amt = shiftImmImmediate m
+      in PP.pPrint $ ShiftImmSpec ty amt
 
 shiftImmImmField :: Field 5
 shiftImmImmField = field 0
@@ -606,16 +630,9 @@ data Am2OffsetReg = Am2OffsetReg { am2OffsetRegImmediate :: W.W 5
 
 instance PP.Pretty Am2OffsetReg where
   pPrint m =
-      let (t, imm) = decodeImmShift (am2OffsetRegType m) (am2OffsetRegImmediate m)
-          addAmt = if t == RRX && imm == 1
-                   then id
-                   else (PP.<+> PP.text ("#" <> show (W.unW imm)))
-          maybePrint = if imm == 0
-                       then const mempty
-                       else id
-          opStr = if am2OffsetRegAdd m == 1 then mempty else PP.char '-'
-      in (opStr <> PP.pPrint (am2OffsetRegReg m) <>
-         (maybePrint $ addAmt $ PP.char ',' PP.<+> ppShiftType t))
+      let opStr = if am2OffsetRegAdd m == 1 then mempty else PP.char '-'
+          shft = ShiftImmSpec (am2OffsetRegType m) (am2OffsetRegImmediate m)
+      in (opStr <> PP.pPrint (am2OffsetRegReg m) <> PP.pPrint shft)
 
 am2OffsetRegAddField :: Field 1
 am2OffsetRegAddField = field 12
@@ -694,17 +711,10 @@ data LdstSoReg = LdstSoReg { ldstSoRegBaseRegister   :: GPR
 
 instance PP.Pretty LdstSoReg where
   pPrint m =
-      let (t, amt) = decodeImmShift (ldstSoRegShiftType m) (ldstSoRegImmediate m)
-          s = PP.text $ if ldstSoRegAdd m == 1 then "" else "-"
-          addAmt = if t == RRX && amt == 1
-                   then id
-                   else (PP.<+> PP.text ("#" <> show (W.unW amt)))
-          maybePrint = if amt == 0
-                       then const mempty
-                       else id
+      let s = PP.text $ if ldstSoRegAdd m == 1 then "" else "-"
+          shft = ShiftImmSpec (ldstSoRegShiftType m) (ldstSoRegImmediate m)
       in (PP.pPrint (ldstSoRegBaseRegister m) <> PP.char ',') PP.<+>
-         (PP.pPrint (ldstSoRegOffsetRegister m) <>
-          (maybePrint $ addAmt $ PP.text "," PP.<+> (s <> ppShiftType t)))
+         (PP.pPrint (ldstSoRegOffsetRegister m) <> PP.pPrint shft)
 
 ldstSoRegBaseRegField :: Field 4
 ldstSoRegBaseRegField = field 13
@@ -950,15 +960,7 @@ data SoRegImm = SoRegImm { soRegImmImmediate :: W.W 5
 
 instance PP.Pretty SoRegImm where
     pPrint (SoRegImm imm reg ty) =
-        let (t, amt) = decodeImmShift ty imm
-            addAmt = if t == RRX && amt == 1
-                     then id
-                     else (PP.<+> PP.text ("#" <> show (W.unW amt)))
-            maybePrint = if amt == 0
-                         then const mempty
-                         else id
-        in PP.pPrint reg <>
-           (maybePrint $ addAmt $ PP.text "," PP.<+> ppShiftType t)
+          PP.pPrint reg <> PP.pPrint (ShiftImmSpec ty imm)
 
 soRegImmImmField :: Field 5
 soRegImmImmField = field 7
@@ -990,12 +992,7 @@ data SoRegReg = SoRegReg { soRegRegReg1      :: GPR
 
 instance PP.Pretty SoRegReg where
     pPrint (SoRegReg reg1 reg2 ty) =
-        let ppShiftType = case ty of
-              0b00 -> PP.text "lsl"
-              0b01 -> PP.text "lsr"
-              0b10 -> PP.text "asr"
-              0b11 -> PP.text "ror"
-        in PP.pPrint reg1 <> (PP.text "," PP.<+> ppShiftType PP.<+> (PP.pPrint reg2))
+        (PP.pPrint reg1 <> PP.text ",") PP.<+> PP.pPrint (ShiftRegSpec ty reg2)
 
 soRegRegReg2Field :: Field 4
 soRegRegReg2Field = field 8
