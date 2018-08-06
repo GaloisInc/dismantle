@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
-nnn
+
 module Data.Word.Indexed ( W, w, wRep, unW, rep, width ) where
 
 import           Data.Bits
