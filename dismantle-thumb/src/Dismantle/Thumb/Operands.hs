@@ -1,5 +1,6 @@
 {-# OPTIONS_HADDOCK not-home #-}
 {-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Dismantle.Thumb.Operands (
   GPR,
@@ -166,6 +167,7 @@ import Data.Bits
 import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.Word ( Word8, Word16, Word32 )
+import qualified Data.Word.Indexed as W
 import Dismantle.Tablegen.ISA
 import Language.Haskell.TH hiding (Pred)
 
@@ -233,7 +235,7 @@ regListToBits (Reglist v) = fromIntegral v
 
 -- | General-purpose low register by number (0-7) for 16-bit thumb
 -- instructions
-newtype LowGPR = LowGPR { unLowGPR :: Word8 }
+newtype LowGPR = LowGPR { unLowGPR :: W.W 3 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty LowGPR where
