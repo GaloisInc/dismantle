@@ -239,8 +239,8 @@ newtype LowGPR = LowGPR { unLowGPR :: Word8 }
 instance PP.Pretty LowGPR where
   pPrint (LowGPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
 
-lowGpr :: Word8 -> LowGPR
-lowGpr = LowGPR
+lowGpr :: Word32 -> LowGPR
+lowGpr = LowGPR . fromIntegral
 
 -- | General-purpose register by number
 newtype GPR = GPR { unGPR :: Word8 }
