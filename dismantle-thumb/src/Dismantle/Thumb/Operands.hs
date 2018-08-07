@@ -245,7 +245,7 @@ lowGpr :: Word32 -> LowGPR
 lowGpr = LowGPR . fromIntegral
 
 -- | General-purpose register by number
-newtype GPR = GPR { unGPR :: Word8 }
+newtype GPR = GPR { unGPR :: W.W 4 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR where
@@ -257,8 +257,8 @@ instance PP.Pretty GPR where
   pPrint (GPR 15) = PP.text "pc"
   pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
 
-gpr :: Word8 -> GPR
-gpr = GPR
+gpr :: Word32 -> GPR
+gpr = GPR . fromIntegral
 
 -- | Coprocessor operation opcode register by number
 newtype Opcode = Opcode { _unOpcode :: Word8 }
@@ -1186,7 +1186,7 @@ predToBits :: Pred -> Word32
 predToBits (Pred p) = fromIntegral p
 
 instance A.Arbitrary GPR where
-  arbitrary g = GPR <$> A.uniformR (0, 15) g
+  arbitrary g = gpr <$> A.uniformR (0, 15) g
 
 instance A.Arbitrary Opcode where
   arbitrary g = Opcode <$> A.uniformR (0, 7) g
