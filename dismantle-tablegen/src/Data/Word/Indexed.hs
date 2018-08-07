@@ -121,7 +121,8 @@ instance KnownNat n => Integral (W n) where
     toInteger = unW
 
 -- safeW is a safe initializer that will automatically truncate the
--- value to the allowed word size, dropping any excess.
+-- value to the allowed word size, dropping any excess.  It is "safe"
+-- in the sense that it will never cause a runtime error.
 safeW :: Integer -> NR.NatRepr n -> W n
 safeW n nr = W (NR.toUnsigned nr nonNeg) nr
   where
