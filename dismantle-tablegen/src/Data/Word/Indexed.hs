@@ -113,6 +113,13 @@ instance KnownNat n => Num (W n) where
                                 (show $ NR.natValue kn))
                     else safeW n kn
 
+instance KnownNat n => Real (W n) where
+    toRational (W x _) = toRational x
+
+instance KnownNat n => Integral (W n) where
+    quotRem (W x _) (W y _) = let (x', y') = quotRem x y in (w x', w y')
+    toInteger = unW
+
 -- safeW is a safe initializer that will automatically truncate the
 -- value to the allowed word size, dropping any excess.
 safeW :: Integer -> NR.NatRepr n -> W n
