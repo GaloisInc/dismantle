@@ -39,6 +39,7 @@ import           Dismantle.Testing.ParserTests ( parserTests )
 import qualified Dismantle.Testing.Regex as RE
 
 import MiscARMTests ( miscArmTests )
+import Debug.Trace
 
 
 ignored :: [(FilePath, [Word64])]
@@ -177,7 +178,7 @@ cmpInstrs objdump dismantle =
   -- a direct comparison fails, try stripping a ", 0" from the objdump
   -- version and check equality of that result.
   objdump == dismantle ||
-  (", 0" `TL.isSuffixOf` objdump &&
+  (", 0" `TL.isSuffixOf` (trace (TL.unpack $ "cmpInstrs <<" <> objdump <> ">> <<" <> dismantle <> ">>") objdump) &&
     (TL.reverse $ TL.drop 3 $ TL.reverse objdump) == dismantle)
 
 rx :: String -> RE.Regex
