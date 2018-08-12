@@ -149,6 +149,7 @@ arm = ATC { testingISA = ARM.isa
           , ignoreAddresses = ignored
           , customObjdumpArgs = []
           , normalizePretty = normalize
+          , comparePretty = Just cmpInstrs
           , instructionFilter = ((== FullWord) . insnLayout)
           }
 
@@ -167,6 +168,17 @@ normalize =
     TL.filter (flip notElem ("[]#"::String)) .
     -- First, trim any trailing comments
     (fst . TL.breakOn ";")
+
+cmpInstrs :: TL.Text -> TL.Text -> Bool
+cmpInstrs objdump dismantle =
+  -- Many operations have an optional shift amount that does not need
+  -- to be specified when the shift amount is zero.  Some objdump
+  -- output contains this value however, but dismantle doesn't, so if
+  -- a direct comparison fails, try stripping a ", 0" from the objdump
+  -- version and check equality of that result.
+  objdump == dismantle ||
+  (", 0" `TL.isSuffixOf` objdump &&
+    (TL.reverse $ TL.drop 3 $ TL.reverse objdump) == dismantle)
 
 rx :: String -> RE.Regex
 rx s =

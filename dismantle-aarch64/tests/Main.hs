@@ -33,6 +33,7 @@ aarch64 = ATC { testingISA = AArch64.isa
                   [("tests/bin/xen-4.6-arm64", ["-b", "binary", "-m", "aarch64", "-D"])]
               , ignoreAddresses = ignored
               , normalizePretty = normalize
+              , comparePretty = Nothing
               , instructionFilter = const True
               }
 

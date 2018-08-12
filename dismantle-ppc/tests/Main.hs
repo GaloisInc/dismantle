@@ -23,6 +23,7 @@ ppc = ATC { testingISA = PPC.isa
           , skipPrettyCheck = Just skipPrettyRE
           , ignoreAddresses = []
           , normalizePretty = normalize
+          , comparePretty = Nothing
           , instructionFilter = const True
           }
 

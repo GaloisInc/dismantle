@@ -31,6 +31,7 @@ thumb = ATC { testingISA = Thumb.isa
             , skipPrettyCheck = Just skipPretty
             , ignoreAddresses = ignored
             , normalizePretty = normalize
+            , comparePretty = Nothing
             , customObjdumpArgs = []
             }
 

@@ -79,6 +79,10 @@ data ArchTestConfig = forall i .
       -- pretty-print comparisons but is otherwise unimportant for
       -- comparison purposes.  Both the objdump and the dismantle
       -- disassembly output are normalized.
+      , comparePretty :: Maybe (TL.Text -> TL.Text -> Bool)
+      -- ^ If special comparison between the pretty forms of
+      -- instruction disassembly is needed, supply that here; if
+      -- Nothing, this simply uses == (instance Eq).
       }
 
 addressIsIgnored :: ArchTestConfig -> FilePath -> Word64 -> Bool
@@ -126,13 +130,15 @@ testInstruction atc binaryPath i agg
           , skipPrettyCheck = skipPPRE
           , expectFailure = expectFailureRE
           , normalizePretty = norm
+          , comparePretty = pCmp
           } -> case maybe False (RE.hasMatches (insnText i)) expectFailureRE of
-                 False -> testInstructionWith norm disasm asm pp skipPPRE i agg
+                 False -> testInstructionWith norm pCmp disasm asm pp skipPPRE i agg
                  True -> return (agg { testExpectedFailure = testExpectedFailure agg + 1
                                      , testCount = testCount agg + 1
                                      })
 
 testInstructionWith :: (TL.Text -> TL.Text)
+                    -> Maybe (TL.Text -> TL.Text -> Bool)
                     -> (LBS.ByteString -> (Int, Maybe i))
                     -> (i -> LBS.ByteString)
                     -> (i -> PP.Doc)
@@ -140,7 +146,7 @@ testInstructionWith :: (TL.Text -> TL.Text)
                     -> Instruction
                     -> TestAggregate
                     -> IO TestAggregate
-testInstructionWith norm disasm asm pp skipPPRE i agg = do
+testInstructionWith norm pCmp disasm asm pp skipPPRE i agg = do
   let bytes = insnBytes i
   let (_consumed, minsn) = disasm bytes
   case minsn of
@@ -159,7 +165,12 @@ testInstructionWith norm disasm asm pp skipPPRE i agg = do
                       })
         True
           | not (maybe False (RE.hasMatches (insnText i)) skipPPRE) ->
-            case norm (insnText i) == norm (TL.pack (show (pp insn))) of
+            case (let want = norm (insnText i)
+                      got  = norm (TL.pack (show (pp insn)))
+                  in case pCmp of
+                       Nothing -> want == got
+                       Just cmpf -> cmpf want got
+                 ) of
               True -> return (agg { testCount = testCount agg + 1 })
               False -> do
                 let !pretty = T.pack (show (pp insn))
