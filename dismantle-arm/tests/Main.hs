@@ -39,7 +39,6 @@ import           Dismantle.Testing.ParserTests ( parserTests )
 import qualified Dismantle.Testing.Regex as RE
 
 import MiscARMTests ( miscArmTests )
-import Debug.Trace
 
 
 ignored :: [(FilePath, [Word64])]
@@ -176,9 +175,10 @@ cmpInstrs objdump dismantle =
   -- to be specified when the shift amount is zero.  Some objdump
   -- output contains this value however, but dismantle doesn't, so if
   -- a direct comparison fails, try stripping a ", 0" from the objdump
-  -- version and check equality of that result.
+  -- version and check equality of that result (n.b. comparing the
+  -- normalized versions, spaces are stripped).
   objdump == dismantle ||
-  (", 0" `TL.isSuffixOf` (trace (TL.unpack $ "cmpInstrs <<" <> objdump <> ">> <<" <> dismantle <> ">>") objdump) &&
+  (",0" `TL.isSuffixOf` objdump &&
     (TL.reverse $ TL.drop 3 $ TL.reverse objdump) == dismantle)
 
 rx :: String -> RE.Regex
