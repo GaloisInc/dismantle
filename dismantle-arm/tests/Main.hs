@@ -179,7 +179,7 @@ cmpInstrs objdump dismantle =
   -- normalized versions, spaces are stripped).
   objdump == dismantle ||
   (",0" `TL.isSuffixOf` objdump &&
-    (TL.reverse $ TL.drop 3 $ TL.reverse objdump) == dismantle)
+    (TL.reverse $ TL.drop 2 $ TL.reverse objdump) == dismantle)
 
 rx :: String -> RE.Regex
 rx s =
