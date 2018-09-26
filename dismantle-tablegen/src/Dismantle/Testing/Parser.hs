@@ -59,7 +59,7 @@ objdumpParser =
   consumeHeader *> (Disassembly <$> P.sepEndBy parseSection P.space) <* P.eof
 
 consumeLine :: Parser ()
-consumeLine = void (P.manyTill P.anyChar P.eol)
+consumeLine = void (P.manyTill P.anySingle P.eol)
 
 consumeHeader :: Parser ()
 consumeHeader = replicateM_ 2 consumeLine >> P.space
@@ -74,6 +74,13 @@ sectionNameChar :: Parser Char
 sectionNameChar = tryOne [ P.alphaNumChar
                          , P.oneOf ['.', '_']
                          ]
+
+instance (Show a, P.ShowErrorComponent a) =>
+  P.ShowErrorComponent (P.ErrorItem a) where
+  showErrorComponent = show
+
+instance P.ShowErrorComponent Char where
+  showErrorComponent = show
 
 -- | Characters that can appear in symbol names, including symbol
 -- names that are an offset from another symbol.
@@ -121,7 +128,7 @@ parseJunkData = do
          , parseWord >> void (P.char ' ') >> void parseWord
          ]
 
-  void $ P.manyTill P.anyChar P.eol
+  void $ P.manyTill P.anySingle P.eol
   void $ P.optional P.eol
 
   return Nothing
@@ -190,7 +197,7 @@ parseInstruction = do
   P.space
   (bytes, layout) <- parseInstructionBytes
   P.space
-  txt <- TL.pack <$> P.manyTill P.anyChar P.eol
+  txt <- TL.pack <$> P.manyTill P.anySingle P.eol
   _ <- P.optional P.eol
   case isDataDirective txt || isUndefinedInstruction txt of
     True -> return Nothing

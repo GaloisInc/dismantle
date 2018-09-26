@@ -231,7 +231,7 @@ withDisassembledFile endianness parser customArgs f k = do
     Left err -> do
       hClose hout
       _ <- Proc.waitForProcess ph
-      error $ P.parseErrorPretty err
+      error $ P.errorBundlePretty err
     Right d -> do
       let rewriteDisassembly = case endianness of
                                  Little swapBytes _ -> fmap (rewriteSection swapBytes)
