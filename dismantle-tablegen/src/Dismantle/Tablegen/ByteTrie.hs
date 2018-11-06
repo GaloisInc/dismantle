@@ -317,8 +317,10 @@ assertMapping mnemonic patReq patTrue val
       case M.lookup pat pats of
         Just _ -> do
             -- Get the mnemonic already mapped to this pattern
-            Just oldMnemonic <- St.gets (M.lookup pat . tsPatternMnemonics)
-            E.throwError (OverlappingBitPattern [(pat, [mnemonic, oldMnemonic])])
+            mnemonics <- St.gets tsPatternMnemonics
+            case M.lookup pat mnemonics of
+              Just oldMnemonic -> E.throwError (OverlappingBitPattern [(pat, [mnemonic, oldMnemonic])])
+              Nothing -> E.throwError (OverlappingBitPattern [(pat, [mnemonic])])
         Nothing -> do
           eid <- St.gets tsEltIdSrc
           St.modify' $ \s -> s { tsPatterns = M.insert pat (eid, val) (tsPatterns s)
