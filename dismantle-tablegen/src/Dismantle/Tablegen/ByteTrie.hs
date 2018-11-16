@@ -1,6 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MagicHash #-}
+{- LANGUAGE StandaloneDeriving #-}
+
 module Dismantle.Tablegen.ByteTrie (
   ByteTrie,
   byteTrie,
@@ -24,6 +26,7 @@ import qualified GHC.ForeignPtr as FP
 import Control.Applicative
 import Control.DeepSeq
 import qualified Control.Monad.State.Strict as St
+import Control.Monad.Fail
 import qualified Control.Monad.Except as E
 import qualified Data.Array as A
 import Data.Bits ( (.&.), popCount )
@@ -110,6 +113,7 @@ lookupByte bt byte
 
 data TrieError = OverlappingBitPattern [(Pattern, [String])]
                | InvalidPatternLength Pattern
+               | MonadFailErr String
   deriving (Eq, Show)
 
 -- | The state of the 'TrieM' monad
@@ -141,6 +145,10 @@ newtype TrieM e a = TrieM { unM :: St.StateT (TrieState e) (E.Except TrieError) 
             Monad,
             E.MonadError TrieError,
             St.MonadState (TrieState e))
+
+instance MonadFail (TrieM e) where
+    fail msg = E.throwError $ MonadFailErr msg
+
 
 -- | Construct a 'ByteTrie' from a list of mappings and a default element
 byteTrie :: e -> [(String, BS.ByteString, BS.ByteString, e)] -> Either TrieError (ByteTrie e)
