@@ -284,7 +284,7 @@ mkAssembler isa desc = do
   insnName <- newName "insn"
   unparserTy <- [t| $(conT (mkName "Instruction")) -> LBS.ByteString |]
   insTagTy <- [t| $(conT (mkName "Instruction")) -> Some $(conT (mkName "Opcode") `appT` (conT (mkName "Operand"))) |]
-  pairsTy <- [t| [(Some $(conT (mkName "Opcode") `appT` (conT (mkName "Operand"))), $(conT (mkName "Instruction")) -> LBS.ByteString)] |]
+  pairsTy <- [t| M.Map (Some ($(conT (mkName "Opcode")) $(conT (mkName "Operand")))) ($(conT (mkName "Instruction")) -> LBS.ByteString) |]
   cases <- mapM (mkAsmCase isa) (isaInstructions desc)
 
   let (pairs, declLists) = unzip cases
@@ -292,19 +292,19 @@ mkAssembler isa desc = do
 
   let pairsExprName = mkName "instructionAssemblyHandlers"
       mkTuple (opExpr, fun) =
-          -- TupE [ConE (mkName "Some") `AppE` opExpr, VarE fun]
           [e| (Some $(return opExpr), $(return $ VarE fun)) |]
 
   pairsBody <- ListE <$> mapM mkTuple pairs
+  mapExpr <- [e| M.fromList $(return pairsBody) |]
   tagExpr <- [e| Some $(varE $ mkName "t") |]
 
   -- maybe (error "") ($ i) lookup (getOpcode isnName) (Data.Map.fromList pairs)
-  let body = VarE 'maybe `AppE` (VarE 'error `AppE` (LitE $ StringL "BUG: unhandled instruction in assembler"))
-                         `AppE` (InfixE Nothing (VarE (mkName "$")) (Just $ VarE insnName))
-                         `AppE` (VarE 'lookup `AppE` (VarE insnTagName `AppE` (VarE insnName))
-                                              `AppE` (VarE pairsExprName))
-      pairsExpr = [ SigD pairsExprName pairsTy
-                  , ValD (VarP pairsExprName) (NormalB pairsBody) []
+  body <- [e| maybe (error "BUG: Unhandled instruction in assembler")
+                       ($ $(varE insnName))
+                       (M.lookup ($(varE insnTagName) $(varE insnName)) $(varE pairsExprName))
+            |]
+  let pairsExpr = [ SigD pairsExprName pairsTy
+                  , ValD (VarP pairsExprName) (NormalB mapExpr) []
                   ]
       insTagExpr = [ SigD insnTagName insTagTy
                    , FunD insnTagName [Clause [ConP 'Instruction [VarP (mkName "t"), WildP]] (NormalB tagExpr) []]
