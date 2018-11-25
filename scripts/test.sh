@@ -5,6 +5,7 @@ set -euo pipefail
 ARCH=$1
 
 export STACK_YAML=stack-ghc-8.0.2.yaml
+export PATH=/opt/cabal/bin:$PATH
 
 case $ARCH in
     tablegen)
