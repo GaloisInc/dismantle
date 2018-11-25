@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -13,6 +14,7 @@ module Dismantle.Tablegen.TH (
   genISARandomHelpers
   ) where
 
+import           GHC.Base ( Int(I#), getTag )
 import           GHC.TypeLits ( Symbol )
 
 import           Control.Monad ( forM )
@@ -458,8 +460,8 @@ mkEnumFInstance :: ISADescriptor -> Q Dec
 mkEnumFInstance desc = do
   enumfTy <- [t| EnumF ($(conT opcodeTypeName) $(varT =<< newName "o")) |]
   enumfArgName <- newName "o"
-  let enumfCase = caseE (varE enumfArgName) (zipWith mkEnumFMatch [0..] (isaInstructions desc))
-  enumfDec <- funD 'enumF [clause [varP enumfArgName] (normalB enumfCase) []]
+  let enumfBody = [e| I# (getTag $(varE enumfArgName)) |]
+  enumfDec <- funD 'enumF [clause [varP enumfArgName] (normalB enumfBody) []]
 
   let pairsExprName = mkName "enumfMapping"
       pairs = [ mkCongruentFCase elt eltsList
@@ -485,10 +487,6 @@ mkEnumFInstance desc = do
     classifyInstruction m i =
       let conName = mkName (toTypeName (idMnemonic i))
       in M.insertWith S.union (instructionShape i) (S.singleton conName) m
-
-    mkEnumFMatch i insn = do
-      let conName = mkName (toTypeName (idMnemonic insn))
-      match (conP conName []) (normalB (litE (integerL i))) []
 
     mkCongruentFCase eltName eltNames =
       [e| PM.Pair $(conE eltName) ($(conE (mkName "NESetWrapper")) $ NES.fromList $(conE eltName) $(listE (map conE eltNames))) |]
