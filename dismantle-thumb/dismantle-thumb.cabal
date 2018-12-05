@@ -8,7 +8,7 @@ maintainer:          jtd@galois.com
 copyright:           2017 Jonathan Daugherty, Tristan Ravitch
 category:            Development
 build-type:          Simple
-extra-source-files:  ChangeLog.md
+extra-source-files:  ChangeLog.md, data/ARM.tgen
 cabal-version:       >=1.10
 
 library
