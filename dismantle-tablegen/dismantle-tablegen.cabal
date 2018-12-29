@@ -48,7 +48,7 @@ library
                        process,
                        located-base,
                        array,
-                       mwc-random >= 0.13 && < 0.14,
+                       mwc-random >= 0.13 && < 0.15,
                        case-insensitive >= 1 && < 2,
                        filemanip,
                        filepath,
