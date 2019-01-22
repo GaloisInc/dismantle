@@ -7,6 +7,12 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-spec-constr -fno-specialise -fmax-simplifier-iterations=1 -fno-call-arity #-}
+-- Dump TH splices to two files on disk. The generated file
+-- Dismantle/PPC.dump-splices will contain all splices, and not be
+-- valid Haskell, while the generated file Dismantle/PPC.th.hs will
+-- have only the top-level splices, and will be valid Haskell. The
+-- second file can be used when generating TAGS.
+{-# OPTIONS_GHC -ddump-splices -ddump-to-file -dth-dec-file #-}
 module Dismantle.PPC (
   Instruction,
   AnnotatedInstruction,
