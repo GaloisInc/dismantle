@@ -7,13 +7,15 @@ module Dismantle.Tablegen.TH.Pretty (
   prettyInstruction
   ) where
 
-import Control.Applicative ((<|>))
-import Data.Char ( isAlphaNum )
-import Data.Int ( Int16, Int32, Int64 )
-import Data.Word ( Word8, Word16, Word32, Word64 )
+import           Control.Applicative ((<|>))
+import           Data.Char ( isAlphaNum )
+import           Data.Int ( Int16, Int32, Int64 )
+import           Data.Word ( Word8, Word16, Word32, Word64 )
 import qualified Data.Map as M
-import Data.Monoid
+import           Data.Monoid
 import qualified Text.PrettyPrint.HughesPJClass as PP
+
+import           Prelude
 
 -- | Wrap 1) the name of an operand, 2) the operand itself, and 3) the
 -- formatter for the operand.
