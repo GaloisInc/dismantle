@@ -36,7 +36,7 @@ import Dismantle.PPC.Operands
 import Dismantle.PPC.ISA ( isa )
 import Dismantle.Tablegen.TH ( genISA, genInstances )
 
-$(genISA isa "data/PPC.tgen" [])
+$(genISA isa "data/PPC.tgen" ["data/override"])
 $(return [])
 
 -- We need a separate call to generate some instances, since the helper(s) that

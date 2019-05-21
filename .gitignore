@@ -5,3 +5,5 @@ dist-newstyle
 .cabal-sandbox
 .stack-work/
 TAGS
+/dismantle-ppc/src/Dismantle/PPC.dump-splices
+/dismantle-ppc/src/Dismantle/PPC.th.hs
