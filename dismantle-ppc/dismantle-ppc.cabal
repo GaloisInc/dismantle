@@ -8,7 +8,7 @@ maintainer:          tristan@nochair.net
 copyright:           2016-2017 Tristan Ravitch
 category:            Development
 build-type:          Simple
-extra-source-files:  ChangeLog.md, data/PPC.tgen
+extra-source-files:  ChangeLog.md, data/PPC.tgen, data/override/*.tgen
 cabal-version:       >=1.10
 
 library
