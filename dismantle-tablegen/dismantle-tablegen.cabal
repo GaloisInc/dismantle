@@ -29,6 +29,8 @@ library
                    Dismantle.Tablegen.Parser.Types
                    Dismantle.Testing
                    Dismantle.Testing.Parser
+                   Dismantle.Testing.ParserTests
+                   Dismantle.Testing.Regex
                    Data.EnumF
                    Data.Int.Indexed
                    Data.Parameterized.HasRepr
@@ -38,7 +40,7 @@ library
   build-depends:       base >=4.8 && <5,
                        ghc-prim,
                        template-haskell,
-                       th-abstraction >= 0.2 && < 0.3,
+                       th-abstraction >= 0.2 && < 0.4,
                        bytestring,
                        binary,
                        pretty,
@@ -46,7 +48,7 @@ library
                        process,
                        located-base,
                        array,
-                       mwc-random >= 0.13 && < 0.14,
+                       mwc-random >= 0.13 && < 0.15,
                        case-insensitive >= 1 && < 2,
                        filemanip,
                        filepath,
@@ -56,13 +58,13 @@ library
                        zlib >= 0.6 && < 0.7,
                        text >= 1 && < 2,
                        vector,
-                       tasty >= 0.10 && < 2,
+                       tasty >= 0.10,
                        tasty-hunit,
                        tasty-expected-failure,
-                       megaparsec >= 6 && < 7,
-                       regex >= 1 && < 2,
+                       megaparsec >= 7 && < 8,
+                       regex-tdfa,
                        mtl >= 2 && < 3,
-                       parameterized-utils >= 1 && < 2
+                       parameterized-utils >= 1 && < 2.1
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options: -Wall -fprof-auto
@@ -73,17 +75,19 @@ test-suite dismantle-tests
   ghc-options: -Wall -rtsopts
   hs-source-dirs: tests
   main-is: Main.hs
-  other-modules: Parser
-                 Operands
+  other-modules: Operands
                  Trie
-  build-depends: dismantle-tablegen,
-                 base,
-                 deepseq,
-                 text,
-                 tasty >= 0.10 && < 0.13,
-                 tasty-hunit,
-                 tasty-quickcheck >= 0.8 && < 0.10,
-                 regex >= 1 && < 2,
-                 filemanip,
-                 directory,
-                 filepath
+                 WordIndexed
+  build-depends: base
+               , deepseq
+               , directory
+               , dismantle-tablegen
+               , filemanip
+               , filepath
+               , parameterized-utils >= 1 && < 2.1
+               , pretty
+               , regex-tdfa
+               , text
+               , tasty >= 0.10
+               , tasty-hunit
+               , tasty-quickcheck >= 0.8 && <= 0.11

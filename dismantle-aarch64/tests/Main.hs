@@ -5,12 +5,13 @@ import Data.Char (isSpace)
 import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
-import qualified Text.RE.TDFA as RE
 import Data.Word (Word64)
 import Data.Monoid ((<>))
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import Dismantle.Testing
+import Dismantle.Testing.ParserTests (parserTests)
+import qualified Dismantle.Testing.Regex as RE
 
 import qualified Dismantle.ARM as ARM
 import qualified Dismantle.AArch64 as AArch64
@@ -32,13 +33,15 @@ aarch64 = ATC { testingISA = AArch64.isa
                   [("tests/bin/xen-4.6-arm64", ["-b", "binary", "-m", "aarch64", "-D"])]
               , ignoreAddresses = ignored
               , normalizePretty = normalize
+              , comparePretty = Nothing
               , instructionFilter = const True
               }
 
 main :: IO ()
 main = do
   tg <- binaryTestSuite aarch64 "tests/bin"
-  T.defaultMain tg
+  pt <- parserTests
+  T.defaultMain $ T.testGroup "dismantle-aarch64" [tg, pt]
 
 normalize :: TL.Text -> TL.Text
 normalize =
@@ -51,13 +54,13 @@ normalize =
     -- First, trim any trailing comments
     (fst . TL.breakOn ";")
 
-rx :: String -> RE.RE
+rx :: String -> RE.Regex
 rx s =
-  case RE.compileRegex s of
-    Nothing -> error ("Invalid regex: " ++ s)
-    Just r -> r
+  case RE.mkRegex s of
+    Left e -> error ("Invalid regex <<" ++ s ++ ">> because: " ++ e)
+    Right r -> r
 
-skipPretty :: RE.RE
+skipPretty :: RE.Regex
 skipPretty = rx (L.intercalate "|" rxes)
   where
     rxes = others
@@ -162,7 +165,7 @@ skipPretty = rx (L.intercalate "|" rxes)
     conditions = "(" <> (concat $ L.intersperse "|"
                   (PP.render <$> PP.pPrint <$> ARM.mkPred <$> [0..13])) <> ")?"
 
-expectedFailures :: RE.RE
+expectedFailures :: RE.Regex
 expectedFailures = rx (L.intercalate "|" rxes)
   where
     rxes = [ "^[[:space:]]*mvnpl"

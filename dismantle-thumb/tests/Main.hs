@@ -5,12 +5,13 @@ import Data.Char (isSpace)
 import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
-import qualified Text.RE.TDFA as RE
 import Data.Monoid ((<>))
 import qualified Text.PrettyPrint.HughesPJClass as PP
 import Data.Word (Word64)
 
 import Dismantle.Testing
+import Dismantle.Testing.ParserTests (parserTests)
+import qualified Dismantle.Testing.Regex as RE
 
 import qualified Dismantle.Thumb as Thumb
 import qualified Dismantle.Thumb.ISA as Thumb
@@ -30,13 +31,15 @@ thumb = ATC { testingISA = Thumb.isa
             , skipPrettyCheck = Just skipPretty
             , ignoreAddresses = ignored
             , normalizePretty = normalize
+            , comparePretty = Nothing
             , customObjdumpArgs = []
             }
 
 main :: IO ()
 main = do
   tg <- binaryTestSuite thumb "tests/bin"
-  T.defaultMain tg
+  pt <- parserTests
+  T.defaultMain $ T.testGroup "dismantle-thumb" [tg, pt]
 
 remove :: TL.Text -> TL.Text -> TL.Text
 remove needle s =
@@ -59,13 +62,13 @@ normalize =
     -- First, trim any trailing comments
     (fst . TL.breakOn ";")
 
-rx :: String -> RE.RE
+rx :: String -> RE.Regex
 rx s =
-  case RE.compileRegex s of
-    Nothing -> error ("Invalid regex: " ++ s)
-    Just r -> r
+  case RE.mkRegex s of
+    Left e -> error ("Invalid regex: <<" ++ s ++ ">> because: " ++ e)
+    Right r -> r
 
-skipPretty :: RE.RE
+skipPretty :: RE.Regex
 skipPretty = rx (L.intercalate "|" rxes)
   where
     rxes = others <> (matchInstruction <$> skipped)

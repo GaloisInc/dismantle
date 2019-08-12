@@ -8,7 +8,7 @@ maintainer:          tristan@nochair.net
 copyright:           2016-2017 Tristan Ravitch
 category:            Development
 build-type:          Simple
-extra-source-files:  ChangeLog.md
+extra-source-files:  ChangeLog.md, data/PPC.tgen, data/override/*.tgen
 cabal-version:       >=1.10
 
 library
@@ -18,9 +18,8 @@ library
   other-modules: Dismantle.PPC.Operands
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
-                       parameterized-utils >= 1 && < 2,
+                       parameterized-utils >= 1 && < 2.1,
                        dismantle-tablegen,
-                       parameterized-utils,
                        bytestring,
                        binary,
                        pretty
@@ -37,5 +36,4 @@ test-suite dismantle-ppc-tests
                  dismantle-tablegen,
                  dismantle-ppc,
                  tasty,
-                 regex >= 1 && < 2,
                  text

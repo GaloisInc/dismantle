@@ -26,6 +26,7 @@ addons:
     packages:
       - binutils-multiarch
       - ghc-8.0.2
+      - cabal-install-2.4
 
 
 matrix:

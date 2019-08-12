@@ -8,7 +8,7 @@ maintainer:          jtd@galois.com
 copyright:           2017 Jonathan Daugherty, Tristan Ravitch
 category:            Development
 build-type:          Simple
-extra-source-files:  ChangeLog.md
+extra-source-files:  ChangeLog.md, data/ARM.tgen
 cabal-version:       >=1.10
 
 library
@@ -18,7 +18,7 @@ library
                    Dismantle.Thumb.Random
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
-                       parameterized-utils >= 1 && < 2,
+                       parameterized-utils >= 1 && < 2.1,
                        dismantle-tablegen,
                        dismantle-arm,
                        bytestring,
@@ -39,6 +39,5 @@ test-suite dismantle-thumb-tests
                  dismantle-tablegen,
                  dismantle-thumb,
                  tasty,
-                 regex >= 1 && < 2,
                  pretty,
                  text

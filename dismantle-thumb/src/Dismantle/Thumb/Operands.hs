@@ -1,5 +1,6 @@
 {-# OPTIONS_HADDOCK not-home #-}
 {-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Dismantle.Thumb.Operands (
   GPR,
@@ -146,7 +147,7 @@ module Dismantle.Thumb.Operands (
   mkPred,
   predToBits,
 
-  T2SoReg,
+  T2SoReg(..),
   mkT2SoReg,
   t2SoRegToBits
 
@@ -166,6 +167,7 @@ import Data.Bits
 import Data.Maybe (catMaybes)
 import Data.Monoid
 import Data.Word ( Word8, Word16, Word32 )
+import qualified Data.Word.Indexed as W
 import Dismantle.Tablegen.ISA
 import Language.Haskell.TH hiding (Pred)
 
@@ -233,17 +235,17 @@ regListToBits (Reglist v) = fromIntegral v
 
 -- | General-purpose low register by number (0-7) for 16-bit thumb
 -- instructions
-newtype LowGPR = LowGPR { unLowGPR :: Word8 }
+newtype LowGPR = LowGPR { unLowGPR :: W.W 3 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty LowGPR where
   pPrint (LowGPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
 
-lowGpr :: Word8 -> LowGPR
-lowGpr = LowGPR
+lowGpr :: Word32 -> LowGPR
+lowGpr = LowGPR . fromIntegral
 
 -- | General-purpose register by number
-newtype GPR = GPR { unGPR :: Word8 }
+newtype GPR = GPR { unGPR :: W.W 4 }
   deriving (Eq, Ord, Show)
 
 instance PP.Pretty GPR where
@@ -255,8 +257,8 @@ instance PP.Pretty GPR where
   pPrint (GPR 15) = PP.text "pc"
   pPrint (GPR rno) = PP.char 'r' <> PP.int (fromIntegral rno)
 
-gpr :: Word8 -> GPR
-gpr = GPR
+gpr :: Word32 -> GPR
+gpr = GPR . fromIntegral
 
 -- | Coprocessor operation opcode register by number
 newtype Opcode = Opcode { _unOpcode :: Word8 }
@@ -727,17 +729,15 @@ imm1_32ToBits (Imm1_32 i) =
     insert imm1_32Field (fromIntegral i) 0
 
 data T2SoReg =
-    T2SoReg { t2SoRegImm5      :: Word8
-            , t2SoRegShiftType :: ARM.ShiftType
+    T2SoReg { t2SoRegImm5      :: Word8  -- n.b. should be W.W 5 when this module is converted
+            , t2SoRegShiftType :: Word8  -- n.b. should be W.W 2 when this module is converted
             , t2SoRegRm        :: GPR
             }
             deriving (Eq, Ord, Show)
 
 instance PP.Pretty T2SoReg where
     pPrint (T2SoReg imm ty rm) =
-        (PP.pPrint rm <> PP.char ',') PP.<+>
-        PP.pPrint ty PP.<+>
-        (PP.char '#' <> PP.pPrint imm)
+        PP.pPrint rm <> PP.pPrint (ARM.ShiftImmSpec (fromIntegral ty) (fromIntegral imm))
 
 t2SoRegImm3Field :: Field
 t2SoRegImm3Field = Field 3 9
@@ -752,13 +752,13 @@ t2SoRegRmField :: Field
 t2SoRegRmField = Field 4 0
 
 mkT2SoReg :: Word32 -> T2SoReg
-mkT2SoReg w = T2SoReg (fromIntegral imm) st (GPR $ fromIntegral reg)
+mkT2SoReg w = T2SoReg (fromIntegral imm) (fromIntegral ty) (GPR $ fromIntegral reg)
   where
       reg  = extract t2SoRegRmField w
       imm2 = extract t2SoRegImm2Field w
       imm3 = extract t2SoRegImm3Field w
-      imm' = (imm3 `shiftL` 2) .|. imm2
-      (st, imm)   = ARM.decodeImmShift (extract t2SoRegShiftTypeField w) imm'
+      imm = (imm3 `shiftL` 2) .|. imm2
+      ty = extract t2SoRegShiftTypeField w
 
 t2SoRegToBits :: T2SoReg -> Word32
 t2SoRegToBits (T2SoReg imm st (GPR reg)) =
@@ -767,7 +767,7 @@ t2SoRegToBits (T2SoReg imm st (GPR reg)) =
     in insert t2SoRegRmField reg $
        insert t2SoRegImm2Field imm2 $
        insert t2SoRegImm3Field imm3 $
-       insert t2SoRegShiftTypeField (ARM.encodeShiftType st) 0
+       insert t2SoRegShiftTypeField st 0
 
 data ThumbBlxTarget =
     ThumbBlxTarget { thumbBlxTargetS      :: Word8
@@ -1186,7 +1186,7 @@ predToBits :: Pred -> Word32
 predToBits (Pred p) = fromIntegral p
 
 instance A.Arbitrary GPR where
-  arbitrary g = GPR <$> A.uniformR (0, 15) g
+  arbitrary g = gpr <$> A.uniformR (0, 15) g
 
 instance A.Arbitrary Opcode where
   arbitrary g = Opcode <$> A.uniformR (0, 7) g

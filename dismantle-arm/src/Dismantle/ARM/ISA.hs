@@ -11,6 +11,7 @@ import qualified Data.List as L
 import qualified Data.List.Split as L
 import qualified Data.Set as S
 import Data.Word ( Word8, Word16, Word32, Word64 )
+import qualified Data.Word.Indexed as W
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax
@@ -56,19 +57,19 @@ isa = ISA { isaName = "ARM"
   where
     gpRegister = OperandPayload { opTypeT = [t| ARM.GPR |]
                                 , opConE = Just (varE 'ARM.gpr)
-                                , opWordE = Just [| fromIntegral . ARM.unGPR |]
+                                , opWordE = Just [| fromIntegral . W.unW . ARM.unGPR |]
                                 }
     qpRegister = OperandPayload { opTypeT = [t| ARM.QPR |]
                                 , opConE = Just (varE 'ARM.qpr)
-                                , opWordE = Just [| fromIntegral . ARM.unQPR |]
+                                , opWordE = Just [| fromIntegral . W.unW . ARM.unQPR |]
                                 }
     qqpRegister = OperandPayload { opTypeT = [t| ARM.QQPR |]
-                                 , opConE = Just (varE 'ARM.unQQPR)
-                                 , opWordE = Just [| fromIntegral . ARM.unQQPR |]
+                                 , opConE = Just (varE 'ARM.qqpr)
+                                 , opWordE = Just [| fromIntegral . W.unW . ARM.unQQPR |]
                                  }
     dpRegister = OperandPayload { opTypeT = [t| ARM.DPR |]
                                 , opConE = Just (varE 'ARM.dpr)
-                                , opWordE = Just [| fromIntegral . ARM.unDPR |]
+                                , opWordE = Just [| fromIntegral . W.unW . ARM.unDPR |]
                                 }
     addrMode3 = OperandPayload { opTypeT = [t| ARM.AddrMode3 |]
                                , opConE = Just (varE 'ARM.mkAddrMode3)
@@ -114,9 +115,13 @@ isa = ISA { isaName = "ARM"
                                     , opConE = Just (varE 'ARM.mkCoprocRegister)
                                     , opWordE = Just (varE 'ARM.coprocRegisterToBits)
                                     }
-    opcodeOperand = OperandPayload { opTypeT = [t| ARM.Opcode |]
-                                   , opConE = Just (varE 'ARM.mkOpcode)
-                                   , opWordE = Just (varE 'ARM.opcodeToBits)
+    opcode15Operand = OperandPayload { opTypeT = [t| ARM.Opcode15 |]
+                                   , opConE = Just (varE 'ARM.mkOpcode15)
+                                   , opWordE = Just (varE 'ARM.opcode15ToBits)
+                                   }
+    opcode7Operand = OperandPayload { opTypeT = [t| ARM.Opcode7 |]
+                                   , opConE = Just (varE 'ARM.mkOpcode7)
+                                   , opWordE = Just (varE 'ARM.opcode7ToBits)
                                    }
     word8Operand = OperandPayload { opTypeT = [t| Word8 |]
                                   , opConE = Nothing
@@ -218,10 +223,10 @@ isa = ISA { isaName = "ARM"
         , ("GPRnopc"           , gpRegister)
         , ("Iflags_op"         , word8Operand)
         , ("Imm0_1"            , bit)
-        , ("Imm0_15"           , opcodeOperand)
+        , ("Imm0_15"           , opcode15Operand)
         , ("Imm0_31"           , imm5)
         , ("Imm0_65535"        , imm16)
-        , ("Imm0_7"            , opcodeOperand)
+        , ("Imm0_7"            , opcode7Operand)
         , ("Imm0_239"          , word8Operand)
         , ("Imm0_65535_expr"   , word16Operand)
         , ("Imm1_16"           , word8Operand)

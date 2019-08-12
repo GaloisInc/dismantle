@@ -59,7 +59,7 @@ parseTablegen :: String
 parseTablegen fname t =
   case St.evalState (P.runParserT p fname (unpack t)) emptyState of
     -- Render the parse error, including the line where it occurred.
-    Left e -> Left $ P.parseErrorPretty' t e
+    Left e -> Left $ P.errorBundlePretty e
     Right r -> Right r
   where
     emptyState = TGState M.empty
@@ -228,7 +228,7 @@ parseSimpleValue cfg =
             , VString <$> parseStringLiteral cfg
             , VList <$> between (symbol "[") (symbol "]") (P.sepBy1 (parseSimpleValue NoEmbeddedStrings) (symbol ","))
                     <*> P.optional parseType
-            , VCode <$> (symbol "[{" *> P.manyTill P.anyChar (symbol "}]"))
+            , VCode <$> (symbol "[{" *> P.manyTill P.anySingle (symbol "}]"))
             , VSequence <$> between (symbol "{") (symbol "}") (P.sepBy (parseSimpleValue NoEmbeddedStrings) (symbol ","))
             , VAnonRecord <$> name <*> between (symbol "<") (symbol ">") (P.sepBy1 (parseSimpleValue NoEmbeddedStrings) (symbol ","))
             , id <$> between (symbol "(") (symbol ")") (VDag <$> parseDagArg <*> P.sepBy parseDagArg (symbol ","))

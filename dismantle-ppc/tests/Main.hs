@@ -5,9 +5,10 @@ import Data.Char (isSpace)
 import qualified Data.List as L
 import qualified Test.Tasty as T
 import qualified Data.Text.Lazy as TL
-import qualified Text.RE.TDFA as RE
 
 import Dismantle.Testing
+import Dismantle.Testing.ParserTests (parserTests)
+import qualified Dismantle.Testing.Regex as RE
 
 import qualified Dismantle.PPC as PPC
 import qualified Dismantle.PPC.ISA as PPC
@@ -22,13 +23,15 @@ ppc = ATC { testingISA = PPC.isa
           , skipPrettyCheck = Just skipPrettyRE
           , ignoreAddresses = []
           , normalizePretty = normalize
+          , comparePretty = Nothing
           , instructionFilter = const True
           }
 
 main :: IO ()
 main = do
   tg <- binaryTestSuite ppc "tests/bin"
-  T.defaultMain tg
+  pt <- parserTests
+  T.defaultMain $ T.testGroup "dismantle-ppc" [tg, pt]
 
 normalize :: TL.Text -> TL.Text
 normalize =
@@ -39,7 +42,7 @@ normalize =
 
 -- | A regular expression matching any instruction that we shouldn't test for
 -- pretty printing accuracy.
-skipPrettyRE :: RE.RE
+skipPrettyRE :: RE.Regex
 skipPrettyRE = rx (L.intercalate "|" rxes)
   where
     rxes = [ -- IP-relative addressing references names in <>, and we can't
@@ -91,9 +94,8 @@ skipPrettyRE = rx (L.intercalate "|" rxes)
            , "^[[:space:]]*mtfsb1[[:space:]]"
            ]
 
-rx :: String -> RE.RE
+rx :: String -> RE.Regex
 rx s =
-  case RE.compileRegex s of
-    Nothing -> error ("Invalid regex: " ++ s)
-    Just r -> r
-
+  case RE.mkRegex s of
+    Left e -> error ("Invalid regex <<" ++ s ++ ">> because: " ++ e)
+    Right r -> r

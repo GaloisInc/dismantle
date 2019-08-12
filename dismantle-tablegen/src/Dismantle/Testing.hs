@@ -27,7 +27,7 @@ import System.FilePath ( (</>) )
 import qualified System.Process as Proc
 import qualified Text.Megaparsec as P
 import System.IO (hClose)
-import qualified Text.RE.TDFA as RE
+import qualified Dismantle.Testing.Regex as RE
 import qualified Text.PrettyPrint.HughesPJClass as PP
 import Text.Printf ( printf )
 
@@ -49,7 +49,7 @@ data ArchTestConfig = forall i .
       -- ^ The re-assembly function for the ISA
       , prettyPrint :: i -> PP.Doc
       -- ^ The pretty printer for the ISA
-      , expectFailure :: Maybe RE.RE
+      , expectFailure :: Maybe RE.Regex
       -- ^ A regular expression run against the text of an instruction (from
       -- objdump); if the regular expression matches, disassembly and reassembly
       -- are expected to fail (and the pretty printing check is therefore not
@@ -57,7 +57,7 @@ data ArchTestConfig = forall i .
       , instructionFilter :: Instruction -> Bool
       -- ^ A function to determine which parsed instructions should be
       -- tested.
-      , skipPrettyCheck :: Maybe RE.RE
+      , skipPrettyCheck :: Maybe RE.Regex
       -- ^ A regular expression run against the text of an instruction (from
       -- objdump); if the regular expression matches, the output of the pretty
       -- printer is not compared against the original text provided by objdump.
@@ -77,7 +77,12 @@ data ArchTestConfig = forall i .
       -- form suitable for comparison. This typically needs to remove
       -- whitespace and special characters whose presence confounds
       -- pretty-print comparisons but is otherwise unimportant for
-      -- comparison purposes.
+      -- comparison purposes.  Both the objdump and the dismantle
+      -- disassembly output are normalized.
+      , comparePretty :: Maybe (TL.Text -> TL.Text -> Bool)
+      -- ^ If special comparison between the pretty forms of
+      -- instruction disassembly is needed, supply that here; if
+      -- Nothing, this simply uses == (instance Eq).
       }
 
 addressIsIgnored :: ArchTestConfig -> FilePath -> Word64 -> Bool
@@ -125,21 +130,23 @@ testInstruction atc binaryPath i agg
           , skipPrettyCheck = skipPPRE
           , expectFailure = expectFailureRE
           , normalizePretty = norm
-          } -> case maybe False (insnText i RE.=~) expectFailureRE of
-                 False -> testInstructionWith norm disasm asm pp skipPPRE i agg
+          , comparePretty = pCmp
+          } -> case maybe False (RE.hasMatches (insnText i)) expectFailureRE of
+                 False -> testInstructionWith norm pCmp disasm asm pp skipPPRE i agg
                  True -> return (agg { testExpectedFailure = testExpectedFailure agg + 1
                                      , testCount = testCount agg + 1
                                      })
 
 testInstructionWith :: (TL.Text -> TL.Text)
+                    -> Maybe (TL.Text -> TL.Text -> Bool)
                     -> (LBS.ByteString -> (Int, Maybe i))
                     -> (i -> LBS.ByteString)
                     -> (i -> PP.Doc)
-                    -> Maybe RE.RE
+                    -> Maybe RE.Regex
                     -> Instruction
                     -> TestAggregate
                     -> IO TestAggregate
-testInstructionWith norm disasm asm pp skipPPRE i agg = do
+testInstructionWith norm pCmp disasm asm pp skipPPRE i agg = do
   let bytes = insnBytes i
   let (_consumed, minsn) = disasm bytes
   case minsn of
@@ -157,8 +164,13 @@ testInstructionWith norm disasm asm pp skipPPRE i agg = do
                       , testCount = testCount agg + 1
                       })
         True
-          | not (maybe False (insnText i RE.=~) skipPPRE) ->
-            case norm (insnText i) == norm (TL.pack (show (pp insn))) of
+          | not (maybe False (RE.hasMatches (insnText i)) skipPPRE) ->
+            case (let want = norm (insnText i)
+                      got  = norm (TL.pack (show (pp insn)))
+                  in case pCmp of
+                       Nothing -> want == got
+                       Just cmpf -> cmpf want got
+                 ) of
               True -> return (agg { testCount = testCount agg + 1 })
               False -> do
                 let !pretty = T.pack (show (pp insn))
@@ -193,6 +205,13 @@ formatTestFailure ta = show doc
                   , PP.nest 2 (PP.vcat roundtripFailures)
                   , "Pretty printing failures:"
                   , PP.nest 2 (PP.vcat prettyFailures)
+                  , PP.hcat [ "Total: "
+                            , PP.text (show $ testCount ta), " tests"
+                            , ", failures: "
+                            , PP.text (show $ length $ testDisassemblyFailures ta), " disassembly"
+                            , ", ", PP.text (show $ length $ testRoundtripFailures ta), " round-trip"
+                            , ", ", PP.text (show $ length $ testPrettyFailures ta), " pretty-printing"
+                            ]
                   ]
     disasmFailures = [ PP.text (printf "Failed to disassemble %s (%s)" (binaryRep (insnBytes i)) (TL.unpack (insnText i)))
                      | i <- testDisassemblyFailures ta
@@ -212,7 +231,7 @@ withDisassembledFile endianness parser customArgs f k = do
     Left err -> do
       hClose hout
       _ <- Proc.waitForProcess ph
-      error $ P.parseErrorPretty err
+      error $ P.errorBundlePretty err
     Right d -> do
       let rewriteDisassembly = case endianness of
                                  Little swapBytes _ -> fmap (rewriteSection swapBytes)

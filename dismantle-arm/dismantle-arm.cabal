@@ -8,7 +8,7 @@ maintainer:          jtd@galois.com
 copyright:           2017 Jonathan Daugherty, Tristan Ravitch
 category:            Development
 build-type:          Simple
-extra-source-files:  ChangeLog.md
+extra-source-files:  ChangeLog.md, data/ARM.tgen
 cabal-version:       >=1.10
 
 library
@@ -18,7 +18,7 @@ library
                    Dismantle.ARM.Operands
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
-                       parameterized-utils >= 1 && < 2,
+                       parameterized-utils >= 1 && < 2.1,
                        dismantle-tablegen,
                        bytestring,
                        binary,
@@ -34,10 +34,11 @@ test-suite dismantle-arm-tests
   ghc-options: -Wall
   hs-source-dirs: tests
   main-is: Main.hs
+  other-modules: MiscARMTests
   build-depends: base,
                  dismantle-tablegen,
                  dismantle-arm,
                  tasty,
-                 regex >= 1 && < 2,
+                 tasty-hunit,
                  pretty,
                  text

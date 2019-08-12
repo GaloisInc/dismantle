@@ -1,19 +1,45 @@
 {-# LANGUAGE OverloadedStrings #-}
+
+{-
+  Note: when a binary representation of an ARM instruction is
+        displayed, the byte order is: 6 7 4 5 2 3 0 1
+
+        In the documentation, bits 31 .... 0  correspond to bytes 0 ... 7
+
+  For example:
+
+    10001100.00110000.10010011.11100001      orrs r3, r3, ip, lsl #1
+    ----____ ----____ ----____ ----____
+      6   7    4   5    2   3    0   1
+
+    [defined on page F7.1.127, F7-2738]
+
+    Translation:
+     cond 0011 100S .rn. .rd. ..imm12....
+        rn = r3
+        rd = r3
+        lsl = 0b00
+        imm12 = 0000 1000 1100  = 0x08c
+-}
+
 module Main ( main ) where
 
-import Data.Char (isSpace)
+import           Data.Char (isSpace)
 import qualified Data.List as L
-import qualified Test.Tasty as T
+import           Data.Monoid ((<>))
 import qualified Data.Text.Lazy as TL
-import qualified Text.RE.TDFA as RE
-import Data.Monoid ((<>))
+import           Data.Word (Word64)
+import qualified Test.Tasty as T
 import qualified Text.PrettyPrint.HughesPJClass as PP
-import Data.Word (Word64)
-
-import Dismantle.Testing
 
 import qualified Dismantle.ARM as ARM
 import qualified Dismantle.ARM.ISA as ARM
+import           Dismantle.Testing
+import           Dismantle.Testing.ParserTests ( parserTests )
+import qualified Dismantle.Testing.Regex as RE
+
+import MiscARMTests ( miscArmTests )
+
 
 ignored :: [(FilePath, [Word64])]
 ignored =
@@ -123,13 +149,16 @@ arm = ATC { testingISA = ARM.isa
           , ignoreAddresses = ignored
           , customObjdumpArgs = []
           , normalizePretty = normalize
+          , comparePretty = Just cmpInstrs
           , instructionFilter = ((== FullWord) . insnLayout)
           }
 
 main :: IO ()
 main = do
   tg <- binaryTestSuite arm "tests/bin"
-  T.defaultMain tg
+  pt <- parserTests
+  mt <- miscArmTests
+  T.defaultMain $ T.testGroup "dismantle-arm" [tg, pt, mt]
 
 normalize :: TL.Text -> TL.Text
 normalize =
@@ -140,13 +169,25 @@ normalize =
     -- First, trim any trailing comments
     (fst . TL.breakOn ";")
 
-rx :: String -> RE.RE
-rx s =
-  case RE.compileRegex s of
-    Nothing -> error ("Invalid regex: " ++ s)
-    Just r -> r
+cmpInstrs :: TL.Text -> TL.Text -> Bool
+cmpInstrs objdump dismantle =
+  -- Many operations have an optional shift amount that does not need
+  -- to be specified when the shift amount is zero.  Some objdump
+  -- output contains this value however, but dismantle doesn't, so if
+  -- a direct comparison fails, try stripping a ", 0" from the objdump
+  -- version and check equality of that result (n.b. comparing the
+  -- normalized versions, spaces are stripped).
+  objdump == dismantle ||
+  (",0" `TL.isSuffixOf` objdump &&
+    (TL.reverse $ TL.drop 2 $ TL.reverse objdump) == dismantle)
 
-skipPretty :: RE.RE
+rx :: String -> RE.Regex
+rx s =
+  case RE.mkRegex s of
+    Left e -> error ("Invalid regex <<" ++ s ++ ">> because: " ++ e)
+    Right r -> r
+
+skipPretty :: RE.Regex
 skipPretty = rx (L.intercalate "|" rxes)
   where
     rxes = others <> (matchInstruction <$> skipped)
@@ -252,7 +293,7 @@ skipPretty = rx (L.intercalate "|" rxes)
     conditions = "(" <> (concat $ L.intersperse "|"
                   (PP.render <$> PP.pPrint <$> ARM.mkPred <$> [0..13])) <> ")?"
 
-expectedFailures :: RE.RE
+expectedFailures :: RE.Regex
 expectedFailures = rx (L.intercalate "|" rxes)
   where
     rxes = [ -- The tablegen data for MVN is currently incorrect

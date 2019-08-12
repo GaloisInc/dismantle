@@ -15,11 +15,12 @@ module Dismantle.Instruction (
   traverseOpcode
   ) where
 
+import Control.Monad
 import qualified Data.Type.Equality as E
 import Data.Typeable ( Typeable )
 
 import Data.EnumF ( EnumF(..) )
-import Data.Parameterized.Classes ( ShowF(..), OrdF(..) )
+import Data.Parameterized.Classes ( ShowF(..), EqF(..), OrdF(..) )
 import Data.Parameterized.Some ( Some(..) )
 import Data.Parameterized.List ( List )
 
@@ -39,6 +40,12 @@ import Data.Parameterized.List ( List )
 -- first so that a partial application during 'mapOperandList' is
 -- simplified.
 data Annotated a o tp = Annotated a (o tp)
+
+instance (Eq a, E.TestEquality o) => E.TestEquality (Annotated a o) where
+  testEquality (Annotated a otp) (Annotated a' otp') = guard (a == a') >> E.testEquality otp otp'
+
+instance (Eq a, EqF o) => Eq (Annotated a o tp) where
+  Annotated a otp == Annotated a' otp' = a == a' && eqF otp otp'
 
 instance (Show a, ShowF o) => Show (Annotated a o tp) where
   show (Annotated a o) = unwords [ "Annotated", show a, " ", showF o ]
