@@ -1,2 +1,3 @@
 packages: */*.cabal
           deps/parameterized-utils/
+          deps/arm-asl-parser/
