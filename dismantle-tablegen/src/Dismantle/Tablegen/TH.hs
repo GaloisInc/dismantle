@@ -10,6 +10,7 @@
 {-# LANGUAGE ViewPatterns #-}
 module Dismantle.Tablegen.TH (
   genISA,
+  genISADesc,
   genInstances,
   genISARandomHelpers
   ) where
@@ -77,6 +78,11 @@ loadISA isa path overridePaths = do
 genISA :: ISA -> FilePath -> [FilePath] -> DecsQ
 genISA isa path overridePaths = do
   desc <- loadISA isa path overridePaths
+  genISADesc isa desc path overridePaths
+
+genISADesc :: ISA -> ISADescriptor -> FilePath -> [FilePath] -> DecsQ
+genISADesc isa desc path overrides = do
+  mapM_ qAddDependentFile (path : overrides)
 
   case isaErrors desc of
     [] -> return ()
@@ -99,6 +105,7 @@ genISA isa path overridePaths = do
                   , parserDef
                   , asmDef
                   ]
+
 
 loadTablegen :: FilePath -> IO Records
 loadTablegen path = do
