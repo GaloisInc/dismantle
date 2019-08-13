@@ -1,3 +1,6 @@
 [submodule "deps/parameterized-utils"]
 	path = deps/parameterized-utils
 	url = git@github.com:GaloisInc/parameterized-utils.git
+[submodule "deps/arm-asl-parser"]
+	path = deps/arm-asl-parser
+	url = git@github.com:GaloisInc/arm-asl-parser.git
