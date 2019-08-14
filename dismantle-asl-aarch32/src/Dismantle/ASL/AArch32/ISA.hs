@@ -3,7 +3,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
-module Dismantle.ASL.AArch32.ISA ( isa ) where
+module Dismantle.ASL.AArch32.ISA (
+  isa,
+  isARM
+  ) where
 
 import           GHC.TypeLits ( KnownNat, Nat, natVal )
 
@@ -13,6 +16,8 @@ import qualified Data.ByteString.Lazy as LBS
 import           Data.Proxy ( Proxy(..) )
 import           Data.Word ( Word32 )
 import qualified Language.Haskell.TH as TH
+
+import qualified Language.ASL.Syntax as AS
 
 import qualified Data.Word.Indexed as I
 import qualified Dismantle.ASL as DA
@@ -42,6 +47,9 @@ isa = DA.ISA { DA.isaName = "AARCH32"
              , DA.isaDefaultPrettyVariableValues = []
              }
 
+
+isARM :: AS.InstructionEncoding -> Bool
+isARM e = AS.encInstrSet e == AS.A32
 
 -- | In the ASL specs, all fields are unsigned bitvectors (which are sometimes
 -- treated as signed)

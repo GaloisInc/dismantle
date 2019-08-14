@@ -27,6 +27,7 @@ library
                        binary >= 0.8 && < 0.11,
                        template-haskell,
                        parameterized-utils,
+                       asl-parser,
                        dismantle-asl,
                        dismantle-tablegen
   hs-source-dirs:      src

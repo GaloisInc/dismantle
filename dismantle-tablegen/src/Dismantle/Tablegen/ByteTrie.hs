@@ -87,7 +87,18 @@ instance NFData Bit where
 
 -- | A wrapper around a sequence of 'Bit's
 data Pattern = Pattern { requiredMask :: BS.ByteString
+                       -- ^ The mask of bits that must be set in order for the
+                       -- pattern to match
                        , trueMask :: BS.ByteString
+                       -- ^ The bits that must be set (or not) in the positions
+                       -- selected by the 'requiredMask'
+                       , negativeMask :: BS.ByteString
+                       -- ^ The mask of bits that must /not/ match for this
+                       -- pattern to apply
+                       , negativeBits :: BS.ByteString
+                       -- ^ The bits that must be set (or not) in the positions
+                       -- selected by the 'negativeMask' in order to reject the
+                       -- pattern
                        }
                deriving (Eq, Ord, Show)
 
@@ -112,6 +123,8 @@ lookupByte bt byte
     tableVal = btParseTables bt `SV.unsafeIndex` (fromIntegral byte + btStartIndex bt)
 
 data TrieError = OverlappingBitPattern [(Pattern, [String])]
+               | OverlappingBitPatternAt Int Word8 [(Pattern, [String])]
+               -- ^ Byte index, byte, patterns
                | InvalidPatternLength Pattern
                | MonadFailErr String
   deriving (Eq, Show)
@@ -151,9 +164,9 @@ instance MonadFail (TrieM e) where
 
 
 -- | Construct a 'ByteTrie' from a list of mappings and a default element
-byteTrie :: e -> [(String, BS.ByteString, BS.ByteString, e)] -> Either TrieError (ByteTrie e)
+byteTrie :: e -> [(String, BS.ByteString, BS.ByteString, BS.ByteString, BS.ByteString, e)] -> Either TrieError (ByteTrie e)
 byteTrie defElt mappings =
-  mkTrie defElt (mapM_ (\(n, r, t, e) -> assertMapping n r t e) mappings)
+  mkTrie defElt (mapM_ (\(n, r, t, nm, nb, e) -> assertMapping n r t nm nb e) mappings)
 
 -- | Construct a 'ByteTrie' through a monadic assertion-oriented interface.
 --
@@ -257,6 +270,15 @@ makePayload patterns byteIndex byte =
     _ | all ((> (byteIndex + 1)) . patternBytes) (M.keys matchingPatterns) -> do
           -- If there are more bytes available in the overlapping patterns, extend
           -- the trie to inspect one more byte
+          {-
+
+            Instead of this, we should probably choose the pattern that has the
+            most required bits in the *current byte*.  We know that the pattern
+            already matches due to the computation of 'matchingPatterns'.  If
+            there are an equal number of matching bits in the current byte,
+            *then* extend the trie to the next level.
+
+          -}
           tix <- buildTableLevel matchingPatterns (byteIndex + 1)
           return (byte, tix)
       | Just (mostSpecificEltIdx, _) <- findMostSpecificPatternElt matchingPatterns -> do
@@ -271,7 +293,7 @@ makePayload patterns byteIndex byte =
           let pats = map fst (M.toList matchingPatterns)
               mnemonics = catMaybes $ (flip M.lookup mapping) <$> pats
 
-          E.throwError (OverlappingBitPattern $ zip pats $ (:[]) <$> mnemonics)
+          E.throwError (OverlappingBitPatternAt byteIndex byte $ zip pats $ (:[]) <$> mnemonics)
   where
     matchingPatterns = M.filterWithKey (patternMatches byteIndex byte) patterns
 
@@ -305,19 +327,23 @@ findMostSpecificPatternElt = findMostSpecific [] . M.toList
 
 -- | Return 'True' if the 'Pattern' *could* match the given byte at the 'Int' byte index
 patternMatches :: Int -> Word8 -> Pattern -> e -> Bool
-patternMatches byteIndex byte (Pattern { requiredMask = req, trueMask = true }) _ =
-  (byte .&. patRequireByte) == patTrueByte
+patternMatches byteIndex byte p _ = -- (Pattern { requiredMask = req, trueMask = true }) _ =
+  and [ (byte .&. patRequireByte) == patTrueByte
+      , not ((byte .&. patNegativeByte) == patNegativeBits)
+      ]
   where
-    patRequireByte = req `BS.index` byteIndex
-    patTrueByte = true `BS.index` byteIndex
+    patRequireByte = requiredMask p `BS.index` byteIndex
+    patTrueByte = trueMask p `BS.index` byteIndex
+    patNegativeByte = negativeMask p `BS.index` byteIndex
+    patNegativeBits = negativeBits p `BS.index` byteIndex
 
 -- | Assert a mapping from a bit pattern to a value.
 --
 -- The bit pattern must have a length that is a multiple of 8.  This
 -- function can error out with a pure error ('TrieError') if an
 -- overlapping bit pattern is asserted.
-assertMapping :: String -> BS.ByteString -> BS.ByteString -> a -> TrieM a ()
-assertMapping mnemonic patReq patTrue val
+assertMapping :: String -> BS.ByteString -> BS.ByteString -> BS.ByteString -> BS.ByteString -> a -> TrieM a ()
+assertMapping mnemonic patReq patTrue patNegMask patNegBits val
   | BS.length patReq /= BS.length patTrue || BS.null patReq =
     E.throwError (InvalidPatternLength pat)
   | otherwise = do
@@ -336,7 +362,7 @@ assertMapping mnemonic patReq patTrue val
                                , tsEltIdSrc = nextElementIndex eid
                                }
   where
-    pat = Pattern patReq patTrue
+    pat = Pattern patReq patTrue patNegMask patNegBits
 
 -- Unsafe things
 

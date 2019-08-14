@@ -241,15 +241,16 @@ bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroup
         _ -> w
 
 -- | Note that the 'Maybe Name' is always a 'Just' value.
-mkTrieInput :: ISA -> InstructionDescriptor -> Q ((String, BS.ByteString, BS.ByteString, Maybe Name), Dec)
+mkTrieInput :: ISA -> InstructionDescriptor -> Q ((String, BS.ByteString, BS.ByteString, BS.ByteString, BS.ByteString, Maybe Name), Dec)
 mkTrieInput isa i = do
   pname <- newName ("insnParser" ++ mnemonic)
   let pexp = mkParserExpr isa i
   pdec <- valD (varP pname) (normalB pexp) []
-  return ((mnemonic, BS.pack requiredMask, BS.pack trueMask, Just pname), pdec)
+  return ((mnemonic, BS.pack requiredMask, BS.pack trueMask, BS.pack negMask, BS.pack negBits, Just pname), pdec)
   where
     mnemonic = idMnemonic i
     (requiredMask, trueMask) = bitSpecAsBytes (idMask i)
+    (negMask, negBits) = bitSpecAsBytes (idNegMask i)
 
 -- | Return a TH expression that defines an instruction parser
 --

@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Dismantle.ASL (
   loadASL,
   DT.ISA(..),
@@ -8,9 +9,15 @@ module Dismantle.ASL (
   DT.UnusedBitsPolicy(..)
   ) where
 
+import           Control.Monad ( when )
+import           Data.Either ( either )
+import qualified Data.Foldable as F
+import           Data.Maybe ( fromMaybe, mapMaybe )
 import qualified Data.Set as S
 import qualified Data.Text as T
+import           Data.Void ( Void )
 import           Data.Word ( Word8 )
+import qualified Text.Megaparsec as P
 import           Text.Printf ( printf )
 import qualified Language.ASL.Syntax as AS
 -- import qualified Language.ASL.Parser as AP
@@ -19,25 +26,31 @@ import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import qualified Dismantle.Tablegen.Parser.Types as PT
 
-loadASL :: String -> [AS.Instruction] -> DT.ISADescriptor
-loadASL arch insns =
+loadASL :: (AS.InstructionEncoding -> Bool) -> String -> [AS.Instruction] -> DT.ISADescriptor
+loadASL fltr arch insns =
   DT.ISADescriptor { DT.isaInstructions = instrs
                    , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
                    , DT.isaErrors = []
                    }
   where
-    instrs = concatMap (aslToInsnDesc arch) insns
+    instrs = concatMap (aslToInsnDesc fltr arch) insns
 
 instrOperandTypes :: DT.InstructionDescriptor -> [DT.OperandType]
 instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutputOperands idesc)
 
-aslToInsnDesc :: String -> AS.Instruction -> [DT.InstructionDescriptor]
-aslToInsnDesc arch i = map (encodingToInstDesc arch) (AS.instEncodings i)
+aslToInsnDesc :: (AS.InstructionEncoding -> Bool) -> String -> AS.Instruction -> [DT.InstructionDescriptor]
+aslToInsnDesc fltr arch i = mapMaybe (encodingToInstDesc fltr arch) (AS.instEncodings i)
 
-encodingToInstDesc :: String -> AS.InstructionEncoding -> DT.InstructionDescriptor
-encodingToInstDesc arch e =
+encodingToInstDesc :: (AS.InstructionEncoding -> Bool)
+                   -> String
+                   -> AS.InstructionEncoding
+                   -> Maybe DT.InstructionDescriptor
+encodingToInstDesc fltr arch e
+  | not (fltr e) = Nothing
+  | otherwise = Just $
   DT.InstructionDescriptor { DT.idMask = fixedEncodingMask e
-                           , DT.idMnemonic = T.unpack (AS.encName e)
+                           , DT.idNegMask = negativeEncodingMask e
+                           , DT.idMnemonic = encodingMnemonic e
                            , DT.idInputOperands = map toOperandDescriptor (AS.encFields e)
                            , DT.idOutputOperands = [] -- See Note [Output Operands]
                            , DT.idNamespace = arch
@@ -48,6 +61,16 @@ encodingToInstDesc arch e =
                            , DT.idPrettyVariableOverrides = []
                            }
 
+type Parser = P.Parsec Void T.Text
+
+encodingMnemonic :: AS.InstructionEncoding -> String
+encodingMnemonic e = T.unpack (either (const (AS.encName e)) id (P.runParser nameParser "" (AS.encName e)))
+
+nameParser :: Parser T.Text
+nameParser = do
+  _ <- P.chunk (T.pack "aarch32_")
+  P.takeRest
+
 -- | The ASL specs don't have any information about textual encodings of
 -- instructions.  We'll have to make something up here.
 --
@@ -55,8 +78,41 @@ encodingToInstDesc arch e =
 -- variable slot for each field, in the order presented.  We'll also have to
 -- build a translator from the fully elaborated names into shorter mnemonics
 -- (i.e., dropping the aarch_ prefix and any suffixes)
+--
+-- FIXME: Add in field format slots
 asmString :: AS.InstructionEncoding -> String
-asmString = undefined
+asmString e = encodingMnemonic e
+
+-- | Negative masks come from guards on fields.
+negativeEncodingMask :: AS.InstructionEncoding -> [BT.Bit]
+negativeEncodingMask e =
+  case AS.encGuard e of
+    Nothing -> trivial
+    Just g ->
+      case g of
+        AS.ExprLitBin [True] -> trivial
+        AS.ExprVarRef (AS.QualifiedIdentifier AS.ArchQualAny "TRUE") -> trivial
+        AS.ExprBinOp AS.BinOpNEQ (AS.ExprVarRef (AS.QualifiedIdentifier _ ident)) (AS.ExprLitBin bv) ->
+          fromMaybe err $ do
+            (begin, off) <- lookupVarField ident e
+            when (off /= length bv) $
+              error ("Mismatch between field length and mask: " ++ show g)
+            let chunk = map BT.ExpectedBit bv
+            let suffix = replicate (32 - (begin + off)) BT.Any
+            let prefix = replicate begin BT.Any
+            let guardBits = concat [ suffix, chunk, prefix ]
+            when (length guardBits /= 32) $ error "Invalid guard length"
+            return guardBits
+        _ -> err
+      where
+        err = error ("Unrecognized guard: " ++ show g)
+  where
+    trivial = replicate 32 BT.Any
+
+lookupVarField :: T.Text -> AS.InstructionEncoding -> Maybe (Int, Int)
+lookupVarField name e = do
+  fld <- F.find ((==name) . AS.instFieldName) (AS.encFields e)
+  return (fromIntegral (AS.instFieldBegin fld), fromIntegral (AS.instFieldOffset fld))
 
 fixedEncodingMask :: AS.InstructionEncoding -> [BT.Bit]
 fixedEncodingMask e = map toBTBit (AS.encOpcodeMask e)

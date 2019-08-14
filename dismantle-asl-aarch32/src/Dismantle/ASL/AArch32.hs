@@ -31,10 +31,10 @@ import Data.Parameterized.List ( List(..) )
 
 import Dismantle.Instruction
 import Dismantle.ASL.TH ( genISA )
-import Dismantle.ASL.AArch32.ISA ( isa )
+import Dismantle.ASL.AArch32.ISA ( isa, isARM )
 import Dismantle.Tablegen.TH ( genInstances )
 
-$(genISA isa "data/arm_instrs.asls")
+$(genISA isARM isa "data/arm_instrs.asls")
 $(return [])
 
 -- We need a separate call to generate some instances, since the helper(s) that
