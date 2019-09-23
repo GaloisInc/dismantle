@@ -192,7 +192,10 @@ mkParser isa desc path = do
   -- Build up a table of AST fragments that are parser expressions.
   -- They are associated with the bit masks required to build the
   -- trie.  The trie is constructed at run time for now.
-  parserData <- mapM (mkTrieInput isa) (parsableInstructions isa desc)
+  parserData <- forM (parsableInstructions isa desc) $ \i -> do
+    trieInput <- mkTrieInput isa i
+    let ((_, requiredMask, trueMask, negMask, negBits, _), _) = trieInput
+    return trieInput
   let (trieInputs, decls) = unzip parserData
   case BT.byteTrie Nothing trieInputs of
     Left err -> reportError ("Error while building parse tables: " ++ show err) >> return []

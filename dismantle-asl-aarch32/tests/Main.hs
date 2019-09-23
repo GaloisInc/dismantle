@@ -24,11 +24,14 @@
 
 module Main ( main ) where
 
+import qualified Data.ByteString.Lazy as BL
 import           Data.Char (isSpace)
 import qualified Data.List as L
 import           Data.Monoid ((<>))
+import           Data.Parameterized.List
 import qualified Data.Text.Lazy as TL
 import           Data.Word (Word64)
+import qualified Data.Word.Indexed as WI
 import qualified Test.Tasty as T
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
@@ -152,8 +155,30 @@ arm = ATC { testingISA = ARM.isa
 
 main :: IO ()
 main = do
-  tg <- binaryTestSuite arm "tests/bin"
-  T.defaultMain $ T.testGroup "dismantle-arm" [tg]
+--  let i = ARM.Instruction ARM.MOV_i_A1_A (ARM.Bv4 (WI.w 0x0) :< ARM.Bv1 (WI.w 0) :<
+--  ARM.Bv4 (WI.w 0x0) :< ARM.Bv12 (WI.w 0x0) :< Nil)
+  let i = ARM.Instruction ARM.VMLA_i_T2A2_A
+          (ARM.Bv1 (WI.w 0) :<
+           ARM.Bv1 (WI.w 0) :<
+           ARM.Bv2 (WI.w 0) :<
+           ARM.Bv4 (WI.w 0) :<
+           ARM.Bv4 (WI.w 0) :<
+           ARM.Bv1 (WI.w 0) :<
+           ARM.Bv1 (WI.w 0) :<
+           ARM.Bv1 (WI.w 0) :<
+           ARM.Bv4 (WI.w 0) :<
+           Nil)
+  -- print i
+  let ai = ARM.assembleInstruction i
+  print $ BL.unpack ai
+  -- let (_, mi) = ARM.disassembleInstruction ai
+  -- case mi of
+  --   Nothing -> print "Failure"
+  --   Just i' -> print i'
+  -- tg <- binaryTestSuite arm "tests/bin"
+  -- T.defaultMain $ T.testGroup "dismantle-arm" [tg]
+
+  return ()
 
 normalize :: TL.Text -> TL.Text
 normalize =

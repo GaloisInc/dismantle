@@ -1,10 +1,11 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MagicHash #-}
-{- LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Dismantle.Tablegen.ByteTrie (
-  ByteTrie,
+  ByteTrie(..),
   byteTrie,
   mkTrie,
   lookupByte,
@@ -18,6 +19,7 @@ module Dismantle.Tablegen.ByteTrie (
   unsafeByteTrieParseTableBytes,
   unsafeByteTriePayloads
   ) where
+import Debug.Trace
 
 import qualified GHC.Prim as P
 import qualified GHC.Ptr as Ptr
@@ -102,6 +104,13 @@ data Pattern = Pattern { requiredMask :: BS.ByteString
                        }
                deriving (Eq, Ord, Show)
 
+showPattern Pattern{..} =
+  "Pattern { requiredMask = " ++ show (BS.unpack requiredMask) ++
+  ", trueMask = " ++ show (BS.unpack trueMask) ++
+  ", negativeMask = " ++ show (BS.unpack negativeMask) ++
+  ", negativeBits = " ++ show (BS.unpack negativeBits) ++
+  "}"
+
 -- | Return the number of bytes occupied by a 'Pattern'
 patternBytes :: Pattern -> Int
 patternBytes = BS.length . requiredMask
@@ -123,11 +132,21 @@ lookupByte bt byte
     tableVal = btParseTables bt `SV.unsafeIndex` (fromIntegral byte + btStartIndex bt)
 
 data TrieError = OverlappingBitPattern [(Pattern, [String])]
-               | OverlappingBitPatternAt Int Word8 [(Pattern, [String])]
+               | OverlappingBitPatternAt Int [Word8] [(Pattern, [String])]
                -- ^ Byte index, byte, patterns
                | InvalidPatternLength Pattern
                | MonadFailErr String
-  deriving (Eq, Show)
+  deriving (Eq)
+
+instance Show TrieError where
+  show err = case err of
+    OverlappingBitPattern patList -> "OverlappingBitPattern " ++ showPatList patList
+    OverlappingBitPatternAt ix bytes patList -> "OverlappingBitPatternAt " ++ show ix ++ " " ++
+      show bytes ++ " " ++ showPatList patList
+    InvalidPatternLength p -> "InvalidPatternLength " ++ showPattern p
+    MonadFailErr str -> "MonadFailErr " ++ show str
+    where showPat (p, mnemonics) = "(" ++ showPattern p ++ ", " ++ show mnemonics ++ ")"
+          showPatList pats = "[" ++ L.intercalate "," (showPat <$> pats) ++ "]"
 
 -- | The state of the 'TrieM' monad
 data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern (LinkedTableIndex, e))
@@ -165,8 +184,8 @@ instance MonadFail (TrieM e) where
 
 -- | Construct a 'ByteTrie' from a list of mappings and a default element
 byteTrie :: e -> [(String, BS.ByteString, BS.ByteString, BS.ByteString, BS.ByteString, e)] -> Either TrieError (ByteTrie e)
-byteTrie defElt mappings =
-  mkTrie defElt (mapM_ (\(n, r, t, nm, nb, e) -> assertMapping n r t nm nb e) mappings)
+byteTrie defElt mappings = mkTrie defElt (mapM_ (\(n, r, t, nm, nb, e) -> assertMapping n r t nm nb e) mappings)
+  where showMapping (s, bs0, bs1, bs2, bs3, _) = show (s, BS.unpack bs0, BS.unpack bs1, BS.unpack bs2, BS.unpack bs3)
 
 -- | Construct a 'ByteTrie' through a monadic assertion-oriented interface.
 --
@@ -191,7 +210,7 @@ mkTrie defElt act =
 trieFromState :: e -> TrieM e (ByteTrie e)
 trieFromState defElt = do
   pats <- St.gets tsPatterns
-  t0 <- buildTableLevel pats 0
+  t0 <- buildTableLevel pats 0 BS.empty
   st <- St.get
   return (flattenTables t0 defElt st)
 
@@ -225,14 +244,16 @@ buildTableLevel :: M.Map Pattern (LinkedTableIndex, e)
                 -- ^ Remaining valid patterns
                 -> Int
                 -- ^ Byte index we are computing
+                -> BS.ByteString
+                -- ^ string of bytes we have followed thus far
                 -> TrieM e LinkedTableIndex
-buildTableLevel patterns byteIndex = do
+buildTableLevel patterns byteIndex bytesSoFar = do
   cache <- St.gets tsCache
   let key = (byteIndex, S.fromList (M.keys patterns))
   case M.lookup key cache of
     Just tix -> return tix
     Nothing -> do
-      payloads <- T.traverse (makePayload patterns byteIndex) byteValues
+      payloads <- T.traverse (makePayload patterns byteIndex bytesSoFar) byteValues
       tix <- newTable payloads
       St.modify' $ \s -> s { tsCache = M.insert key tix (tsCache s) }
       return tix
@@ -260,10 +281,12 @@ makePayload :: M.Map Pattern (LinkedTableIndex, e)
             -- ^ Valid patterns at this point in the trie
             -> Int
             -- ^ Byte index we are computing
+            -> BS.ByteString
+            -- ^ bytes we have used to traverse thus far
             -> Word8
             -- ^ The byte we are matching patterns against
             -> TrieM e (Word8, LinkedTableIndex)
-makePayload patterns byteIndex byte =
+makePayload patterns byteIndex bytesSoFar byte =
   case M.toList matchingPatterns of
     [] -> return (byte, defaultElementIndex)
     [(_, (eltIdx, _elt))] -> return (byte, eltIdx)
@@ -279,9 +302,10 @@ makePayload patterns byteIndex byte =
             *then* extend the trie to the next level.
 
           -}
-          tix <- buildTableLevel matchingPatterns (byteIndex + 1)
+          tix <- buildTableLevel matchingPatterns (byteIndex + 1) bytesSoFar'
           return (byte, tix)
-      | Just (mostSpecificEltIdx, _) <- findMostSpecificPatternElt matchingPatterns -> do
+      | M.null negativeMatchingPatterns -> return (byte, defaultElementIndex)
+      | Just (mostSpecificEltIdx, _) <- findMostSpecificPatternElt negativeMatchingPatterns -> do
           -- If there are no more bytes *and* one of the patterns is more specific
           -- than all of the others, take the most specific pattern
           return (byte, mostSpecificEltIdx)
@@ -290,12 +314,14 @@ makePayload patterns byteIndex byte =
           -- choose a winner, so fail
           mapping <- St.gets tsPatternMnemonics
 
-          let pats = map fst (M.toList matchingPatterns)
+          let pats = map fst (M.toList negativeMatchingPatterns)
               mnemonics = catMaybes $ (flip M.lookup mapping) <$> pats
 
-          E.throwError (OverlappingBitPatternAt byteIndex byte $ zip pats $ (:[]) <$> mnemonics)
+          E.throwError (OverlappingBitPatternAt byteIndex (BS.unpack bytesSoFar') $ zip pats $ (:[]) <$> mnemonics)
   where
+    bytesSoFar' = BS.snoc bytesSoFar byte
     matchingPatterns = M.filterWithKey (patternMatches byteIndex byte) patterns
+    negativeMatchingPatterns = M.filterWithKey (negativePatternMatches bytesSoFar') matchingPatterns
 
 -- | Return the element associated with the most specific pattern in the given
 -- collection, if any.
@@ -328,14 +354,23 @@ findMostSpecificPatternElt = findMostSpecific [] . M.toList
 -- | Return 'True' if the 'Pattern' *could* match the given byte at the 'Int' byte index
 patternMatches :: Int -> Word8 -> Pattern -> e -> Bool
 patternMatches byteIndex byte p _ = -- (Pattern { requiredMask = req, trueMask = true }) _ =
-  and [ (byte .&. patRequireByte) == patTrueByte
-      , not ((byte .&. patNegativeByte) == patNegativeBits)
-      ]
+  (byte .&. patRequireByte) == patTrueByte
   where
     patRequireByte = requiredMask p `BS.index` byteIndex
     patTrueByte = trueMask p `BS.index` byteIndex
-    patNegativeByte = negativeMask p `BS.index` byteIndex
-    patNegativeBits = negativeBits p `BS.index` byteIndex
+
+-- | Return 'True' if a 'BS.ByteString' does not match with the negative bits in a
+-- 'Pattern'.
+-- FIXME: We do not check that the bytestrings have the same length
+negativePatternMatches :: BS.ByteString -> Pattern -> e -> Bool
+negativePatternMatches bs p _ =
+  let ret = case (all (==0) (BS.unpack (negativeMask p))) of
+        True -> True
+        False -> not (and (zipWith3 negativeByteMatches (BS.unpack $ negativeMask p) (BS.unpack $ negativeBits p) (BS.unpack bs)))
+  in -- trace ("negativePatternMatches " ++ show (BS.unpack bs) ++ " " ++ showPattern p ++ " = " ++ show ret) $
+     ret
+  where negativeByteMatches :: Word8 -> Word8 -> Word8 -> Bool
+        negativeByteMatches negByteMask negByteBits byte = (byte .&. negByteMask) == negByteBits
 
 -- | Assert a mapping from a bit pattern to a value.
 --

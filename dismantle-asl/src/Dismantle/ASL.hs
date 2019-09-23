@@ -14,6 +14,7 @@ import           Control.Monad ( when )
 import qualified Control.Monad.State.Strict as MS
 import           Data.Either ( either )
 import qualified Data.Foldable as F
+import qualified Data.List.Split as L
 import qualified Data.Map as M
 import           Data.Maybe ( catMaybes, fromMaybe )
 import qualified Data.Set as S
@@ -65,8 +66,8 @@ encodingToInstDesc fltr arch e
   | otherwise = do
       mnemonic <- encodingMnemonic e
       let desc = DT.InstructionDescriptor
-                 { DT.idMask = fixedEncodingMask e
-                 , DT.idNegMask = negativeEncodingMask e
+                 { DT.idMask = concat (reverse (L.chunksOf 8 (fixedEncodingMask e)))
+                 , DT.idNegMask = concat (reverse (L.chunksOf 8 (negativeEncodingMask e)))
                  , DT.idMnemonic = mnemonic
                  , DT.idInputOperands = map toOperandDescriptor (AS.encFields e)
                  , DT.idOutputOperands = [] -- See Note [Output Operands]
@@ -109,7 +110,7 @@ nameParser = do
 --
 -- FIXME: Add in field format slots
 asmString :: AS.InstructionEncoding -> String -> String
-asmString e mn = mn
+asmString _ mn = mn
 
 -- | Negative masks come from guards on fields.
 negativeEncodingMask :: AS.InstructionEncoding -> [BT.Bit]

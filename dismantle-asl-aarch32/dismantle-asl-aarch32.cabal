@@ -29,10 +29,11 @@ library
                        parameterized-utils,
                        asl-parser,
                        dismantle-asl,
-                       dismantle-tablegen
+                       dismantle-tablegen,
+                       split
   hs-source-dirs:      src
   default-language:    Haskell2010
-  ghc-options:         -Wall -Wcompat
+  ghc-options:         -Wall -Wcompat -ddump-to-file -ddump-splices
 
 test-suite dismantle-asl-aarch32-tests
   default-language: Haskell2010
@@ -41,10 +42,12 @@ test-suite dismantle-asl-aarch32-tests
   hs-source-dirs: tests
   main-is: Main.hs
   build-depends: base,
+                 bytestring,
                  dismantle-tablegen,
                  dismantle-asl-aarch32,
                  tasty,
                  tasty-hunit,
+                 parameterized-utils,
                  pretty,
                  text
 

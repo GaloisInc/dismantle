@@ -63,7 +63,6 @@ parseInstruction trie0 bs0 = go bs0 trie0 bs0 0
             Right (Just (Parser reqBytes p))
               | hasAtLeast bs1 reqBytes -> (reqBytes, Just (p bs1))
               | otherwise -> (consumed + 1, Nothing)
---              -> (consumed + 1, Just (p bs1))
 
 -- | Check if a 'LBS.ByteString' has at least a certain number of bytes
 --

@@ -13,6 +13,7 @@ import           GHC.TypeLits ( KnownNat, Nat, natVal )
 import qualified Data.Binary.Get as BG
 import qualified Data.Binary.Put as BP
 import qualified Data.ByteString.Lazy as LBS
+import qualified Data.List.Split as L
 import           Data.Proxy ( Proxy(..) )
 import           Data.Word ( Word32 )
 import qualified Language.Haskell.TH as TH
@@ -22,17 +23,18 @@ import qualified Language.ASL.Syntax as AS
 import qualified Data.Word.Indexed as I
 import qualified Dismantle.ASL as DA
 
+import Numeric (showHex)
 
 asWord32 :: LBS.ByteString -> Word32
-asWord32 = BG.runGet BG.getWord32be
+asWord32 bs = BG.runGet BG.getWord32le bs
 
 fromWord32 :: Word32 -> LBS.ByteString
-fromWord32 = BP.runPut . BP.putWord32be
+fromWord32 w = BP.runPut (BP.putWord32le w)
 
 isa :: DA.ISA
 isa = DA.ISA { DA.isaName = "AARCH32"
              , DA.isaTgenBitPreprocess = id
-             , DA.isaInputEndianness = DA.Little id id
+             , DA.isaInputEndianness = DA.Little LBS.reverse (concat . reverse . L.chunksOf 8)
              , DA.isaUnusedBitsPolicy = Nothing
              , DA.isaInstructionFilter = error "isaInstructionFilter is not used for ASL"
              , DA.isaPseudoInstruction = const False
@@ -73,3 +75,4 @@ operandPayloadTypes =
                                             , DA.opConE = Just [| I.w |]
                                             , DA.opWordE = Just [| fromIntegral . I.unW |]
                                             }
+

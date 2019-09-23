@@ -171,17 +171,22 @@ testInstructionWith norm pCmp disasm asm pp skipPPRE i agg = do
                        Nothing -> want == got
                        Just cmpf -> cmpf want got
                  ) of
-              True -> return (agg { testCount = testCount agg + 1 })
+              True -> do
+                return (agg { testSuccesses = i : testSuccesses agg
+                            , testCount = testCount agg + 1 })
               False -> do
                 let !pretty = T.pack (show (pp insn))
                 let failure = (i, pretty)
                 return (agg { testPrettyFailures = failure : testPrettyFailures agg
                             , testCount = testCount agg + 1
                             })
-          | otherwise -> return (agg { testCount = testCount agg + 1 })
+          | otherwise -> do
+              return (agg { testSuccesses = i : testSuccesses agg
+                          , testCount = testCount agg + 1 })
 
 data TestAggregate =
-  TestAggregate { testDisassemblyFailures :: [Instruction]
+  TestAggregate { testSuccesses :: [Instruction]
+                , testDisassemblyFailures :: [Instruction]
                 , testRoundtripFailures :: [(Instruction, T.Text, T.Text, T.Text)]
                 , testPrettyFailures :: [(Instruction, T.Text)]
                 , testCount :: !Int
@@ -189,7 +194,8 @@ data TestAggregate =
                 }
 
 emptyTestAggregate :: TestAggregate
-emptyTestAggregate = TestAggregate { testDisassemblyFailures = []
+emptyTestAggregate = TestAggregate { testSuccesses = []
+                                   , testDisassemblyFailures = []
                                    , testRoundtripFailures = []
                                    , testPrettyFailures = []
                                    , testCount = 0
@@ -199,7 +205,7 @@ emptyTestAggregate = TestAggregate { testDisassemblyFailures = []
 formatTestFailure :: TestAggregate -> String
 formatTestFailure ta = show doc
   where
-    doc = PP.vcat [ "Disassembly failures:"
+    doc = PP.vcat ["Disassembly failures:"
                   , PP.nest 2 (PP.vcat disasmFailures)
                   , "Roundtrip failures:"
                   , PP.nest 2 (PP.vcat roundtripFailures)
@@ -212,6 +218,8 @@ formatTestFailure ta = show doc
                             , ", ", PP.text (show $ length $ testRoundtripFailures ta), " round-trip"
                             , ", ", PP.text (show $ length $ testPrettyFailures ta), " pretty-printing"
                             ]
+                  , "Successes:"
+                  , PP.nest 2 (PP.vcat successes)
                   ]
     disasmFailures = [ PP.text (printf "Failed to disassemble %s (%s)" (binaryRep (insnBytes i)) (TL.unpack (insnText i)))
                      | i <- testDisassemblyFailures ta
@@ -222,6 +230,9 @@ formatTestFailure ta = show doc
     prettyFailures = [ PP.text (printf "Pretty printing comparison failed (bytes: %s)\n\tExpected: '%s'\n\tActual:   '%s' " (binaryRep (insnBytes i)) (insnText i) actual)
                      | (i, actual) <- testPrettyFailures ta
                      ]
+    successes = [ PP.text (printf "Successfully disassembled %s (%s)" (binaryRep (insnBytes i)) (TL.unpack (insnText i)))
+                | i <- testSuccesses ta
+                ]
 
 withDisassembledFile :: Endianness -> Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
 withDisassembledFile endianness parser customArgs f k = do
