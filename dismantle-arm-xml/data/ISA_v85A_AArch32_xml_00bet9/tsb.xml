@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="TSB" title="TSB CSYNC -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="TSB" />
+  </docvars>
+  <heading>TSB CSYNC</heading>
+  <desc>
+    <brief>
+      <para>Trace Synchronization Barrier</para>
+    </brief>
+    <authored>
+      <para>Trace Synchronization Barrier. This instruction is a barrier that synchronizes the trace operations of instructions.</para>
+      <para>If the Self-Hosted Trace Extension is not implemented, this instruction executes as a <instruction>NOP</instruction>.</para>
+    </authored>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="TSB" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <arch_variants>
+        <arch_variant name="ARMv8.4" />
+      </arch_variants>
+      <regdiagram form="32" psname="aarch32/instrs/TSB/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" name="R" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="imm4" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="14" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="11" width="12" name="imm12" settings="12">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+      </regdiagram>
+      <encoding name="TSB_A1" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="TSB" />
+        </docvars>
+        <asmtemplate><text>TSB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> CSYNC</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/TSB/A1_A.txt" mylink="aarch32.instrs.TSB.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if !<a link="impl-shared.HaveSelfHostedTrace.0" file="shared_pseudocode.xml" hover="function: boolean HaveSelfHostedTrace()">HaveSelfHostedTrace</a>() then <a link="impl-shared.EndOfInstruction.0" file="shared_pseudocode.xml" hover="function: EndOfInstruction()">EndOfInstruction</a>(); // Instruction executes as NOP
+if cond != '1110' then UNPREDICTABLE;              // ESB must be encoded with AL condition</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">cond != '1110'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNCOND" />
+          <cu_type constraint="Constraint_COND" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="TSB" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <arch_variants>
+        <arch_variant name="ARMv8.4" />
+      </arch_variants>
+      <regdiagram form="16x2" psname="aarch32/instrs/TSB/T1_A.txt">
+        <box hibit="31" width="12" settings="12">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="19" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="18" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="17" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="16" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="15" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="10" width="3" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" width="4" name="hint" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="option" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+      </regdiagram>
+      <encoding name="TSB_T1" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="TSB" />
+        </docvars>
+        <asmtemplate><text>TSB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> CSYNC</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/TSB/T1_A.txt" mylink="aarch32.instrs.TSB.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if !<a link="impl-shared.HaveSelfHostedTrace.0" file="shared_pseudocode.xml" hover="function: boolean HaveSelfHostedTrace()">HaveSelfHostedTrace</a>() then <a link="impl-shared.EndOfInstruction.0" file="shared_pseudocode.xml" hover="function: EndOfInstruction()">EndOfInstruction</a>(); // Instruction executes as NOP
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">InITBlock()</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNCOND" />
+          <cu_type constraint="Constraint_COND" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="TSB_A1, TSB_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="TSB_A1, TSB_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/TSB/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    TraceSynchronizationBarrier();</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

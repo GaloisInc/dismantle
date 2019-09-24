@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="RRX_MOV_r" title="RRX -- AArch32" type="alias">
+  <docvars>
+    <docvar key="alias_mnemonic" value="RRX" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="MOV" />
+    <docvar key="mnemonic-shift-type" value="MOV-rrx" />
+    <docvar key="shift-type" value="rrx" />
+  </docvars>
+  <heading>RRX</heading>
+  <desc>
+    <brief>
+      <para>Rotate Right with Extend</para>
+    </brief>
+    <authored>
+      <para>Rotate Right with Extend provides the value of the contents of a register shifted right by one place, with the Carry flag shifted into bit[31].</para>
+    </authored>
+  </desc>
+  <aliasto refiform="mov_r.xml" iformid="MOV_r">MOV, MOVS (register)</aliasto>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t3">T3</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" width="2" name="opc" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" name="S" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="5" name="imm5" usename="1" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="6" width="2" name="type" usename="1" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="RRX_MOV_r_A1_RRX" oneofinclass="1" oneof="2" label="MOV, rotate right with extend">
+        <docvars>
+          <docvar key="alias_mnemonic" value="RRX" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="MOV" />
+          <docvar key="mnemonic-shift-type" value="MOV-rrx" />
+          <docvar key="shift-type" value="rrx" />
+        </docvars>
+        <asmtemplate><text>RRX</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_3" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rm_2" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="mov_r.xml#MOV_r_A1_RRX">MOV</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd_3" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm_2" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, RRX</text></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+    <iclass name="T3" oneof="2" id="t3" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T3" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="24" width="4" name="op1" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="S" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="14" width="3" name="imm3" usename="1" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="2" name="imm2" usename="1" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="5" width="2" name="type" usename="1" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="RRX_MOV_r_T3_RRX" oneofinclass="1" oneof="2" label="MOV, rotate right with extend">
+        <docvars>
+          <docvar key="alias_mnemonic" value="RRX" />
+          <docvar key="armarmheading" value="T3" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MOV" />
+          <docvar key="mnemonic-shift-type" value="MOV-rrx" />
+          <docvar key="shift-type" value="rrx" />
+        </docvars>
+        <asmtemplate><text>RRX</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rm_1" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="mov_r.xml#MOV_r_T3_RRX">MOV</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm_1" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, RRX</text></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="RRX_MOV_r_A1_RRX, RRX_MOV_r_T3_RRX" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RRX_MOV_r_A1_RRX, RRX_MOV_r_T3_RRX" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RRX_MOV_r_A1_RRX" symboldefcount="1">
+      <symbol link="rd_3">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the general-purpose destination register, encoded in the "Rd" field. Arm deprecates using the PC as the destination register, but if the PC is used, the instruction is a branch to the address calculated by the operation. This is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RRX_MOV_r_T3_RRX" symboldefcount="2">
+      <symbol link="rd_1">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <docvars>
+          <docvar key="armarmheading" value="T3" />
+        </docvars>
+        <intro>
+          <para>For encoding T3: is the general-purpose destination register, encoded in the "Rd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RRX_MOV_r_A1_RRX" symboldefcount="1">
+      <symbol link="rm_2">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the general-purpose source register, encoded in the "Rm" field. The PC can be used, but this is deprecated.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RRX_MOV_r_T3_RRX" symboldefcount="2">
+      <symbol link="rm_1">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <docvars>
+          <docvar key="armarmheading" value="T3" />
+        </docvars>
+        <intro>
+          <para>For encoding T3: is the general-purpose source register, encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+</instructionsection>

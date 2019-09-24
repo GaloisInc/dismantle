@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>SRS, SRSDA, SRSDB, SRSIA, SRSIB -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">SRS, SRSDA, SRSDB, SRSIA, SRSIB</h2><p id="desc">
+      <p class="aml">Store Return State stores the LR_&lt;current_mode&gt; and <a class="armarm-xref" title="Reference to Armv8 ARM section">SPSR</a>_&lt;current_mode&gt; to the stack of a specified mode. For information about memory accesses see <a class="armarm-xref" title="Reference to Armv8 ARM section">Memory accesses</a>.</p>
+      <p class="aml"><span class="asm-code">SRS</span> is <span class="arm-defined-word">undefined</span> in Hyp mode.</p>
+      <p class="aml"><span class="asm-code">SRS</span> is <span class="arm-defined-word">constrained unpredictable</span> if it is executed in User or System mode, or if the specified mode is any of the following:</p>
+      <ul>
+        <li>Not implemented.</li>
+        <li>A mode that <a class="armarm-xref" title="Reference to Armv8 ARM section">Table G1-5</a> does not show.</li>
+        <li>Hyp mode.</li>
+        <li>Monitor mode, if the <span class="asm-code">SRS</span> instruction is executed in Non-secure state.</li>
+      </ul>
+      <p class="aml">If EL3 is using AArch64 and an <span class="asm-code">SRS</span> instruction that is executed in a Secure EL1 mode specifies Monitor mode, it is trapped to EL3.</p>
+      <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Traps to EL3 of Secure monitor functionality from Secure EL1 using AArch32</a>.</p>
+    </p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t1">T1</a>
+       and 
+      <a href="#t2">T2</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><p class="desc"></p><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td class="r">0</td><td class="lr">P</td><td class="lr">U</td><td class="lr">1</td><td class="lr">W</td><td class="lr">0</td><td class="l">(1)</td><td>(1)</td><td>(0)</td><td class="r">(1)</td><td class="l">(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(1)</td><td>(0)</td><td>(1)</td><td>(0)</td><td>(0)</td><td class="r">(0)</td><td colspan="5" class="lr">mode</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">Decrement After<span class="bitdiff"> (P == 0 &amp;&amp; U == 0)</span></h4><p class="asm-code"><a name="SRSDA_A1_AS" id="SRSDA_A1_AS"></a>SRSDA{<a href="#c_1" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} SP<a href="#0d33" title="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a>, #<a href="#mode" title="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></p></div><div class="encoding"><h4 class="encoding">Decrement Before<span class="bitdiff"> (P == 1 &amp;&amp; U == 0)</span></h4><p class="asm-code"><a name="SRSDB_A1_AS" id="SRSDB_A1_AS"></a>SRSDB{<a href="#c_1" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} SP<a href="#0d33" title="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a>, #<a href="#mode" title="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></p></div><div class="encoding"><h4 class="encoding">Increment After<span class="bitdiff"> (P == 0 &amp;&amp; U == 1)</span></h4><p class="asm-code"><a name="SRSIA_A1_AS" id="SRSIA_A1_AS"></a>SRS<a href="#ia_1" title="Optional suffix to indicate the Increment After variant">{IA}</a>{<a href="#c_1" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} SP<a href="#0d33" title="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a>, #<a href="#mode" title="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></p></div><div class="encoding"><h4 class="encoding">Increment Before<span class="bitdiff"> (P == 1 &amp;&amp; U == 1)</span></h4><p class="asm-code"><a name="SRSIB_A1_AS" id="SRSIB_A1_AS"></a>SRSIB{<a href="#c_1" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} SP<a href="#0d33" title="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a>, #<a href="#mode" title="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></p></div><p class="pseudocode">wback = (W == '1');  increment = (U == '1');  wordhigher = (P == U);</p>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td class="r">0</td><td class="l">0</td><td class="r">0</td><td class="lr">0</td><td class="lr">W</td><td class="lr">0</td><td class="l">(1)</td><td>(1)</td><td>(0)</td><td class="r">(1)</td><td class="lr">(1)</td><td class="lr">(1)</td><td class="l">(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td class="r">(0)</td><td colspan="5" class="lr">mode</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">T1</h4><p class="asm-code"><a name="SRS_T1_AS" id="SRS_T1_AS"></a>SRSDB{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} SP<a href="#0d33" title="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a>, #<a href="#mode" title="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></p></div><p class="pseudocode">wback = (W == '1');  increment = FALSE;  wordhigher = FALSE;</p>
+    <h3 class="classheading"><a name="t2" id="t2"></a>T2</h3><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td class="r">0</td><td class="l">1</td><td class="r">1</td><td class="lr">0</td><td class="lr">W</td><td class="lr">0</td><td class="l">(1)</td><td>(1)</td><td>(0)</td><td class="r">(1)</td><td class="lr">(1)</td><td class="lr">(1)</td><td class="l">(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td class="r">(0)</td><td colspan="5" class="lr">mode</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">T2</h4><p class="asm-code"><a name="SRS_T2_AS" id="SRS_T2_AS"></a>SRS<a href="#ia" title="Optional suffix for Increment After form">{IA}</a>{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} SP<a href="#0d33" title="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a>, #<a href="#mode" title="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></p></div><p class="pseudocode">wback = (W == '1');  increment = TRUE;  wordhigher = FALSE;</p>
+  <p class="encoding-notes">
+      <p class="aml">For more information about the <span class="arm-defined-word">constrained unpredictable</span> behavior of this instruction, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Architectural Constraints on UNPREDICTABLE behaviors</a>, and particularly <a class="armarm-xref" title="Reference to Armv8 ARM section">SRS (T32)</a> and <a class="armarm-xref" title="Reference to Armv8 ARM section">SRS (A32)</a>.</p>
+    </p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>IA</td><td><a name="ia_1" id="ia_1"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding A1: is an optional suffix to indicate the Increment After variant.</p>
+        
+      </td></tr><tr><td></td><td><a name="ia" id="ia"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding T2: is an optional suffix for the Increment After form.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;c&gt;</td><td><a name="c_1" id="c_1"></a>
+        
+          
+          
+          
+          
+        
+        
+          <p class="aml">For encoding A1: see <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>. &lt;c&gt; must be AL or omitted.</p>
+        
+      </td></tr><tr><td></td><td><a name="c" id="c"></a>
+        
+          
+        
+        
+          <p class="aml">For encoding T1 and T2: see <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>!</td><td><a name="0d33" id="0d33"></a>
+        
+          <p class="aml">The address adjusted by the size of the data loaded is written back to the base register. If specified, it is encoded in the "W" field as 1, otherwise this field defaults to 0.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;mode&gt;</td><td><a name="mode" id="mode"></a>
+        
+          <p class="aml">Is the number of the mode whose Banked SP is used as the base register, encoded in the "mode" field. For details of PE modes and their numbers see <a class="armarm-xref" title="Reference to Armv8 ARM section">AArch32 PE mode descriptions</a>.</p>
+        
+      </td></tr></table></div><p class="syntax-notes">
+      <p class="aml"><span class="asm-code">SRSFA</span>, <span class="asm-code">SRSEA</span>, <span class="asm-code">SRSFD</span>, and <span class="asm-code">SRSED</span> are pseudo-instructions for <span class="asm-code">SRSIB</span>, <span class="asm-code">SRSIA</span>, <span class="asm-code">SRSDB</span>, and <span class="asm-code">SRSDA</span> respectively, referring to their use for pushing data onto Full Ascending, Empty Ascending, Full Descending, and Empty Descending stacks.</p>
+    </p>
+    <div class="ps" psname="commonps"><a name="commonps" id="commonps"></a><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode">if <a href="shared_pseudocode.html#impl-shared.CurrentInstrSet.0" title="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() == <a href="shared_pseudocode.html#InstrSet_A32" title="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a> then
+    if <a href="shared_pseudocode.html#impl-aarch32.ConditionPassed.0" title="function: boolean ConditionPassed()">ConditionPassed</a>() then
+        EncodingSpecificOperations();
+        if PSTATE.EL == <a href="shared_pseudocode.html#EL2" title="constant bits(2) EL2 = '10'">EL2</a> then          // UNDEFINED at EL2
+            UNDEFINED;
+    
+        // Check for UNPREDICTABLE cases. The definition of UNPREDICTABLE does not permit these
+        // to be security holes
+        if PSTATE.M IN {<a href="shared_pseudocode.html#M32_User" title="constant bits(5) M32_User = '10000'">M32_User</a>,<a href="shared_pseudocode.html#M32_System" title="constant bits(5) M32_System = '11111'">M32_System</a>} then
+            UNPREDICTABLE;
+        elsif mode == <a href="shared_pseudocode.html#M32_Hyp" title="constant bits(5) M32_Hyp = '11010'">M32_Hyp</a> then        // Check for attempt to access Hyp mode SP
+            UNPREDICTABLE;
+        elsif mode == <a href="shared_pseudocode.html#M32_Monitor" title="constant bits(5) M32_Monitor = '10110'">M32_Monitor</a> then    // Check for attempt to access Monitor mode SP
+            if !<a href="shared_pseudocode.html#impl-shared.HaveEL.1" title="function: boolean HaveEL(bits(2) el)">HaveEL</a>(<a href="shared_pseudocode.html#EL3" title="constant bits(2) EL3 = '11'">EL3</a>) || !<a href="shared_pseudocode.html#impl-shared.IsSecure.0" title="function: boolean IsSecure()">IsSecure</a>()  then
+                UNPREDICTABLE;
+            elsif !<a href="shared_pseudocode.html#impl-shared.ELUsingAArch32.1" title="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a href="shared_pseudocode.html#EL3" title="constant bits(2) EL3 = '11'">EL3</a>) then
+                <a href="shared_pseudocode.html#AArch64.MonitorModeTrap.0" title="function: AArch64.MonitorModeTrap()">AArch64.MonitorModeTrap</a>();
+        elsif <a href="shared_pseudocode.html#impl-aarch32.BadMode.1" title="function: boolean BadMode(bits(5) mode)">BadMode</a>(mode) then
+            UNPREDICTABLE;
+    
+        base = <a href="shared_pseudocode.html#impl-aarch32.Rmode.read.2" title="accessor: bits(32) Rmode[integer n, bits(5) mode]">Rmode</a>[13,mode];
+        address = if increment then base else base-8;
+        if wordhigher then address = address+4;
+        <a href="shared_pseudocode.html#impl-aarch32.MemA.write.2" title="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4]   = LR;
+        <a href="shared_pseudocode.html#impl-aarch32.MemA.write.2" title="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address+4,4] = <a href="shared_pseudocode.html#impl-shared.SPSR.read.0" title="accessor: bits(32) SPSR[]">SPSR</a>[];
+        if wback then <a href="shared_pseudocode.html#impl-aarch32.Rmode.write.2" title="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[13,mode] = if increment then base+8 else base-8;
+else
+    if <a href="shared_pseudocode.html#impl-aarch32.ConditionPassed.0" title="function: boolean ConditionPassed()">ConditionPassed</a>() then
+        EncodingSpecificOperations();
+        if PSTATE.EL == <a href="shared_pseudocode.html#EL2" title="constant bits(2) EL2 = '10'">EL2</a> then          // UNDEFINED at EL2
+            UNDEFINED;
+    
+        // Check for UNPREDICTABLE cases. The definition of UNPREDICTABLE does not permit these
+        // to be security holes
+        if PSTATE.M IN {<a href="shared_pseudocode.html#M32_User" title="constant bits(5) M32_User = '10000'">M32_User</a>,<a href="shared_pseudocode.html#M32_System" title="constant bits(5) M32_System = '11111'">M32_System</a>} then
+            UNPREDICTABLE;
+        elsif mode == <a href="shared_pseudocode.html#M32_Hyp" title="constant bits(5) M32_Hyp = '11010'">M32_Hyp</a> then        // Check for attempt to access Hyp mode SP
+            UNPREDICTABLE;
+        elsif mode == <a href="shared_pseudocode.html#M32_Monitor" title="constant bits(5) M32_Monitor = '10110'">M32_Monitor</a> then    // Check for attempt to access Monitor mode SP
+            if !<a href="shared_pseudocode.html#impl-shared.HaveEL.1" title="function: boolean HaveEL(bits(2) el)">HaveEL</a>(<a href="shared_pseudocode.html#EL3" title="constant bits(2) EL3 = '11'">EL3</a>) || !<a href="shared_pseudocode.html#impl-shared.IsSecure.0" title="function: boolean IsSecure()">IsSecure</a>()  then
+                UNPREDICTABLE;
+            elsif !<a href="shared_pseudocode.html#impl-shared.ELUsingAArch32.1" title="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a href="shared_pseudocode.html#EL3" title="constant bits(2) EL3 = '11'">EL3</a>) then
+                <a href="shared_pseudocode.html#AArch64.MonitorModeTrap.0" title="function: AArch64.MonitorModeTrap()">AArch64.MonitorModeTrap</a>();
+        elsif <a href="shared_pseudocode.html#impl-aarch32.BadMode.1" title="function: boolean BadMode(bits(5) mode)">BadMode</a>(mode) then
+            UNPREDICTABLE;
+    
+        base = <a href="shared_pseudocode.html#impl-aarch32.Rmode.read.2" title="accessor: bits(32) Rmode[integer n, bits(5) mode]">Rmode</a>[13,mode];
+        address = if increment then base else base-8;
+        if wordhigher then address = address+4;
+        <a href="shared_pseudocode.html#impl-aarch32.MemA.write.2" title="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4]   = LR;
+        <a href="shared_pseudocode.html#impl-aarch32.MemA.write.2" title="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address+4,4] = <a href="shared_pseudocode.html#impl-shared.SPSR.read.0" title="accessor: bits(32) SPSR[]">SPSR</a>[];
+        if wback then <a href="shared_pseudocode.html#impl-aarch32.Rmode.write.2" title="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[13,mode] = if increment then base+8 else base-8;</p>
+    </div>
+  <h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">PSTATE.M IN {M32_User,M32_System}</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li></ul><p>If <span class="pseudocode">mode == M32_Hyp</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li></ul><p>If <span class="pseudocode">mode == M32_Monitor &amp;&amp; (!HaveEL(EL3) || !IsSecure())</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li></ul><p>If <span class="pseudocode">BadMode(mode)</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction stores to the stack of the mode in which it is executed.</li><li>The instruction stores to an <span class="arm-defined-word">unknown</span> address, and if the instruction specifies writeback then any general-purpose register that can be accessed from the current Exception level without a privilege violation becomes <span class="arm-defined-word">unknown</span>.</li></ul><hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

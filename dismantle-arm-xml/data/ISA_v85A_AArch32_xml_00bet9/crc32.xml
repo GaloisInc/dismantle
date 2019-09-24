@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="CRC32" title="CRC32 -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>CRC32</heading>
+  <desc>
+    <brief>
+      <para>CRC32</para>
+    </brief>
+    <authored>
+      <para><instruction>CRC32</instruction> performs a cyclic redundancy check (CRC) calculation on a value held in a general-purpose register. It takes an input CRC value in the first source operand, performs a CRC on the input value in the second source operand, and returns the output CRC value. The second source operand can be 8, 16, or 32 bits. To align with common usage, the bit order of the values is reversed as part of the operation, and the polynomial <hexnumber>0x04C11DB7</hexnumber> is used for the CRC calculation.</para>
+      <para>In Armv8-A, this is an <arm-defined-word>optional</arm-defined-word> instruction, and in Armv8.1 it is mandatory for all implementations to implement it.</para>
+      <note>
+        <para><xref linkend="AArch32.id_isar5">ID_ISAR5</xref>.CRC32 indicates whether this instruction is supported in the T32 and A32 instruction sets.</para>
+      </note>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1 and this instruction passes its condition execution check:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="3" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="3"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/CRC32/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="2" name="sz" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="10" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="9" name="C" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="8" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="7" width="4" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="CRC32B_A1" oneofinclass="3" oneof="6" label="CRC32B" bitdiffs="sz == 00">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="CRC32B" />
+        </docvars>
+        <box hibit="22" width="2" name="sz">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>CRC32B</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose accumulator output register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="General-purpose accumulator input register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="General-purpose data source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="CRC32H_A1" oneofinclass="3" oneof="6" label="CRC32H" bitdiffs="sz == 01">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="CRC32H" />
+        </docvars>
+        <box hibit="22" width="2" name="sz">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>CRC32H</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose accumulator output register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="General-purpose accumulator input register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="General-purpose data source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="CRC32W_A1" oneofinclass="3" oneof="6" label="CRC32W" bitdiffs="sz == 10">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="CRC32W" />
+        </docvars>
+        <box hibit="22" width="2" name="sz">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>CRC32W</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose accumulator output register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="General-purpose accumulator input register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="General-purpose data source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/CRC32/A1_A.txt" mylink="aarch32.instrs.CRC32.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if ! <a link="impl-shared.HaveCRCExt.0" file="shared_pseudocode.xml" hover="function: boolean HaveCRCExt()">HaveCRCExt</a>() then UNDEFINED;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd); n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);
+size = 8 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(sz);
+crc32c = (C == '1');
+if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
+if size == 64 then UNPREDICTABLE;
+if cond != '1110' then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">size == 64</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_ADDITIONAL_DECODE">
+            <cu_type_variable name="pseudocode" value="size = 32;" />
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">cond != '1110'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNCOND" />
+          <cu_type constraint="Constraint_COND" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="3" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="3"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/CRC32/T1_A.txt" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="C" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="5" width="2" name="sz" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="CRC32B_T1" oneofinclass="3" oneof="6" label="CRC32B" bitdiffs="sz == 00">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="CRC32B" />
+        </docvars>
+        <box hibit="5" width="2" name="sz">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>CRC32B</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose accumulator output register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="General-purpose accumulator input register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="General-purpose data source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="CRC32H_T1" oneofinclass="3" oneof="6" label="CRC32H" bitdiffs="sz == 01">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="CRC32H" />
+        </docvars>
+        <box hibit="5" width="2" name="sz">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>CRC32H</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose accumulator output register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="General-purpose accumulator input register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="General-purpose data source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="CRC32W_T1" oneofinclass="3" oneof="6" label="CRC32W" bitdiffs="sz == 10">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="CRC32W" />
+        </docvars>
+        <box hibit="5" width="2" name="sz">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>CRC32W</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose accumulator output register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="General-purpose accumulator input register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="General-purpose data source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/CRC32/T1_A.txt" mylink="aarch32.instrs.CRC32.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;
+if ! <a link="impl-shared.HaveCRCExt.0" file="shared_pseudocode.xml" hover="function: boolean HaveCRCExt()">HaveCRCExt</a>() then UNDEFINED;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd); n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);
+size = 8 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(sz);
+crc32c = (C == '1');
+if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;
+if size == 64 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">size == 64</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_ADDITIONAL_DECODE">
+            <cu_type_variable name="pseudocode" value="size = 32;" />
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="CRC32B_A1, CRC32B_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. An <instruction>CRC32</instruction> instruction must be unconditional.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="CRC32B_A1, CRC32B_T1" symboldefcount="1">
+      <symbol link="rd">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <intro>
+          <para>Is the general-purpose accumulator output register, encoded in the "Rd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="CRC32B_A1, CRC32B_T1" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose accumulator input register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="CRC32B_A1, CRC32B_T1" symboldefcount="1">
+      <symbol link="rm">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <intro>
+          <para>Is the general-purpose data source register, encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/CRC32/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+
+    acc = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];             // accumulator
+    val = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m]&lt;size-1:0&gt;;   // input value
+    poly = (if crc32c then 0x1EDC6F41 else 0x04C11DB7)&lt;31:0&gt;;
+    tempacc = <a link="impl-shared.BitReverse.1" file="shared_pseudocode.xml" hover="function: bits(N) BitReverse(bits(N) data)">BitReverse</a>(acc):<a link="impl-shared.Zeros.1" file="shared_pseudocode.xml" hover="function: bits(N) Zeros(integer N)">Zeros</a>(size);
+    tempval = <a link="impl-shared.BitReverse.1" file="shared_pseudocode.xml" hover="function: bits(N) BitReverse(bits(N) data)">BitReverse</a>(val):<a link="impl-shared.Zeros.1" file="shared_pseudocode.xml" hover="function: bits(N) Zeros(integer N)">Zeros</a>(32);
+    // Poly32Mod2 on a bitstring does a polynomial Modulus over {0,1} operation
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[d] = <a link="impl-shared.BitReverse.1" file="shared_pseudocode.xml" hover="function: bits(N) BitReverse(bits(N) data)">BitReverse</a>(<a link="impl-shared.Poly32Mod2.2" file="shared_pseudocode.xml" hover="function: bits(32) Poly32Mod2(bits(N) data, bits(32) poly)">Poly32Mod2</a>(tempacc EOR tempval, poly));</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

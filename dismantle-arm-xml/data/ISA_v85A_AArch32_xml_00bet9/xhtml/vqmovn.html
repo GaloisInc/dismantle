@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>VQMOVN, VQMOVUN -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">VQMOVN, VQMOVUN</h2><p id="desc">
+      <p class="aml">Vector Saturating Move and Narrow copies each element of the operand vector to the corresponding element of the destination vector.</p>
+      <p class="aml">The operand is a quadword vector. The elements can be any one of:</p>
+      <ul>
+        <li>16-bit, 32-bit, or 64-bit signed integers.</li>
+        <li>16-bit, 32-bit, or 64-bit unsigned integers.</li>
+      </ul>
+      <p class="aml">The result is a doubleword vector. The elements are half the length of the operand vector elements. If the operand is unsigned, the results are unsigned. If the operand is signed, the results can be signed or unsigned.</p>
+      <p class="aml">If any of the results overflow, they are saturated. The cumulative saturation bit, <a class="armarm-xref" title="Reference to Armv8 ARM section">FPSCR</a>.QC, is set if saturation occurs. For details see <a class="armarm-xref" title="Reference to Armv8 ARM section">Pseudocode details of saturation</a>.</p>
+      <p class="aml">Depending on settings in the <a class="armarm-xref" title="Reference to Armv8 ARM section">CPACR</a>, <a class="armarm-xref" title="Reference to Armv8 ARM section">NSACR</a>, and <a class="armarm-xref" title="Reference to Armv8 ARM section">HCPTR</a> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <span class="arm-defined-word">undefined</span>, or trapped to Hyp mode. For more information see <a class="armarm-xref" title="Reference to Armv8 ARM section">Enabling Advanced SIMD and floating-point support</a>.</p>
+    </p><p id="desc">This instruction is used by the pseudo-instructions <a href="vqrshrn_vqmovn.html" title="Vector Saturating Rounding Shift Right">VQRSHRN (zero)</a>, <a href="vqrshrun_vqmovn.html" title="Vector Saturating Rounding Shift Right">VQRSHRUN (zero)</a>, <a href="vqshrn_vqmovn.html" title="Vector Saturating Shift Right">VQSHRN (zero)</a>, and <a href="vqshrun_vqmovn.html" title="Vector Saturating Shift Right">VQSHRUN (zero)</a>.</p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t1">T1</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><p class="desc"></p><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td class="r">1</td><td class="lr">D</td><td class="l">1</td><td class="r">1</td><td colspan="2" class="lr">size</td><td class="l">1</td><td class="r">0</td><td colspan="4" class="lr">Vd</td><td class="lr">0</td><td class="l">0</td><td>1</td><td class="r">0</td><td colspan="2" class="lr">op</td><td class="lr">M</td><td class="lr">0</td><td colspan="4" class="lr">Vm</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">Signed result<span class="bitdiff"> (op == 1x)</span></h4><p class="asm-code"><a name="VQMOVN_A1" id="VQMOVN_A1"></a>VQMOVN{<a href="#c_1" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>}.<a href="#dt" title="Data type for elements of operand (field &quot;op&lt;0&gt;:size&quot;) [S16,S32,S64,U16,U32,U64,UNDEFINED]">&lt;dt&gt;</a> <a href="#dd" title="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a>, <a href="#qm" title="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></p></div><div class="encoding"><h4 class="encoding">Unsigned result<span class="bitdiff"> (op == 01)</span></h4><p class="asm-code"><a name="VQMOVUN_A1" id="VQMOVUN_A1"></a>VQMOVUN{<a href="#c_1" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>}.<a href="#dt_1" title="Data type for elements of operand (field &quot;size&quot;) [S16,S32,S64,UNDEFINED]">&lt;dt&gt;</a> <a href="#dd" title="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a>, <a href="#qm" title="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></p></div><p class="pseudocode">if op == '00' then SEE "VMOVN";
+if size == '11' || Vm&lt;0&gt; == '1' then UNDEFINED;
+src_unsigned = (op == '11');  dest_unsigned = (op&lt;0&gt; == '1');
+esize = 8 &lt;&lt; <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(size);  elements = 64 DIV esize;
+d = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  m = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);</p>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><p class="desc"></p><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td class="r">1</td><td class="lr">D</td><td class="l">1</td><td class="r">1</td><td colspan="2" class="lr">size</td><td class="l">1</td><td class="r">0</td><td colspan="4" class="lr">Vd</td><td class="lr">0</td><td class="l">0</td><td>1</td><td class="r">0</td><td colspan="2" class="lr">op</td><td class="lr">M</td><td class="lr">0</td><td colspan="4" class="lr">Vm</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">Signed result<span class="bitdiff"> (op == 1x)</span></h4><p class="asm-code"><a name="VQMOVN_T1" id="VQMOVN_T1"></a>VQMOVN{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>}.<a href="#dt" title="Data type for elements of operand (field &quot;op&lt;0&gt;:size&quot;) [S16,S32,S64,U16,U32,U64,UNDEFINED]">&lt;dt&gt;</a> <a href="#dd" title="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a>, <a href="#qm" title="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></p></div><div class="encoding"><h4 class="encoding">Unsigned result<span class="bitdiff"> (op == 01)</span></h4><p class="asm-code"><a name="VQMOVUN_T1" id="VQMOVUN_T1"></a>VQMOVUN{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>}.<a href="#dt_1" title="Data type for elements of operand (field &quot;size&quot;) [S16,S32,S64,UNDEFINED]">&lt;dt&gt;</a> <a href="#dd" title="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a>, <a href="#qm" title="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></p></div><p class="pseudocode">if op == '00' then SEE "VMOVN";
+if size == '11' || Vm&lt;0&gt; == '1' then UNDEFINED;
+src_unsigned = (op == '11');  dest_unsigned = (op&lt;0&gt; == '1');
+esize = 8 &lt;&lt; <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(size);  elements = 64 DIV esize;
+d = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  m = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);</p>
+  <p class="encoding-notes"></p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;c&gt;</td><td><a name="c_1" id="c_1"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding A1: see <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>. This encoding must be unconditional.</p>
+        
+      </td></tr><tr><td></td><td><a name="c" id="c"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding T1: see <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;dt&gt;</td><td><a name="dt" id="dt"></a>
+        For the signed result variant: is the data type for the elements of the operand, 
+    encoded in 
+    <q>op&lt;0&gt;:size</q>:
+      
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">op&lt;0&gt;</th>
+                <th class="bitfield">size</th>
+                <th class="symbol">&lt;dt&gt;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">0</td>
+                <td class="bitfield">00</td>
+                <td class="symbol">S16</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0</td>
+                <td class="bitfield">01</td>
+                <td class="symbol">S32</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0</td>
+                <td class="bitfield">10</td>
+                <td class="symbol">S64</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0</td>
+                <td class="bitfield">11</td>
+                <td class="symbol">RESERVED</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1</td>
+                <td class="bitfield">00</td>
+                <td class="symbol">U16</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1</td>
+                <td class="bitfield">01</td>
+                <td class="symbol">U32</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1</td>
+                <td class="bitfield">10</td>
+                <td class="symbol">U64</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1</td>
+                <td class="bitfield">11</td>
+                <td class="symbol">RESERVED</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr><tr><td></td><td><a name="dt_1" id="dt_1"></a>
+        For the unsigned result variant: is the data type for the elements of the operand, 
+    encoded in 
+    <q>size</q>:
+      
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">size</th>
+                <th class="symbol">&lt;dt&gt;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">00</td>
+                <td class="symbol">S16</td>
+              </tr>
+              <tr>
+                <td class="bitfield">01</td>
+                <td class="symbol">S32</td>
+              </tr>
+              <tr>
+                <td class="bitfield">10</td>
+                <td class="symbol">S64</td>
+              </tr>
+              <tr>
+                <td class="bitfield">11</td>
+                <td class="symbol">RESERVED</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Dd&gt;</td><td><a name="dd" id="dd"></a>
+        
+          <p class="aml">Is the 64-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Qm&gt;</td><td><a name="qm" id="qm"></a>
+        
+          <p class="aml">Is the 128-bit name of the SIMD&amp;FP source register, encoded in the "M:Vm" field as &lt;Qm&gt;*2.</p>
+        
+      </td></tr></table></div><p class="syntax-notes"></p>
+    <div class="ps" psname="commonps"><a name="commonps" id="commonps"></a><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode">if <a href="shared_pseudocode.html#impl-aarch32.ConditionPassed.0" title="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a href="shared_pseudocode.html#impl-aarch32.CheckAdvSIMDEnabled.0" title="function: CheckAdvSIMDEnabled()">CheckAdvSIMDEnabled</a>();
+    for e = 0 to elements-1
+        operand = <a href="shared_pseudocode.html#impl-shared.Int.2" title="function: integer Int(bits(N) x, boolean unsigned)">Int</a>(<a href="shared_pseudocode.html#impl-shared.Elem.read.3" title="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a href="shared_pseudocode.html#impl-aarch32.Qin.read.1" title="accessor: bits(128) Qin[integer n]">Qin</a>[m&gt;&gt;1],e,2*esize], src_unsigned);
+        (<a href="shared_pseudocode.html#impl-shared.Elem.write.3" title="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a href="shared_pseudocode.html#impl-aarch32.D.write.1" title="accessor: D[integer n] = bits(64) value">D</a>[d],e,esize], sat) = <a href="shared_pseudocode.html#impl-shared.SatQ.3" title="function: (bits(N), boolean) SatQ(integer i, integer N, boolean unsigned)">SatQ</a>(operand, esize, dest_unsigned);
+        if sat then FPSCR.QC = '1';</p>
+    </div>
+  <hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

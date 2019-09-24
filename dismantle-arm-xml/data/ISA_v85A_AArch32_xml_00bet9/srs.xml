@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="SRS" title="SRS, SRSDA, SRSDB, SRSIA, SRSIB -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>SRS, SRSDA, SRSDB, SRSIA, SRSIB</heading>
+  <desc>
+    <brief>
+      <para>Store Return State</para>
+    </brief>
+    <authored>
+      <para>Store Return State stores the LR_&lt;current_mode&gt; and <xref linkend="CHDDAABB">SPSR</xref>_&lt;current_mode&gt; to the stack of a specified mode. For information about memory accesses see <xref linkend="Chddjfjf">Memory accesses</xref>.</para>
+      <para><instruction>SRS</instruction> is <arm-defined-word>undefined</arm-defined-word> in Hyp mode.</para>
+      <para><instruction>SRS</instruction> is <arm-defined-word>constrained unpredictable</arm-defined-word> if it is executed in User or System mode, or if the specified mode is any of the following:</para>
+      <list type="unordered">
+        <listitem><content>Not implemented.</content></listitem>
+        <listitem><content>A mode that <xref linkend="CIHGHDGI">Table G1-5</xref> does not show.</content></listitem>
+        <listitem><content>Hyp mode.</content></listitem>
+        <listitem><content>Monitor mode, if the <instruction>SRS</instruction> instruction is executed in Non-secure state.</content></listitem>
+      </list>
+      <para>If EL3 is using AArch64 and an <instruction>SRS</instruction> instruction that is executed in a Secure EL1 mode specifies Monitor mode, it is trapped to EL3.</para>
+      <para>See <xref linkend="CHDJIEBG">Traps to EL3 of Secure monitor functionality from Secure EL1 using AArch32</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>, and particularly <xref linkend="CEGDFDHJ">SRS (T32)</xref> and <xref linkend="CEGJIFIF">SRS (A32)</xref>.</para>
+    </encodingnotes>
+    <syntaxnotes>
+      <para><instruction>SRSFA</instruction>, <instruction>SRSEA</instruction>, <instruction>SRSFD</instruction>, and <instruction>SRSED</instruction> are pseudo-instructions for <instruction>SRSIB</instruction>, <instruction>SRSIA</instruction>, <instruction>SRSDB</instruction>, and <instruction>SRSDA</instruction> respectively, referring to their use for pushing data onto Full Ascending, Empty Ascending, Full Descending, and Empty Descending stacks.</para>
+    </syntaxnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="3">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="3" id="a1" no_encodings="4" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="4"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/SRS/A1_AS.txt">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="S" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>(1)</c>
+          <c>(1)</c>
+          <c>(0)</c>
+          <c>(1)</c>
+        </box>
+        <box hibit="15" width="11" name="op" settings="11">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(1)</c>
+          <c>(0)</c>
+          <c>(1)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+        <box hibit="4" width="5" name="mode" usename="1">
+          <c colspan="5"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SRSDA_A1_AS" oneofinclass="4" oneof="6" label="Decrement After" bitdiffs="P == 0 &amp;&amp; U == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="dec-after" />
+          <docvar key="mnemonic" value="SRSDA" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>SRSDA</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> SP</text><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, #</text><a link="mode" hover="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SRSDB_A1_AS" oneofinclass="4" oneof="6" label="Decrement Before" bitdiffs="P == 1 &amp;&amp; U == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="dec-before" />
+          <docvar key="mnemonic" value="SRSDB" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>SRSDB</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> SP</text><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, #</text><a link="mode" hover="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SRSIA_A1_AS" oneofinclass="4" oneof="6" label="Increment After" bitdiffs="P == 0 &amp;&amp; U == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="SRS{IA}" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>SRS</text><a link="ia_1" hover="Optional suffix to indicate the Increment After variant">{IA}</a><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> SP</text><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, #</text><a link="mode" hover="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SRSIB_A1_AS" oneofinclass="4" oneof="6" label="Increment Before" bitdiffs="P == 1 &amp;&amp; U == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="inc-before" />
+          <docvar key="mnemonic" value="SRSIB" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>SRSIB</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> SP</text><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, #</text><a link="mode" hover="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SRS/A1_AS.txt" mylink="aarch32.instrs.SRS.A1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">wback = (W == '1');  increment = (U == '1');  wordhigher = (P == U);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="3" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="ldmstm-mode" value="dec-before" />
+        <docvar key="mnemonic" value="SRSDB" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/SRS/T1_AS.txt">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" width="2" name="opc" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>(1)</c>
+          <c>(1)</c>
+          <c>(0)</c>
+          <c>(1)</c>
+        </box>
+        <box hibit="15" name="P" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="14" name="M" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="13" width="9" settings="9">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+        <box hibit="4" width="5" name="mode" usename="1">
+          <c colspan="5"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SRS_T1_AS" oneofinclass="1" oneof="6" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="dec-before" />
+          <docvar key="mnemonic" value="SRSDB" />
+        </docvars>
+        <asmtemplate><text>SRSDB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> SP</text><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, #</text><a link="mode" hover="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SRS/T1_AS.txt" mylink="aarch32.instrs.SRS.T1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">wback = (W == '1');  increment = FALSE;  wordhigher = FALSE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T2" oneof="3" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="ldmstm-mode" value="inc-after" />
+        <docvar key="mnemonic" value="SRS{IA}" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/SRS/T2_AS.txt">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" width="2" name="opc" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>(1)</c>
+          <c>(1)</c>
+          <c>(0)</c>
+          <c>(1)</c>
+        </box>
+        <box hibit="15" name="P" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="14" name="M" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="13" width="9" settings="9">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+        <box hibit="4" width="5" name="mode" usename="1">
+          <c colspan="5"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SRS_T2_AS" oneofinclass="1" oneof="6" label="T2">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="SRS{IA}" />
+        </docvars>
+        <asmtemplate><text>SRS</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> SP</text><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, #</text><a link="mode" hover="Mode whose Banked SP is used as the base register number (field &quot;mode&quot;)">&lt;mode&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SRS/T2_AS.txt" mylink="aarch32.instrs.SRS.T2_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">wback = (W == '1');  increment = TRUE;  wordhigher = FALSE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="SRSIA_A1_AS" symboldefcount="1">
+      <symbol link="ia_1">IA</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is an optional suffix to indicate the Increment After variant.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SRS_T2_AS" symboldefcount="2">
+      <symbol link="ia">IA</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T2: is an optional suffix for the Increment After form.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SRSDA_A1_AS" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="dec-after" />
+          <docvar key="mnemonic" value="SRSDA" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. <syntax>&lt;c&gt;</syntax> must be <value>AL</value> or omitted.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SRS_T1_AS, SRS_T2_AS" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1 and T2: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SRSDA_A1_AS, SRS_T1_AS, SRS_T2_AS" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SRSDA_A1_AS, SRS_T1_AS, SRS_T2_AS" symboldefcount="1">
+      <symbol link="0d33">!</symbol>
+      <account encodedin="W">
+        <intro>
+          <para>The address adjusted by the size of the data loaded is written back to the base register. If specified, it is encoded in the "W" field as 1, otherwise this field defaults to 0.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SRSDA_A1_AS, SRS_T1_AS, SRS_T2_AS" symboldefcount="1">
+      <symbol link="mode">&lt;mode&gt;</symbol>
+      <account encodedin="mode">
+        <intro>
+          <para>Is the number of the mode whose Banked SP is used as the base register, encoded in the "mode" field. For details of PE modes and their numbers see <xref linkend="CIHEDADE">AArch32 PE mode descriptions</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/SRS/Op_AS.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-shared.CurrentInstrSet.0" file="shared_pseudocode.xml" hover="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() == <a link="InstrSet_A32" file="shared_pseudocode.xml" hover="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a> then
+    if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+        EncodingSpecificOperations();
+        if PSTATE.EL == <a link="EL2" file="shared_pseudocode.xml" hover="constant bits(2) EL2 = '10'">EL2</a> then          // UNDEFINED at EL2
+            UNDEFINED;
+    
+        // Check for UNPREDICTABLE cases. The definition of UNPREDICTABLE does not permit these
+        // to be security holes
+        if PSTATE.M IN {<a link="M32_User" file="shared_pseudocode.xml" hover="constant bits(5) M32_User = '10000'">M32_User</a>,<a link="M32_System" file="shared_pseudocode.xml" hover="constant bits(5) M32_System = '11111'">M32_System</a>} then
+            UNPREDICTABLE;
+        elsif mode == <a link="M32_Hyp" file="shared_pseudocode.xml" hover="constant bits(5) M32_Hyp = '11010'">M32_Hyp</a> then        // Check for attempt to access Hyp mode SP
+            UNPREDICTABLE;
+        elsif mode == <a link="M32_Monitor" file="shared_pseudocode.xml" hover="constant bits(5) M32_Monitor = '10110'">M32_Monitor</a> then    // Check for attempt to access Monitor mode SP
+            if !<a link="impl-shared.HaveEL.1" file="shared_pseudocode.xml" hover="function: boolean HaveEL(bits(2) el)">HaveEL</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) || !<a link="impl-shared.IsSecure.0" file="shared_pseudocode.xml" hover="function: boolean IsSecure()">IsSecure</a>()  then
+                UNPREDICTABLE;
+            elsif !<a link="impl-shared.ELUsingAArch32.1" file="shared_pseudocode.xml" hover="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) then
+                <a link="AArch64.MonitorModeTrap.0" file="shared_pseudocode.xml" hover="function: AArch64.MonitorModeTrap()">AArch64.MonitorModeTrap</a>();
+        elsif <a link="impl-aarch32.BadMode.1" file="shared_pseudocode.xml" hover="function: boolean BadMode(bits(5) mode)">BadMode</a>(mode) then
+            UNPREDICTABLE;
+    
+        base = <a link="impl-aarch32.Rmode.read.2" file="shared_pseudocode.xml" hover="accessor: bits(32) Rmode[integer n, bits(5) mode]">Rmode</a>[13,mode];
+        address = if increment then base else base-8;
+        if wordhigher then address = address+4;
+        <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4]   = LR;
+        <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address+4,4] = <a link="impl-shared.SPSR.read.0" file="shared_pseudocode.xml" hover="accessor: bits(32) SPSR[]">SPSR</a>[];
+        if wback then <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[13,mode] = if increment then base+8 else base-8;
+else
+    if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+        EncodingSpecificOperations();
+        if PSTATE.EL == <a link="EL2" file="shared_pseudocode.xml" hover="constant bits(2) EL2 = '10'">EL2</a> then          // UNDEFINED at EL2
+            UNDEFINED;
+    
+        // Check for UNPREDICTABLE cases. The definition of UNPREDICTABLE does not permit these
+        // to be security holes
+        if PSTATE.M IN {<a link="M32_User" file="shared_pseudocode.xml" hover="constant bits(5) M32_User = '10000'">M32_User</a>,<a link="M32_System" file="shared_pseudocode.xml" hover="constant bits(5) M32_System = '11111'">M32_System</a>} then
+            UNPREDICTABLE;
+        elsif mode == <a link="M32_Hyp" file="shared_pseudocode.xml" hover="constant bits(5) M32_Hyp = '11010'">M32_Hyp</a> then        // Check for attempt to access Hyp mode SP
+            UNPREDICTABLE;
+        elsif mode == <a link="M32_Monitor" file="shared_pseudocode.xml" hover="constant bits(5) M32_Monitor = '10110'">M32_Monitor</a> then    // Check for attempt to access Monitor mode SP
+            if !<a link="impl-shared.HaveEL.1" file="shared_pseudocode.xml" hover="function: boolean HaveEL(bits(2) el)">HaveEL</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) || !<a link="impl-shared.IsSecure.0" file="shared_pseudocode.xml" hover="function: boolean IsSecure()">IsSecure</a>()  then
+                UNPREDICTABLE;
+            elsif !<a link="impl-shared.ELUsingAArch32.1" file="shared_pseudocode.xml" hover="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) then
+                <a link="AArch64.MonitorModeTrap.0" file="shared_pseudocode.xml" hover="function: AArch64.MonitorModeTrap()">AArch64.MonitorModeTrap</a>();
+        elsif <a link="impl-aarch32.BadMode.1" file="shared_pseudocode.xml" hover="function: boolean BadMode(bits(5) mode)">BadMode</a>(mode) then
+            UNPREDICTABLE;
+    
+        base = <a link="impl-aarch32.Rmode.read.2" file="shared_pseudocode.xml" hover="accessor: bits(32) Rmode[integer n, bits(5) mode]">Rmode</a>[13,mode];
+        address = if increment then base else base-8;
+        if wordhigher then address = address+4;
+        <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4]   = LR;
+        <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address+4,4] = <a link="impl-shared.SPSR.read.0" file="shared_pseudocode.xml" hover="accessor: bits(32) SPSR[]">SPSR</a>[];
+        if wback then <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[13,mode] = if increment then base+8 else base-8;</pstext>
+    </ps>
+  </ps_section>
+  <constrained_unpredictables ps_block="Operation">
+    <cu_case>
+      <cu_cause>
+        <pstext mayhavelinks="1">PSTATE.M IN {M32_User,M32_System}</pstext>
+      </cu_cause>
+      <cu_type constraint="Constraint_UNDEF" />
+      <cu_type constraint="Constraint_NOP" />
+    </cu_case>
+    <cu_case>
+      <cu_cause>
+        <pstext mayhavelinks="1">mode == M32_Hyp</pstext>
+      </cu_cause>
+      <cu_type constraint="Constraint_UNDEF" />
+      <cu_type constraint="Constraint_NOP" />
+    </cu_case>
+    <cu_case>
+      <cu_cause>
+        <pstext mayhavelinks="1">mode == M32_Monitor &amp;&amp; (!HaveEL(EL3) || !IsSecure())</pstext>
+      </cu_cause>
+      <cu_type constraint="Constraint_UNDEF" />
+      <cu_type constraint="Constraint_NOP" />
+    </cu_case>
+    <cu_case>
+      <cu_cause>
+        <pstext mayhavelinks="1">BadMode(mode)</pstext>
+      </cu_cause>
+      <cu_type constraint="Constraint_UNDEF" />
+      <cu_type constraint="Constraint_NOP" />
+      <cu_type>
+        <cu_type_text>The instruction stores to the stack of the mode in which it is executed.</cu_type_text>
+      </cu_type>
+      <cu_type>
+        <cu_type_text>The instruction stores to an <arm-defined-word>unknown</arm-defined-word> address, and if the instruction specifies writeback then any general-purpose register that can be accessed from the current Exception level without a privilege violation becomes <arm-defined-word>unknown</arm-defined-word>.</cu_type_text>
+      </cu_type>
+    </cu_case>
+  </constrained_unpredictables>
+</instructionsection>

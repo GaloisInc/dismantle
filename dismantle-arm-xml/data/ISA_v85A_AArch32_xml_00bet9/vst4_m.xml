@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VST4_m" title="VST4 (multiple 4-element structures) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VST4" />
+  </docvars>
+  <heading>VST4 (multiple 4-element structures)</heading>
+  <desc>
+    <brief>
+      <para>Store multiple 4-element structures from four registers</para>
+    </brief>
+    <authored>
+      <para>Store multiple 4-element structures from four registers stores multiple 4-element structures to memory from four registers, with interleaving. For more information, see <xref linkend="BABHJAGF">Element and structure load/store instructions</xref>. Every element of each register is saved. For details of the addressing mode see <xref linkend="Cjaefebe">Advanced SIMD addressing mode</xref>.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, and <xref linkend="AArch32.hcptr">HCPTR</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>, and particularly <xref linkend="CEGJJDEH">VST4 (multiple 4-element structures)</xref>.</para>
+      <para>Related encodings: See <xref linkend="T32.encoding_index.vldst">Advanced SIMD element or structure load/store</xref> for the T32 instruction set, or <xref linkend="A32.encoding_index.advsimdls">Advanced SIMD element or structure load/store</xref> for the A32 instruction set.</para>
+    </encodingnotes>
+    <syntaxnotes>
+      <para>For more information about the variants of this instruction, see <xref linkend="Cjaefebe">Advanced SIMD addressing mode</xref>.</para>
+    </syntaxnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="3" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VST4" />
+      </docvars>
+      <iclassintro count="3"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VST4_m/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="type" usename="1" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>x</c>
+        </box>
+        <box hibit="7" width="2" name="size" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="5" width="2" name="align" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VST4_m_A1_nowb" oneofinclass="3" oneof="6" label="Offset" bitdiffs="Rm == 1111">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VST4" />
+        </docvars>
+        <box hibit="3" width="4" name="Rm">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VST4</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="Data size (field &quot;size&quot;) [8,16,32,UNDEFINED]">&lt;size&gt;</a><text> </text><a link="list" hover="List containing the 64-bit names of SIMD&amp;FP registers (field &quot;type&quot;)">&lt;list&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>{</text><text>:</text><a link="align" hover="Optional alignment (field &quot;align&quot;)">&lt;align&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="VST4_m_A1_posti" oneofinclass="3" oneof="6" label="Post-indexed" bitdiffs="Rm == 1101">
+        <docvars>
+          <docvar key="address-form" value="post-indexed" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VST4" />
+        </docvars>
+        <box hibit="3" width="4" name="Rm">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VST4</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="Data size (field &quot;size&quot;) [8,16,32,UNDEFINED]">&lt;size&gt;</a><text> </text><a link="list" hover="List containing the 64-bit names of SIMD&amp;FP registers (field &quot;type&quot;)">&lt;list&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>{</text><text>:</text><a link="align" hover="Optional alignment (field &quot;align&quot;)">&lt;align&gt;</a><text>}</text><text>]!</text></asmtemplate>
+      </encoding>
+      <encoding name="VST4_m_A1_postr" oneofinclass="3" oneof="6" label="Post-indexed" bitdiffs="Rm != 11x1">
+        <docvars>
+          <docvar key="address-form" value="post-indexed" />
+          <docvar key="address-offset" value="reg-offset" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VST4" />
+        </docvars>
+        <box hibit="3" width="4" name="Rm">
+          <c>N</c>
+          <c>N</c>
+          <c></c>
+          <c>N</c>
+        </box>
+        <asmtemplate><text>VST4</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="Data size (field &quot;size&quot;) [8,16,32,UNDEFINED]">&lt;size&gt;</a><text> </text><a link="list" hover="List containing the 64-bit names of SIMD&amp;FP registers (field &quot;type&quot;)">&lt;list&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>{</text><text>:</text><a link="align" hover="Optional alignment (field &quot;align&quot;)">&lt;align&gt;</a><text>}</text><text>], </text><a link="rm" hover="General-purpose index register containing an offset applied after the access (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VST4_m/T1A1_A.txt" mylink="aarch32.instrs.VST4_m.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if size == '11' then UNDEFINED;
+case type of
+    when '0000'
+        inc = 1;
+    when '0001'
+        inc = 2;
+    otherwise
+        SEE "Related encodings";
+alignment = if align == '00' then 1 else 4 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(align);
+ebytes = 1 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(size);  elements = 8 DIV ebytes;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  d2 = d + inc;  d3 = d2 + inc;  d4 = d3 + inc;  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);
+wback = (m != 15);  register_index = (m != 15 &amp;&amp; m != 13);
+if n == 15 || d4 &gt; 31 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">d4 &gt; 31</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The memory locations specified by the instruction and the number of registers specified by the instruction if the register list had not gone out of range, become <arm-defined-word>unknown</arm-defined-word>. If the instruction specifies writeback, then that register becomes <arm-defined-word>unknown</arm-defined-word>. This behavior does not affect any other memory locations.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="3" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VST4" />
+      </docvars>
+      <iclassintro count="3"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VST4_m/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="type" usename="1" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>x</c>
+        </box>
+        <box hibit="7" width="2" name="size" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="5" width="2" name="align" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VST4_m_T1_nowb" oneofinclass="3" oneof="6" label="Offset" bitdiffs="Rm == 1111">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VST4" />
+        </docvars>
+        <box hibit="3" width="4" name="Rm">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VST4</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="Data size (field &quot;size&quot;) [8,16,32,UNDEFINED]">&lt;size&gt;</a><text> </text><a link="list" hover="List containing the 64-bit names of SIMD&amp;FP registers (field &quot;type&quot;)">&lt;list&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>{</text><text>:</text><a link="align" hover="Optional alignment (field &quot;align&quot;)">&lt;align&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="VST4_m_T1_posti" oneofinclass="3" oneof="6" label="Post-indexed" bitdiffs="Rm == 1101">
+        <docvars>
+          <docvar key="address-form" value="post-indexed" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VST4" />
+        </docvars>
+        <box hibit="3" width="4" name="Rm">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VST4</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="Data size (field &quot;size&quot;) [8,16,32,UNDEFINED]">&lt;size&gt;</a><text> </text><a link="list" hover="List containing the 64-bit names of SIMD&amp;FP registers (field &quot;type&quot;)">&lt;list&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>{</text><text>:</text><a link="align" hover="Optional alignment (field &quot;align&quot;)">&lt;align&gt;</a><text>}</text><text>]!</text></asmtemplate>
+      </encoding>
+      <encoding name="VST4_m_T1_postr" oneofinclass="3" oneof="6" label="Post-indexed" bitdiffs="Rm != 11x1">
+        <docvars>
+          <docvar key="address-form" value="post-indexed" />
+          <docvar key="address-offset" value="reg-offset" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VST4" />
+        </docvars>
+        <box hibit="3" width="4" name="Rm">
+          <c>N</c>
+          <c>N</c>
+          <c></c>
+          <c>N</c>
+        </box>
+        <asmtemplate><text>VST4</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="Data size (field &quot;size&quot;) [8,16,32,UNDEFINED]">&lt;size&gt;</a><text> </text><a link="list" hover="List containing the 64-bit names of SIMD&amp;FP registers (field &quot;type&quot;)">&lt;list&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>{</text><text>:</text><a link="align" hover="Optional alignment (field &quot;align&quot;)">&lt;align&gt;</a><text>}</text><text>], </text><a link="rm" hover="General-purpose index register containing an offset applied after the access (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VST4_m/T1A1_A.txt" mylink="aarch32.instrs.VST4_m.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if size == '11' then UNDEFINED;
+case type of
+    when '0000'
+        inc = 1;
+    when '0001'
+        inc = 2;
+    otherwise
+        SEE "Related encodings";
+alignment = if align == '00' then 1 else 4 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(align);
+ebytes = 1 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(size);  elements = 8 DIV ebytes;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  d2 = d + inc;  d3 = d2 + inc;  d4 = d3 + inc;  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);
+wback = (m != 15);  register_index = (m != 15 &amp;&amp; m != 13);
+if n == 15 || d4 &gt; 31 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">d4 &gt; 31</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The memory locations specified by the instruction and the number of registers specified by the instruction if the register list had not gone out of range, become <arm-defined-word>unknown</arm-defined-word>. If the instruction specifies writeback, then that register becomes <arm-defined-word>unknown</arm-defined-word>. This behavior does not affect any other memory locations.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VST4_m_A1_nowb" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. This encoding must be unconditional.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VST4_m_T1_nowb" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VST4_m_A1_nowb, VST4_m_T1_nowb" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VST4_m_A1_nowb, VST4_m_T1_nowb" symboldefcount="1">
+      <symbol link="size">&lt;size&gt;</symbol>
+      <definition encodedin="size">
+        <intro>Is the data size, </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">size</entry>
+                <entry class="symbol">&lt;size&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">00</entry>
+                <entry class="symbol">8</entry>
+              </row>
+              <row>
+                <entry class="bitfield">01</entry>
+                <entry class="symbol">16</entry>
+              </row>
+              <row>
+                <entry class="bitfield">10</entry>
+                <entry class="symbol">32</entry>
+              </row>
+              <row>
+                <entry class="bitfield">11</entry>
+                <entry class="symbol">RESERVED</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="VST4_m_A1_nowb, VST4_m_T1_nowb" symboldefcount="1">
+      <symbol link="list">&lt;list&gt;</symbol>
+      <account encodedin="type">
+        <intro>
+          <para>Is a list containing the 64-bit names of the SIMD&amp;FP registers.</para>
+          <para>The list must be one of:</para>
+          <list type="param">
+            <listitem>
+              <param><syntax>{ &lt;Dd&gt;, &lt;Dd+1&gt;, &lt;Dd+2&gt;, &lt;Dd+3&gt; }</syntax></param><content>Single-spaced registers, encoded in the "type" field as <binarynumber>0b0000</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param><syntax>{ &lt;Dd&gt;, &lt;Dd+2&gt;, &lt;Dd+4&gt;, &lt;Dd+6&gt; }</syntax></param><content>Double-spaced registers, encoded in the "type" field as <binarynumber>0b0001</binarynumber>.</content>
+            </listitem>
+          </list>
+          <para>The register <syntax>&lt;Dd&gt;</syntax> is encoded in the "D:Vd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VST4_m_A1_nowb, VST4_m_T1_nowb" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose base register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VST4_m_A1_nowb, VST4_m_T1_nowb" symboldefcount="1">
+      <symbol link="align">&lt;align&gt;</symbol>
+      <account encodedin="align">
+        <intro>
+          <para>Is the optional alignment.</para>
+          <para>Whenever <syntax>&lt;align&gt;</syntax> is omitted, the standard alignment is used, see <xref linkend="Chdijihg">Unaligned data access</xref>, and is encoded in the "align" field as <binarynumber>0b00</binarynumber>.</para>
+          <para>Whenever <syntax>&lt;align&gt;</syntax> is present, the permitted values are:</para>
+          <list type="param">
+            <listitem>
+              <param>64</param><content>64-bit alignment, encoded in the "align" field as <binarynumber>0b01</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>128</param><content>128-bit alignment, encoded in the "align" field as <binarynumber>0b10</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>256</param><content>256-bit alignment, encoded in the "align" field as <binarynumber>0b11</binarynumber>.</content>
+            </listitem>
+          </list>
+          <para><value>:</value> is the preferred separator before the <syntax>&lt;align&gt;</syntax> value, but the alignment can be specified as <value>@&lt;align&gt;</value>, see <xref linkend="Cjaefebe">Advanced SIMD addressing mode</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VST4_m_A1_postr, VST4_m_T1_postr" symboldefcount="1">
+      <symbol link="rm">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <intro>
+          <para>Is the general-purpose index register containing an offset applied after the access, encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VST4_m/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckAdvSIMDEnabled.0" file="shared_pseudocode.xml" hover="function: CheckAdvSIMDEnabled()">CheckAdvSIMDEnabled</a>();
+    address = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];  iswrite = TRUE;
+    - = <a link="AArch32.CheckAlignment.4" file="shared_pseudocode.xml" hover="function: boolean AArch32.CheckAlignment(bits(32) address, integer alignment, AccType acctype,&#13; boolean iswrite)">AArch32.CheckAlignment</a>(address, alignment, <a link="AccType_VEC" file="shared_pseudocode.xml" hover="enumeration AccType {AccType_NORMAL, AccType_VEC, AccType_STREAM, AccType_VECSTREAM, AccType_ATOMIC, AccType_ATOMICRW, AccType_ORDERED, AccType_ORDEREDRW, AccType_ORDEREDATOMIC, AccType_ORDEREDATOMICRW,&#13; AccType_LIMITEDORDERED, AccType_UNPRIV, AccType_IFETCH, AccType_PTW, AccType_NONFAULT, AccType_CNOTFIRST, AccType_NV2REGISTER,   AccType_DC, AccType_DC_UNPRIV, AccType_IC, AccType_DCZVA, AccType_AT}">AccType_VEC</a>, iswrite);
+    for e = 0 to elements-1
+        <a link="impl-aarch32.MemU.write.2" file="shared_pseudocode.xml" hover="accessor: MemU[bits(32) address, integer size] = bits(8*size) value">MemU</a>[address,         ebytes] = <a link="impl-shared.Elem.read.2" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e]">Elem</a>[<a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[d], e];
+        <a link="impl-aarch32.MemU.write.2" file="shared_pseudocode.xml" hover="accessor: MemU[bits(32) address, integer size] = bits(8*size) value">MemU</a>[address+ebytes,  ebytes] = <a link="impl-shared.Elem.read.2" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e]">Elem</a>[<a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[d2],e];
+        <a link="impl-aarch32.MemU.write.2" file="shared_pseudocode.xml" hover="accessor: MemU[bits(32) address, integer size] = bits(8*size) value">MemU</a>[address+2*ebytes,ebytes] = <a link="impl-shared.Elem.read.2" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e]">Elem</a>[<a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[d3],e];
+        <a link="impl-aarch32.MemU.write.2" file="shared_pseudocode.xml" hover="accessor: MemU[bits(32) address, integer size] = bits(8*size) value">MemU</a>[address+3*ebytes,ebytes] = <a link="impl-shared.Elem.read.2" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e]">Elem</a>[<a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[d4],e];
+        address = address + 4*ebytes;
+    if wback then
+        if register_index then
+            <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[n] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] + <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m];
+        else
+            <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[n] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] + 32;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

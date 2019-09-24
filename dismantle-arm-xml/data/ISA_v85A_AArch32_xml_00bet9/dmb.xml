@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="DMB" title="DMB -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="DMB" />
+  </docvars>
+  <heading>DMB</heading>
+  <desc>
+    <brief>
+      <para>Data Memory Barrier</para>
+    </brief>
+    <authored>
+      <para>Data Memory Barrier is a memory barrier that ensures the ordering of observations of memory accesses, see <xref linkend="AA32CHDCIFHJ">Data Memory Barrier (DMB)</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="DMB" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/DMB/A1_A.txt">
+        <box hibit="31" width="12" settings="12">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="18" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="17" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="16" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="14" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="10" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="9" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="8" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="7" width="4" name="opcode" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="option" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="DMB_A1" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="DMB" />
+        </docvars>
+        <asmtemplate><text>DMB</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="option" hover="Specifies an optional limitation on the barrier operation">&lt;option&gt;</a><text>}</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/DMB/A1_A.txt" mylink="aarch32.instrs.DMB.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">// No additional decoding required</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="DMB" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/DMB/T1_A.txt">
+        <box hibit="31" width="12" settings="12">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="18" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="17" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="16" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="15" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="10" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="9" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="8" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="7" width="4" name="opc" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="option" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="DMB_T1" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="DMB" />
+        </docvars>
+        <asmtemplate><text>DMB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="option" hover="Specifies an optional limitation on the barrier operation">&lt;option&gt;</a><text>}</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/DMB/T1_A.txt" mylink="aarch32.instrs.DMB.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">// No additional decoding required</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="DMB_A1" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. Must be <value>AL</value> or omitted.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="DMB_T1" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="DMB_A1, DMB_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="DMB_A1, DMB_T1" symboldefcount="1">
+      <symbol link="option">&lt;option&gt;</symbol>
+      <account encodedin="option">
+        <intro>
+          <para>Specifies an optional limitation on the barrier operation. Values are:</para>
+          <list type="param">
+            <listitem>
+              <param>SY</param><content>Full system is the required shareability domain, reads and writes are the required access types, both before and after the barrier instruction. Can be omitted. This option is referred to as the full system barrier. Encoded as option = <binarynumber>0b1111</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>ST</param><content>Full system is the required shareability domain, writes are the required access type, both before and after the barrier instruction. <value>SYST</value> is a synonym for <value>ST</value>. Encoded as option = <binarynumber>0b1110</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>LD</param><content>Full system is the required shareability domain, reads are the required access type before the barrier instruction, and reads and writes are the required access types after the barrier instruction. Encoded as option = <binarynumber>0b1101</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>ISH</param><content>Inner Shareable is the required shareability domain, reads and writes are the required access types, both before and after the barrier instruction. Encoded as option = <binarynumber>0b1011</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>ISHST</param><content>Inner Shareable is the required shareability domain, writes are the required access type, both before and after the barrier instruction. Encoded as option = <binarynumber>0b1010</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>ISHLD</param><content>Inner Shareable is the required shareability domain, reads are the required access type before the barrier instruction, and reads and writes are the required access types after the barrier instruction. Encoded as option = <binarynumber>0b1001</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>NSH</param><content>Non-shareable is the required shareability domain, reads and writes are the required access, both before and after the barrier instruction. Encoded as option = <binarynumber>0b0111</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>NSHST</param><content>Non-shareable is the required shareability domain, writes are the required access type both before and after the barrier instruction. Encoded as option = <binarynumber>0b0110</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>NSHLD</param><content>Non-shareable is the required shareability domain, reads are the required access type before the barrier instruction, and reads and writes are the required access types after the barrier instruction. Encoded as option = <binarynumber>0b0101</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>OSH</param><content>Outer Shareable is the required shareability domain, reads and writes are the required access types, both before and after the barrier instruction. Encoded as option = <binarynumber>0b0011</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>OSHST</param><content>Outer Shareable is the required shareability domain, writes are the required access type, both before and after the barrier instruction. Encoded as option = <binarynumber>0b0010</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>OSHLD</param><content>Outer Shareable is the required shareability domain, reads are the required access type before the barrier instruction, and reads and writes are the required access types after the barrier instruction. Encoded as option = <binarynumber>0b0001</binarynumber>.</content>
+            </listitem>
+          </list>
+          <para>For more information on whether an access is before or after a barrier instruction, see <xref linkend="AA32CHDCIFHJ">Data Memory Barrier (DMB)</xref>. All other encodings of option are reserved. It is <arm-defined-word>implementation defined</arm-defined-word> whether options other than <value>SY</value> are implemented. All unsupported and reserved options must execute as a full system DMB operation, but software must not rely on this behavior.</para>
+          <note>
+            <para>The instruction supports the following alternative <syntax>&lt;option&gt;</syntax> values, but Arm recommends that software does not use these alternative values:</para>
+            <list type="unordered">
+              <listitem><content><value>SH</value> as an alias for <value>ISH</value>.</content></listitem>
+              <listitem><content><value>SHST</value> as an alias for <value>ISHST</value>.</content></listitem>
+              <listitem><content><value>UN</value> as an alias for <value>NSH</value>.</content></listitem>
+              <listitem><content><value>UNST</value> as an alias for <value>NSHST</value>.</content></listitem>
+            </list>
+          </note>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/DMB/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    case option of
+        when '0001'  domain = <a link="MBReqDomain_OuterShareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_OuterShareable</a>;  types = <a link="MBReqTypes_Reads" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_Reads</a>;
+        when '0010'  domain = <a link="MBReqDomain_OuterShareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_OuterShareable</a>;  types = <a link="MBReqTypes_Writes" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_Writes</a>;
+        when '0011'  domain = <a link="MBReqDomain_OuterShareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_OuterShareable</a>;  types = <a link="MBReqTypes_All" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_All</a>;
+        when '0101'  domain = <a link="MBReqDomain_Nonshareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_Nonshareable</a>;    types = <a link="MBReqTypes_Reads" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_Reads</a>;
+        when '0110'  domain = <a link="MBReqDomain_Nonshareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_Nonshareable</a>;    types = <a link="MBReqTypes_Writes" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_Writes</a>;
+        when '0111'  domain = <a link="MBReqDomain_Nonshareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_Nonshareable</a>;    types = <a link="MBReqTypes_All" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_All</a>;
+        when '1001'  domain = <a link="MBReqDomain_InnerShareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_InnerShareable</a>;  types = <a link="MBReqTypes_Reads" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_Reads</a>;
+        when '1010'  domain = <a link="MBReqDomain_InnerShareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_InnerShareable</a>;  types = <a link="MBReqTypes_Writes" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_Writes</a>;
+        when '1011'  domain = <a link="MBReqDomain_InnerShareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_InnerShareable</a>;  types = <a link="MBReqTypes_All" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_All</a>;
+        when '1101'  domain = <a link="MBReqDomain_FullSystem" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_FullSystem</a>;      types = <a link="MBReqTypes_Reads" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_Reads</a>;
+        when '1110'  domain = <a link="MBReqDomain_FullSystem" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_FullSystem</a>;      types = <a link="MBReqTypes_Writes" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_Writes</a>;
+        otherwise    domain = <a link="MBReqDomain_FullSystem" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_FullSystem</a>;      types = <a link="MBReqTypes_All" file="shared_pseudocode.xml" hover="enumeration MBReqTypes     {MBReqTypes_Reads, MBReqTypes_Writes, MBReqTypes_All}">MBReqTypes_All</a>;
+
+    if <a link="impl-shared.EL2Enabled.0" file="shared_pseudocode.xml" hover="function: boolean EL2Enabled()">EL2Enabled</a>() &amp;&amp; PSTATE.EL IN {<a link="EL0" file="shared_pseudocode.xml" hover="constant bits(2) EL0 = '00'">EL0</a>,<a link="EL1" file="shared_pseudocode.xml" hover="constant bits(2) EL1 = '01'">EL1</a>} then
+        if HCR.BSU == '11' then
+            domain = <a link="MBReqDomain_FullSystem" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_FullSystem</a>;
+        if HCR.BSU == '10' &amp;&amp; domain != <a link="MBReqDomain_FullSystem" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_FullSystem</a> then
+            domain = <a link="MBReqDomain_OuterShareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_OuterShareable</a>;
+        if HCR.BSU == '01' &amp;&amp; domain == <a link="MBReqDomain_Nonshareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_Nonshareable</a> then
+            domain = <a link="MBReqDomain_InnerShareable" file="shared_pseudocode.xml" hover="enumeration MBReqDomain    {MBReqDomain_Nonshareable, MBReqDomain_InnerShareable,&#13; MBReqDomain_OuterShareable, MBReqDomain_FullSystem}">MBReqDomain_InnerShareable</a>;
+
+    <a link="impl-shared.DataMemoryBarrier.2" file="shared_pseudocode.xml" hover="function: DataMemoryBarrier(MBReqDomain domain, MBReqTypes types)">DataMemoryBarrier</a>(domain, types);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

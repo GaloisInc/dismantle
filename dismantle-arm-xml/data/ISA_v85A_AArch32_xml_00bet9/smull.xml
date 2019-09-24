@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="SMULL" title="SMULL, SMULLS -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>SMULL, SMULLS</heading>
+  <desc>
+    <brief>
+      <para>Signed Multiply Long</para>
+    </brief>
+    <authored>
+      <para>Signed Multiply Long multiplies two 32-bit signed values to produce a 64-bit result.</para>
+      <para>In A32 instructions, the condition flags can optionally be updated based on the result. Use of this option adversely affects performance on many implementations.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, this instruction has passed its condition execution check, and does not use R15 as either its source or destination:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/SMULL/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="4" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" width="3" name="opc" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="S" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="RdHi" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="RdLo" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SMULLS_A1" oneofinclass="2" oneof="3" label="Flag setting" bitdiffs="S == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="cond-setting" value="s" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SMULLS" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>SMULLS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdlo" hover="General-purpose destination register for lower 32 bits of result (field &quot;RdLo&quot;)">&lt;RdLo&gt;</a><text>, </text><a link="rdhi" hover="General-purpose destination register for upper 32 bits of result (field &quot;RdHi&quot;)">&lt;RdHi&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SMULL_A1" oneofinclass="2" oneof="3" label="Not flag setting" bitdiffs="S == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="cond-setting" value="no-s" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SMULL" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>SMULL</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdlo" hover="General-purpose destination register for lower 32 bits of result (field &quot;RdLo&quot;)">&lt;RdLo&gt;</a><text>, </text><a link="rdhi" hover="General-purpose destination register for upper 32 bits of result (field &quot;RdHi&quot;)">&lt;RdHi&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SMULL/A1_A.txt" mylink="aarch32.instrs.SMULL.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">dLo = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(RdLo);  dHi = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(RdHi);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  setflags = (S == '1');
+if dLo == 15 || dHi == 15 || n == 15 || m == 15 then UNPREDICTABLE;
+if dHi == dLo then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">dHi == dLo</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNKNOWN" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="SMULL" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/SMULL/T1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" width="3" name="op1" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="RdLo" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="RdHi" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="4" name="op2" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SMULL_T1" oneofinclass="1" oneof="3" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="SMULL" />
+        </docvars>
+        <asmtemplate><text>SMULL</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdlo" hover="General-purpose destination register for lower 32 bits of result (field &quot;RdLo&quot;)">&lt;RdLo&gt;</a><text>, </text><a link="rdhi" hover="General-purpose destination register for upper 32 bits of result (field &quot;RdHi&quot;)">&lt;RdHi&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier (field &quot;Rm&quot;)">&lt;Rm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SMULL/T1_A.txt" mylink="aarch32.instrs.SMULL.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">dLo = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(RdLo);  dHi = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(RdHi);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  setflags = FALSE;
+if dLo == 15 || dHi == 15 || n == 15 || m == 15 then UNPREDICTABLE;
+// Armv8-A removes UNPREDICTABLE for R13
+if dHi == dLo then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">dHi == dLo</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNKNOWN" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="SMULL_A1, SMULL_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMULL_A1, SMULL_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMULL_A1, SMULL_T1" symboldefcount="1">
+      <symbol link="rdlo">&lt;RdLo&gt;</symbol>
+      <account encodedin="RdLo">
+        <intro>
+          <para>Is the general-purpose destination register for the lower 32 bits of the result, encoded in the "RdLo" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMULL_A1, SMULL_T1" symboldefcount="1">
+      <symbol link="rdhi">&lt;RdHi&gt;</symbol>
+      <account encodedin="RdHi">
+        <intro>
+          <para>Is the general-purpose destination register for the upper 32 bits of the result, encoded in the "RdHi" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMULL_A1, SMULL_T1" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the first general-purpose source register holding the multiplicand, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMULL_A1, SMULL_T1" symboldefcount="1">
+      <symbol link="rm">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <intro>
+          <para>Is the second general-purpose source register holding the multiplier, encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/SMULL/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    result = <a link="impl-shared.SInt.1" file="shared_pseudocode.xml" hover="function: integer SInt(bits(N) x)">SInt</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]) * <a link="impl-shared.SInt.1" file="shared_pseudocode.xml" hover="function: integer SInt(bits(N) x)">SInt</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m]);
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[dHi] = result&lt;63:32&gt;;
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[dLo] = result&lt;31:0&gt;;
+    if setflags then
+        PSTATE.N = result&lt;63&gt;;
+        PSTATE.Z = <a link="impl-shared.IsZeroBit.1" file="shared_pseudocode.xml" hover="function: bit IsZeroBit(bits(N) x)">IsZeroBit</a>(result&lt;63:0&gt;);
+        // PSTATE.C, PSTATE.V unchanged</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

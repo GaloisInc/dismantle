@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="AESIMC" title="AESIMC -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="AESIMC" />
+  </docvars>
+  <heading>AESIMC</heading>
+  <desc>
+    <brief>
+      <para>AES inverse mix columns</para>
+    </brief>
+    <authored>
+      <para>AES inverse mix columns.</para>
+    </authored>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="AESIMC" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/AESIMC/A1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" width="2" name="size" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="17" width="2" name="opc1" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="10" width="4" name="opc2" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="6" name="Q" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="AESIMC_A1" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="AESIMC" />
+        </docvars>
+        <asmtemplate><text>AESIMC.</text><a link="dt" hover="Data type (field &quot;size&quot;) [8,UNDEFINED]">&lt;dt&gt;</a><text> </text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, </text><a link="qm" hover="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/AESIMC/A1_A.txt" mylink="aarch32.instrs.AESIMC.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if !<a link="impl-shared.HaveAESExt.0" file="shared_pseudocode.xml" hover="function: boolean HaveAESExt()">HaveAESExt</a>() then UNDEFINED;
+if size != '00' then UNDEFINED;
+if Vd&lt;0&gt; == '1' || Vm&lt;0&gt; == '1' then UNDEFINED;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="AESIMC" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/AESIMC/T1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" width="2" name="size" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="17" width="2" name="opc1" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="10" width="4" name="opc2" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="6" name="Q" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="AESIMC_T1" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="AESIMC" />
+        </docvars>
+        <asmtemplate><text>AESIMC.</text><a link="dt" hover="Data type (field &quot;size&quot;) [8,UNDEFINED]">&lt;dt&gt;</a><text> </text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, </text><a link="qm" hover="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/AESIMC/T1_A.txt" mylink="aarch32.instrs.AESIMC.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;
+if !<a link="impl-shared.HaveAESExt.0" file="shared_pseudocode.xml" hover="function: boolean HaveAESExt()">HaveAESExt</a>() then UNDEFINED;
+if size != '00' then UNDEFINED;
+if Vd&lt;0&gt; == '1' || Vm&lt;0&gt; == '1' then UNDEFINED;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="AESIMC_A1, AESIMC_T1" symboldefcount="1">
+      <symbol link="dt">&lt;dt&gt;</symbol>
+      <definition encodedin="size">
+        <intro>Is the data type, </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">size</entry>
+                <entry class="symbol">&lt;dt&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">00</entry>
+                <entry class="symbol">8</entry>
+              </row>
+              <row>
+                <entry class="bitfield">01</entry>
+                <entry class="symbol">RESERVED</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1x</entry>
+                <entry class="symbol">RESERVED</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="AESIMC_A1, AESIMC_T1" symboldefcount="1">
+      <symbol link="qd">&lt;Qd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 128-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field as &lt;Qd&gt;*2.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="AESIMC_A1, AESIMC_T1" symboldefcount="1">
+      <symbol link="qm">&lt;Qm&gt;</symbol>
+      <account encodedin="M:Vm">
+        <intro>
+          <para>Is the 128-bit name of the SIMD&amp;FP source register, encoded in the "M:Vm" field as &lt;Qm&gt;*2.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/AESIMC/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations(); <a link="impl-aarch32.CheckCryptoEnabled32.0" file="shared_pseudocode.xml" hover="function: CheckCryptoEnabled32()">CheckCryptoEnabled32</a>();
+    <a link="impl-aarch32.Q.write.1" file="shared_pseudocode.xml" hover="accessor: Q[integer n] = bits(128) value">Q</a>[d&gt;&gt;1] = <a link="impl-shared.AESInvMixColumns.1" file="shared_pseudocode.xml" hover="function: bits(128) AESInvMixColumns(bits (128) op)">AESInvMixColumns</a>(<a link="impl-aarch32.Q.read.1" file="shared_pseudocode.xml" hover="accessor: bits(128) Q[integer n]">Q</a>[m&gt;&gt;1]);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="ASRS_MOV_rr" title="ASRS (register) -- AArch32" type="alias">
+  <docvars>
+    <docvar key="alias_mnemonic" value="ASRS" />
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>ASRS (register)</heading>
+  <desc>
+    <brief>Arithmetic Shift Right, setting flags (register)</brief>
+    <longer> shifts a register value right by a variable number of bits, shifting in copies of its sign bit, writes the result to the destination register, and updates the condition flags based on the result. The variable number of bits is read from the bottom byte of a register</longer>
+  </desc>
+  <aliasto refiform="mov_rr.xml" iformid="MOV_rr">MOV, MOVS (register-shifted register)</aliasto>
+  <classes>
+    <classesintro count="3">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="3" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" width="2" name="opc" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" name="S" usename="1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="Rs" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" width="2" name="type" usename="1" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ASRS_MOVS_rr_A1" oneofinclass="1" oneof="3" label="Flag setting">
+        <docvars>
+          <docvar key="alias_mnemonic" value="ASRS" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="cond-setting" value="s" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="MOVS" />
+        </docvars>
+        <asmtemplate><text>ASRS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rm_1" hover="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="rs_1" hover="Second general-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="mov_rr.xml#MOVS_rr_A1">MOVS</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm_1" hover="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, ASR </text><a link="rs_1" hover="Second general-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+    <iclass name="T1" oneof="3" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="MOV" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="" tworows="1">
+        <box hibit="31" width="6" settings="6">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="25" width="4" name="op" usename="1" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="21" width="3" name="Rs" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="18" width="3" name="Rdm" usename="1">
+          <c colspan="3"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ASRS_MOV_rr_T1_ASR" oneofinclass="1" oneof="3" label="Arithmetic shift right">
+        <docvars>
+          <docvar key="alias_mnemonic" value="ASRS" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MOV" />
+          <docvar key="mnemonic-shift-type" value="MOV-asr" />
+          <docvar key="shift-type" value="asr" />
+        </docvars>
+        <asmtemplate comment="Outside IT block"><text>ASRS</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rdm_1" hover="First general-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>,</text><text>}</text><text> </text><a link="rdm_1" hover="First general-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rs_1" hover="Second general-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="mov_rr.xml#MOV_rr_T1_ASR">MOVS</a><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdm_1" hover="First general-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rdm_1" hover="First general-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, ASR </text><a link="rs_1" hover="Second general-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+          <aliascond>!<a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+    <iclass name="T2" oneof="3" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="2" name="type" usename="1" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="S" usename="1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="4" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Rs" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ASRS_MOVS_rr_T2" oneofinclass="1" oneof="3" label="Flag setting">
+        <docvars>
+          <docvar key="alias_mnemonic" value="ASRS" />
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="cond-setting" value="s" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MOVS" />
+        </docvars>
+        <asmtemplate comment="Outside IT block, and &lt;Rd&gt;, &lt;Rm&gt;, &lt;type&gt;, &lt;Rs&gt; can be represented in T1"><text>ASRS.W </text><text>{</text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rm_1" hover="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="rs_1" hover="Second general-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <asmtemplate><text>ASRS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rm_1" hover="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="rs_1" hover="Second general-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="mov_rr.xml#MOVS_rr_T2">MOVS</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm_1" hover="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, ASR </text><a link="rs_1" hover="Second general-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="ASRS_MOVS_rr_A1, ASRS_MOVS_rr_T2" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ASRS_MOVS_rr_A1, ASRS_MOV_rr_T1_ASR, ASRS_MOVS_rr_T2" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ASRS_MOV_rr_T1_ASR" symboldefcount="1">
+      <symbol link="rdm_1">&lt;Rdm&gt;</symbol>
+      <account encodedin="Rdm">
+        <intro>
+          <para>Is the first general-purpose source register and the destination register, encoded in the "Rdm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ASRS_MOVS_rr_A1, ASRS_MOVS_rr_T2" symboldefcount="1">
+      <symbol link="rd">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <intro>
+          <para>Is the general-purpose destination register, encoded in the "Rd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ASRS_MOVS_rr_A1, ASRS_MOVS_rr_T2" symboldefcount="1">
+      <symbol link="rm_1">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <intro>
+          <para>Is the first general-purpose source register, encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ASRS_MOVS_rr_A1, ASRS_MOV_rr_T1_ASR, ASRS_MOVS_rr_T2" symboldefcount="1">
+      <symbol link="rs_1">&lt;Rs&gt;</symbol>
+      <account encodedin="Rs">
+        <intro>
+          <para>Is the second general-purpose source register holding a shift amount in its bottom 8 bits, encoded in the "Rs" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+</instructionsection>

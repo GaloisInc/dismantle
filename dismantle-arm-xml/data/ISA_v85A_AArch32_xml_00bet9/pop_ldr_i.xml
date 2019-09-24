@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="POP_LDR_i" title="POP (single register) -- AArch32" type="alias">
+  <docvars>
+    <docvar key="address-form" value="post-indexed" />
+    <docvar key="alias_mnemonic" value="POP" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="LDR" />
+  </docvars>
+  <heading>POP (single register)</heading>
+  <desc>
+    <brief>Pop Single Register from Stack</brief>
+    <longer> loads a single general-purpose register from the stack, loading from the address in SP, and updates SP to point just above the loaded data</longer>
+  </desc>
+  <aliasto refiform="ldr_i.xml" iformid="LDR_i">LDR (immediate)</aliasto>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t4">T4</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="LDR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="23" name="U" usename="1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="o2" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" name="o1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="12" name="imm12" usename="1" settings="12">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+      </regdiagram>
+      <encoding name="POP_LDR_i_A1_post" oneofinclass="1" oneof="2" label="Post-indexed">
+        <docvars>
+          <docvar key="address-form" value="post-indexed" />
+          <docvar key="alias_mnemonic" value="POP" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="LDR" />
+        </docvars>
+        <asmtemplate><text>POP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="single_register_list" hover="General-purpose register {syntax{&lt;Rt&gt;}} to be loaded surrounded by { and }">&lt;single_register_list&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="ldr_i.xml#LDR_i_A1_post">LDR</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt_2" hover="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, [SP], #4</text></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+    <iclass name="T4" oneof="2" id="t4" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T4" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="LDR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="10" name="P" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="9" name="U" usename="1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="8" name="W" usename="1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1" settings="8">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+      </regdiagram>
+      <encoding name="POP_LDR_i_T4_post" oneofinclass="1" oneof="2" label="Post-indexed">
+        <docvars>
+          <docvar key="address-form" value="post-indexed" />
+          <docvar key="alias_mnemonic" value="POP" />
+          <docvar key="armarmheading" value="T4" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="LDR" />
+        </docvars>
+        <asmtemplate><text>POP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="single_register_list" hover="General-purpose register {syntax{&lt;Rt&gt;}} to be loaded surrounded by { and }">&lt;single_register_list&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="ldr_i.xml#LDR_i_T4_post">LDR</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt_1" hover="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, [SP], #4</text></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="POP_LDR_i_A1_post, POP_LDR_i_T4_post" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="POP_LDR_i_A1_post, POP_LDR_i_T4_post" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="POP_LDR_i_A1_post, POP_LDR_i_T4_post" symboldefcount="1">
+      <symbol link="single_register_list">&lt;single_register_list&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is the general-purpose register <syntax>&lt;Rt&gt;</syntax> to be loaded surrounded by { and }.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="POP_LDR_i_A1_post" symboldefcount="1">
+      <symbol link="rt_2">&lt;Rt&gt;</symbol>
+      <account encodedin="Rt">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the general-purpose register to be transferred, encoded in the "Rt" field. The PC can be used. If the PC is used, the instruction branches to the address (data) loaded to the PC. This is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="POP_LDR_i_T4_post" symboldefcount="2">
+      <symbol link="rt_1">&lt;Rt&gt;</symbol>
+      <account encodedin="Rt">
+        <docvars>
+          <docvar key="armarmheading" value="T4" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T4: is the general-purpose register to be transferred, encoded in the "Rt" field. The PC can be used, provided the instruction is either outside an IT block or the last instruction of an IT block. If the PC is used, the instruction branches to the address (data) loaded to the PC. This is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+</instructionsection>

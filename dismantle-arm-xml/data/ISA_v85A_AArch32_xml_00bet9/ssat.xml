@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="SSAT" title="SSAT -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="SSAT" />
+  </docvars>
+  <heading>SSAT</heading>
+  <desc>
+    <brief>
+      <para>Signed Saturate</para>
+    </brief>
+    <authored>
+      <para>Signed Saturate saturates an optionally-shifted signed value to a selectable signed range.</para>
+      <para>This instruction sets <xref linkend="BEIDIGBH">PSTATE</xref>.Q to 1 if the operation saturates.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="SSAT" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/SSAT/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="U" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="20" width="5" name="sat_imm" usename="1">
+          <c colspan="5"></c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="5" name="imm5" usename="1">
+          <c colspan="5"></c>
+        </box>
+        <box hibit="6" name="sh" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" width="2" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SSAT_A1_ASR" oneofinclass="2" oneof="4" label="Arithmetic shift right" bitdiffs="sh == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SSAT" />
+          <docvar key="mnemonic-shift-type" value="SSAT-asr" />
+          <docvar key="shift-type" value="asr" />
+        </docvars>
+        <box hibit="6" width="1" name="sh">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>SSAT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, #</text><a link="imm" hover="Bit position for saturation [1-32] (field &quot;sat_imm&quot;)">&lt;imm&gt;</a><text>, </text><a link="rn" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, ASR #</text><a link="amount_3" hover="Shift amount [1-32 (field &quot;imm5&quot;)">&lt;amount&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SSAT_A1_LSL" oneofinclass="2" oneof="4" label="Logical shift left" bitdiffs="sh == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SSAT" />
+          <docvar key="mnemonic-shift-type" value="SSAT-lsl" />
+          <docvar key="shift-type" value="lsl" />
+        </docvars>
+        <box hibit="6" width="1" name="sh">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>SSAT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, #</text><a link="imm" hover="Bit position for saturation [1-32] (field &quot;sat_imm&quot;)">&lt;imm&gt;</a><text>, </text><a link="rn" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text> </text><text>{</text><text>, LSL #</text><a link="amount_2" hover="Optional shift amount [0-31], default 0 (field &quot;imm5&quot;)">&lt;amount&gt;</a><text>}</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SSAT/A1_A.txt" mylink="aarch32.instrs.SSAT.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  saturate_to = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(sat_imm)+1;
+(shift_t, shift_n) = <a link="impl-aarch32.DecodeImmShift.2" file="shared_pseudocode.xml" hover="function: (SRType, integer) DecodeImmShift(bits(2) type, bits(5) imm5)">DecodeImmShift</a>(sh:'0', imm5);
+if d == 15 || n == 15 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="SSAT" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/SSAT/T1_A.txt">
+        <box hibit="31" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="26" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="25" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="23" width="2" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="21" name="sh" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="14" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="2" name="imm2" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="5" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="4" width="5" name="sat_imm" usename="1">
+          <c colspan="5"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SSAT_T1_ASR" oneofinclass="2" oneof="4" label="Arithmetic shift right" bitdiffs="sh == 1 &amp;&amp; !(imm3 == 000 &amp;&amp; imm2 == 00)">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="SSAT" />
+          <docvar key="mnemonic-shift-type" value="SSAT-asr" />
+          <docvar key="shift-type" value="asr" />
+        </docvars>
+        <box hibit="21" width="1" name="sh">
+          <c>1</c>
+        </box>
+        <box hibit="14" width="9" name="imm3:imm2">
+          <c>Z</c>
+          <c>Z</c>
+          <c>Z</c>
+          <c>Z</c>
+          <c>Z</c>
+        </box>
+        <asmtemplate><text>SSAT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, #</text><a link="imm" hover="Bit position for saturation [1-32] (field &quot;sat_imm&quot;)">&lt;imm&gt;</a><text>, </text><a link="rn" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, ASR #</text><a link="amount_1" hover="Shift amount [1-31 (field &quot;imm3:imm2&quot;)">&lt;amount&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SSAT_T1_LSL" oneofinclass="2" oneof="4" label="Logical shift left" bitdiffs="sh == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="SSAT" />
+          <docvar key="mnemonic-shift-type" value="SSAT-lsl" />
+          <docvar key="shift-type" value="lsl" />
+        </docvars>
+        <box hibit="21" width="1" name="sh">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>SSAT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, #</text><a link="imm" hover="Bit position for saturation [1-32] (field &quot;sat_imm&quot;)">&lt;imm&gt;</a><text>, </text><a link="rn" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text> </text><text>{</text><text>, LSL #</text><a link="amount" hover="Optional shift amount [0-31], default 0 (field &quot;imm3:imm2&quot;)">&lt;amount&gt;</a><text>}</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SSAT/T1_A.txt" mylink="aarch32.instrs.SSAT.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if sh == '1' &amp;&amp; (imm3:imm2) == '00000' then SEE "SSAT16";
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  saturate_to = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(sat_imm)+1;
+(shift_t, shift_n) = <a link="impl-aarch32.DecodeImmShift.2" file="shared_pseudocode.xml" hover="function: (SRType, integer) DecodeImmShift(bits(2) type, bits(5) imm5)">DecodeImmShift</a>(sh:'0', imm3:imm2);
+if d == 15 || n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="SSAT_A1_LSL, SSAT_T1_LSL" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SSAT_A1_LSL, SSAT_T1_LSL" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SSAT_A1_LSL, SSAT_T1_LSL" symboldefcount="1">
+      <symbol link="rd">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <intro>
+          <para>Is the general-purpose destination register, encoded in the "Rd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SSAT_A1_LSL, SSAT_T1_LSL" symboldefcount="1">
+      <symbol link="imm">&lt;imm&gt;</symbol>
+      <account encodedin="sat_imm">
+        <intro>
+          <para>Is the bit position for saturation, in the range 1 to 32, encoded in the "sat_imm" field as &lt;imm&gt;-1.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SSAT_A1_LSL, SSAT_T1_LSL" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose source register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SSAT_A1_LSL" symboldefcount="1">
+      <symbol link="amount_2">&lt;amount&gt;</symbol>
+      <account encodedin="imm5">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic-shift-type" value="SSAT-lsl" />
+          <docvar key="shift-type" value="lsl" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the optional shift amount, in the range 0 to 31, defaulting to 0 and encoded in the "imm5" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SSAT_A1_ASR" symboldefcount="2">
+      <symbol link="amount_3">&lt;amount&gt;</symbol>
+      <account encodedin="imm5">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic-shift-type" value="SSAT-asr" />
+          <docvar key="shift-type" value="asr" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the shift amount, in the range 1 to 32 encoded in the "imm5" field as &lt;amount&gt; modulo 32.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SSAT_T1_LSL" symboldefcount="3">
+      <symbol link="amount">&lt;amount&gt;</symbol>
+      <account encodedin="imm3:imm2">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic-shift-type" value="SSAT-lsl" />
+          <docvar key="shift-type" value="lsl" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is the optional shift amount, in the range 0 to 31, defaulting to 0 and encoded in the "imm3:imm2" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SSAT_T1_ASR" symboldefcount="4">
+      <symbol link="amount_1">&lt;amount&gt;</symbol>
+      <account encodedin="imm3:imm2">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic-shift-type" value="SSAT-asr" />
+          <docvar key="shift-type" value="asr" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is the shift amount, in the range 1 to 31 encoded in the "imm3:imm2" field as &lt;amount&gt;.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/SSAT/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    operand = <a link="impl-aarch32.Shift.4" file="shared_pseudocode.xml" hover="function: bits(N) Shift(bits(N) value, SRType type, integer amount, bit carry_in)">Shift</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n], shift_t, shift_n, PSTATE.C);  // PSTATE.C ignored
+    (result, sat) = <a link="impl-shared.SignedSatQ.2" file="shared_pseudocode.xml" hover="function: (bits(N), boolean) SignedSatQ(integer i, integer N)">SignedSatQ</a>(<a link="impl-shared.SInt.1" file="shared_pseudocode.xml" hover="function: integer SInt(bits(N) x)">SInt</a>(operand), saturate_to);
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[d] = <a link="impl-shared.SignExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) SignExtend(bits(M) x, integer N)">SignExtend</a>(result, 32);
+    if sat then
+        PSTATE.Q = '1';</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

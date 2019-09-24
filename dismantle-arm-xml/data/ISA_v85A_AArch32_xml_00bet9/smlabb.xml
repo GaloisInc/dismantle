@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="SMLABB" title="SMLABB, SMLABT, SMLATB, SMLATT -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>SMLABB, SMLABT, SMLATB, SMLATT</heading>
+  <desc>
+    <brief>
+      <para>Signed Multiply Accumulate (halfwords)</para>
+    </brief>
+    <authored>
+      <para>Signed Multiply Accumulate (halfwords) performs a signed multiply accumulate operation. The multiply acts on two signed 16-bit quantities, taken from either the bottom or the top half of their respective source registers. The other halves of these source registers are ignored.  The 32-bit product is added to a 32-bit accumulate value and the result is written to the destination register.</para>
+      <para>If overflow occurs during the addition of the accumulate value, the instruction sets <xref linkend="BEIDIGBH">PSTATE</xref>.Q to 1. It is not possible for overflow to occur during the multiplication.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="4" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="4"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/SMLABB/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="2" name="opc" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Ra" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="6" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" name="N" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SMLABB_A1" oneofinclass="4" oneof="8" label="SMLABB" bitdiffs="M == 0 &amp;&amp; N == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SMLABB" />
+        </docvars>
+        <box hibit="6" width="1" name="M">
+          <c>0</c>
+        </box>
+        <box hibit="5" width="1" name="N">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>SMLABB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand in the bottom or top half (selected by {syntax{&lt;x&gt;}}) (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier in the bottom or top half (selected by {syntax{&lt;y&gt;}}) (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="ra" hover="Third general-purpose source register holding addend (field &quot;Ra&quot;)">&lt;Ra&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SMLABT_A1" oneofinclass="4" oneof="8" label="SMLABT" bitdiffs="M == 1 &amp;&amp; N == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SMLABT" />
+        </docvars>
+        <box hibit="6" width="1" name="M">
+          <c>1</c>
+        </box>
+        <box hibit="5" width="1" name="N">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>SMLABT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand in the bottom or top half (selected by {syntax{&lt;x&gt;}}) (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier in the bottom or top half (selected by {syntax{&lt;y&gt;}}) (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="ra" hover="Third general-purpose source register holding addend (field &quot;Ra&quot;)">&lt;Ra&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SMLATB_A1" oneofinclass="4" oneof="8" label="SMLATB" bitdiffs="M == 0 &amp;&amp; N == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SMLATB" />
+        </docvars>
+        <box hibit="6" width="1" name="M">
+          <c>0</c>
+        </box>
+        <box hibit="5" width="1" name="N">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>SMLATB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand in the bottom or top half (selected by {syntax{&lt;x&gt;}}) (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier in the bottom or top half (selected by {syntax{&lt;y&gt;}}) (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="ra" hover="Third general-purpose source register holding addend (field &quot;Ra&quot;)">&lt;Ra&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SMLATT_A1" oneofinclass="4" oneof="8" label="SMLATT" bitdiffs="M == 1 &amp;&amp; N == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SMLATT" />
+        </docvars>
+        <box hibit="6" width="1" name="M">
+          <c>1</c>
+        </box>
+        <box hibit="5" width="1" name="N">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>SMLATT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand in the bottom or top half (selected by {syntax{&lt;x&gt;}}) (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier in the bottom or top half (selected by {syntax{&lt;y&gt;}}) (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="ra" hover="Third general-purpose source register holding addend (field &quot;Ra&quot;)">&lt;Ra&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SMLABB/A1_A.txt" mylink="aarch32.instrs.SMLABB.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  a = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Ra);
+n_high = (N == '1');  m_high = (M == '1');
+if d == 15 || n == 15 || m == 15 || a == 15 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="4" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="4"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/SMLABB/T1_A.txt" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="3" name="op1" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Ra" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="2" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="5" name="N" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SMLABB_T1" oneofinclass="4" oneof="8" label="SMLABB" bitdiffs="N == 0 &amp;&amp; M == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="SMLABB" />
+        </docvars>
+        <box hibit="5" width="1" name="N">
+          <c>0</c>
+        </box>
+        <box hibit="4" width="1" name="M">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>SMLABB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand in the bottom or top half (selected by {syntax{&lt;x&gt;}}) (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier in the bottom or top half (selected by {syntax{&lt;y&gt;}}) (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="ra" hover="Third general-purpose source register holding addend (field &quot;Ra&quot;)">&lt;Ra&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SMLABT_T1" oneofinclass="4" oneof="8" label="SMLABT" bitdiffs="N == 0 &amp;&amp; M == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="SMLABT" />
+        </docvars>
+        <box hibit="5" width="1" name="N">
+          <c>0</c>
+        </box>
+        <box hibit="4" width="1" name="M">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>SMLABT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand in the bottom or top half (selected by {syntax{&lt;x&gt;}}) (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier in the bottom or top half (selected by {syntax{&lt;y&gt;}}) (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="ra" hover="Third general-purpose source register holding addend (field &quot;Ra&quot;)">&lt;Ra&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SMLATB_T1" oneofinclass="4" oneof="8" label="SMLATB" bitdiffs="N == 1 &amp;&amp; M == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="SMLATB" />
+        </docvars>
+        <box hibit="5" width="1" name="N">
+          <c>1</c>
+        </box>
+        <box hibit="4" width="1" name="M">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>SMLATB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand in the bottom or top half (selected by {syntax{&lt;x&gt;}}) (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier in the bottom or top half (selected by {syntax{&lt;y&gt;}}) (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="ra" hover="Third general-purpose source register holding addend (field &quot;Ra&quot;)">&lt;Ra&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="SMLATT_T1" oneofinclass="4" oneof="8" label="SMLATT" bitdiffs="N == 1 &amp;&amp; M == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="SMLATT" />
+        </docvars>
+        <box hibit="5" width="1" name="N">
+          <c>1</c>
+        </box>
+        <box hibit="4" width="1" name="M">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>SMLATT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rn" hover="First general-purpose source register holding multiplicand in the bottom or top half (selected by {syntax{&lt;x&gt;}}) (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register holding multiplier in the bottom or top half (selected by {syntax{&lt;y&gt;}}) (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="ra" hover="Third general-purpose source register holding addend (field &quot;Ra&quot;)">&lt;Ra&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SMLABB/T1_A.txt" mylink="aarch32.instrs.SMLABB.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if Ra == '1111' then SEE "SMULBB, SMULBT, SMULTB, SMULTT";
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  a = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Ra);
+n_high = (N == '1');  m_high = (M == '1');
+if d == 15 || n == 15 || m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="SMLABB_A1, SMLABB_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMLABB_A1, SMLABB_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMLABB_A1, SMLABB_T1" symboldefcount="1">
+      <symbol link="rd">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <intro>
+          <para>Is the general-purpose destination register, encoded in the "Rd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMLABB_A1, SMLABB_T1" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the first general-purpose source register holding the multiplicand in the bottom or top half (selected by <syntax>&lt;x&gt;</syntax>), encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMLABB_A1, SMLABB_T1" symboldefcount="1">
+      <symbol link="rm">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <intro>
+          <para>Is the second general-purpose source register holding the multiplier in the bottom or top half (selected by <syntax>&lt;y&gt;</syntax>), encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMLABB_A1, SMLABB_T1" symboldefcount="1">
+      <symbol link="ra">&lt;Ra&gt;</symbol>
+      <account encodedin="Ra">
+        <intro>
+          <para>Is the third general-purpose source register holding the addend, encoded in the "Ra" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/SMLABB/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    operand1 = if n_high then <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]&lt;31:16&gt; else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]&lt;15:0&gt;;
+    operand2 = if m_high then <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m]&lt;31:16&gt; else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m]&lt;15:0&gt;;
+    result = <a link="impl-shared.SInt.1" file="shared_pseudocode.xml" hover="function: integer SInt(bits(N) x)">SInt</a>(operand1) * <a link="impl-shared.SInt.1" file="shared_pseudocode.xml" hover="function: integer SInt(bits(N) x)">SInt</a>(operand2) + <a link="impl-shared.SInt.1" file="shared_pseudocode.xml" hover="function: integer SInt(bits(N) x)">SInt</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[a]);
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[d] = result&lt;31:0&gt;;
+    if result != <a link="impl-shared.SInt.1" file="shared_pseudocode.xml" hover="function: integer SInt(bits(N) x)">SInt</a>(result&lt;31:0&gt;) then  // Signed overflow
+        PSTATE.Q = '1';</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

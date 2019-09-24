@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>ROR (register) -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">ROR (register)</h2><p id="desc">Rotate Right (register) provides the value of the contents of a register rotated by a variable number of bits. The bits that are rotated off the right end are inserted into the vacated bit positions on the left. The variable number of bits is read from the bottom byte of a register.
+          <p></p><p></p></p><p id="desc">
+        This is an alias of
+        <a href="mov_rr.html">MOV, MOVS (register-shifted register)</a>.
+        This means:
+        <ul><li>
+            The encodings in this description are named to match the encodings of 
+            <a href="mov_rr.html">MOV, MOVS (register-shifted register)</a>.
+          </li><li>
+            The description of 
+            <a href="mov_rr.html">MOV, MOVS (register-shifted register)</a>
+            gives the operational pseudocode for this instruction.
+          </li></ul></p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t1">T1</a>
+       and 
+      <a href="#t2">T2</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td colspan="4" class="lr">!= 1111</td><td class="l">0</td><td>0</td><td>0</td><td>1</td><td class="r">1</td><td class="l">0</td><td class="r">1</td><td class="lr">0</td><td class="l">(0)</td><td>(0)</td><td>(0)</td><td class="r">(0)</td><td colspan="4" class="lr">Rd</td><td colspan="4" class="lr">Rs</td><td class="lr">0</td><td class="l">1</td><td class="r">1</td><td class="lr">1</td><td colspan="4" class="lr">Rm</td></tr><tr class="secondrow"><td colspan="4" class="droppedname">cond</td><td colspan="5"></td><td colspan="2"></td><td class="droppedname">S</td><td colspan="4"></td><td colspan="4"></td><td colspan="4"></td><td></td><td colspan="2" class="droppedname">type</td><td></td><td colspan="4"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">Not flag setting</h4><p class="asm-code"><a name="ROR_MOV_rr_A1" id="ROR_MOV_rr_A1"></a>ROR{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {<a href="#rd" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>,} <a href="#rm_1" title="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, <a href="#rs_2" title="Second general-purpose source register holding a rotate amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></p><p class="equivto">
+      is equivalent to
+    </p>
+          <p class="asm-code"><a href="mov_rr.html#MOV_rr_A1">MOV</a>{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rd" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>, <a href="#rm_1" title="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, ROR <a href="#rs_2" title="Second general-purpose source register holding a rotate amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></p>
+          <p class="equivto">
+          and is always the preferred disassembly.
+        </p>
+        </div>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><div class="regdiagram-16"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">0</td><td>1</td><td>0</td><td>0</td><td>0</td><td class="r">0</td><td class="l">0</td><td>1</td><td>1</td><td class="r">1</td><td colspan="3" class="lr">Rs</td><td colspan="3" class="lr">Rdm</td></tr><tr class="secondrow"><td colspan="6"></td><td colspan="4" class="droppedname">op</td><td colspan="3"></td><td colspan="3"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">Rotate right</h4><p class="asm-code"><a name="ROR_MOV_rr_T1_ROR" id="ROR_MOV_rr_T1_ROR"></a>ROR<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {<a href="#rdm_1" title="First general-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a>,} <a href="#rdm_1" title="First general-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a>, <a href="#rs_2" title="Second general-purpose source register holding a rotate amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a>
+        //
+      
+        (Inside IT block)
+      </p><p class="equivto">
+      is equivalent to
+    </p>
+          <p class="asm-code"><a href="mov_rr.html#MOV_rr_T1_ROR">MOV</a><a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rdm_1" title="First general-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a>, <a href="#rdm_1" title="First general-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a>, ROR <a href="#rs_2" title="Second general-purpose source register holding a rotate amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></p>
+          <p class="equivto">
+          and is the preferred disassembly when
+          <span class="pseudocode">InITBlock()</span>.
+        </p>
+        </div>
+    <h3 class="classheading"><a name="t2" id="t2"></a>T2</h3><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td class="r">0</td><td class="l">1</td><td class="r">1</td><td class="lr">0</td><td colspan="4" class="lr">Rm</td><td class="l">1</td><td>1</td><td>1</td><td class="r">1</td><td colspan="4" class="lr">Rd</td><td class="l">0</td><td>0</td><td>0</td><td class="r">0</td><td colspan="4" class="lr">Rs</td></tr><tr class="secondrow"><td colspan="9"></td><td colspan="2" class="droppedname">type</td><td class="droppedname">S</td><td colspan="4"></td><td colspan="4"></td><td colspan="4"></td><td colspan="4"></td><td colspan="4"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">Not flag setting</h4><p class="asm-code"><a name="ROR_MOV_rr_T2" id="ROR_MOV_rr_T2"></a>ROR<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>.W {<a href="#rd" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>,} <a href="#rm_1" title="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, <a href="#rs_2" title="Second general-purpose source register holding a rotate amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a>
+        //
+      
+        (Inside IT block, and &lt;Rd&gt;, &lt;Rm&gt;, &lt;type&gt;, &lt;Rs&gt; can be represented in T1)
+      </p><p class="asm-code"><a name="ROR_MOV_rr_T2" id="ROR_MOV_rr_T2"></a>ROR{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {<a href="#rd" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>,} <a href="#rm_1" title="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, <a href="#rs_2" title="Second general-purpose source register holding a rotate amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></p><p class="equivto">
+      is equivalent to
+    </p>
+          <p class="asm-code"><a href="mov_rr.html#MOV_rr_T2">MOV</a>{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rd" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>, <a href="#rm_1" title="First general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, ROR <a href="#rs_2" title="Second general-purpose source register holding a rotate amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></p>
+          <p class="equivto">
+          and is always the preferred disassembly.
+        </p>
+        </div>
+  <p class="encoding-notes"></p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;c&gt;</td><td><a name="c" id="c"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Rdm&gt;</td><td><a name="rdm_1" id="rdm_1"></a>
+        
+          <p class="aml">Is the first general-purpose source register and the destination register, encoded in the "Rdm" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Rd&gt;</td><td><a name="rd" id="rd"></a>
+        
+          <p class="aml">Is the general-purpose destination register, encoded in the "Rd" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Rm&gt;</td><td><a name="rm_1" id="rm_1"></a>
+        
+          <p class="aml">Is the first general-purpose source register, encoded in the "Rm" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Rs&gt;</td><td><a name="rs_2" id="rs_2"></a>
+        
+          <p class="aml">Is the second general-purpose source register holding a rotate amount in its bottom 8 bits, encoded in the "Rs" field.</p>
+        
+      </td></tr></table></div><p class="syntax-notes"></p><div class="alias_ps_section"><h3 class="pseudocode">Operation</h3><p>The description of 
+        <a href="mov_rr.html">MOV, MOVS (register-shifted register)</a> 
+        gives the operational pseudocode for this instruction.</p></div><hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

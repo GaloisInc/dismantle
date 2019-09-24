@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VTBL" title="VTBL, VTBX -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+  </docvars>
+  <heading>VTBL, VTBX</heading>
+  <desc>
+    <brief>
+      <para>Vector Table Lookup and Extension</para>
+    </brief>
+    <authored>
+      <para>Vector Table Lookup uses byte indexes in a control vector to look up byte values in a table and generate a new vector. Indexes out of range return 0.</para>
+      <para>Vector Table Extension works in the same way, except that indexes out of range leave the destination element unchanged.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, and <xref linkend="AArch32.hcptr">HCPTR</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1 and this instruction passes its condition execution check:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VTBL/T1A1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Vn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="len" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="7" name="N" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" name="op" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VTBL_A1" oneofinclass="2" oneof="4" label="VTBL" bitdiffs="op == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VTBL" />
+        </docvars>
+        <box hibit="6" width="1" name="op">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VTBL</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.8 </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="list" hover="The vectors containing the table">&lt;list&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP source register holding indices (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VTBX_A1" oneofinclass="2" oneof="4" label="VTBX" bitdiffs="op == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VTBX" />
+        </docvars>
+        <box hibit="6" width="1" name="op">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VTBX</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.8 </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="list" hover="The vectors containing the table">&lt;list&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP source register holding indices (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VTBL/T1A1_A.txt" mylink="aarch32.instrs.VTBL.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">is_vtbl = (op == '0');  length = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(len)+1;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(N:Vn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);
+if n+length &gt; 32 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">n + length &gt; 32</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>One or more of the SIMD and floating-point registers are <arm-defined-word>unknown</arm-defined-word>. This behavior does not affect any general-purpose registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VTBL/T1A1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Vn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="len" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="7" name="N" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" name="op" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VTBL_T1" oneofinclass="2" oneof="4" label="VTBL" bitdiffs="op == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VTBL" />
+        </docvars>
+        <box hibit="6" width="1" name="op">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VTBL</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.8 </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="list" hover="The vectors containing the table">&lt;list&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP source register holding indices (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VTBX_T1" oneofinclass="2" oneof="4" label="VTBX" bitdiffs="op == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VTBX" />
+        </docvars>
+        <box hibit="6" width="1" name="op">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VTBX</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.8 </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="list" hover="The vectors containing the table">&lt;list&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP source register holding indices (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VTBL/T1A1_A.txt" mylink="aarch32.instrs.VTBL.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">is_vtbl = (op == '0');  length = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(len)+1;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(N:Vn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);
+if n+length &gt; 32 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">n + length &gt; 32</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>One or more of the SIMD and floating-point registers are <arm-defined-word>unknown</arm-defined-word>. This behavior does not affect any general-purpose registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VTBL_A1" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. This encoding must be unconditional.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VTBL_T1" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VTBL_A1, VTBL_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VTBL_A1, VTBL_T1" symboldefcount="1">
+      <symbol link="dd">&lt;Dd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VTBL_A1, VTBL_T1" symboldefcount="1">
+      <symbol link="list">&lt;list&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>The vectors containing the table. It must be one of:</para>
+          <list type="param">
+            <listitem>
+              <param>{&lt;Dn&gt;}</param><content>Encoded as len = <binarynumber>0b00</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>{&lt;Dn&gt;, &lt;Dn+1&gt;}</param><content>Encoded as len = <binarynumber>0b01</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>{&lt;Dn&gt;, &lt;Dn+1&gt;, &lt;Dn+2&gt;}</param><content>Encoded as len = <binarynumber>0b10</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>{&lt;Dn&gt;, &lt;Dn+1&gt;, &lt;Dn+2&gt;, &lt;Dn+3&gt;}</param><content>Encoded as len = <binarynumber>0b11</binarynumber>.</content>
+            </listitem>
+          </list>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VTBL_A1, VTBL_T1" symboldefcount="1">
+      <symbol link="dm">&lt;Dm&gt;</symbol>
+      <account encodedin="M:Vm">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP source register holding the indices, encoded in the "M:Vm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VTBL/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckAdvSIMDEnabled.0" file="shared_pseudocode.xml" hover="function: CheckAdvSIMDEnabled()">CheckAdvSIMDEnabled</a>();
+
+    // Create 256-bit = 32-byte table variable, with zeros in entries that will not be used.
+    table3 = if length == 4 then <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[n+3] else <a link="impl-shared.Zeros.1" file="shared_pseudocode.xml" hover="function: bits(N) Zeros(integer N)">Zeros</a>(64);
+    table2 = if length &gt;= 3 then <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[n+2] else <a link="impl-shared.Zeros.1" file="shared_pseudocode.xml" hover="function: bits(N) Zeros(integer N)">Zeros</a>(64);
+    table1 = if length &gt;= 2 then <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[n+1] else <a link="impl-shared.Zeros.1" file="shared_pseudocode.xml" hover="function: bits(N) Zeros(integer N)">Zeros</a>(64);
+    table = table3 : table2 : table1 : <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[n];
+
+    for i = 0 to 7
+        index = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(<a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[m],i,8]);
+        if index &lt; 8*length then
+            <a link="impl-shared.Elem.write.3" file="shared_pseudocode.xml" hover="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d],i,8] = <a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[table,index,8];
+        else
+            if is_vtbl then
+                <a link="impl-shared.Elem.write.3" file="shared_pseudocode.xml" hover="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d],i,8] = <a link="impl-shared.Zeros.1" file="shared_pseudocode.xml" hover="function: bits(N) Zeros(integer N)">Zeros</a>(8);
+            // else Elem[D[d],i,8] unchanged</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

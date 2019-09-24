@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="LDAEXD" title="LDAEXD -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="LDAEXD" />
+  </docvars>
+  <heading>LDAEXD</heading>
+  <desc>
+    <brief>
+      <para>Load-Acquire Exclusive Doubleword</para>
+    </brief>
+    <authored>
+      <para>Load-Acquire Exclusive Doubleword loads a doubleword from memory, writes it to two registers and:</para>
+      <list type="unordered">
+        <listitem><content>If the address has the Shared Memory attribute, marks the physical address as exclusive access for the executing PE in a global monitor</content></listitem>
+        <listitem><content>Causes the executing PE to indicate an active exclusive access in the local monitor.</content></listitem>
+      </list>
+      <para>The instruction also acts as a barrier instruction with the ordering requirements described in <xref linkend="AA32CHDBDIDF">Load-Acquire, Store-Release</xref>.</para>
+      <para>For more information about support for shared memory see <xref linkend="CEGDAEAG">Synchronization and semaphores</xref>. For information about memory accesses see <xref linkend="Chddjfjf">Memory accesses</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, the timing of this instruction is insensitive to the value of the data being loaded or stored.</para>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="LDAEXD" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/LDAEXD/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" width="2" name="type" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="10" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="9" name="ex" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="8" name="ord" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="7" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="xRt" settings="4">
+          <c>(1)</c>
+          <c>(1)</c>
+          <c>(1)</c>
+          <c>(1)</c>
+        </box>
+      </regdiagram>
+      <encoding name="LDAEXD_A1" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="LDAEXD" />
+        </docvars>
+        <asmtemplate><text>LDAEXD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt_1" hover="First general-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, </text><a link="rt2_1" hover="Second general-purpose register to be transferred">&lt;Rt2&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/LDAEXD/A1_A.txt" mylink="aarch32.instrs.LDAEXD.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);  t2 = t + 1;  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);
+if Rt&lt;0&gt; == '1' || t2 == 15 || n == 15 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">Rt&lt;0&gt; == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_ADDITIONAL_DECODE">
+            <cu_type_variable name="pseudocode" value="t&lt;0&gt; = '0'" />
+          </cu_type>
+          <cu_type constraint="Constraint_ADDITIONAL_DECODE">
+            <cu_type_variable name="pseudocode" value="t2 = t" />
+          </cu_type>
+          <cu_type constraint="Constraint_NONE" />
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">Rt == '1110'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction is handled as described in <xref linkend="CEGHJGEF">Using R15</xref>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="LDAEXD" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/LDAEXD/T1_A.txt">
+        <box hibit="31" width="11" settings="11">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="Rt2" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="6" name="op" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" width="2" name="sz" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Rd" settings="4">
+          <c>(1)</c>
+          <c>(1)</c>
+          <c>(1)</c>
+          <c>(1)</c>
+        </box>
+      </regdiagram>
+      <encoding name="LDAEXD_T1" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="LDAEXD" />
+        </docvars>
+        <asmtemplate><text>LDAEXD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt" hover="First general-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, </text><a link="rt2" hover="Second general-purpose register to be transferred (field &quot;Rt2&quot;)">&lt;Rt2&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/LDAEXD/T1_A.txt" mylink="aarch32.instrs.LDAEXD.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);  t2 = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt2);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);
+if t == 15 || t2 == 15 || t == t2 || n == 15 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">t == t2</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_LDUNKNOWN" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="LDAEXD_A1, LDAEXD_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDAEXD_A1, LDAEXD_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDAEXD_A1" symboldefcount="1">
+      <symbol link="rt_1">&lt;Rt&gt;</symbol>
+      <account encodedin="Rt">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the first general-purpose register to be transferred, encoded in the "Rt" field. <syntax>&lt;Rt&gt;</syntax> must be even-numbered and not R14.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDAEXD_T1" symboldefcount="2">
+      <symbol link="rt">&lt;Rt&gt;</symbol>
+      <account encodedin="Rt">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is the first general-purpose register to be transferred, encoded in the "Rt" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDAEXD_A1" symboldefcount="1">
+      <symbol link="rt2_1">&lt;Rt2&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the second general-purpose register to be transferred. <syntax>&lt;Rt2&gt;</syntax> must be <syntax>&lt;R(t+1)&gt;</syntax>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDAEXD_T1" symboldefcount="2">
+      <symbol link="rt2">&lt;Rt2&gt;</symbol>
+      <account encodedin="Rt2">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is the second general-purpose register to be transferred, encoded in the "Rt2" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDAEXD_A1, LDAEXD_T1" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose base register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/LDAEXD/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    address = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+    <a link="AArch32.SetExclusiveMonitors.2" file="shared_pseudocode.xml" hover="function: AArch32.SetExclusiveMonitors(bits(32) address, integer size)">AArch32.SetExclusiveMonitors</a>(address, 8);
+    value = <a link="impl-aarch32.MemO.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemO[bits(32) address, integer size]">MemO</a>[address, 8];
+    // Extract words from 64-bit loaded value such that R[t] is
+    // loaded from address and R[t2] from address+4.
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t]  = if <a link="impl-shared.BigEndian.0" file="shared_pseudocode.xml" hover="function: boolean BigEndian()">BigEndian</a>() then value&lt;63:32&gt; else value&lt;31:0&gt;;
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t2] = if <a link="impl-shared.BigEndian.0" file="shared_pseudocode.xml" hover="function: boolean BigEndian()">BigEndian</a>() then value&lt;31:0&gt;  else value&lt;63:32&gt;;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

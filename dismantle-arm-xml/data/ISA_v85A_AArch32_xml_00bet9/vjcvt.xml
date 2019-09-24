@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VJCVT" title="VJCVT -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="convert-type" value="double-to-single" />
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VJCVT" />
+  </docvars>
+  <heading>VJCVT</heading>
+  <desc>
+    <brief>
+      <para>Javascript Convert to signed fixed-point, rounding toward Zero</para>
+    </brief>
+    <authored>
+      <para>Javascript Convert to signed fixed-point, rounding toward Zero. This instruction converts the double-precision floating-point value in the SIMD&amp;FP source register to a 32-bit signed integer using the Round towards Zero rounding mode, and writes the result to the SIMD&amp;FP destination register. If the result is too large to be accomodated as a signed 32-bit integer, then the result is the integer modulo 2<sup>32</sup>, as held in a 32-bit signed integer.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, <xref linkend="AArch32.hcptr">HCPTR</xref>, and <xref linkend="AArch32.fpexc">FPEXC</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="convert-type" value="double-to-single" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VJCVT" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <arch_variants>
+        <arch_variant name="ARMv8.3" />
+      </arch_variants>
+      <regdiagram form="32" psname="aarch32/instrs/VJCVT/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" name="o1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="18" width="3" name="opc2" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" name="o3" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VJCVT_A1" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="convert-type" value="double-to-single" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VJCVT" />
+        </docvars>
+        <asmtemplate><text>VJCVT</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.S32.F64 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VJCVT/A1_A.txt" mylink="aarch32.instrs.VJCVT.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if !<a link="impl-shared.HaveFJCVTZSExt.0" file="shared_pseudocode.xml" hover="function: boolean HaveFJCVTZSExt()">HaveFJCVTZSExt</a>() then UNDEFINED;
+if cond != '1110' then UNPREDICTABLE;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="convert-type" value="double-to-single" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VJCVT" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <arch_variants>
+        <arch_variant name="ARMv8.3" />
+      </arch_variants>
+      <regdiagram form="16x2" psname="aarch32/instrs/VJCVT/T1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" name="o1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="18" width="3" name="opc2" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" name="o3" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VJCVT_T1" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="convert-type" value="double-to-single" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VJCVT" />
+        </docvars>
+        <asmtemplate><text>VJCVT</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.S32.F64 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VJCVT/T1_A.txt" mylink="aarch32.instrs.VJCVT.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if !<a link="impl-shared.HaveFJCVTZSExt.0" file="shared_pseudocode.xml" hover="function: boolean HaveFJCVTZSExt()">HaveFJCVTZSExt</a>() then UNDEFINED;
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VJCVT_A1, VJCVT_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VJCVT_A1, VJCVT_T1" symboldefcount="1">
+      <symbol link="sd">&lt;Sd&gt;</symbol>
+      <account encodedin="Vd:D">
+        <intro>
+          <para>Is the 32-bit name of the SIMD&amp;FP destination register, encoded in the "Vd:D" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VJCVT_A1, VJCVT_T1" symboldefcount="1">
+      <symbol link="dm">&lt;Dm&gt;</symbol>
+      <account encodedin="M:Vm">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP source register, encoded in the "M:Vm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VJCVT/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">EncodingSpecificOperations();
+<a link="impl-aarch32.CheckVFPEnabled.1" file="shared_pseudocode.xml" hover="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(TRUE);
+bits(64) fltval = <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[m];
+bits(32) intval = <a link="impl-shared.FPToFixedJS.3" file="shared_pseudocode.xml" hover="function: bits(N) FPToFixedJS(bits(M) op, FPCRType fpcr, boolean Is64)">FPToFixedJS</a>(fltval, FPSCR, FALSE);
+<a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d] = intval;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

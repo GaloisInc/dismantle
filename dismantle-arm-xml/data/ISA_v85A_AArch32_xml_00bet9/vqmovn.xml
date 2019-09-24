@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VQMOVN" title="VQMOVN, VQMOVUN -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+  </docvars>
+  <heading>VQMOVN, VQMOVUN</heading>
+  <desc>
+    <brief>
+      <para>Vector Saturating Move and Narrow</para>
+    </brief>
+    <authored>
+      <para>Vector Saturating Move and Narrow copies each element of the operand vector to the corresponding element of the destination vector.</para>
+      <para>The operand is a quadword vector. The elements can be any one of:</para>
+      <list type="unordered">
+        <listitem><content>16-bit, 32-bit, or 64-bit signed integers.</content></listitem>
+        <listitem><content>16-bit, 32-bit, or 64-bit unsigned integers.</content></listitem>
+      </list>
+      <para>The result is a doubleword vector. The elements are half the length of the operand vector elements. If the operand is unsigned, the results are unsigned. If the operand is signed, the results can be signed or unsigned.</para>
+      <para>If any of the results overflow, they are saturated. The cumulative saturation bit, <xref linkend="AArch32.fpscr">FPSCR</xref>.QC, is set if saturation occurs. For details see <xref linkend="BEIHABGJ">Pseudocode details of saturation</xref>.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, and <xref linkend="AArch32.hcptr">HCPTR</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+  </desc>
+  <alias_list howmany="4">
+    <alias_list_intro>This instruction is used by the aliases </alias_list_intro>
+    <aliasref aliaspageid="VQRSHRN_VQMOVN" aliasfile="vqrshrn_vqmovn.xml" hover="Vector Saturating Rounding Shift Right" punct=", ">
+      <text>VQRSHRN (zero)</text>
+      <aliaspref>Never</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="VQRSHRUN_VQMOVN" aliasfile="vqrshrun_vqmovn.xml" hover="Vector Saturating Rounding Shift Right" punct=", ">
+      <text>VQRSHRUN (zero)</text>
+      <aliaspref>Never</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="VQSHRN_VQMOVN" aliasfile="vqshrn_vqmovn.xml" hover="Vector Saturating Shift Right" punct=" and ">
+      <text>VQSHRN (zero)</text>
+      <aliaspref>Never</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="VQSHRUN_VQMOVN" aliasfile="vqshrun_vqmovn.xml" hover="Vector Saturating Shift Right" punct=".">
+      <text>VQSHRUN (zero)</text>
+      <aliaspref>Never</aliaspref>
+    </aliasref>
+    <alias_list_outro>
+      <text>  See </text>
+      <aliastablelink />
+      <text> below for details of when each alias is preferred.</text>
+    </alias_list_outro>
+  </alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VQMOVN/T1A1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" width="2" name="size" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="17" width="2" name="opc1" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="10" width="3" settings="3">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" width="2" name="op" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VQMOVN_A1" oneofinclass="2" oneof="4" label="Signed result" bitdiffs="op == 1x">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VQMOVN" />
+          <docvar key="result-type" value="signed-result" />
+        </docvars>
+        <box hibit="7" width="2" name="op">
+          <c>1</c>
+          <c></c>
+        </box>
+        <asmtemplate><text>VQMOVN</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for elements of operand (field &quot;op&lt;0&gt;:size&quot;) [S16,S32,S64,U16,U32,U64,UNDEFINED]">&lt;dt&gt;</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="qm" hover="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VQMOVUN_A1" oneofinclass="2" oneof="4" label="Unsigned result" bitdiffs="op == 01">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VQMOVUN" />
+          <docvar key="result-type" value="unsigned-result" />
+        </docvars>
+        <box hibit="7" width="2" name="op">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VQMOVUN</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt_1" hover="Data type for elements of operand (field &quot;size&quot;) [S16,S32,S64,UNDEFINED]">&lt;dt&gt;</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="qm" hover="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VQMOVN/T1A1_A.txt" mylink="aarch32.instrs.VQMOVN.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if op == '00' then SEE "VMOVN";
+if size == '11' || Vm&lt;0&gt; == '1' then UNDEFINED;
+src_unsigned = (op == '11');  dest_unsigned = (op&lt;0&gt; == '1');
+esize = 8 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(size);  elements = 64 DIV esize;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VQMOVN/T1A1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" width="2" name="size" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="17" width="2" name="opc1" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="10" width="3" settings="3">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" width="2" name="op" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VQMOVN_T1" oneofinclass="2" oneof="4" label="Signed result" bitdiffs="op == 1x">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VQMOVN" />
+          <docvar key="result-type" value="signed-result" />
+        </docvars>
+        <box hibit="7" width="2" name="op">
+          <c>1</c>
+          <c></c>
+        </box>
+        <asmtemplate><text>VQMOVN</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for elements of operand (field &quot;op&lt;0&gt;:size&quot;) [S16,S32,S64,U16,U32,U64,UNDEFINED]">&lt;dt&gt;</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="qm" hover="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VQMOVUN_T1" oneofinclass="2" oneof="4" label="Unsigned result" bitdiffs="op == 01">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VQMOVUN" />
+          <docvar key="result-type" value="unsigned-result" />
+        </docvars>
+        <box hibit="7" width="2" name="op">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VQMOVUN</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt_1" hover="Data type for elements of operand (field &quot;size&quot;) [S16,S32,S64,UNDEFINED]">&lt;dt&gt;</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="qm" hover="128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VQMOVN/T1A1_A.txt" mylink="aarch32.instrs.VQMOVN.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if op == '00' then SEE "VMOVN";
+if size == '11' || Vm&lt;0&gt; == '1' then UNDEFINED;
+src_unsigned = (op == '11');  dest_unsigned = (op&lt;0&gt; == '1');
+esize = 8 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(size);  elements = 64 DIV esize;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VQMOVN_A1" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. This encoding must be unconditional.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VQMOVN_T1" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VQMOVN_A1, VQMOVN_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VQMOVN_A1, VQMOVN_T1" symboldefcount="1">
+      <symbol link="dt">&lt;dt&gt;</symbol>
+      <definition encodedin="op&lt;0&gt;:size">
+        <intro>For the signed result variant: is the data type for the elements of the operand, </intro>
+        <table class="valuetable">
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry class="bitfield">op&lt;0&gt;</entry>
+                <entry class="bitfield">size</entry>
+                <entry class="symbol">&lt;dt&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">00</entry>
+                <entry class="symbol">S16</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">01</entry>
+                <entry class="symbol">S32</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">10</entry>
+                <entry class="symbol">S64</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">11</entry>
+                <entry class="symbol">RESERVED</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">00</entry>
+                <entry class="symbol">U16</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">01</entry>
+                <entry class="symbol">U32</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">10</entry>
+                <entry class="symbol">U64</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">11</entry>
+                <entry class="symbol">RESERVED</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="VQMOVUN_A1, VQMOVUN_T1" symboldefcount="2">
+      <symbol link="dt_1">&lt;dt&gt;</symbol>
+      <definition encodedin="size">
+        <intro>For the unsigned result variant: is the data type for the elements of the operand, </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">size</entry>
+                <entry class="symbol">&lt;dt&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">00</entry>
+                <entry class="symbol">S16</entry>
+              </row>
+              <row>
+                <entry class="bitfield">01</entry>
+                <entry class="symbol">S32</entry>
+              </row>
+              <row>
+                <entry class="bitfield">10</entry>
+                <entry class="symbol">S64</entry>
+              </row>
+              <row>
+                <entry class="bitfield">11</entry>
+                <entry class="symbol">RESERVED</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="VQMOVN_A1, VQMOVN_T1" symboldefcount="1">
+      <symbol link="dd">&lt;Dd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VQMOVN_A1, VQMOVN_T1" symboldefcount="1">
+      <symbol link="qm">&lt;Qm&gt;</symbol>
+      <account encodedin="M:Vm">
+        <intro>
+          <para>Is the 128-bit name of the SIMD&amp;FP source register, encoded in the "M:Vm" field as &lt;Qm&gt;*2.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <aliastablehook anchor="aliasconditions">Alias Conditions</aliastablehook>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VQMOVN/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckAdvSIMDEnabled.0" file="shared_pseudocode.xml" hover="function: CheckAdvSIMDEnabled()">CheckAdvSIMDEnabled</a>();
+    for e = 0 to elements-1
+        operand = <a link="impl-shared.Int.2" file="shared_pseudocode.xml" hover="function: integer Int(bits(N) x, boolean unsigned)">Int</a>(<a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a link="impl-aarch32.Qin.read.1" file="shared_pseudocode.xml" hover="accessor: bits(128) Qin[integer n]">Qin</a>[m&gt;&gt;1],e,2*esize], src_unsigned);
+        (<a link="impl-shared.Elem.write.3" file="shared_pseudocode.xml" hover="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d],e,esize], sat) = <a link="impl-shared.SatQ.3" file="shared_pseudocode.xml" hover="function: (bits(N), boolean) SatQ(integer i, integer N, boolean unsigned)">SatQ</a>(operand, esize, dest_unsigned);
+        if sat then FPSCR.QC = '1';</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="STC" title="STC -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="STC" />
+  </docvars>
+  <heading>STC</heading>
+  <desc>
+    <brief>
+      <para>Store data to System register</para>
+    </brief>
+    <authored>
+      <para>Store data to System register calculates an address from a base register value and an immediate offset, and stores a word from the <xref linkend="AArch32.dbgdtrrxint">DBGDTRRXint</xref> System register to memory. It can use offset, post-indexed, pre-indexed, or unindexed addressing. For information about memory accesses see <xref linkend="Chddjfjf">Memory accesses</xref>.</para>
+      <para>In an implementation that includes EL2, the permitted <instruction>STC</instruction> access to <xref linkend="AArch32.dbgdtrrxint">DBGDTRRXint</xref> can be trapped to Hyp mode, meaning that an attempt to execute an <instruction>STC</instruction> instruction in a Non-secure mode other than Hyp mode, that would be permitted in the absence of the Hyp trap controls, generates a Hyp Trap exception.  For more information, see <xref linkend="BEICAABI">Trapping general Non-secure System register accesses to debug registers</xref>.</para>
+      <para>For simplicity, the <instruction>STC</instruction> pseudocode does not show this possible trap to Hyp mode.</para>
+    </authored>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, the timing of this instruction is insensitive to the value of the data being loaded or stored.</para>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="4" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="STC" />
+      </docvars>
+      <iclassintro count="4"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/STC/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="CRd" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="11" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="8" name="cp15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="STC_A1_off" oneofinclass="4" oneof="8" label="Offset" bitdiffs="P == 1 &amp;&amp; W == 0">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="address-offset" value="signed-offset" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="STC" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>STC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [</text><a link="rn_1" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>{</text><text>, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="Immediate offset used for forming the address (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="STC_A1_post" oneofinclass="4" oneof="8" label="Post-indexed" bitdiffs="P == 0 &amp;&amp; W == 1">
+        <docvars>
+          <docvar key="address-form" value="post-indexed" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="STC" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>STC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>], #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="Immediate offset used for forming the address (field &quot;imm8&quot;)">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="STC_A1_pre" oneofinclass="4" oneof="8" label="Pre-indexed" bitdiffs="P == 1 &amp;&amp; W == 1">
+        <docvars>
+          <docvar key="address-form" value="pre-indexed" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="STC" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>STC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="Immediate offset used for forming the address (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]!</text></asmtemplate>
+      </encoding>
+      <encoding name="STC_A1_unind" oneofinclass="4" oneof="8" label="Unindexed" bitdiffs="P == 0 &amp;&amp; U == 1 &amp;&amp; W == 0">
+        <docvars>
+          <docvar key="address-form" value="unindexed" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="STC" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>STC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [</text><a link="rn_1" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>], </text><a link="option" hover="8-bit immediate [0-255 enclosed in { }] (field &quot;imm8&quot;)">&lt;option&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/STC/T1A1_A.txt" mylink="aarch32.instrs.STC.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if P == '0' &amp;&amp; U == '0' &amp;&amp; W == '0' then UNDEFINED;
+n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  cp = 14;
+imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);  index = (P == '1');  add = (U == '1');  wback = (W == '1');
+if n == 15 &amp;&amp; (wback || <a link="impl-shared.CurrentInstrSet.0" file="shared_pseudocode.xml" hover="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() != <a link="InstrSet_A32" file="shared_pseudocode.xml" hover="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a>) then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">n == 15 &amp;&amp; wback</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_WBSUPPRESS" />
+          <cu_type>
+            <cu_type_text>The instruction executes with writeback to the PC. The instruction is handled as described in <xref linkend="CEGHJGEF">Using R15</xref>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="4" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="STC" />
+      </docvars>
+      <iclassintro count="4"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/STC/T1A1_A.txt">
+        <box hibit="31" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="28" name="o0" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="CRd" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="11" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="8" name="cp15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="STC_T1_off" oneofinclass="4" oneof="8" label="Offset" bitdiffs="P == 1 &amp;&amp; W == 0">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="address-offset" value="signed-offset" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="STC" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>STC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>{</text><text>, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="Immediate offset used for forming the address (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="STC_T1_post" oneofinclass="4" oneof="8" label="Post-indexed" bitdiffs="P == 0 &amp;&amp; W == 1">
+        <docvars>
+          <docvar key="address-form" value="post-indexed" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="STC" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>STC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>], #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="Immediate offset used for forming the address (field &quot;imm8&quot;)">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="STC_T1_pre" oneofinclass="4" oneof="8" label="Pre-indexed" bitdiffs="P == 1 &amp;&amp; W == 1">
+        <docvars>
+          <docvar key="address-form" value="pre-indexed" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="STC" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>STC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="Immediate offset used for forming the address (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]!</text></asmtemplate>
+      </encoding>
+      <encoding name="STC_T1_unind" oneofinclass="4" oneof="8" label="Unindexed" bitdiffs="P == 0 &amp;&amp; U == 1 &amp;&amp; W == 0">
+        <docvars>
+          <docvar key="address-form" value="unindexed" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="STC" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>STC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>], </text><a link="option" hover="8-bit immediate [0-255 enclosed in { }] (field &quot;imm8&quot;)">&lt;option&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/STC/T1A1_A.txt" mylink="aarch32.instrs.STC.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if P == '0' &amp;&amp; U == '0' &amp;&amp; W == '0' then UNDEFINED;
+n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  cp = 14;
+imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);  index = (P == '1');  add = (U == '1');  wback = (W == '1');
+if n == 15 &amp;&amp; (wback || <a link="impl-shared.CurrentInstrSet.0" file="shared_pseudocode.xml" hover="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() != <a link="InstrSet_A32" file="shared_pseudocode.xml" hover="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a>) then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">n == 15</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_WBSUPPRESS" />
+          <cu_type>
+            <cu_type_text>The instruction executes with writeback to the PC. The instruction is handled as described in <xref linkend="CEGHJGEF">Using R15</xref>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="STC_A1_off, STC_T1_off" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STC_A1_off, STC_T1_off" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STC_A1_off, STC_A1_unind" symboldefcount="1">
+      <symbol link="rn_1">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For the offset or unindexed variant: is the general-purpose base register, encoded in the "Rn" field. The PC can be used, but this is deprecated.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STC_A1_pre, STC_A1_post, STC_T1_off" symboldefcount="2">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>For the offset, post-indexed or pre-indexed variant: is the general-purpose base register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STC_A1_unind, STC_T1_unind" symboldefcount="1">
+      <symbol link="option">&lt;option&gt;</symbol>
+      <account encodedin="imm8">
+        <intro>
+          <para>Is an 8-bit immediate, in the range 0 to 255 enclosed in { }, encoded in the "imm8" field. The value of this field is ignored when executing this instruction.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STC_A1_off, STC_T1_off" symboldefcount="1">
+      <symbol link="_plusminus_">+/-</symbol>
+      <definition encodedin="U">
+        <intro>Specifies the offset is added to or subtracted from the base register, defaulting to + if omitted and </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">U</entry>
+                <entry class="symbol">+/-</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="symbol">-</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="symbol">+</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="STC_A1_off, STC_T1_off" symboldefcount="1">
+      <symbol link="imm">&lt;imm&gt;</symbol>
+      <account encodedin="imm8">
+        <intro>
+          <para>Is the immediate offset used for forming the address, a multiple of 4 in the range 0-1020, defaulting to 0 and encoded in the "imm8" field, as &lt;imm&gt;/4.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/STC/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    offset_addr = if add then (<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] + imm32) else (<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] - imm32);
+    address = if index then offset_addr else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+
+    // System register read from DBGDTRRXint.
+    <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4] = <a link="impl-shared.DBGDTR_EL0.read.0" file="shared_pseudocode.xml" hover="accessor: bits(N) DBGDTR_EL0[]">DBGDTR_EL0</a>[];
+
+    if wback then <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[n] = offset_addr;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

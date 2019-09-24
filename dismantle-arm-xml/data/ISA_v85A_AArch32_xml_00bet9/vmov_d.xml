@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VMOV_d" title="VMOV (between two general-purpose registers and a doubleword floating-point register) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VMOV" />
+  </docvars>
+  <heading>VMOV (between two general-purpose registers and a doubleword floating-point register)</heading>
+  <desc>
+    <brief>
+      <para>Copy two general-purpose registers to or from a SIMD&amp;FP register</para>
+    </brief>
+    <authored>
+      <para>Copy two general-purpose registers to or from a SIMD&amp;FP register copies two words from two general-purpose registers into a doubleword register in the Advanced SIMD and floating-point register file, or from a doubleword register in the Advanced SIMD and floating-point register file to two general-purpose registers.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, <xref linkend="AArch32.hcptr">HCPTR</xref>, and <xref linkend="AArch32.fpexc">FPEXC</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>, and particularly <xref linkend="CEGGHFHD">VMOV (between two general-purpose registers and a doubleword floating-point register)</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1 and this instruction passes its condition execution check:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VMOV" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VMOV_d/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" name="D" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="21" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" name="op" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="Rt2" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" width="2" name="opc2" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" name="o3" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VMOV_tod_A1" oneofinclass="2" oneof="4" label="From general-purpose registers" bitdiffs="op == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VMOV" />
+          <docvar key="to-or-from-gp" value="from-gps" />
+        </docvars>
+        <box hibit="20" width="1" name="op">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VMOV</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="dm" hover="64-bit SIMD&amp;FP register to be transferred (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a><text>, </text><a link="rt" hover="First general-purpose register that {syntax{&lt;Dm&gt;}}[31:0] will be transferred to or from (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, </text><a link="rt2" hover="Second general-purpose register that {syntax{&lt;Dm&gt;}}[63:32] will be transferred to or from (field &quot;Rt2&quot;)">&lt;Rt2&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VMOV_d_A1" oneofinclass="2" oneof="4" label="To general-purpose registers" bitdiffs="op == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VMOV" />
+          <docvar key="to-or-from-gp" value="to-gps" />
+        </docvars>
+        <box hibit="20" width="1" name="op">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VMOV</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt" hover="First general-purpose register that {syntax{&lt;Dm&gt;}}[31:0] will be transferred to or from (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, </text><a link="rt2" hover="Second general-purpose register that {syntax{&lt;Dm&gt;}}[63:32] will be transferred to or from (field &quot;Rt2&quot;)">&lt;Rt2&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP register to be transferred (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VMOV_d/T1A1_A.txt" mylink="aarch32.instrs.VMOV_d.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">to_arm_registers = (op == '1');  t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);  t2 = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt2);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);
+if t == 15 || t2 == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
+if to_arm_registers &amp;&amp; t == t2 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">to_arm_registers &amp;&amp; t == t2</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNKNOWN" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VMOV" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VMOV_d/T1A1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" name="D" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="21" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" name="op" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="Rt2" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" width="2" name="opc2" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" name="o3" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VMOV_tod_T1" oneofinclass="2" oneof="4" label="From general-purpose registers" bitdiffs="op == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VMOV" />
+          <docvar key="to-or-from-gp" value="from-gps" />
+        </docvars>
+        <box hibit="20" width="1" name="op">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VMOV</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="dm" hover="64-bit SIMD&amp;FP register to be transferred (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a><text>, </text><a link="rt" hover="First general-purpose register that {syntax{&lt;Dm&gt;}}[31:0] will be transferred to or from (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, </text><a link="rt2" hover="Second general-purpose register that {syntax{&lt;Dm&gt;}}[63:32] will be transferred to or from (field &quot;Rt2&quot;)">&lt;Rt2&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VMOV_d_T1" oneofinclass="2" oneof="4" label="To general-purpose registers" bitdiffs="op == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VMOV" />
+          <docvar key="to-or-from-gp" value="to-gps" />
+        </docvars>
+        <box hibit="20" width="1" name="op">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VMOV</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt" hover="First general-purpose register that {syntax{&lt;Dm&gt;}}[31:0] will be transferred to or from (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, </text><a link="rt2" hover="Second general-purpose register that {syntax{&lt;Dm&gt;}}[63:32] will be transferred to or from (field &quot;Rt2&quot;)">&lt;Rt2&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP register to be transferred (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VMOV_d/T1A1_A.txt" mylink="aarch32.instrs.VMOV_d.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">to_arm_registers = (op == '1');  t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);  t2 = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt2);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);
+if t == 15 || t2 == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
+if to_arm_registers &amp;&amp; t == t2 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">to_arm_registers &amp;&amp; t == t2</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNKNOWN" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VMOV_d_A1, VMOV_d_T1" symboldefcount="1">
+      <symbol link="dm">&lt;Dm&gt;</symbol>
+      <account encodedin="M:Vm">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP register to be transferred, encoded in the "M:Vm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMOV_d_A1, VMOV_d_T1" symboldefcount="1">
+      <symbol link="rt2">&lt;Rt2&gt;</symbol>
+      <account encodedin="Rt2">
+        <intro>
+          <para>Is the second general-purpose register that <syntax>&lt;Dm&gt;</syntax>[63:32] will be transferred to or from, encoded in the "Rt2" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMOV_d_A1, VMOV_d_T1" symboldefcount="1">
+      <symbol link="rt">&lt;Rt&gt;</symbol>
+      <account encodedin="Rt">
+        <intro>
+          <para>Is the first general-purpose register that <syntax>&lt;Dm&gt;</syntax>[31:0] will be transferred to or from, encoded in the "Rt" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMOV_d_A1, VMOV_d_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMOV_d_A1, VMOV_d_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VMOV_d/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckVFPEnabled.1" file="shared_pseudocode.xml" hover="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(TRUE);
+    if to_arm_registers then
+        <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t] = <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[m]&lt;31:0&gt;;
+        <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t2] = <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[m]&lt;63:32&gt;;
+    else
+        <a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[m]&lt;31:0&gt; = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[t];
+        <a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[m]&lt;63:32&gt; = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[t2];</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

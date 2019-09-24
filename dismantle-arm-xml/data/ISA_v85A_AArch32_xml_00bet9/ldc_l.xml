@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="LDC_l" title="LDC (literal) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="address-form" value="literal" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="LDC" />
+  </docvars>
+  <heading>LDC (literal)</heading>
+  <desc>
+    <brief>
+      <para>Load data to System register (literal)</para>
+    </brief>
+    <authored>
+      <para>Load data to System register (literal) calculates an address from the PC value and an immediate offset, loads a word from memory, and writes it to the <xref linkend="AArch32.dbgdtrtxint">DBGDTRTXint</xref> System register. For information about memory accesses see <xref linkend="Chddjfjf">Memory accesses</xref>.</para>
+      <para>In an implementation that includes EL2, the permitted <instruction>LDC</instruction> access to <xref linkend="AArch32.dbgdtrtxint">DBGDTRTXint</xref> can be trapped to Hyp mode, meaning that an attempt to execute an <instruction>LDC</instruction> instruction in a Non-secure mode other than Hyp mode, that would be permitted in the absence of the Hyp trap controls, generates a Hyp Trap exception.  For more information, see <xref linkend="BEICAABI">Trapping general Non-secure System register accesses to debug registers</xref>.</para>
+      <para>For simplicity, the <instruction>LDC</instruction> pseudocode does not show this possible trap to Hyp mode.</para>
+    </authored>
+    <syntaxnotes>
+      <para>The alternative syntax permits the addition or subtraction of the offset and the immediate offset to be specified separately, including permitting a subtraction of 0 that cannot be specified using the normal syntax. For more information, see <xref linkend="BABGCIBA">Use of labels in UAL instruction syntax</xref>.</para>
+    </syntaxnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, the timing of this instruction is insensitive to the value of the data being loaded or stored.</para>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="address-form" value="literal" />
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="LDC" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/LDC_l/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="CRd" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="11" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="8" name="cp15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="LDC_l_A1" oneofinclass="1" oneof="2" label="A1" bitdiffs="!(P == 0 &amp;&amp; U == 0 &amp;&amp; W == 0)">
+        <docvars>
+          <docvar key="address-form" value="literal" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="LDC" />
+        </docvars>
+        <box hibit="24" width="4" name="P:U:W">
+          <c>Z</c>
+          <c>Z</c>
+          <c>Z</c>
+        </box>
+        <asmtemplate><text>LDC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, </text><a link="label" hover="The label of literal data item that is to be loaded into {syntax{&lt;Rt&gt;}}">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>LDC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [PC, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="Immediate offset used for forming the address (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]</text></asmtemplate>
+        <asmtemplate><text>LDC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [PC], </text><a link="option" hover="8-bit immediate [0-255 enclosed in { }] (field &quot;imm8&quot;)">&lt;option&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/LDC_l/T1A1_A.txt" mylink="aarch32.instrs.LDC_l.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if P == '0' &amp;&amp; U == '0' &amp;&amp; W == '0' then UNDEFINED;
+index = (P == '1');  add = (U == '1');  cp = 14;  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);
+if W == '1' || (P == '0' &amp;&amp; <a link="impl-shared.CurrentInstrSet.0" file="shared_pseudocode.xml" hover="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() != <a link="InstrSet_A32" file="shared_pseudocode.xml" hover="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a>) then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">W == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_WBSUPPRESS" />
+          <cu_type>
+            <cu_type_text>The instruction uses the addressing mode described in the equivalent immediate offset instruction.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="address-form" value="literal" />
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="LDC" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/LDC_l/T1A1_A.txt">
+        <box hibit="31" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="28" name="o0" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="CRd" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="11" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="8" name="cp15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="LDC_l_T1" oneofinclass="1" oneof="2" label="T1" bitdiffs="!(P == 0 &amp;&amp; U == 0 &amp;&amp; W == 0)">
+        <docvars>
+          <docvar key="address-form" value="literal" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="LDC" />
+        </docvars>
+        <box hibit="24" width="4" name="P:U:W">
+          <c>Z</c>
+          <c>Z</c>
+          <c>Z</c>
+        </box>
+        <asmtemplate><text>LDC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, </text><a link="label" hover="The label of literal data item that is to be loaded into {syntax{&lt;Rt&gt;}}">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>LDC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> p14, c5, [PC, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="Immediate offset used for forming the address (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/LDC_l/T1A1_A.txt" mylink="aarch32.instrs.LDC_l.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if P == '0' &amp;&amp; U == '0' &amp;&amp; W == '0' then UNDEFINED;
+index = (P == '1');  add = (U == '1');  cp = 14;  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);
+if W == '1' || (P == '0' &amp;&amp; <a link="impl-shared.CurrentInstrSet.0" file="shared_pseudocode.xml" hover="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() != <a link="InstrSet_A32" file="shared_pseudocode.xml" hover="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a>) then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">W == '1' || P == '0'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_WBSUPPRESS" />
+          <cu_type>
+            <cu_type_text>The instruction executes as <instruction>LDC</instruction> (immediate) with writeback to the PC. The instruction is handled as described in <xref linkend="CEGHJGEF">Using R15</xref>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="LDC_l_A1, LDC_l_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDC_l_A1, LDC_l_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDC_l_A1" symboldefcount="1">
+      <symbol link="option">&lt;option&gt;</symbol>
+      <account encodedin="imm8">
+        <intro>
+          <para>Is an 8-bit immediate, in the range 0 to 255 enclosed in { }, encoded in the "imm8" field. The value of this field is ignored when executing this instruction.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDC_l_A1, LDC_l_T1" symboldefcount="1">
+      <symbol link="label">&lt;label&gt;</symbol>
+      <account encodedin="imm8">
+        <intro>
+          <para>The label of the literal data item that is to be loaded into <syntax>&lt;Rt&gt;</syntax>. The assembler calculates the required value of the offset from the <function>Align(PC, 4)</function> value of the instruction to this label. Permitted values of the offset are multiples of 4 in the range -1020 to 1020.</para>
+          <para>If the offset is zero or positive, <field>imm32</field> is equal to the offset and <field>add</field> == <enumvalue>TRUE</enumvalue> (encoded as U == 1).</para>
+          <para>If the offset is negative, <field>imm32</field> is equal to minus the offset and <field>add</field> == <enumvalue>FALSE (encoded as U == 0)</enumvalue>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDC_l_A1, LDC_l_T1" symboldefcount="1">
+      <symbol link="_plusminus_">+/-</symbol>
+      <definition encodedin="U">
+        <intro>Specifies the offset is added to or subtracted from the base register, defaulting to + if omitted and </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">U</entry>
+                <entry class="symbol">+/-</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="symbol">-</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="symbol">+</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="LDC_l_A1, LDC_l_T1" symboldefcount="1">
+      <symbol link="imm">&lt;imm&gt;</symbol>
+      <account encodedin="imm8">
+        <intro>
+          <para>Is the immediate offset used for forming the address, a multiple of 4 in the range 0-1020, defaulting to 0 and encoded in the "imm8" field, as &lt;imm&gt;/4.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/LDC_l/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    offset_addr = if add then (<a link="impl-shared.Align.2" file="shared_pseudocode.xml" hover="function: integer Align(integer x, integer y)">Align</a>(PC,4) + imm32) else (<a link="impl-shared.Align.2" file="shared_pseudocode.xml" hover="function: integer Align(integer x, integer y)">Align</a>(PC,4) - imm32);
+    address = if index then offset_addr else <a link="impl-shared.Align.2" file="shared_pseudocode.xml" hover="function: integer Align(integer x, integer y)">Align</a>(PC,4);
+
+    // System register write to DBGDTRTXint.
+    <a link="impl-shared.DBGDTR_EL0.write.0" file="shared_pseudocode.xml" hover="accessor: DBGDTR_EL0[] = bits(N) value">DBGDTR_EL0</a>[] = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address,4];</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

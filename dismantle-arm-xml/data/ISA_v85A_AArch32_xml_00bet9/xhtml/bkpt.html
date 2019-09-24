@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>BKPT -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">BKPT</h2><p id="desc">
+      <p class="aml">Breakpoint causes a Breakpoint Instruction exception.</p>
+      <p class="aml">Breakpoint is always unconditional, even when inside an IT block.</p>
+    </p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t1">T1</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td colspan="4" class="lr">!= 1111</td><td class="l">0</td><td>0</td><td>0</td><td>1</td><td class="r">0</td><td class="l">0</td><td class="r">1</td><td class="lr">0</td><td colspan="12" class="lr">imm12</td><td class="l">0</td><td>1</td><td>1</td><td class="r">1</td><td colspan="4" class="lr">imm4</td></tr><tr class="secondrow"><td colspan="4" class="droppedname">cond</td><td colspan="5"></td><td colspan="2"></td><td></td><td colspan="12"></td><td colspan="4"></td><td colspan="4"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">A1</h4><p class="asm-code"><a name="BKPT_A1" id="BKPT_A1"></a>BKPT{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {#}<a href="#imm_1" title="16-bit unsigned immediate [0-65535] (field &quot;imm12:imm4&quot;)">&lt;imm&gt;</a></p></div><p class="pseudocode">imm16 = imm12:imm4;
+if cond != '1110' then UNPREDICTABLE;  // BKPT must be encoded with AL condition</p><h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">cond != '1110'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction executes unconditionally.</li><li>The instruction executes conditionally.</li></ul>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><div class="regdiagram-16"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td class="r">0</td><td colspan="8" class="lr">imm8</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">T1</h4><p class="asm-code"><a name="BKPT_T1" id="BKPT_T1"></a>BKPT{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {#}<a href="#imm" title="8-bit unsigned immediate [0-255] (field &quot;imm8&quot;)">&lt;imm&gt;</a></p></div><p class="pseudocode">imm16 = <a href="shared_pseudocode.html#impl-shared.ZeroExtend.2" title="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8, 16);</p>
+  <p class="encoding-notes">
+      <p class="aml">For more information about the <span class="arm-defined-word">constrained unpredictable</span> behavior of this instruction, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Architectural Constraints on UNPREDICTABLE behaviors</a>.</p>
+    </p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>. An <span class="asm-code">BKPT</span> instruction must be unconditional.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;imm&gt;</td><td><a name="imm_1" id="imm_1"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding A1: is a 16-bit unsigned immediate, in the range 0 to 65535, encoded in the "imm12:imm4" field. This value:</p>
+          <ul>
+            <li>Is recorded in the Comment field of <a class="armarm-xref" title="Reference to Armv8 ARM section">ESR_Elx</a>.ISS if the Software Breakpoint Instruction exception is taken to an exception level that is using AArch64.</li>
+            <li>Is ignored otherwise.</li>
+          </ul>
+        
+      </td></tr><tr><td></td><td><a name="imm" id="imm"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding T1: is a 8-bit unsigned immediate, in the range 0 to 255, encoded in the "imm8" field. This value:</p>
+          <ul>
+            <li>Is recorded in the Comment field of <a class="armarm-xref" title="Reference to Armv8 ARM section">ESR_Elx</a>.ISS if the Software Breakpoint Instruction exception is taken to an exception level that is using AArch64.</li>
+            <li>Is ignored otherwise.</li>
+          </ul>
+        
+      </td></tr></table></div><p class="syntax-notes"></p>
+    <div class="ps" psname="commonps"><a name="commonps" id="commonps"></a><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode">EncodingSpecificOperations();
+<a href="shared_pseudocode.html#AArch32.SoftwareBreakpoint.1" title="function: AArch32.SoftwareBreakpoint(bits(16) immediate)">AArch32.SoftwareBreakpoint</a>(imm16);</p>
+    </div>
+  <hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

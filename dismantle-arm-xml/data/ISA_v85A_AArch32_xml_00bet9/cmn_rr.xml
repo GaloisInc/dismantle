@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="CMN_rr" title="CMN (register-shifted register) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="armarmheading" value="A1" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="isa" value="A32" />
+    <docvar key="mnemonic" value="CMN" />
+  </docvars>
+  <heading>CMN (register-shifted register)</heading>
+  <desc>
+    <brief>
+      <para>Compare Negative (register-shifted register)</para>
+    </brief>
+    <authored>
+      <para>Compare Negative (register-shifted register) adds a register value and a register-shifted register value. It updates the condition flags based on the result, and discards the result.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, this instruction has passed its condition execution check, and does not use R15 as either its source or destination:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <iclass name="A1" oneof="1" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="CMN" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/CMN_rr/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="2" name="opc" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="14" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="11" width="4" name="Rs" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" width="2" name="type" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="CMN_rr_A1" oneofinclass="1" oneof="1" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="CMN" />
+        </docvars>
+        <asmtemplate><text>CMN</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="First general-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="type" hover="Type of shift applied to second source register (field &quot;type&quot;) [ASR,LSL,LSR,ROR]">&lt;type&gt;</a><text> </text><a link="rs" hover="Third general-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/CMN_rr/A1_A.txt" mylink="aarch32.instrs.CMN_rr.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  s = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rs);
+shift_t = <a link="impl-aarch32.DecodeRegShift.1" file="shared_pseudocode.xml" hover="function: SRType DecodeRegShift(bits(2) type)">DecodeRegShift</a>(type);
+if n == 15 || m == 15 || s == 15 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="CMN_rr_A1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="CMN_rr_A1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="CMN_rr_A1" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the first general-purpose source register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="CMN_rr_A1" symboldefcount="1">
+      <symbol link="rm">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <intro>
+          <para>Is the second general-purpose source register, encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="CMN_rr_A1" symboldefcount="1">
+      <symbol link="type">&lt;type&gt;</symbol>
+      <definition encodedin="type">
+        <intro>Is the type of shift to be applied to the second source register, </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">type</entry>
+                <entry class="symbol">&lt;type&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">00</entry>
+                <entry class="symbol">LSL</entry>
+              </row>
+              <row>
+                <entry class="bitfield">01</entry>
+                <entry class="symbol">LSR</entry>
+              </row>
+              <row>
+                <entry class="bitfield">10</entry>
+                <entry class="symbol">ASR</entry>
+              </row>
+              <row>
+                <entry class="bitfield">11</entry>
+                <entry class="symbol">ROR</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="CMN_rr_A1" symboldefcount="1">
+      <symbol link="rs">&lt;Rs&gt;</symbol>
+      <account encodedin="Rs">
+        <intro>
+          <para>Is the third general-purpose source register holding a shift amount in its bottom 8 bits, encoded in the "Rs" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/CMN_rr/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    shift_n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[s]&lt;7:0&gt;);
+    shifted = <a link="impl-aarch32.Shift.4" file="shared_pseudocode.xml" hover="function: bits(N) Shift(bits(N) value, SRType type, integer amount, bit carry_in)">Shift</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m], shift_t, shift_n, PSTATE.C);
+    (result, nzcv) = <a link="impl-shared.AddWithCarry.3" file="shared_pseudocode.xml" hover="function: (bits(N), bits(4)) AddWithCarry(bits(N) x, bits(N) y, bit carry_in)">AddWithCarry</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n], shifted, '0');
+    PSTATE.&lt;N,Z,C,V&gt; = nzcv;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

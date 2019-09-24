@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VDUP_r" title="VDUP (general-purpose register) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VDUP" />
+  </docvars>
+  <heading>VDUP (general-purpose register)</heading>
+  <desc>
+    <brief>
+      <para>Duplicate general-purpose register to vector</para>
+    </brief>
+    <authored>
+      <para>Duplicate general-purpose register to vector duplicates an element from a general-purpose register into every element of the destination vector.</para>
+      <para>The destination vector elements can be 8-bit, 16-bit, or 32-bit fields. The source element is the least significant 8, 16, or 32 bits of the general-purpose register. There is no distinction between data types.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, and <xref linkend="AArch32.hcptr">HCPTR</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1 and this instruction passes its condition execution check:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VDUP" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VDUP_r/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="4" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="B" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="5" name="E" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="2" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="1" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="0" settings="1">
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="VDUP_r_A1" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VDUP" />
+        </docvars>
+        <asmtemplate comment="Encoded as Q = 1"><text>VDUP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="The data size for elements of destination vector">&lt;size&gt;</a><text> </text><a link="qd" hover="The destination vector for a quadword operation">&lt;Qd&gt;</a><text>, </text><a link="rt" hover="The Arm source register">&lt;Rt&gt;</a></asmtemplate>
+        <asmtemplate comment="Encoded as Q = 0"><text>VDUP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="The data size for elements of destination vector">&lt;size&gt;</a><text> </text><a link="dd" hover="The destination vector for a doubleword operation">&lt;Dd&gt;</a><text>, </text><a link="rt" hover="The Arm source register">&lt;Rt&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VDUP_r/T1A1_A.txt" mylink="aarch32.instrs.VDUP_r.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if Q == '1' &amp;&amp; Vd&lt;0&gt; == '1' then UNDEFINED;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);  regs = if Q == '0' then 1 else 2;
+case B:E of
+    when '00'  esize = 32;  elements = 2;
+    when '01'  esize = 16;  elements = 4;
+    when '10'  esize = 8;   elements = 8;
+    when '11'  UNDEFINED;
+if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VDUP" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VDUP_r/T1A1_A.txt">
+        <box hibit="31" width="8" settings="8">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="B" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="5" name="E" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="2" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="1" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="0" settings="1">
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="VDUP_r_T1" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VDUP" />
+        </docvars>
+        <asmtemplate comment="Encoded as Q = 1"><text>VDUP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="The data size for elements of destination vector">&lt;size&gt;</a><text> </text><a link="qd" hover="The destination vector for a quadword operation">&lt;Qd&gt;</a><text>, </text><a link="rt" hover="The Arm source register">&lt;Rt&gt;</a></asmtemplate>
+        <asmtemplate comment="Encoded as Q = 0"><text>VDUP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="size" hover="The data size for elements of destination vector">&lt;size&gt;</a><text> </text><a link="dd" hover="The destination vector for a doubleword operation">&lt;Dd&gt;</a><text>, </text><a link="rt" hover="The Arm source register">&lt;Rt&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VDUP_r/T1A1_A.txt" mylink="aarch32.instrs.VDUP_r.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if Q == '1' &amp;&amp; Vd&lt;0&gt; == '1' then UNDEFINED;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);  regs = if Q == '0' then 1 else 2;
+case B:E of
+    when '00'  esize = 32;  elements = 2;
+    when '01'  esize = 16;  elements = 4;
+    when '10'  esize = 8;   elements = 8;
+    when '11'  UNDEFINED;
+if t == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VDUP_r_A1, VDUP_r_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. Arm strongly recommends that any <instruction>VDUP</instruction> instruction is unconditional, see <xref linkend="BABGABFG">Conditional execution</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VDUP_r_A1, VDUP_r_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VDUP_r_A1, VDUP_r_T1" symboldefcount="1">
+      <symbol link="size">&lt;size&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>The data size for the elements of the destination vector. It must be one of:</para>
+          <list type="param">
+            <listitem>
+              <param>8</param><content>Encoded as [b, e] = <binarynumber>0b10</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>16</param><content>Encoded as [b, e] = <binarynumber>0b01</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>32</param><content>Encoded as [b, e] = <binarynumber>0b00</binarynumber>.</content>
+            </listitem>
+          </list>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VDUP_r_A1, VDUP_r_T1" symboldefcount="1">
+      <symbol link="qd">&lt;Qd&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>The destination vector for a quadword operation.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VDUP_r_A1, VDUP_r_T1" symboldefcount="1">
+      <symbol link="dd">&lt;Dd&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>The destination vector for a doubleword operation.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VDUP_r_A1, VDUP_r_T1" symboldefcount="1">
+      <symbol link="rt">&lt;Rt&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>The Arm source register.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VDUP_r/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckAdvSIMDEnabled.0" file="shared_pseudocode.xml" hover="function: CheckAdvSIMDEnabled()">CheckAdvSIMDEnabled</a>();
+    scalar = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[t]&lt;esize-1:0&gt;;
+    for r = 0 to regs-1
+        for e = 0 to elements-1
+            <a link="impl-shared.Elem.write.3" file="shared_pseudocode.xml" hover="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d+r],e,esize] = scalar;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

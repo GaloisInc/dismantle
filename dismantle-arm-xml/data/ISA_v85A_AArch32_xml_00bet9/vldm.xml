@@ -1,0 +1,632 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VLDM" title="VLDM, VLDMDB, VLDMIA -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+  </docvars>
+  <heading>VLDM, VLDMDB, VLDMIA</heading>
+  <desc>
+    <brief>
+      <para>Load Multiple SIMD&amp;FP registers</para>
+    </brief>
+    <authored>
+      <para>Load Multiple SIMD&amp;FP registers loads multiple registers from consecutive locations in the Advanced SIMD and floating-point register file using an address from a general-purpose register.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, and <xref linkend="AArch32.hcptr">HCPTR</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>, and particularly <xref linkend="CEGFAHHG">VLDM</xref>.</para>
+      <para>Related encodings: See <xref linkend="T32.encoding_index.simdfp_mov64">Advanced SIMD and floating-point 64-bit move</xref> for the T32 instruction set, or <xref linkend="A32.encoding_index.movsimdfpgp64">Advanced SIMD and floating-point 64-bit move</xref> for the A32 instruction set.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="1">
+    <alias_list_intro>This instruction is used by the alias </alias_list_intro>
+    <aliasref aliaspageid="VPOP_VLDM" aliasfile="vpop_vldm.xml" hover="Pop SIMD&amp;FP registers from Stack" punct=".">
+      <text>VPOP</text>
+      <aliaspref>P == '0' &amp;&amp; U == '1' &amp;&amp; W == '1' &amp;&amp; Rn == '1101'</aliaspref>
+    </aliasref>
+    <alias_list_outro>
+      <text>  See </text>
+      <aliastablelink />
+      <text> below for details of when the alias is preferred.</text>
+    </alias_list_outro>
+  </alias_list>
+  <classes>
+    <classesintro count="4">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt> and </txt>
+      <a href="#a2">A2</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="4" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="fpdatasize" value="doubleprec" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VLDM/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" width="7" name="imm8&lt;7:1&gt;" usename="1">
+          <c colspan="7"></c>
+        </box>
+        <box hibit="0" name="imm8&lt;0&gt;" usename="1" settings="1">
+          <c>0</c>
+        </box>
+      </regdiagram>
+      <encoding name="VLDMDB_A1" oneofinclass="2" oneof="8" label="Decrement Before" bitdiffs="P == 1 &amp;&amp; U == 0 &amp;&amp; W == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="dec-before" />
+          <docvar key="mnemonic" value="VLDMDB" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>0</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDMDB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>!, </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VLDM_A1" oneofinclass="2" oneof="8" label="Increment After" bitdiffs="P == 0 &amp;&amp; U == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="VLDM" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDM</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="Specifies base register writeback (field &quot;W&quot;)">{!}</a><text>, </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDMIA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="Specifies base register writeback (field &quot;W&quot;)">{!}</a><text>, </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VLDM/T1A1_A.txt" mylink="aarch32.instrs.VLDM.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if P == '0' &amp;&amp; U == '0' &amp;&amp; W == '0' then SEE "Related encodings";
+if P == '1' &amp;&amp; W == '0' then SEE "VLDR";
+if P == U &amp;&amp; W == '1' then UNDEFINED;
+// Remaining combinations are PUW = 010 (IA without !), 011 (IA with !), 101 (DB with !)
+single_regs = FALSE;  add = (U == '1');  wback = (W == '1');
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);
+regs = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(imm8) DIV 2;  // If UInt(imm8) is odd, see "FLDM*X".
+if n == 15 &amp;&amp; (wback || <a link="impl-shared.CurrentInstrSet.0" file="shared_pseudocode.xml" hover="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() != <a link="InstrSet_A32" file="shared_pseudocode.xml" hover="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a>) then UNPREDICTABLE;
+if regs == 0 || regs &gt; 16 || (d+regs) &gt; 32 then UNPREDICTABLE;
+if imm8&lt;0&gt; == '1' &amp;&amp; (d+regs) &gt; 16 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">regs == 0</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction operates as a <instruction>VLDM</instruction> with the same addressing mode but loads no registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">regs &gt; 16 || (d+regs) &gt; 32</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>One or more of the SIMD and floating-point registers are <arm-defined-word>unknown</arm-defined-word>. If the instruction specifies writeback, the base register becomes <arm-defined-word>unknown</arm-defined-word>. This behavior does not affect any general-purpose registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="A2" oneof="4" id="a2" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A2" />
+        <docvar key="fpdatasize" value="singleprec" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VLDM/T2A2_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VLDMDB_A2" oneofinclass="2" oneof="8" label="Decrement Before" bitdiffs="P == 1 &amp;&amp; U == 0 &amp;&amp; W == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A2" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="dec-before" />
+          <docvar key="mnemonic" value="VLDMDB" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>0</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDMDB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>!, </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VLDM_A2" oneofinclass="2" oneof="8" label="Increment After" bitdiffs="P == 0 &amp;&amp; U == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A2" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="VLDM" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDM</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="Specifies base register writeback (field &quot;W&quot;)">{!}</a><text>, </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDMIA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="Specifies base register writeback (field &quot;W&quot;)">{!}</a><text>, </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VLDM/T2A2_A.txt" mylink="aarch32.instrs.VLDM.T2A2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if P == '0' &amp;&amp; U == '0' &amp;&amp; W == '0' then SEE "Related encodings";
+if P == '1' &amp;&amp; W == '0' then SEE "VLDR";
+if P == U &amp;&amp; W == '1' then UNDEFINED;
+// Remaining combinations are PUW = 010 (IA without !), 011 (IA with !), 101 (DB with !)
+single_regs = TRUE;  add = (U == '1');  wback = (W == '1');  d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);
+imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);  regs = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(imm8);
+if n == 15 &amp;&amp; (wback || <a link="impl-shared.CurrentInstrSet.0" file="shared_pseudocode.xml" hover="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() != <a link="InstrSet_A32" file="shared_pseudocode.xml" hover="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a>) then UNPREDICTABLE;
+if regs == 0 || (d+regs) &gt; 32 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A2" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">regs == 0</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction operates as a <instruction>VLDM</instruction> with the same addressing mode but loads no registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">(d+regs) &gt; 32</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>One or more of the SIMD and floating-point registers are <arm-defined-word>unknown</arm-defined-word>. If the instruction specifies writeback, the base register becomes <arm-defined-word>unknown</arm-defined-word>. This behavior does not affect any general-purpose registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="4" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="fpdatasize" value="doubleprec" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VLDM/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" width="7" name="imm8&lt;7:1&gt;" usename="1">
+          <c colspan="7"></c>
+        </box>
+        <box hibit="0" name="imm8&lt;0&gt;" usename="1" settings="1">
+          <c>0</c>
+        </box>
+      </regdiagram>
+      <encoding name="VLDMDB_T1" oneofinclass="2" oneof="8" label="Decrement Before" bitdiffs="P == 1 &amp;&amp; U == 0 &amp;&amp; W == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="dec-before" />
+          <docvar key="mnemonic" value="VLDMDB" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>0</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDMDB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>!, </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VLDM_T1" oneofinclass="2" oneof="8" label="Increment After" bitdiffs="P == 0 &amp;&amp; U == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="VLDM" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDM</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="Specifies base register writeback (field &quot;W&quot;)">{!}</a><text>, </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDMIA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="Specifies base register writeback (field &quot;W&quot;)">{!}</a><text>, </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VLDM/T1A1_A.txt" mylink="aarch32.instrs.VLDM.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if P == '0' &amp;&amp; U == '0' &amp;&amp; W == '0' then SEE "Related encodings";
+if P == '1' &amp;&amp; W == '0' then SEE "VLDR";
+if P == U &amp;&amp; W == '1' then UNDEFINED;
+// Remaining combinations are PUW = 010 (IA without !), 011 (IA with !), 101 (DB with !)
+single_regs = FALSE;  add = (U == '1');  wback = (W == '1');
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);
+regs = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(imm8) DIV 2;  // If UInt(imm8) is odd, see "FLDM*X".
+if n == 15 &amp;&amp; (wback || <a link="impl-shared.CurrentInstrSet.0" file="shared_pseudocode.xml" hover="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() != <a link="InstrSet_A32" file="shared_pseudocode.xml" hover="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a>) then UNPREDICTABLE;
+if regs == 0 || regs &gt; 16 || (d+regs) &gt; 32 then UNPREDICTABLE;
+if imm8&lt;0&gt; == '1' &amp;&amp; (d+regs) &gt; 16 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">regs == 0</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction operates as a <instruction>VLDM</instruction> with the same addressing mode but loads no registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">regs &gt; 16 || (d+regs) &gt; 32</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>One or more of the SIMD and floating-point registers are <arm-defined-word>unknown</arm-defined-word>. If the instruction specifies writeback, the base register becomes <arm-defined-word>unknown</arm-defined-word>. This behavior does not affect any general-purpose registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T2" oneof="4" id="t2" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="fpdatasize" value="singleprec" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VLDM/T2A2_A.txt">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VLDMDB_T2" oneofinclass="2" oneof="8" label="Decrement Before" bitdiffs="P == 1 &amp;&amp; U == 0 &amp;&amp; W == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="dec-before" />
+          <docvar key="mnemonic" value="VLDMDB" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>0</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDMDB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>!, </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VLDM_T2" oneofinclass="2" oneof="8" label="Increment After" bitdiffs="P == 0 &amp;&amp; U == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="VLDM" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDM</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="Specifies base register writeback (field &quot;W&quot;)">{!}</a><text>, </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDMIA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="Specifies base register writeback (field &quot;W&quot;)">{!}</a><text>, </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VLDM/T2A2_A.txt" mylink="aarch32.instrs.VLDM.T2A2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if P == '0' &amp;&amp; U == '0' &amp;&amp; W == '0' then SEE "Related encodings";
+if P == '1' &amp;&amp; W == '0' then SEE "VLDR";
+if P == U &amp;&amp; W == '1' then UNDEFINED;
+// Remaining combinations are PUW = 010 (IA without !), 011 (IA with !), 101 (DB with !)
+single_regs = TRUE;  add = (U == '1');  wback = (W == '1');  d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);
+imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);  regs = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(imm8);
+if n == 15 &amp;&amp; (wback || <a link="impl-shared.CurrentInstrSet.0" file="shared_pseudocode.xml" hover="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() != <a link="InstrSet_A32" file="shared_pseudocode.xml" hover="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a>) then UNPREDICTABLE;
+if regs == 0 || (d+regs) &gt; 32 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T2" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">regs == 0</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction operates as a <instruction>VLDM</instruction> with the same addressing mode but loads no registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">(d+regs) &gt; 32</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>One or more of the SIMD and floating-point registers are <arm-defined-word>unknown</arm-defined-word>. If the instruction specifies writeback, the base register becomes <arm-defined-word>unknown</arm-defined-word>. This behavior does not affect any general-purpose registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VLDM_A1, VLDM_A2, VLDM_T1, VLDM_T2" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDM_A1, VLDM_A2, VLDM_T1, VLDM_T2" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDM_A1, VLDM_A2, VLDM_T1, VLDM_T2" symboldefcount="1">
+      <symbol link="size">&lt;size&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>An optional data size specifier. If present, it must be equal to the size in bits, 32 or 64, of the registers being transferred.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDM_A1, VLDM_A2, VLDM_T1, VLDM_T2" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose base register, encoded in the "Rn" field. If writeback is not specified, the PC can be used.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDM_A1, VLDM_A2, VLDM_T1, VLDM_T2" symboldefcount="1">
+      <symbol link="0d33">!</symbol>
+      <account encodedin="W">
+        <intro>
+          <para>Specifies base register writeback. Encoded in the "W" field as 1 if present, otherwise 0.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDM_A2, VLDM_T2" symboldefcount="1">
+      <symbol link="sreglist">&lt;sreglist&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is the list of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred. The first register in the list is encoded in "Vd:D", and "imm8" is set to the number of registers in the list. The list must contain at least one register.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDM_A1, VLDM_T1" symboldefcount="1">
+      <symbol link="dreglist">&lt;dreglist&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is the list of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred. The first register in the list is encoded in "D:Vd", and "imm8" is set to twice the number of registers in the list. The list must contain at least one register, and must not contain more than 16 registers.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <aliastablehook anchor="aliasconditions">Alias Conditions</aliastablehook>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VLDM/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckVFPEnabled.1" file="shared_pseudocode.xml" hover="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(TRUE);
+    address = if add then <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]-imm32;
+    for r = 0 to regs-1
+        if single_regs then
+            <a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d+r] = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address,4];  address = address+4;
+        else
+            word1 = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address,4];  word2 = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address+4,4];  address = address+8;
+            // Combine the word-aligned words in the correct order for current endianness.
+            <a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d+r] = if <a link="impl-shared.BigEndian.0" file="shared_pseudocode.xml" hover="function: boolean BigEndian()">BigEndian</a>() then word1:word2 else word2:word1;
+    if wback then <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[n] = if add then <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]+imm32 else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]-imm32;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

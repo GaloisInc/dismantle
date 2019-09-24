@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="SETEND" title="SETEND -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="SETEND" />
+  </docvars>
+  <heading>SETEND</heading>
+  <desc>
+    <brief>
+      <para>Set Endianness</para>
+    </brief>
+    <authored>
+      <para>Set Endianness writes a new value to <xref linkend="BEIDIGBH">PSTATE</xref>.E.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="SETEND" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/SETEND/A1_A.txt">
+        <box hibit="31" width="12" settings="12">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="19" width="2" name="imod" settings="2">
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+        <box hibit="17" name="M" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="16" name="op" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="14" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="10" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="9" name="E" usename="1">
+          <c></c>
+        </box>
+        <box hibit="8" name="A" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="7" name="I" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" name="F" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="5" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="4" width="5" name="mode" settings="5">
+          <c>0</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="SETEND_A1" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SETEND" />
+        </docvars>
+        <asmtemplate comment="Cannot be conditional"><text>SETEND</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="endian_specifier" hover="Endianness to be selected, and the value to be set in PSTATE (field &quot;E&quot;)">&lt;endian_specifier&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SETEND/A1_A.txt" mylink="aarch32.instrs.SETEND.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">set_bigend = (E == '1');</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="SETEND" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/SETEND/T1_A.txt">
+        <box hibit="31" width="10" settings="10">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="21" name="op" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="19" name="E" usename="1">
+          <c></c>
+        </box>
+        <box hibit="18" width="3" settings="3">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="SETEND_T1" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="SETEND" />
+        </docvars>
+        <asmtemplate comment="Not permitted in IT block"><text>SETEND</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="endian_specifier" hover="Endianness to be selected, and the value to be set in PSTATE (field &quot;E&quot;)">&lt;endian_specifier&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SETEND/T1_A.txt" mylink="aarch32.instrs.SETEND.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">set_bigend = (E == '1');
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="SETEND_A1, SETEND_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SETEND_A1, SETEND_T1" symboldefcount="1">
+      <symbol link="endian_specifier">&lt;endian_specifier&gt;</symbol>
+      <definition encodedin="E">
+        <intro>Is the endianness to be selected, and the value to be set in PSTATE.E, </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">E</entry>
+                <entry class="symbol">&lt;endian_specifier&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="symbol">LE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="symbol">BE</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/SETEND/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">EncodingSpecificOperations();
+<a link="AArch32.CheckSETENDEnabled.0" file="shared_pseudocode.xml" hover="function: AArch32.CheckSETENDEnabled()">AArch32.CheckSETENDEnabled</a>();
+PSTATE.E = if set_bigend then '1' else '0';</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

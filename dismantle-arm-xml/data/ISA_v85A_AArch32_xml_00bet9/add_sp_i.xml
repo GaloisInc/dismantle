@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="ADD_SP_i" title="ADD, ADDS (SP plus immediate) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>ADD, ADDS (SP plus immediate)</heading>
+  <desc>
+    <brief>
+      <para>Add to SP (immediate)</para>
+    </brief>
+    <authored>
+      <para>Add to SP (immediate) adds an immediate value to the SP value, and writes the result to the destination register.</para>
+      <para>If the destination register is not the PC, the ADDS variant of the instruction updates the condition flags based on the result.</para>
+      <para>The field descriptions for <syntax>&lt;Rd&gt;</syntax> identify the encodings where the PC is permitted as the destination register. However, when the destination register is the PC:</para>
+      <list type="unordered">
+        <listitem><content>The ADD variant of the instruction is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>.</content></listitem>
+        <listitem><content>The ADDS variant of the instruction performs an exception return without the use of the stack. Arm deprecates use of this instruction. However, in this case:<list type="unordered"><listitem><content>The PE branches to the address written to the PC, and restores <xref linkend="BEIDIGBH">PSTATE</xref> from SPSR_&lt;current_mode&gt;.</content></listitem><listitem><content>The PE checks SPSR_&lt;current_mode&gt; for an illegal return event. See <xref linkend="CHDDDJDB">Illegal return events from AArch32 state</xref>.</content></listitem><listitem><content>The instruction is <arm-defined-word>undefined</arm-defined-word> in Hyp mode.</content></listitem><listitem><content>The instruction is <arm-defined-word>constrained unpredictable</arm-defined-word> in User mode and System mode.</content></listitem></list></content></listitem>
+      </list>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="5">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>, </txt>
+      <a href="#t2">T2</a>
+      <txt>, </txt>
+      <a href="#t3">T3</a>
+      <txt> and </txt>
+      <a href="#t4">T4</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="5" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/ADD_SP_i/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="4" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" width="3" name="opc" settings="3">
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="S" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="12" name="imm12" usename="1">
+          <c colspan="12"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADD_SP_i_A1" oneofinclass="2" oneof="7" label="ADD" bitdiffs="S == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="ADD" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>ADD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_2" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> SP, #</text><a link="const_1" hover="An immediate value">&lt;const&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="ADDS_SP_i_A1" oneofinclass="2" oneof="7" label="ADDS" bitdiffs="S == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="ADDS" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>ADDS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_2" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> SP, #</text><a link="const_1" hover="An immediate value">&lt;const&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADD_SP_i/A1_A.txt" mylink="aarch32.instrs.ADD_SP_i.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  setflags = (S == '1');  imm32 = <a link="impl-aarch32.A32ExpandImm.1" file="shared_pseudocode.xml" hover="function: bits(32) A32ExpandImm(bits(12) imm12)">A32ExpandImm</a>(imm12);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="5" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="ADD" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/ADD_SP_i/T1_A.txt">
+        <box hibit="31" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="27" name="SP" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="26" width="3" name="Rd" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="23" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADD_SP_i_T1" oneofinclass="1" oneof="7" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="ADD" />
+        </docvars>
+        <asmtemplate><text>ADD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, SP, #</text><a link="imm8" hover="Unsigned immediate, multiple of 4 [0-1020] (field &quot;imm8&quot;)">&lt;imm8&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADD_SP_i/T1_A.txt" mylink="aarch32.instrs.ADD_SP_i.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  setflags = FALSE;  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T2" oneof="5" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="ADD" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/ADD_SP_i/T2_A.txt">
+        <box hibit="31" width="8" settings="8">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" name="S" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="22" width="7" name="imm7" usename="1">
+          <c colspan="7"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADD_SP_i_T2" oneofinclass="1" oneof="7" label="T2">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="ADD" />
+        </docvars>
+        <asmtemplate><text>ADD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="sp" hover="Stack pointer">{SP,}</a><text> SP, #</text><a link="imm7" hover="Unsigned immediate, multiple of 4 [0-508] (field &quot;imm7&quot;)">&lt;imm7&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADD_SP_i/T2_A.txt" mylink="aarch32.instrs.ADD_SP_i.T2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = 13;  setflags = FALSE;  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm7:'00', 32);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T3" oneof="5" id="t3" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T3" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/ADD_SP_i/T3_A.txt">
+        <box hibit="31" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="26" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="25" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="24" width="4" name="op1" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="S" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="14" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADD_SP_i_T3" oneofinclass="2" oneof="7" label="ADD" bitdiffs="S == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T3" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="ADD" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>0</c>
+        </box>
+        <asmtemplate comment="&lt;Rd&gt;, &lt;const&gt; can be represented in T1 or T2"><text>ADD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>.W </text><text>{</text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> SP, #</text><a link="const" hover="An immediate value">&lt;const&gt;</a></asmtemplate>
+        <asmtemplate><text>ADD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> SP, #</text><a link="const" hover="An immediate value">&lt;const&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="ADDS_SP_i_T3" oneofinclass="2" oneof="7" label="ADDS" bitdiffs="S == 1 &amp;&amp; Rd != 1111">
+        <docvars>
+          <docvar key="armarmheading" value="T3" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="ADDS" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>1</c>
+        </box>
+        <box hibit="11" width="4" name="Rd">
+          <c>N</c>
+          <c>N</c>
+          <c>N</c>
+          <c>N</c>
+        </box>
+        <asmtemplate><text>ADDS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> SP, #</text><a link="const" hover="An immediate value">&lt;const&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADD_SP_i/T3_A.txt" mylink="aarch32.instrs.ADD_SP_i.T3_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if Rd == '1111' &amp;&amp; S == '1' then SEE "CMN (immediate)";
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  setflags = (S == '1');  imm32 = <a link="impl-aarch32.T32ExpandImm.1" file="shared_pseudocode.xml" hover="function: bits(32) T32ExpandImm(bits(12) imm12)">T32ExpandImm</a>(i:imm3:imm8);
+if d == 15 &amp;&amp; !setflags then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T4" oneof="5" id="t4" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T4" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="ADDW" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/ADD_SP_i/T4_A.txt">
+        <box hibit="31" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="26" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="25" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" name="o1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="o2" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="14" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADD_SP_i_T4" oneofinclass="1" oneof="7" label="T4">
+        <docvars>
+          <docvar key="armarmheading" value="T4" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="ADDW" />
+        </docvars>
+        <asmtemplate comment="&lt;imm12&gt; cannot be represented in T1, T2, or T3"><text>ADD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> SP, #</text><a link="imm12" hover="12-bit unsigned immediate [0-4095] (field &quot;i:imm3:imm8&quot;)">&lt;imm12&gt;</a></asmtemplate>
+        <asmtemplate comment="&lt;imm12&gt; can be represented in T1, T2, or T3"><text>ADDW</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> SP, #</text><a link="imm12" hover="12-bit unsigned immediate [0-4095] (field &quot;i:imm3:imm8&quot;)">&lt;imm12&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADD_SP_i/T4_A.txt" mylink="aarch32.instrs.ADD_SP_i.T4_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  setflags = FALSE;  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(i:imm3:imm8, 32);
+if d == 15 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="ADD_SP_i_A1, ADD_SP_i_T1, ADD_SP_i_T2, ADD_SP_i_T3, ADD_SP_i_T4" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_A1, ADD_SP_i_T1, ADD_SP_i_T2, ADD_SP_i_T3, ADD_SP_i_T4" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_T2" symboldefcount="1">
+      <symbol link="sp">SP,</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is the stack pointer.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_T2" symboldefcount="1">
+      <symbol link="imm7">&lt;imm7&gt;</symbol>
+      <account encodedin="imm7">
+        <intro>
+          <para>Is the unsigned immediate, a multiple of 4, in the range 0 to 508, encoded in the "imm7" field as &lt;imm7&gt;/4.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_A1" symboldefcount="1">
+      <symbol link="rd_2">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="ADD" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the general-purpose destination register, encoded in the "Rd" field. If omitted, this register is the SP. Arm deprecates using the PC as the destination register, but if the PC is used:</para>
+          <list type="unordered">
+            <listitem><content>For the ADD variant, the instruction is a branch to the address calculated by the operation. This is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>.</content></listitem>
+            <listitem><content>For the ADDS variant, the instruction performs an exception return, that restores <xref linkend="BEIDIGBH">PSTATE</xref> from SPSR_&lt;current_mode&gt;.</content></listitem>
+          </list>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_T1" symboldefcount="2">
+      <symbol link="rd">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="ADD" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is the general-purpose destination register, encoded in the "Rd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_T3, ADD_SP_i_T4" symboldefcount="3">
+      <symbol link="rd_1">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <docvars>
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T3 and T4: is the general-purpose destination register, encoded in the "Rd" field. If omitted, this register is the SP.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_T1" symboldefcount="1">
+      <symbol link="imm8">&lt;imm8&gt;</symbol>
+      <account encodedin="imm8">
+        <intro>
+          <para>Is an unsigned immediate, a multiple of 4, in the range 0 to 1020, encoded in the "imm8" field as &lt;imm8&gt;/4.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_T4" symboldefcount="1">
+      <symbol link="imm12">&lt;imm12&gt;</symbol>
+      <account encodedin="i:imm3:imm8">
+        <intro>
+          <para>Is a 12-bit unsigned immediate, in the range 0 to 4095, encoded in the "i:imm3:imm8" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_A1" symboldefcount="1">
+      <symbol link="const_1">&lt;const&gt;</symbol>
+      <account encodedin="imm12">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: an immediate value. See <xref linkend="BABHDAJF">Modified immediate constants in A32 instructions</xref> for the range of values.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADD_SP_i_T3" symboldefcount="2">
+      <symbol link="const">&lt;const&gt;</symbol>
+      <account encodedin="i:imm3:imm8">
+        <docvars>
+          <docvar key="armarmheading" value="T3" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T3: an immediate value. See <xref linkend="BABGHAGA">Modified immediate constants in T32 instructions</xref> for the range of values.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/ADD_SP_i/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    (result, nzcv) = <a link="impl-shared.AddWithCarry.3" file="shared_pseudocode.xml" hover="function: (bits(N), bits(4)) AddWithCarry(bits(N) x, bits(N) y, bit carry_in)">AddWithCarry</a>(SP, imm32, '0');
+    if d == 15 then          // Can only occur for A32 encoding
+        if setflags then
+            <a link="impl-aarch32.ALUExceptionReturn.1" file="shared_pseudocode.xml" hover="function: ALUExceptionReturn(bits(32) address)">ALUExceptionReturn</a>(result);
+        else
+            <a link="impl-aarch32.ALUWritePC.1" file="shared_pseudocode.xml" hover="function: ALUWritePC(bits(32) address)">ALUWritePC</a>(result);
+    else
+        <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[d] = result;
+        if setflags then
+            PSTATE.&lt;N,Z,C,V&gt; = nzcv;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

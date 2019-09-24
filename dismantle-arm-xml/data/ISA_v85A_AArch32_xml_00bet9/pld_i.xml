@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="PLD_i" title="PLD, PLDW (immediate) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>PLD, PLDW (immediate)</heading>
+  <desc>
+    <brief>
+      <para>Preload Data (immediate)</para>
+    </brief>
+    <authored>
+      <para>Preload Data (immediate) signals the memory system that data memory accesses from a specified address are likely in the near future. The memory system can respond by taking actions that are expected to speed up the memory accesses when they do occur, such as preloading the cache line containing the specified address into the data cache.</para>
+      <para>The <instruction>PLD</instruction> instruction signals that the likely memory access is a read, and the <instruction>PLDW</instruction> instruction signals that it is a write.</para>
+      <para>The effect of a <instruction>PLD</instruction> or <instruction>PLDW</instruction> instruction is <arm-defined-word>implementation defined</arm-defined-word>.  For more information, see <xref linkend="CEGJJFCA">Preloading caches</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="3">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="3" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/PLD_i/A1_A.txt" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="D" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="R" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="14" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="11" width="12" name="imm12" usename="1">
+          <c colspan="12"></c>
+        </box>
+      </regdiagram>
+      <encoding name="PLD_i_A1" oneofinclass="2" oneof="6" label="Preload read" bitdiffs="R == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="PLD" />
+          <docvar key="preload-type" value="pld" />
+        </docvars>
+        <box hibit="22" width="1" name="R">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>PLD</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text> </text><text>{</text><text>, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm_2" hover="Optional 12-bit unsigned immediate byte offset [0-4095], default 0 (field &quot;imm12&quot;)">&lt;imm&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="PLDW_i_A1" oneofinclass="2" oneof="6" label="Preload write" bitdiffs="R == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="PLDW" />
+          <docvar key="preload-type" value="pldw" />
+        </docvars>
+        <box hibit="22" width="1" name="R">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>PLDW</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text> </text><text>{</text><text>, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm_2" hover="Optional 12-bit unsigned immediate byte offset [0-4095], default 0 (field &quot;imm12&quot;)">&lt;imm&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/PLD_i/A1_A.txt" mylink="aarch32.instrs.PLD_i.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if Rn == '1111' then SEE "PLD (literal)";
+n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm12, 32);  add = (U == '1');  is_pldw = (R == '0');</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="3" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="address-form" value="base-plus-offset" />
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/PLD_i/T1_A.txt" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="15" width="4" name="Rt" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="11" width="12" name="imm12" usename="1">
+          <c colspan="12"></c>
+        </box>
+      </regdiagram>
+      <encoding name="PLD_i_T1" oneofinclass="2" oneof="6" label="Preload read" bitdiffs="W == 0">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="PLD" />
+          <docvar key="preload-type" value="pld" />
+        </docvars>
+        <box hibit="21" width="1" name="W">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>PLD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text> </text><text>{</text><text>, #</text><a link="_plus_" hover="Specifies the offset is added to the base register">{+}</a><a link="imm" hover="Optional 12-bit unsigned immediate byte offset [0-4095], default 0 (field &quot;imm12&quot;)">&lt;imm&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="PLDW_i_T1" oneofinclass="2" oneof="6" label="Preload write" bitdiffs="W == 1">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="PLDW" />
+          <docvar key="preload-type" value="pldw" />
+        </docvars>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>PLDW</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text> </text><text>{</text><text>, #</text><a link="_plus_" hover="Specifies the offset is added to the base register">{+}</a><a link="imm" hover="Optional 12-bit unsigned immediate byte offset [0-4095], default 0 (field &quot;imm12&quot;)">&lt;imm&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/PLD_i/T1_A.txt" mylink="aarch32.instrs.PLD_i.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if Rn == '1111' then SEE "PLD (literal)";
+n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm12, 32);  add = TRUE;  is_pldw = (W == '1');</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T2" oneof="3" id="t2" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="address-form" value="base-plus-offset" />
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/PLD_i/T2_A.txt" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="15" width="4" name="Rt" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="11" width="4" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="PLD_i_T2" oneofinclass="2" oneof="6" label="Preload read" bitdiffs="W == 0">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="PLD" />
+          <docvar key="preload-type" value="pld" />
+        </docvars>
+        <box hibit="21" width="1" name="W">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>PLD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text> </text><text>{</text><text>, #-</text><a link="imm_1" hover="8-bit unsigned immediate byte offset [0-255] (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="PLDW_i_T2" oneofinclass="2" oneof="6" label="Preload write" bitdiffs="W == 1">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="PLDW" />
+          <docvar key="preload-type" value="pldw" />
+        </docvars>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>PLDW</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text> </text><text>{</text><text>, #-</text><a link="imm_1" hover="8-bit unsigned immediate byte offset [0-255] (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/PLD_i/T2_A.txt" mylink="aarch32.instrs.PLD_i.T2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if Rn == '1111' then SEE "PLD (literal)";
+n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8, 32);  add = FALSE;  is_pldw = (W == '1');</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="PLD_i_A1" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. Must be <value>AL</value> or omitted.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PLD_i_T1, PLD_i_T2" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1 and T2: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PLD_i_A1, PLD_i_T1, PLD_i_T2" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PLD_i_A1, PLD_i_T1, PLD_i_T2" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose base register, encoded in the "Rn" field. If the PC is used, see <xref linkend="A32T32-base.instructions.PLD_l">PLD (literal)</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PLD_i_A1" symboldefcount="1">
+      <symbol link="_plusminus_">+/-</symbol>
+      <definition encodedin="U">
+        <intro>Specifies the offset is added to or subtracted from the base register, defaulting to + if omitted and </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">U</entry>
+                <entry class="symbol">+/-</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="symbol">-</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="symbol">+</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="PLD_i_T1" symboldefcount="1">
+      <symbol link="_plus_">+</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Specifies the offset is added to the base register.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PLD_i_A1" symboldefcount="1">
+      <symbol link="imm_2">&lt;imm&gt;</symbol>
+      <account encodedin="imm12">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the optional 12-bit unsigned immediate byte offset, in the range 0 to 4095, defaulting to 0 and encoded in the "imm12" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PLD_i_T1" symboldefcount="2">
+      <symbol link="imm">&lt;imm&gt;</symbol>
+      <account encodedin="imm12">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is an optional 12-bit unsigned immediate byte offset, in the range 0 to 4095, defaulting to 0 and encoded in the "imm12" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PLD_i_T2" symboldefcount="3">
+      <symbol link="imm_1">&lt;imm&gt;</symbol>
+      <account encodedin="imm8">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T2: is an 8-bit unsigned immediate byte offset, in the range 0 to 255, defaulting to 0 if omitted, and encoded in the "imm8" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/PLD_i/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    address = if add then (<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] + imm32) else (<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] - imm32);
+    if is_pldw then
+        <a link="impl-aarch32.Hint_PreloadDataForWrite.1" file="shared_pseudocode.xml" hover="function: Hint_PreloadDataForWrite(bits(32) address)">Hint_PreloadDataForWrite</a>(address);
+    else
+        <a link="impl-aarch32.Hint_PreloadData.1" file="shared_pseudocode.xml" hover="function: Hint_PreloadData(bits(32) address)">Hint_PreloadData</a>(address);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

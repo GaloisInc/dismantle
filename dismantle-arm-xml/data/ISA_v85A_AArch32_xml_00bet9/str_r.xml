@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="STR_r" title="STR (register) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="STR" />
+  </docvars>
+  <heading>STR (register)</heading>
+  <desc>
+    <brief>
+      <para>Store Register (register)</para>
+    </brief>
+    <authored>
+      <para>Store Register (register) calculates an address from a base register value and an offset register value, stores a word from a register to memory. The offset register value can optionally be shifted. For information about memory accesses see <xref linkend="Chddjfjf">Memory accesses</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, the timing of this instruction is insensitive to the value of the data being loaded or stored.</para>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="3">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="3" id="a1" no_encodings="3" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="STR" />
+      </docvars>
+      <iclassintro count="3"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/STR_r/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="o2" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="o1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="5" name="imm5" usename="1">
+          <c colspan="5"></c>
+        </box>
+        <box hibit="6" width="2" name="type" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="STR_r_A1_off" oneofinclass="3" oneof="5" label="Offset" bitdiffs="P == 1 &amp;&amp; W == 0">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="address-offset" value="signed-offset" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="STR" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>STR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt_1" hover="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, [</text><a link="rn_1" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="_plusminus_" hover="Specifies the index register is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="rm" hover="General-purpose index register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>{</text><text>, </text><a link="shift" hover="The shift to apply to the value read from {syntax{&lt;Rm&gt;}}">&lt;shift&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="STR_r_A1_post" oneofinclass="3" oneof="5" label="Post-indexed" bitdiffs="P == 0 &amp;&amp; W == 0">
+        <docvars>
+          <docvar key="address-form" value="post-indexed" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="STR" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>STR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt_1" hover="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, [</text><a link="rn_1" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>], </text><a link="_plusminus_" hover="Specifies the index register is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="rm" hover="General-purpose index register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>{</text><text>, </text><a link="shift" hover="The shift to apply to the value read from {syntax{&lt;Rm&gt;}}">&lt;shift&gt;</a><text>}</text></asmtemplate>
+      </encoding>
+      <encoding name="STR_r_A1_pre" oneofinclass="3" oneof="5" label="Pre-indexed" bitdiffs="P == 1 &amp;&amp; W == 1">
+        <docvars>
+          <docvar key="address-form" value="pre-indexed" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="STR" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="21" width="1" name="W">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>STR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt_1" hover="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, [</text><a link="rn_1" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="_plusminus_" hover="Specifies the index register is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="rm" hover="General-purpose index register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>{</text><text>, </text><a link="shift" hover="The shift to apply to the value read from {syntax{&lt;Rm&gt;}}">&lt;shift&gt;</a><text>}</text><text>]!</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/STR_r/A1_A.txt" mylink="aarch32.instrs.STR_r.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if P == '0' &amp;&amp; W == '1' then SEE "STRT";
+t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);
+index = (P == '1');  add = (U == '1');  wback = (P == '0') || (W == '1');
+(shift_t, shift_n) = <a link="impl-aarch32.DecodeImmShift.2" file="shared_pseudocode.xml" hover="function: (SRType, integer) DecodeImmShift(bits(2) type, bits(5) imm5)">DecodeImmShift</a>(type, imm5);
+if m == 15 then UNPREDICTABLE;
+if wback &amp;&amp; (n == 15 || n == t) then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">wback &amp;&amp; n == t</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_STUNKNOWN" />
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">wback &amp;&amp; n == 15</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_WBSUPPRESS" />
+          <cu_type>
+            <cu_type_text>The instruction uses the addressing mode described in the equivalent immediate offset instruction.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="3" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="address-form" value="base-plus-offset" />
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="STR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/STR_r/T1_A.txt">
+        <box hibit="31" width="4" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="27" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="26" name="B" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="25" name="H" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="24" width="3" name="Rm" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="21" width="3" name="Rn" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="18" width="3" name="Rt" usename="1">
+          <c colspan="3"></c>
+        </box>
+      </regdiagram>
+      <encoding name="STR_r_T1" oneofinclass="1" oneof="5" label="T1">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="STR" />
+        </docvars>
+        <asmtemplate><text>STR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt" hover="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="_plus_" hover="Specifies the index register is added to the base register">{+}</a><a link="rm" hover="General-purpose index register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/STR_r/T1_A.txt" mylink="aarch32.instrs.STR_r.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);
+index = TRUE;  add = TRUE;  wback = FALSE;
+(shift_t, shift_n) = (<a link="SRType_LSL" file="shared_pseudocode.xml" hover="enumeration SRType {SRType_LSL, SRType_LSR, SRType_ASR, SRType_ROR, SRType_RRX}">SRType_LSL</a>, 0);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T2" oneof="3" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="address-form" value="register-offset" />
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="STR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/STR_r/T2_A.txt" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="6" settings="6">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="5" width="2" name="imm2" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="STR_r_T2" oneofinclass="1" oneof="5" label="T2">
+        <docvars>
+          <docvar key="address-form" value="register-offset" />
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="STR" />
+        </docvars>
+        <asmtemplate comment="&lt;Rt&gt;, &lt;Rn&gt;, &lt;Rm&gt; can be represented in T1"><text>STR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>.W </text><a link="rt" hover="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="_plus_" hover="Specifies the index register is added to the base register">{+}</a><a link="rm" hover="General-purpose index register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>]</text></asmtemplate>
+        <asmtemplate><text>STR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt" hover="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, [</text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="_plus_" hover="Specifies the index register is added to the base register">{+}</a><a link="rm" hover="General-purpose index register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>{</text><text>, LSL #</text><a link="imm" hover="If present, the size of left shift to apply to the value from {syntax{&lt;Rm&gt;}}, in the range 1-3">&lt;imm&gt;</a><text>}</text><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/STR_r/T2_A.txt" mylink="aarch32.instrs.STR_r.T2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if Rn == '1111' then UNDEFINED;
+t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);
+index = TRUE;  add = TRUE;  wback = FALSE;
+(shift_t, shift_n) = (<a link="SRType_LSL" file="shared_pseudocode.xml" hover="enumeration SRType {SRType_LSL, SRType_LSR, SRType_ASR, SRType_ROR, SRType_RRX}">SRType_LSL</a>, <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(imm2));
+if t == 15 || m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T2" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">t == 15</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The store instruction performs the store using the specified addressing mode but the value corresponding to R15 is <arm-defined-word>unknown</arm-defined-word>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="STR_r_A1_off, STR_r_T1, STR_r_T2" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STR_r_A1_off, STR_r_T1, STR_r_T2" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STR_r_A1_off" symboldefcount="1">
+      <symbol link="rt_1">&lt;Rt&gt;</symbol>
+      <account encodedin="Rt">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="address-offset" value="signed-offset" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the general-purpose register to be transferred, encoded in the "Rt" field. The PC can be used, but this is deprecated.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STR_r_T1, STR_r_T2" symboldefcount="2">
+      <symbol link="rt">&lt;Rt&gt;</symbol>
+      <account encodedin="Rt">
+        <docvars>
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1 and T2: is the general-purpose register to be transferred, encoded in the "Rt" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STR_r_A1_off" symboldefcount="1">
+      <symbol link="rn_1">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <docvars>
+          <docvar key="address-form" value="base-plus-offset" />
+          <docvar key="address-offset" value="signed-offset" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the general-purpose base register, encoded in the "Rn" field. The PC can be used in the offset variant, but this is deprecated.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STR_r_T1, STR_r_T2" symboldefcount="2">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <docvars>
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1 and T2: is the general-purpose base register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STR_r_A1_off" symboldefcount="1">
+      <symbol link="_plusminus_">+/-</symbol>
+      <definition encodedin="U">
+        <intro>Specifies the index register is added to or subtracted from the base register, defaulting to + if omitted and </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">U</entry>
+                <entry class="symbol">+/-</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="symbol">-</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="symbol">+</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="STR_r_T1, STR_r_T2" symboldefcount="1">
+      <symbol link="_plus_">+</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Specifies the index register is added to the base register.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STR_r_A1_off, STR_r_T1, STR_r_T2" symboldefcount="1">
+      <symbol link="rm">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <intro>
+          <para>Is the general-purpose index register, encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STR_r_A1_off" symboldefcount="1">
+      <symbol link="shift">&lt;shift&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>The shift to apply to the value read from <syntax>&lt;Rm&gt;</syntax>. If absent, no shift is applied. Otherwise, see <xref linkend="Chdibjii">Shifts applied to a register</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STR_r_T2" symboldefcount="1">
+      <symbol link="imm">&lt;imm&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>If present, the size of the left shift to apply to the value from <syntax>&lt;Rm&gt;</syntax>, in the range 1-3. <syntax>&lt;imm&gt;</syntax> is encoded in imm2. If absent, no shift is specified and imm2 is encoded as <binarynumber>0b00</binarynumber>.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/STR_r/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    offset = <a link="impl-aarch32.Shift.4" file="shared_pseudocode.xml" hover="function: bits(N) Shift(bits(N) value, SRType type, integer amount, bit carry_in)">Shift</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m], shift_t, shift_n, PSTATE.C);
+    offset_addr = if add then (<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] + offset) else (<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] - offset);
+    address = if index then offset_addr else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+    if t == 15 then  // Only possible for encoding A1
+        data = <a link="impl-aarch32.PCStoreValue.0" file="shared_pseudocode.xml" hover="function: bits(32) PCStoreValue()">PCStoreValue</a>();
+    else
+        data = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[t];
+    <a link="impl-aarch32.MemU.write.2" file="shared_pseudocode.xml" hover="accessor: MemU[bits(32) address, integer size] = bits(8*size) value">MemU</a>[address,4] = data;
+    if wback then <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[n] = offset_addr;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

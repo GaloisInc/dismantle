@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>VMRS -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">VMRS</h2><p id="desc">
+      <p class="aml">Move SIMD&amp;FP Special register to general-purpose register moves the value of an Advanced SIMD and floating-point System register to a general-purpose register. When the specified System register is the <a class="armarm-xref" title="Reference to Armv8 ARM section">FPSCR</a>, a form of the instruction transfers the <a class="armarm-xref" title="Reference to Armv8 ARM section">FPSCR</a>.{N, Z, C, V} condition flags to the <a class="armarm-xref" title="Reference to Armv8 ARM section">APSR</a>.{N, Z, C, V} condition flags.</p>
+      <p class="aml">Depending on settings in the <a class="armarm-xref" title="Reference to Armv8 ARM section">CPACR</a>, <a class="armarm-xref" title="Reference to Armv8 ARM section">NSACR</a>, <a class="armarm-xref" title="Reference to Armv8 ARM section">HCPTR</a>, and <a class="armarm-xref" title="Reference to Armv8 ARM section">FPEXC</a> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <span class="arm-defined-word">undefined</span>, or trapped to Hyp mode. For more information see <a class="armarm-xref" title="Reference to Armv8 ARM section">Enabling Advanced SIMD and floating-point support</a>.</p>
+      <p class="aml">When these settings permit the execution of floating-point and Advanced SIMD instructions, if the specified floating-point System register is not the <a class="armarm-xref" title="Reference to Armv8 ARM section">FPSCR</a>, the instruction is <span class="arm-defined-word">undefined</span> if executed in User mode.</p>
+      <p class="aml">In an implementation that includes EL2, when <a class="armarm-xref" title="Reference to Armv8 ARM section">HCR</a>.TID0 is set to 1, any <span class="asm-code">VMRS</span> access to <a class="armarm-xref" title="Reference to Armv8 ARM section">FPSID</a> from a Non-secure EL1 mode that would be permitted if <a class="armarm-xref" title="Reference to Armv8 ARM section">HCR</a>.TID0 was set to 0 generates a Hyp Trap exception. For more information, see <a class="armarm-xref" title="Reference to Armv8 ARM section">ID group 0, Primary device identification registers</a>.</p>
+      <p class="aml">For simplicity, the <span class="asm-code">VMRS</span> pseudocode does not show the possible trap to Hyp mode.</p>
+    </p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t1">T1</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td colspan="4" class="lr">!= 1111</td><td class="l">1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td class="r">1</td><td class="lr">1</td><td colspan="4" class="lr">reg</td><td colspan="4" class="lr">Rt</td><td class="l">1</td><td>0</td><td>1</td><td class="r">0</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">1</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td></tr><tr class="secondrow"><td colspan="4" class="droppedname">cond</td><td colspan="7"></td><td></td><td colspan="4"></td><td colspan="4"></td><td colspan="4"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">A1</h4><p class="asm-code"><a name="VMRS_A1_AS" id="VMRS_A1_AS"></a>VMRS{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rt" title="General-purpose destination register (field &quot;Rt&quot;)">&lt;Rt&gt;</a>, <a href="#spec_reg" title="Source Advanced SIMD and floating-point System register (field &quot;reg&quot;)">&lt;spec_reg&gt;</a></p></div><p class="pseudocode">t = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(Rt);
+if !(reg IN {'000x', '0101', '011x', '1000'}) then UNPREDICTABLE;
+if t == 15 &amp;&amp; reg != '0001' then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</p><h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">!(reg IN {'000x', '0101', '011x', '1000'})</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction transfers an <span class="arm-defined-word">unknown</span> value to the specified target register. When the Rt field holds the value 0b1111, the specified target register is the <a class="armarm-xref" title="Reference to Armv8 ARM section">APSR</a>.{N, Z, C, V} bits, and these bits become <span class="arm-defined-word">unknown</span>. Otherwise, the specified target register is the register specified by the Rt field, R0 - R14.</li></ul>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td class="r">1</td><td class="lr">1</td><td colspan="4" class="lr">reg</td><td colspan="4" class="lr">Rt</td><td class="l">1</td><td>0</td><td>1</td><td class="r">0</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">1</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">T1</h4><p class="asm-code"><a name="VMRS_T1_AS" id="VMRS_T1_AS"></a>VMRS{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rt" title="General-purpose destination register (field &quot;Rt&quot;)">&lt;Rt&gt;</a>, <a href="#spec_reg" title="Source Advanced SIMD and floating-point System register (field &quot;reg&quot;)">&lt;spec_reg&gt;</a></p></div><p class="pseudocode">t = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(Rt);
+if !(reg IN {'000x', '0101', '011x', '1000'}) then UNPREDICTABLE;
+if t == 15 &amp;&amp; reg != '0001' then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</p><h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">!(reg IN {'000x', '0101', '011x', '1000'})</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction transfers an <span class="arm-defined-word">unknown</span> value to the specified target register. When the Rt field holds the value 0b1111, the specified target register is the <a class="armarm-xref" title="Reference to Armv8 ARM section">APSR</a>.{N, Z, C, V} bits, and these bits become <span class="arm-defined-word">unknown</span>. Otherwise, the specified target register is the register specified by the Rt field, R0 - R14.</li></ul>
+  <p class="encoding-notes">
+      <p class="aml">For more information about the <span class="arm-defined-word">constrained unpredictable</span> behavior of this instruction, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Architectural Constraints on UNPREDICTABLE behaviors</a>.</p>
+    </p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;c&gt;</td><td><a name="c" id="c"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Rt&gt;</td><td><a name="rt" id="rt"></a>
+        
+          <p class="aml">Is the general-purpose destination register, encoded in the "Rt" field. Is one of:</p>
+          <dl>
+            <dt>R0-R14</dt><dd>General-purpose register.</dd>
+            <dt>APSR_nzcv</dt><dd>Permitted only when &lt;spec_reg&gt; is FPSCR. Encoded as 0b1111. The instruction transfers the <a class="armarm-xref" title="Reference to Armv8 ARM section">FPSCR</a>.{N, Z, C, V} condition flags to the <a class="armarm-xref" title="Reference to Armv8 ARM section">APSR</a>.{N, Z, C, V} condition flags.</dd>
+          </dl>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;spec_reg&gt;</td><td><a name="spec_reg" id="spec_reg"></a>
+        Is the source Advanced SIMD and floating-point System register, 
+    encoded in 
+    <q>reg</q>:
+      
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">reg</th>
+                <th class="symbol">&lt;spec_reg&gt;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">0000</td>
+                <td class="symbol">FPSID</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0001</td>
+                <td class="symbol">FPSCR</td>
+              </tr>
+              <tr>
+                <td class="bitfield">001x</td>
+                <td class="symbol">UNPREDICTABLE</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0100</td>
+                <td class="symbol">UNPREDICTABLE</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0101</td>
+                <td class="symbol">MVFR2</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0110</td>
+                <td class="symbol">MVFR1</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0111</td>
+                <td class="symbol">MVFR0</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1000</td>
+                <td class="symbol">FPEXC</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1001</td>
+                <td class="symbol">UNPREDICTABLE</td>
+              </tr>
+              <tr>
+                <td class="bitfield">101x</td>
+                <td class="symbol">UNPREDICTABLE</td>
+              </tr>
+              <tr>
+                <td class="bitfield">11xx</td>
+                <td class="symbol">UNPREDICTABLE</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr></table></div><p class="syntax-notes"></p>
+    <div class="ps" psname="commonps"><a name="commonps" id="commonps"></a><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode">if <a href="shared_pseudocode.html#impl-aarch32.ConditionPassed.0" title="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    if reg == '0001' then                 // FPSCR
+        <a href="shared_pseudocode.html#impl-aarch32.CheckVFPEnabled.1" title="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(TRUE);
+        if t == 15 then
+            PSTATE.&lt;N,Z,C,V&gt; = FPSR.&lt;N,Z,C,V&gt;;
+        else
+            <a href="shared_pseudocode.html#impl-aarch32.R.write.1" title="accessor: R[integer n] = bits(32) value">R</a>[t] = FPSCR;
+    elsif PSTATE.EL == <a href="shared_pseudocode.html#EL0" title="constant bits(2) EL0 = '00'">EL0</a> then
+        UNDEFINED;                        // Non-FPSCR registers accessible only at PL1 or above
+    else
+        <a href="shared_pseudocode.html#impl-aarch32.CheckVFPEnabled.1" title="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(FALSE);           // Non-FPSCR registers are not affected by FPEXC.EN
+        <a href="shared_pseudocode.html#AArch32.CheckAdvSIMDOrFPRegisterTraps.1" title="function: AArch32.CheckAdvSIMDOrFPRegisterTraps(bits(4) reg)">AArch32.CheckAdvSIMDOrFPRegisterTraps</a>(reg);
+        case reg of
+            when '0000'  <a href="shared_pseudocode.html#impl-aarch32.R.write.1" title="accessor: R[integer n] = bits(32) value">R</a>[t] = FPSID;
+            when '0101'  <a href="shared_pseudocode.html#impl-aarch32.R.write.1" title="accessor: R[integer n] = bits(32) value">R</a>[t] = MVFR2;
+            when '0110'  <a href="shared_pseudocode.html#impl-aarch32.R.write.1" title="accessor: R[integer n] = bits(32) value">R</a>[t] = MVFR1;
+            when '0111'  <a href="shared_pseudocode.html#impl-aarch32.R.write.1" title="accessor: R[integer n] = bits(32) value">R</a>[t] = MVFR0;
+            when '1000'  <a href="shared_pseudocode.html#impl-aarch32.R.write.1" title="accessor: R[integer n] = bits(32) value">R</a>[t] = FPEXC;
+            otherwise    <a href="shared_pseudocode.html#impl-shared.Unreachable.0" title="function: Unreachable()">Unreachable</a>();   // Dealt with above or in encoding-specific pseudocode</p>
+    </div>
+  <hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

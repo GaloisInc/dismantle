@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VMLA_s" title="VMLA (by scalar) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VMLA" />
+  </docvars>
+  <heading>VMLA (by scalar)</heading>
+  <desc>
+    <brief>
+      <para>Vector Multiply Accumulate (by scalar)</para>
+    </brief>
+    <authored>
+      <para>Vector Multiply Accumulate multiplies elements of a vector by a scalar, and adds the products to corresponding elements of the destination vector.</para>
+      <para>For more information about scalars see <xref linkend="Cjaibjhd">Advanced SIMD scalars</xref>.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, and <xref linkend="AArch32.hcptr">HCPTR</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>Related encodings: See <xref linkend="T32.encoding_index.simddp">Advanced SIMD data-processing</xref> for the T32 instruction set, or <xref linkend="A32.encoding_index.advsimddp">Advanced SIMD data-processing</xref> for the A32 instruction set.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1 and this instruction passes its condition execution check:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VMLA" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VMLA_s/A1_A.txt" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="24" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" name="size" usename="1" settings="2" constraint="!= 11">
+          <c colspan="2">!= 11</c>
+        </box>
+        <box hibit="19" width="4" name="Vn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="10" name="op" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="9" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="8" name="F" usename="1">
+          <c></c>
+        </box>
+        <box hibit="7" name="N" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VMLA_s_A1_D" oneofinclass="2" oneof="4" label="64-bit SIMD vector" bitdiffs="Q == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VMLA" />
+          <docvar key="simdvectorsize" value="double" />
+        </docvars>
+        <box hibit="24" width="1" name="Q">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VMLA</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for scalar and the elements of operand vector (field &quot;F:size&quot;)">&lt;dt&gt;</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP register holding accumulate vector (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="dn" hover="First 64-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Dn&gt;</a><text>, </text><a link="dm_x" hover="Second 64-bit SIMD&amp;FP source register holding scalar (field &quot;Vm&lt;2:0&gt;&quot;)">&lt;Dm[x]&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VMLA_s_A1_Q" oneofinclass="2" oneof="4" label="128-bit SIMD vector" bitdiffs="Q == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VMLA" />
+          <docvar key="simdvectorsize" value="quad" />
+        </docvars>
+        <box hibit="24" width="1" name="Q">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VMLA</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for scalar and the elements of operand vector (field &quot;F:size&quot;)">&lt;dt&gt;</a><text> </text><a link="qd" hover="128-bit SIMD&amp;FP register holding accumulate vector (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, </text><a link="qn" hover="First 128-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Qn&gt;</a><text>, </text><a link="dm_x" hover="Second 64-bit SIMD&amp;FP source register holding scalar (field &quot;Vm&lt;2:0&gt;&quot;)">&lt;Dm[x]&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VMLA_s/A1_A.txt" mylink="aarch32.instrs.VMLA_s.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if size == '11' then SEE "Related encodings";
+if size == '00' || (F == '1' &amp;&amp; size == '01' &amp;&amp; !<a link="impl-shared.HaveFP16Ext.0" file="shared_pseudocode.xml" hover="function: boolean HaveFP16Ext()">HaveFP16Ext</a>()) then UNDEFINED;
+if Q == '1' &amp;&amp; (Vd&lt;0&gt; == '1' || Vn&lt;0&gt; == '1') then UNDEFINED;
+unsigned = FALSE;  // "Don't care" value: TRUE produces same functionality
+add = (op == '0');  floating_point = (F == '1');  long_destination = FALSE;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(N:Vn);  regs = if Q == '0' then 1 else 2;
+if size == '01' then esize = 16;  elements = 4;  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm&lt;2:0&gt;);  index = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm&lt;3&gt;);
+if size == '10' then esize = 32;  elements = 2;  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm);  index = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VMLA" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VMLA_s/T1_A.txt" tworows="1">
+        <box hibit="31" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="28" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" name="size" usename="1" settings="2" constraint="!= 11">
+          <c colspan="2">!= 11</c>
+        </box>
+        <box hibit="19" width="4" name="Vn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="10" name="op" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="9" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="8" name="F" usename="1">
+          <c></c>
+        </box>
+        <box hibit="7" name="N" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VMLA_s_T1_D" oneofinclass="2" oneof="4" label="64-bit SIMD vector" bitdiffs="Q == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VMLA" />
+          <docvar key="simdvectorsize" value="double" />
+        </docvars>
+        <box hibit="28" width="1" name="Q">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VMLA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for scalar and the elements of operand vector (field &quot;F:size&quot;)">&lt;dt&gt;</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP register holding accumulate vector (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="dn" hover="First 64-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Dn&gt;</a><text>, </text><a link="dm_x" hover="Second 64-bit SIMD&amp;FP source register holding scalar (field &quot;Vm&lt;2:0&gt;&quot;)">&lt;Dm[x]&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VMLA_s_T1_Q" oneofinclass="2" oneof="4" label="128-bit SIMD vector" bitdiffs="Q == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VMLA" />
+          <docvar key="simdvectorsize" value="quad" />
+        </docvars>
+        <box hibit="28" width="1" name="Q">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VMLA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for scalar and the elements of operand vector (field &quot;F:size&quot;)">&lt;dt&gt;</a><text> </text><a link="qd" hover="128-bit SIMD&amp;FP register holding accumulate vector (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, </text><a link="qn" hover="First 128-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Qn&gt;</a><text>, </text><a link="dm_x" hover="Second 64-bit SIMD&amp;FP source register holding scalar (field &quot;Vm&lt;2:0&gt;&quot;)">&lt;Dm[x]&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VMLA_s/T1_A.txt" mylink="aarch32.instrs.VMLA_s.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if size == '11' then SEE "Related encodings";
+if size == '00' || (F == '1' &amp;&amp; size == '01' &amp;&amp; !<a link="impl-shared.HaveFP16Ext.0" file="shared_pseudocode.xml" hover="function: boolean HaveFP16Ext()">HaveFP16Ext</a>()) then UNDEFINED;
+if F == '1' &amp;&amp; size == '01' &amp;&amp; <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;
+if Q == '1' &amp;&amp; (Vd&lt;0&gt; == '1' || Vn&lt;0&gt; == '1') then UNDEFINED;
+unsigned = FALSE;  // "Don't care" value: TRUE produces same functionality
+add = (op == '0');  floating_point = (F == '1');  long_destination = FALSE;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(N:Vn);  regs = if Q == '0' then 1 else 2;
+if size == '01' then esize = 16;  elements = 4;  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm&lt;2:0&gt;);  index = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm&lt;3&gt;);
+if size == '10' then esize = 32;  elements = 2;  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm);  index = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M);</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">F == '1' &amp;&amp; size == '01' &amp;&amp; InITBlock()</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type>
+            <cu_type_text>The instruction executes as if it passes the Condition code check.</cu_type_text>
+          </cu_type>
+          <cu_type>
+            <cu_type_text>The instruction executes as NOP. This means it behaves as if it fails the Condition code check.</cu_type_text>
+          </cu_type>
+          <arch_variants>
+            <arch_variant name="ARMv8.2-A" />
+          </arch_variants>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VMLA_s_A1_Q" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. This encoding must be unconditional.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMLA_s_T1_Q" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMLA_s_A1_Q, VMLA_s_T1_Q" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMLA_s_A1_Q, VMLA_s_T1_Q" symboldefcount="1">
+      <symbol link="dt">&lt;dt&gt;</symbol>
+      <definition encodedin="F:size">
+        <intro>Is the data type for the scalar and the elements of the operand vector, </intro>
+        <table class="valuetable">
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry class="bitfield">F</entry>
+                <entry class="bitfield">size</entry>
+                <entry class="symbol">&lt;dt&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">01</entry>
+                <entry class="symbol">I16</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">10</entry>
+                <entry class="symbol">I32</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">01</entry>
+                <entry class="symbol">F16</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">10</entry>
+                <entry class="symbol">F32</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+      <arch_variants>
+        <arch_variant name="ARMv8.2-A" />
+      </arch_variants>
+    </explanation>
+    <explanation enclist="VMLA_s_A1_Q, VMLA_s_T1_Q" symboldefcount="1">
+      <symbol link="qd">&lt;Qd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 128-bit name of the SIMD&amp;FP register holding the accumulate vector, encoded in the "D:Vd" field as &lt;Qd&gt;*2.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMLA_s_A1_Q, VMLA_s_T1_Q" symboldefcount="1">
+      <symbol link="qn">&lt;Qn&gt;</symbol>
+      <account encodedin="N:Vn">
+        <intro>
+          <para>Is the 128-bit name of the first SIMD&amp;FP source register, encoded in the "N:Vn" field as &lt;Qn&gt;*2.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMLA_s_A1_D, VMLA_s_T1_D" symboldefcount="1">
+      <symbol link="dd">&lt;Dd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP register holding the accumulate vector, encoded in the "D:Vd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMLA_s_A1_D, VMLA_s_T1_D" symboldefcount="1">
+      <symbol link="dn">&lt;Dn&gt;</symbol>
+      <account encodedin="N:Vn">
+        <intro>
+          <para>Is the 64-bit name of the first SIMD&amp;FP source register, encoded in the "N:Vn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMLA_s_A1_Q, VMLA_s_T1_Q" symboldefcount="1">
+      <symbol link="dm_x">&lt;Dm[x]&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is the 64-bit name of the second SIMD&amp;FP source register holding the scalar. If <syntax>&lt;dt&gt;</syntax> is <value>I16</value> or <value>F16</value>, <syntax>Dm</syntax> is restricted to D0-D7. <syntax>Dm</syntax> is encoded in "Vm&lt;2:0&gt;", and <syntax>x</syntax> is encoded in "M:Vm&lt;3&gt;". If <syntax>&lt;dt&gt;</syntax> is <value>I32</value> or <value>F32</value>, <syntax>Dm</syntax> is restricted to D0-D15. <syntax>Dm</syntax> is encoded in "Vm", and <syntax>x</syntax> is encoded in "M".</para>
+        </intro>
+      </account>
+      <arch_variants>
+        <arch_variant name="ARMv8.2-A" />
+      </arch_variants>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VMLA_s/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckAdvSIMDEnabled.0" file="shared_pseudocode.xml" hover="function: CheckAdvSIMDEnabled()">CheckAdvSIMDEnabled</a>();
+    op2 = <a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a link="impl-aarch32.Din.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) Din[integer n]">Din</a>[m],index,esize];  op2val = <a link="impl-shared.Int.2" file="shared_pseudocode.xml" hover="function: integer Int(bits(N) x, boolean unsigned)">Int</a>(op2, unsigned);
+    for r = 0 to regs-1
+        for e = 0 to elements-1
+            op1 = <a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a link="impl-aarch32.Din.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) Din[integer n]">Din</a>[n+r],e,esize];  op1val = <a link="impl-shared.Int.2" file="shared_pseudocode.xml" hover="function: integer Int(bits(N) x, boolean unsigned)">Int</a>(op1, unsigned);
+            if floating_point then
+                fp_addend = if add then <a link="impl-shared.FPMul.3" file="shared_pseudocode.xml" hover="function: bits(N) FPMul(bits(N) op1, bits(N) op2, FPCRType fpcr)">FPMul</a>(op1,op2,<a link="impl-aarch32.StandardFPSCRValue.0" file="shared_pseudocode.xml" hover="function: FPCRType StandardFPSCRValue()">StandardFPSCRValue</a>()) else <a link="impl-shared.FPNeg.1" file="shared_pseudocode.xml" hover="function: bits(N) FPNeg(bits(N) op)">FPNeg</a>(<a link="impl-shared.FPMul.3" file="shared_pseudocode.xml" hover="function: bits(N) FPMul(bits(N) op1, bits(N) op2, FPCRType fpcr)">FPMul</a>(op1,op2,<a link="impl-aarch32.StandardFPSCRValue.0" file="shared_pseudocode.xml" hover="function: FPCRType StandardFPSCRValue()">StandardFPSCRValue</a>()));
+                <a link="impl-shared.Elem.write.3" file="shared_pseudocode.xml" hover="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d+r],e,esize] = <a link="impl-shared.FPAdd.3" file="shared_pseudocode.xml" hover="function: bits(N) FPAdd(bits(N) op1, bits(N) op2, FPCRType fpcr)">FPAdd</a>(<a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a link="impl-aarch32.Din.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) Din[integer n]">Din</a>[d+r],e,esize], fp_addend, <a link="impl-aarch32.StandardFPSCRValue.0" file="shared_pseudocode.xml" hover="function: FPCRType StandardFPSCRValue()">StandardFPSCRValue</a>());
+            else
+                addend = if add then op1val*op2val else -op1val*op2val;
+                if long_destination then
+                    <a link="impl-shared.Elem.write.3" file="shared_pseudocode.xml" hover="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a link="impl-aarch32.Q.write.1" file="shared_pseudocode.xml" hover="accessor: Q[integer n] = bits(128) value">Q</a>[d&gt;&gt;1],e,2*esize] = <a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a link="impl-aarch32.Qin.read.1" file="shared_pseudocode.xml" hover="accessor: bits(128) Qin[integer n]">Qin</a>[d&gt;&gt;1],e,2*esize] + addend;
+                else
+                    <a link="impl-shared.Elem.write.3" file="shared_pseudocode.xml" hover="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d+r],e,esize] = <a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a link="impl-aarch32.Din.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) Din[integer n]">Din</a>[d+r],e,esize] + addend;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

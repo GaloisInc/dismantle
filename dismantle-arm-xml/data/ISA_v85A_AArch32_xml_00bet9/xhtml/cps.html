@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>CPS, CPSID, CPSIE -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">CPS, CPSID, CPSIE</h2><p id="desc">
+      <p class="aml">Change PE State changes one or more of the <a class="armarm-xref" title="Reference to Armv8 ARM section">PSTATE</a>.{A, I, F} interrupt mask bits and, optionally, the <a class="armarm-xref" title="Reference to Armv8 ARM section">PSTATE</a>.M mode field, without changing any other <a class="armarm-xref" title="Reference to Armv8 ARM section">PSTATE</a> bits.</p>
+      <p class="aml"><span class="asm-code">CPS</span> is treated as <span class="asm-code">NOP</span> if executed in User mode unless it is defined as being <span class="arm-defined-word">constrained unpredictable</span> elsewhere in this section.</p>
+      <p class="aml">The PE checks whether the value being written to PSTATE.M is legal. See <a class="armarm-xref" title="Reference to Armv8 ARM section">Illegal changes to PSTATE.M</a>.</p>
+    </p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t1">T1</a>
+       and 
+      <a href="#t2">T2</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><p class="desc"></p><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td class="r">0</td><td colspan="2" class="lr">imod</td><td class="lr">M</td><td class="lr">0</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">(0)</td><td class="lr">A</td><td class="lr">I</td><td class="lr">F</td><td class="lr">0</td><td colspan="5" class="lr">mode</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">CPS<span class="bitdiff"> (imod == 00 &amp;&amp; M == 1)</span></h4><p class="asm-code"><a name="CPS_A1_AS" id="CPS_A1_AS"></a>CPS{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} #<a href="#mode" title="Number of mode to change to [0-31] (field &quot;mode&quot;)">&lt;mode&gt;</a>
+        //
+      
+        (Cannot be conditional)
+      </p></div><div class="encoding"><h4 class="encoding">CPSID<span class="bitdiff"> (imod == 11 &amp;&amp; M == 0)</span></h4><p class="asm-code"><a name="CPSID_A1_AS" id="CPSID_A1_AS"></a>CPSID{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a>
+        //
+      
+        (Cannot be conditional)
+      </p></div><div class="encoding"><h4 class="encoding">CPSID<span class="bitdiff"> (imod == 11 &amp;&amp; M == 1)</span></h4><p class="asm-code"><a name="CPSID_A1_ASM" id="CPSID_A1_ASM"></a>CPSID{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a> , #<a href="#mode" title="Number of mode to change to [0-31] (field &quot;mode&quot;)">&lt;mode&gt;</a>
+        //
+      
+        (Cannot be conditional)
+      </p></div><div class="encoding"><h4 class="encoding">CPSIE<span class="bitdiff"> (imod == 10 &amp;&amp; M == 0)</span></h4><p class="asm-code"><a name="CPSIE_A1_AS" id="CPSIE_A1_AS"></a>CPSIE{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a>
+        //
+      
+        (Cannot be conditional)
+      </p></div><div class="encoding"><h4 class="encoding">CPSIE<span class="bitdiff"> (imod == 10 &amp;&amp; M == 1)</span></h4><p class="asm-code"><a name="CPSIE_A1_ASM" id="CPSIE_A1_ASM"></a>CPSIE{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a> , #<a href="#mode" title="Number of mode to change to [0-31] (field &quot;mode&quot;)">&lt;mode&gt;</a>
+        //
+      
+        (Cannot be conditional)
+      </p></div><p class="pseudocode">if mode != '00000' &amp;&amp; M == '0' then UNPREDICTABLE;
+if (imod&lt;1&gt; == '1' &amp;&amp; A:I:F == '000') || (imod&lt;1&gt; == '0' &amp;&amp; A:I:F != '000') then UNPREDICTABLE;
+enable = (imod == '10');  disable = (imod == '11');  changemode = (M == '1');
+affectA = (A == '1');  affectI = (I == '1');  affectF = (F == '1');
+if (imod == '00' &amp;&amp; M == '0') || imod == '01' then UNPREDICTABLE;</p><h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">imod == '01'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li></ul><p>If <span class="pseudocode">imod == '00' &amp;&amp; M == '0'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li></ul><p>If <span class="pseudocode">mode != '00000' &amp;&amp; M == '0'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction executes with the additional decode: changemode = TRUE.</li><li>The instruction executes as described, and the value specified by mode is ignored. There are no additional side-effects.</li></ul><p>If <span class="pseudocode">imod&lt;1&gt; == '1' &amp;&amp; A:I:F == '000'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction behaves as if imod&lt;1&gt; == '0'.</li><li>The instruction behaves as if A:I:F has an <span class="arm-defined-word">unknown</span> nonzero value.</li></ul><p>If <span class="pseudocode">imod&lt;1&gt; == '0' &amp;&amp; A:I:F != '000'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction behaves as if imod&lt;1&gt; == '1'.</li><li>The instruction behaves as if A:I:F == '000'.</li></ul>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><p class="desc"></p><div class="regdiagram-16"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td class="r">1</td><td class="lr">1</td><td class="lr">im</td><td class="lr">(0)</td><td class="lr">A</td><td class="lr">I</td><td class="lr">F</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">CPSID<span class="bitdiff"> (im == 1)</span></h4><p class="asm-code"><a name="CPSID_T1_AS" id="CPSID_T1_AS"></a>CPSID{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a>
+        //
+      
+        (Not permitted in IT block)
+      </p></div><div class="encoding"><h4 class="encoding">CPSIE<span class="bitdiff"> (im == 0)</span></h4><p class="asm-code"><a name="CPSIE_T1_AS" id="CPSIE_T1_AS"></a>CPSIE{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a>
+        //
+      
+        (Not permitted in IT block)
+      </p></div><p class="pseudocode">if A:I:F == '000' then UNPREDICTABLE;
+enable = (im == '0');  disable = (im == '1');  changemode = FALSE;
+affectA = (A == '1');  affectI = (I == '1');  affectF = (F == '1');
+if <a href="shared_pseudocode.html#impl-aarch32.InITBlock.0" title="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;</p><h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">A:I:F == '000'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li></ul>
+    <h3 class="classheading"><a name="t2" id="t2"></a>T2</h3><p class="desc"></p><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td class="r">0</td><td class="lr">(1)</td><td class="lr">(1)</td><td class="lr">(1)</td><td class="lr">(1)</td><td class="l">1</td><td class="r">0</td><td class="lr">(0)</td><td class="lr">0</td><td class="lr">(0)</td><td colspan="2" class="lr">imod</td><td class="lr">M</td><td class="lr">A</td><td class="lr">I</td><td class="lr">F</td><td colspan="5" class="lr">mode</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">CPS<span class="bitdiff"> (imod == 00 &amp;&amp; M == 1)</span></h4><p class="asm-code"><a name="CPS_T2_AS" id="CPS_T2_AS"></a>CPS{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} #<a href="#mode" title="Number of mode to change to [0-31] (field &quot;mode&quot;)">&lt;mode&gt;</a>
+        //
+      
+        (Not permitted in IT block)
+      </p></div><div class="encoding"><h4 class="encoding">CPSID<span class="bitdiff"> (imod == 11 &amp;&amp; M == 0)</span></h4><p class="asm-code"><a name="CPSID_T2_AS" id="CPSID_T2_AS"></a>CPSID.W <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a>
+        //
+      
+        (Not permitted in IT block)
+      </p></div><div class="encoding"><h4 class="encoding">CPSID<span class="bitdiff"> (imod == 11 &amp;&amp; M == 1)</span></h4><p class="asm-code"><a name="CPSID_T2_ASM" id="CPSID_T2_ASM"></a>CPSID{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a>, #<a href="#mode" title="Number of mode to change to [0-31] (field &quot;mode&quot;)">&lt;mode&gt;</a>
+        //
+      
+        (Not permitted in IT block)
+      </p></div><div class="encoding"><h4 class="encoding">CPSIE<span class="bitdiff"> (imod == 10 &amp;&amp; M == 0)</span></h4><p class="asm-code"><a name="CPSIE_T2_AS" id="CPSIE_T2_AS"></a>CPSIE.W <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a>
+        //
+      
+        (Not permitted in IT block)
+      </p></div><div class="encoding"><h4 class="encoding">CPSIE<span class="bitdiff"> (imod == 10 &amp;&amp; M == 1)</span></h4><p class="asm-code"><a name="CPSIE_T2_ASM" id="CPSIE_T2_ASM"></a>CPSIE{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#iflags" title="Sequence of one or more of following, specifying which interrupt mask bits are affected:&#10;$a: Sets the A bit in the instruction, causing the specified effect on {xref{ARMARM_BEIDIGBH}{PSTATE}}">&lt;iflags&gt;</a>, #<a href="#mode" title="Number of mode to change to [0-31] (field &quot;mode&quot;)">&lt;mode&gt;</a>
+        //
+      
+        (Not permitted in IT block)
+      </p></div><p class="pseudocode">if imod == '00' &amp;&amp; M == '0' then SEE "Hint instructions";
+if mode != '00000' &amp;&amp; M == '0' then UNPREDICTABLE;
+if (imod&lt;1&gt; == '1' &amp;&amp; A:I:F == '000') || (imod&lt;1&gt; == '0' &amp;&amp; A:I:F != '000') then UNPREDICTABLE;
+enable = (imod == '10');  disable = (imod == '11');  changemode = (M == '1');
+affectA = (A == '1');  affectI = (I == '1');  affectF = (F == '1');
+if imod == '01' || <a href="shared_pseudocode.html#impl-aarch32.InITBlock.0" title="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;</p><h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">imod == '01'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li></ul><p>If <span class="pseudocode">mode != '00000' &amp;&amp; M == '0'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction executes with the additional decode: changemode = TRUE.</li><li>The instruction executes as described, and the value specified by mode is ignored. There are no additional side-effects.</li></ul><p>If <span class="pseudocode">imod&lt;1&gt; == '1' &amp;&amp; A:I:F == '000'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction behaves as if imod&lt;1&gt; == '0'.</li><li>The instruction behaves as if A:I:F has an <span class="arm-defined-word">unknown</span> nonzero value.</li></ul><p>If <span class="pseudocode">imod&lt;1&gt; == '0' &amp;&amp; A:I:F != '000'</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction behaves as if imod&lt;1&gt; == '1'.</li><li>The instruction behaves as if A:I:F == '000'.</li></ul>
+  <p class="encoding-notes">
+      <p class="aml">Hint instructions: In encoding T2, if the imod field is 00 and the M bit is 0, a hint instruction is encoded. To determine which hint instruction, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Branches and miscellaneous control</a>.</p>
+      <p class="aml">For more information about the <span class="arm-defined-word">constrained unpredictable</span> behavior of this instruction, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Architectural Constraints on UNPREDICTABLE behaviors</a>.</p>
+    </p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;iflags&gt;</td><td><a name="iflags" id="iflags"></a>
+        
+          <p class="aml">Is a sequence of one or more of the following, specifying which interrupt mask bits are affected:</p>
+          <dl>
+            <dt>a</dt><dd>Sets the A bit in the instruction, causing the specified effect on <a class="armarm-xref" title="Reference to Armv8 ARM section">PSTATE</a>.A, the SError interrupt mask bit.</dd>
+            <dt>i</dt><dd>Sets the I bit in the instruction, causing the specified effect on <a class="armarm-xref" title="Reference to Armv8 ARM section">PSTATE</a>.I, the IRQ interrupt mask bit.</dd>
+            <dt>f</dt><dd>Sets the F bit in the instruction, causing the specified effect on <a class="armarm-xref" title="Reference to Armv8 ARM section">PSTATE</a>.F, the FIQ interrupt mask bit.</dd>
+          </dl>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;mode&gt;</td><td><a name="mode" id="mode"></a>
+        
+          <p class="aml">Is the number of the mode to change to, in the range 0 to 31, encoded in the "mode" field.</p>
+        
+      </td></tr></table></div><p class="syntax-notes"></p>
+    <div class="ps" psname="commonps"><a name="commonps" id="commonps"></a><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode">if <a href="shared_pseudocode.html#impl-shared.CurrentInstrSet.0" title="function: InstrSet CurrentInstrSet()">CurrentInstrSet</a>() == <a href="shared_pseudocode.html#InstrSet_A32" title="enumeration InstrSet {InstrSet_A64, InstrSet_A32, InstrSet_T32}">InstrSet_A32</a> then
+    EncodingSpecificOperations();
+    if PSTATE.EL != <a href="shared_pseudocode.html#EL0" title="constant bits(2) EL0 = '00'">EL0</a> then
+        if enable then
+            if affectA then PSTATE.A = '0';
+            if affectI then PSTATE.I = '0';
+            if affectF then PSTATE.F = '0';
+        if disable then
+            if affectA then PSTATE.A = '1';
+            if affectI then PSTATE.I = '1';
+            if affectF then PSTATE.F = '1';
+        if changemode then
+            // AArch32.WriteModeByInstr() sets PSTATE.IL to 1 if this is an illegal mode change.
+            <a href="shared_pseudocode.html#AArch32.WriteModeByInstr.1" title="function: AArch32.WriteModeByInstr(bits(5) mode)">AArch32.WriteModeByInstr</a>(mode);
+else
+    EncodingSpecificOperations();
+    if PSTATE.EL != <a href="shared_pseudocode.html#EL0" title="constant bits(2) EL0 = '00'">EL0</a> then
+        if enable then
+            if affectA then PSTATE.A = '0';
+            if affectI then PSTATE.I = '0';
+            if affectF then PSTATE.F = '0';
+        if disable then
+            if affectA then PSTATE.A = '1';
+            if affectI then PSTATE.I = '1';
+            if affectF then PSTATE.F = '1';
+        if changemode then
+            // AArch32.WriteModeByInstr() sets PSTATE.IL to 1 if this is an illegal mode change.
+            <a href="shared_pseudocode.html#AArch32.WriteModeByInstr.1" title="function: AArch32.WriteModeByInstr(bits(5) mode)">AArch32.WriteModeByInstr</a>(mode);</p>
+    </div>
+  <hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VSDOT_s" title="VSDOT (by element) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VSDOT" />
+  </docvars>
+  <heading>VSDOT (by element)</heading>
+  <desc>
+    <brief>
+      <para>Dot Product index form with signed integers.</para>
+    </brief>
+    <authored>
+      <para>Dot Product index form with signed integers. This instruction performs the dot product of the four 8-bit elements in each 32-bit element of the first source register with the four 8-bit elements of an indexed 32-bit element in the second source register, accumulating the result into the corresponding 32-bit element of the destination register.</para>
+      <para>In Armv8.2 and Armv8.3, this is an <arm-defined-word>optional</arm-defined-word> instruction. From Armv8.4 it is mandatory for all implementations to support it.</para>
+      <note>
+        <para><xref linkend="AArch32.id_isar6">ID_ISAR6</xref>.DP indicates whether this instruction is supported.</para>
+      </note>
+    </authored>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VSDOT" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <arch_variants>
+        <arch_variant name="ARMv8.2" />
+      </arch_variants>
+      <regdiagram form="32" psname="aarch32/instrs/VDOT_s/A1_A.txt" tworows="1">
+        <box hibit="31" width="8" settings="8">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" name="op1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" name="op2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Vn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="10" name="op3" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="9" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="8" name="op4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="7" name="N" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" name="U" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VSDOT_s_A1_D" oneofinclass="2" oneof="4" label="64-bit SIMD vector" bitdiffs="Q == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VSDOT" />
+          <docvar key="simdvectorsize" value="double" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VSDOT</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.S8 </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="dn" hover="First 64-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Dn&gt;</a><text>, </text><a link="dm" hover="Second 64-bit SIMD&amp;FP source register (field &quot;Vm&quot;)">&lt;Dm&gt;</a><text>[</text><a link="index" hover="Element index [0-1] (field &quot;M&quot;)">&lt;index&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="VSDOT_s_A1_Q" oneofinclass="2" oneof="4" label="128-bit SIMD vector" bitdiffs="Q == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VSDOT" />
+          <docvar key="simdvectorsize" value="quad" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VSDOT</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.S8 </text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, </text><a link="qn" hover="First 128-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Qn&gt;</a><text>, </text><a link="dm" hover="Second 64-bit SIMD&amp;FP source register (field &quot;Vm&quot;)">&lt;Dm&gt;</a><text>[</text><a link="index" hover="Element index [0-1] (field &quot;M&quot;)">&lt;index&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VDOT_s/A1_A.txt" mylink="aarch32.instrs.VDOT_s.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if !<a link="impl-shared.HaveDOTPExt.0" file="shared_pseudocode.xml" hover="function: boolean HaveDOTPExt()">HaveDOTPExt</a>() then UNDEFINED;
+if Q == '1' &amp;&amp; (Vd&lt;0&gt; == '1' || Vn&lt;0&gt; == '1') then UNDEFINED;
+boolean signed = (U=='0');
+integer d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);
+integer n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(N:Vn);
+integer m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm&lt;3:0&gt;);
+integer index = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M);
+integer esize = 32;
+integer regs = if Q == '1' then 2 else 1;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VSDOT" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <arch_variants>
+        <arch_variant name="ARMv8.2" />
+      </arch_variants>
+      <regdiagram form="16x2" psname="aarch32/instrs/VDOT_s/T1_A.txt" tworows="1">
+        <box hibit="31" width="8" settings="8">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" name="op1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" name="op2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Vn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="10" name="op3" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="9" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="8" name="op4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="7" name="N" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" name="U" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VSDOT_s_T1_D" oneofinclass="2" oneof="4" label="64-bit SIMD vector" bitdiffs="Q == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VSDOT" />
+          <docvar key="simdvectorsize" value="double" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VSDOT</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.S8 </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="dn" hover="First 64-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Dn&gt;</a><text>, </text><a link="dm" hover="Second 64-bit SIMD&amp;FP source register (field &quot;Vm&quot;)">&lt;Dm&gt;</a><text>[</text><a link="index" hover="Element index [0-1] (field &quot;M&quot;)">&lt;index&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="VSDOT_s_T1_Q" oneofinclass="2" oneof="4" label="128-bit SIMD vector" bitdiffs="Q == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VSDOT" />
+          <docvar key="simdvectorsize" value="quad" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VSDOT</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.S8 </text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, </text><a link="qn" hover="First 128-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Qn&gt;</a><text>, </text><a link="dm" hover="Second 64-bit SIMD&amp;FP source register (field &quot;Vm&quot;)">&lt;Dm&gt;</a><text>[</text><a link="index" hover="Element index [0-1] (field &quot;M&quot;)">&lt;index&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VDOT_s/T1_A.txt" mylink="aarch32.instrs.VDOT_s.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;
+if !<a link="impl-shared.HaveDOTPExt.0" file="shared_pseudocode.xml" hover="function: boolean HaveDOTPExt()">HaveDOTPExt</a>() then UNDEFINED;
+if Q == '1' &amp;&amp; (Vd&lt;0&gt; == '1' || Vn&lt;0&gt; == '1') then UNDEFINED;
+boolean signed = (U=='0');
+integer d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);
+integer n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(N:Vn);
+integer m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm&lt;3:0&gt;);
+integer index = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M);
+integer esize = 32;
+integer regs = if Q == '1' then 2 else 1;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VSDOT_s_A1_D, VSDOT_s_T1_D" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VSDOT_s_A1_Q, VSDOT_s_T1_Q" symboldefcount="1">
+      <symbol link="qd">&lt;Qd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 128-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field as &lt;Qd&gt;*2.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VSDOT_s_A1_Q, VSDOT_s_T1_Q" symboldefcount="1">
+      <symbol link="qn">&lt;Qn&gt;</symbol>
+      <account encodedin="N:Vn">
+        <intro>
+          <para>Is the 128-bit name of the first SIMD&amp;FP source register, encoded in the "N:Vn" field as &lt;Qn&gt;*2.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VSDOT_s_A1_D, VSDOT_s_T1_D" symboldefcount="1">
+      <symbol link="dd">&lt;Dd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VSDOT_s_A1_D, VSDOT_s_T1_D" symboldefcount="1">
+      <symbol link="dn">&lt;Dn&gt;</symbol>
+      <account encodedin="N:Vn">
+        <intro>
+          <para>Is the 64-bit name of the first SIMD&amp;FP source register, encoded in the "N:Vn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VSDOT_s_A1_D, VSDOT_s_T1_D" symboldefcount="1">
+      <symbol link="dm">&lt;Dm&gt;</symbol>
+      <account encodedin="Vm">
+        <intro>
+          <para>Is the 64-bit name of the second SIMD&amp;FP source register, encoded in the "Vm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VSDOT_s_A1_D, VSDOT_s_T1_D" symboldefcount="1">
+      <symbol link="index">&lt;index&gt;</symbol>
+      <account encodedin="M">
+        <intro>
+          <para>Is the element index in the range 0 to 1, encoded in the "M" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VDOT_s/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">bits(64) operand1;
+bits(64) operand2 = <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[m];
+bits(64) result;
+<a link="impl-aarch32.CheckAdvSIMDEnabled.0" file="shared_pseudocode.xml" hover="function: CheckAdvSIMDEnabled()">CheckAdvSIMDEnabled</a>();
+for r = 0 to regs-1
+    operand1 = <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[n+r];
+    result = <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[d+r];
+    integer element1, element2;
+    for e = 0 to 1
+        integer res = 0;
+        for i = 0 to 3
+            if signed then
+                element1 = <a link="impl-shared.SInt.1" file="shared_pseudocode.xml" hover="function: integer SInt(bits(N) x)">SInt</a>(<a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[operand1, 4 * e + i, esize DIV 4]);
+                element2 = <a link="impl-shared.SInt.1" file="shared_pseudocode.xml" hover="function: integer SInt(bits(N) x)">SInt</a>(<a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[operand2, 4 * index + i, esize DIV 4]);
+            else
+                element1 = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(<a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[operand1, 4 * e + i, esize DIV 4]);
+                element2 = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(<a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[operand2, 4 * index + i, esize DIV 4]);
+            res = res + element1 * element2;
+        <a link="impl-shared.Elem.write.3" file="shared_pseudocode.xml" hover="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[result, e, esize] = <a link="impl-shared.Elem.read.3" file="shared_pseudocode.xml" hover="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[result, e, esize] + res;
+    <a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d+r] = result;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

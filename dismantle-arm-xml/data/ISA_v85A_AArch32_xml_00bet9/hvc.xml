@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="HVC" title="HVC -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="HVC" />
+  </docvars>
+  <heading>HVC</heading>
+  <desc>
+    <brief>
+      <para>Hypervisor Call</para>
+    </brief>
+    <authored>
+      <para>Hypervisor Call causes a Hypervisor Call exception. For more information see <xref linkend="BEIBEBHJ">Hypervisor Call (HVC) exception</xref>.  Non-secure software executing at EL1 can use this instruction to call the hypervisor to request a service.</para>
+      <para>The <instruction>HVC</instruction> instruction is:</para>
+      <list type="unordered">
+        <listitem><content><arm-defined-word>undefined</arm-defined-word> in Secure state, and in User mode in Non-secure state.</content></listitem>
+        <listitem><content>When <xref linkend="AArch32.scr_s">SCR</xref>.HCE is set to 0, <arm-defined-word>undefined</arm-defined-word> in Non-secure EL1 modes and <arm-defined-word>constrained unpredictable</arm-defined-word> in Hyp mode.</content></listitem>
+      </list>
+      <para>On executing an <instruction>HVC</instruction> instruction, the <xref linkend="AArch32.hsr">HSR, Hyp Syndrome Register</xref> reports the exception as a Hypervisor Call exception, using the EC value <hexnumber>0x12</hexnumber>, and captures the value of the immediate argument, see <xref linkend="BEIDBEAG">Use of the HSR</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="HVC" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/HVC/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="2" name="opc" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="12" name="imm12" usename="1">
+          <c colspan="12"></c>
+        </box>
+        <box hibit="7" width="4" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="HVC_A1" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="HVC" />
+        </docvars>
+        <asmtemplate><text>HVC</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a>{#}</a><a link="imm16_1" hover="16-bit unsigned immediate [0-65535] (field &quot;imm12:imm4&quot;)">&lt;imm16&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/HVC/A1_A.txt" mylink="aarch32.instrs.HVC.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if cond != '1110' then UNPREDICTABLE;
+imm16 = imm12:imm4;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">cond != '1110'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNCOND" />
+          <cu_type constraint="Constraint_COND" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="HVC" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/HVC/T1_A.txt">
+        <box hibit="31" width="11" settings="11">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" name="o1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="13" name="o2" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="11" width="12" name="imm12" usename="1">
+          <c colspan="12"></c>
+        </box>
+      </regdiagram>
+      <encoding name="HVC_T1" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="HVC" />
+        </docvars>
+        <asmtemplate><text>HVC</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a>{#}</a><a link="imm16" hover="16-bit unsigned immediate [0-65535] (field &quot;imm4:imm12&quot;)">&lt;imm16&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/HVC/T1_A.txt" mylink="aarch32.instrs.HVC.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">imm16 = imm4:imm12;
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="HVC_A1, HVC_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. An <instruction>HVC</instruction> instruction must be unconditional.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="HVC_A1" symboldefcount="1">
+      <symbol link="imm16_1">&lt;imm16&gt;</symbol>
+      <account encodedin="imm12:imm4">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is a 16-bit unsigned immediate, in the range 0 to 65535, encoded in the "imm12:imm4" field. This value is for assembly and disassembly only. It is reported in the HSR but otherwise is ignored by hardware. An HVC handler might interpret imm16, for example to determine the required service.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="HVC_T1" symboldefcount="2">
+      <symbol link="imm16">&lt;imm16&gt;</symbol>
+      <account encodedin="imm4:imm12">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is a 16-bit unsigned immediate, in the range 0 to 65535, encoded in the "imm4:imm12" field. This value is for assembly and disassembly only. It is reported in the HSR but otherwise is ignored by hardware. An HVC handler might interpret imm16, for example to determine the required service.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/HVC/Op_AS.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">EncodingSpecificOperations();
+if !<a link="impl-shared.HaveEL.1" file="shared_pseudocode.xml" hover="function: boolean HaveEL(bits(2) el)">HaveEL</a>(<a link="EL2" file="shared_pseudocode.xml" hover="constant bits(2) EL2 = '10'">EL2</a>) || PSTATE.EL == <a link="EL0" file="shared_pseudocode.xml" hover="constant bits(2) EL0 = '00'">EL0</a> || (<a link="impl-shared.IsSecure.0" file="shared_pseudocode.xml" hover="function: boolean IsSecure()">IsSecure</a>() &amp;&amp; !<a link="impl-shared.IsSecureEL2Enabled.0" file="shared_pseudocode.xml" hover="function: boolean IsSecureEL2Enabled()">IsSecureEL2Enabled</a>()) then
+    UNDEFINED;
+
+if <a link="impl-shared.HaveEL.1" file="shared_pseudocode.xml" hover="function: boolean HaveEL(bits(2) el)">HaveEL</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) then
+    if <a link="impl-shared.ELUsingAArch32.1" file="shared_pseudocode.xml" hover="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) &amp;&amp; SCR.HCE == '0' &amp;&amp; PSTATE.EL == <a link="EL2" file="shared_pseudocode.xml" hover="constant bits(2) EL2 = '10'">EL2</a> then
+        UNPREDICTABLE;
+    else
+        hvc_enable = <a link="impl-shared.SCR_GEN.read.0" file="shared_pseudocode.xml" hover="accessor: SCRType SCR_GEN[]">SCR_GEN</a>[].HCE;
+else
+    hvc_enable = if <a link="impl-shared.ELUsingAArch32.1" file="shared_pseudocode.xml" hover="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a link="EL2" file="shared_pseudocode.xml" hover="constant bits(2) EL2 = '10'">EL2</a>) then NOT(HCR.HCD) else NOT(HCR_EL2.HCD);
+
+if hvc_enable == '0' then
+    UNDEFINED;
+else
+    <a link="AArch32.CallHypervisor.1" file="shared_pseudocode.xml" hover="function: AArch32.CallHypervisor(bits(16) immediate)">AArch32.CallHypervisor</a>(imm16);</pstext>
+    </ps>
+  </ps_section>
+  <constrained_unpredictables ps_block="Operation">
+    <cu_case>
+      <cu_cause>
+        <pstext mayhavelinks="1">ELUsingAArch32(EL3) &amp;&amp; SCR.HCE == '0' &amp;&amp; PSTATE.EL == EL2</pstext>
+      </cu_cause>
+      <cu_type constraint="Constraint_UNDEF" />
+      <cu_type constraint="Constraint_NOP" />
+    </cu_case>
+  </constrained_unpredictables>
+</instructionsection>

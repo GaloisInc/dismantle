@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="LDM" title="LDM, LDMIA, LDMFD -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="LDM" />
+  </docvars>
+  <heading>LDM, LDMIA, LDMFD</heading>
+  <desc>
+    <brief>
+      <para>Load Multiple (Increment After, Full Descending)</para>
+    </brief>
+    <authored>
+      <para>Load Multiple (Increment After, Full Descending) loads multiple registers from consecutive memory locations using an address from a base register. The consecutive memory locations start at this address, and the address just above the highest of those locations can optionally be written back to the base register.</para>
+      <para>The lowest-numbered register is loaded from the lowest memory address, through to the highest-numbered register from the highest memory address. See also <xref linkend="CHDDBEDG">Encoding of lists of general-purpose registers and the PC</xref>.</para>
+      <para>Armv8.2 permits the deprecation of some Load Multiple ordering behaviors in AArch32 state, for more information see <xref linkend="v8.2.LSMAOC">ARMv8.2-LSMAOC</xref>. The registers loaded can include the PC, causing a branch to a loaded address. This is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>. Related system instructions are <xref linkend="A32T32-base.instructions.LDM_u">LDM (User registers)</xref> and <xref linkend="A32T32-base.instructions.LDM_e">LDM (exception return)</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, the timing of this instruction is insensitive to the value of the data being loaded or stored.</para>
+  </operationalnotes>
+  <alias_list howmany="1">
+    <alias_list_intro>This instruction is used by the alias </alias_list_intro>
+    <aliasref aliaspageid="POP_LDM" aliasfile="pop_ldm.xml" hover="Pop Multiple Registers from Stack" punct=".">
+      <text>POP (multiple registers)</text>
+      <aliaspref labels="T2">W == '1' &amp;&amp; Rn == '1101' &amp;&amp; <a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(P:M:register_list) &gt; 1</aliaspref>
+      <aliaspref labels="A1">W == '1' &amp;&amp; Rn == '1101' &amp;&amp; <a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(register_list) &gt; 1</aliaspref>
+    </aliasref>
+    <alias_list_outro>
+      <text>  See </text>
+      <aliastablelink />
+      <text> below for details of when the alias is preferred.</text>
+    </alias_list_outro>
+  </alias_list>
+  <classes>
+    <classesintro count="3">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="3" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="LDM" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/LDM/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="23" name="U" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="op" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="16" name="register_list" usename="1">
+          <c colspan="16"></c>
+        </box>
+      </regdiagram>
+      <encoding name="LDM_A1" oneofinclass="1" oneof="3" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="LDM" />
+        </docvars>
+        <asmtemplate comment="Preferred syntax"><text>LDM</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33_1" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_2" hover="List of one or more registers to be loaded">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Alternate syntax, Full Descending stack"><text>LDMFD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33_1" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_2" hover="List of one or more registers to be loaded">&lt;registers&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/LDM/A1_A.txt" mylink="aarch32.instrs.LDM.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  registers = register_list;  wback = (W == '1');
+if n == 15 || <a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers) &lt; 1 then UNPREDICTABLE;
+if wback &amp;&amp; registers&lt;n&gt; == '1' then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">BitCount(registers) &lt; 1</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction executes as <instruction>LDM</instruction> with the same addressing mode but targeting an unspecified set of registers. These registers might include R15. If the instruction specifies writeback, the modification to the base address on writeback might differ from the number of registers loaded.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">wback &amp;&amp; registers&lt;n&gt; == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction performs all of the loads using the specified addressing mode and the content of the register that is written back is <arm-defined-word>unknown</arm-defined-word>. In addition, if an exception occurs during such an instruction, the base address might be corrupted so that the instruction cannot be repeated.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="3" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="LDM" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/LDM/T1_A.txt">
+        <box hibit="31" width="4" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="27" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="26" width="3" name="Rn" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="23" width="8" name="register_list" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="LDM_T1" oneofinclass="1" oneof="3" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="LDM" />
+        </docvars>
+        <asmtemplate comment="Preferred syntax"><text>LDM</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register">{!}</a><text>, </text><a link="registers" hover="List of one or more registers to be loaded (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Alternate syntax, Full Descending stack"><text>LDMFD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register">{!}</a><text>, </text><a link="registers" hover="List of one or more registers to be loaded (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/LDM/T1_A.txt" mylink="aarch32.instrs.LDM.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  registers = '00000000':register_list;  wback = (registers&lt;n&gt; == '0');
+if <a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers) &lt; 1 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">BitCount(registers) &lt; 1</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction executes as <instruction>LDM</instruction> with the same addressing mode but targeting an unspecified set of registers. These registers might include R15. If the instruction specifies writeback, the modification to the base address on writeback might differ from the number of registers loaded.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T2" oneof="3" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="LDM" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/LDM/T2_A.txt">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" width="2" name="opc" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="14" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="13" width="14" name="register_list" usename="1">
+          <c colspan="14"></c>
+        </box>
+      </regdiagram>
+      <encoding name="LDM_T2" oneofinclass="1" oneof="3" label="T2">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="LDM" />
+        </docvars>
+        <asmtemplate comment="Preferred syntax, if &lt;Rn&gt;, '!' and &lt;registers&gt; can be represented in T1"><text>LDM</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>.W </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33_1" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_1" hover="List of one or more registers to be loaded (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Alternate syntax, Full Descending stack, if &lt;Rn&gt;, '!' and &lt;registers&gt; can be represented in T1"><text>LDMFD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>.W </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33_1" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_1" hover="List of one or more registers to be loaded (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Preferred syntax"><text>LDM</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33_1" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_1" hover="List of one or more registers to be loaded (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Alternate syntax, Full Descending stack"><text>LDMFD</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33_1" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_1" hover="List of one or more registers to be loaded (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/LDM/T2_A.txt" mylink="aarch32.instrs.LDM.T2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  registers = P:M:register_list;  wback = (W == '1');
+if n == 15 || <a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers) &lt; 2 || (P == '1' &amp;&amp; M == '1') then UNPREDICTABLE;
+if wback &amp;&amp; registers&lt;n&gt; == '1' then UNPREDICTABLE;
+if registers&lt;13&gt; == '1' then UNPREDICTABLE;
+if registers&lt;15&gt; == '1' &amp;&amp; <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() &amp;&amp; !<a link="impl-aarch32.LastInITBlock.0" file="shared_pseudocode.xml" hover="function: boolean LastInITBlock()">LastInITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T2" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">BitCount(registers) &lt; 1</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction executes as <instruction>LDM</instruction> with the same addressing mode but targeting an unspecified set of registers. These registers might include R15. If the instruction specifies writeback, the modification to the base address on writeback might differ from the number of registers loaded.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">wback &amp;&amp; registers&lt;n&gt; == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction performs all of the loads using the specified addressing mode and the content of the register that is written back is <arm-defined-word>unknown</arm-defined-word>. In addition, if an exception occurs during such an instruction, the base address might be corrupted so that the instruction cannot be repeated.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">BitCount(registers) == 1</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction loads a single register using the specified addressing modes.</cu_type_text>
+          </cu_type>
+          <cu_type>
+            <cu_type_text>The instruction executes as <instruction>LDM</instruction> with the same addressing mode but targeting an unspecified set of registers. These registers might include R15.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">registers&lt;13&gt; == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction performs all of the loads using the specified addressing mode, but R13 is <arm-defined-word>unknown</arm-defined-word>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">P == '1' &amp;&amp; M == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction loads the register list and either R14 or R15, both R14 and R15, or neither of these registers.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="LDM_A1, LDM_T1, LDM_T2" symboldefcount="1">
+      <symbol link="ia">IA</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is an optional suffix for the Increment After form.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDM_A1, LDM_T1, LDM_T2" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDM_A1, LDM_T1, LDM_T2" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDM_A1, LDM_T1, LDM_T2" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose base register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDM_A1, LDM_T2" symboldefcount="1">
+      <symbol link="0d33_1">!</symbol>
+      <account encodedin="W">
+        <intro>
+          <para>For encoding A1 and T2: the address adjusted by the size of the data loaded is written back to the base register. If specified, it is encoded in the "W" field as 1, otherwise this field defaults to 0.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDM_T1" symboldefcount="2">
+      <symbol link="0d33">!</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: the address adjusted by the size of the data loaded is written back to the base register. It is omitted if <syntax>&lt;Rn&gt;</syntax> is included in <syntax>&lt;registers&gt;</syntax>, otherwise it must be present.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDM_A1" symboldefcount="1">
+      <symbol link="registers_2">&lt;registers&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is a list of one or more registers to be loaded, separated by commas and surrounded by { and }.</para>
+          <para>The PC can be in the list.</para>
+          <para>Arm deprecates using these instructions with both the LR and the PC in the list.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDM_T1" symboldefcount="2">
+      <symbol link="registers">&lt;registers&gt;</symbol>
+      <account encodedin="register_list">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is a list of one or more registers to be loaded, separated by commas and surrounded by { and }. The registers in the list must be in the range R0-R7, encoded in the "register_list" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="LDM_T2" symboldefcount="3">
+      <symbol link="registers_1">&lt;registers&gt;</symbol>
+      <account encodedin="register_list">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T2: is a list of one or more registers to be loaded, separated by commas and surrounded by { and }. The registers in the list must be in the range R0-R12, encoded in the "register_list" field, and can optionally contain one of  the LR or the PC. If the LR is in the list, the "M" field is set to 1, otherwise it defaults to 0. If the PC is in the list, the "P" field is set to 1, otherwise it defaults to 0.</para>
+          <para>If the PC is in the list:</para>
+          <list type="unordered">
+            <listitem><content>The LR must not be in the list.</content></listitem>
+            <listitem><content>The instruction must be either outside any IT block, or the last instruction in an IT block.</content></listitem>
+          </list>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <aliastablehook anchor="aliasconditions">Alias Conditions</aliastablehook>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/LDM/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    address = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+    for i = 0 to 14
+        if registers&lt;i&gt; == '1' then
+            <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[i] = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address,4];  address = address + 4;
+    if registers&lt;15&gt; == '1' then
+        <a link="impl-aarch32.LoadWritePC.1" file="shared_pseudocode.xml" hover="function: LoadWritePC(bits(32) address)">LoadWritePC</a>(<a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address,4]);
+    if wback &amp;&amp; registers&lt;n&gt; == '0' then <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[n] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] + 4*<a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers);
+    if wback &amp;&amp; registers&lt;n&gt; == '1' then <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[n] = bits(32) UNKNOWN;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

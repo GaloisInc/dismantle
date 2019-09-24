@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="CBNZ" title="CBNZ, CBZ -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="armarmheading" value="T1" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="isa" value="T32" />
+  </docvars>
+  <heading>CBNZ, CBZ</heading>
+  <desc>
+    <brief>
+      <para>Compare and Branch on Nonzero or Zero</para>
+    </brief>
+    <authored>
+      <para>Compare and Branch on Nonzero and Compare and Branch on Zero compare the value in a register with zero, and conditionally branch forward a constant value. They do not affect the condition flags.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <iclass name="T1" oneof="1" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/CBNZ/T1_A.txt">
+        <box hibit="31" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="27" name="op" usename="1">
+          <c></c>
+        </box>
+        <box hibit="26" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="25" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="24" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="23" width="5" name="imm5" usename="1">
+          <c colspan="5"></c>
+        </box>
+        <box hibit="18" width="3" name="Rn" usename="1">
+          <c colspan="3"></c>
+        </box>
+      </regdiagram>
+      <encoding name="CBNZ_T1" oneofinclass="2" oneof="2" label="CBNZ" bitdiffs="op == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="CBNZ" />
+        </docvars>
+        <box hibit="27" width="1" name="op">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>CBNZ</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose register to be tested (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="label" hover="Label to be conditionally branched to">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="CBZ_T1" oneofinclass="2" oneof="2" label="CBZ" bitdiffs="op == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="CBZ" />
+        </docvars>
+        <box hibit="27" width="1" name="op">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>CBZ</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose register to be tested (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="label" hover="Label to be conditionally branched to">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/CBNZ/T1_A.txt" mylink="aarch32.instrs.CBNZ.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(i:imm5:'0', 32);  nonzero = (op == '1');
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="CBNZ_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="CBNZ_T1" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose register to be tested, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="CBNZ_T1" symboldefcount="1">
+      <symbol link="label">&lt;label&gt;</symbol>
+      <account encodedin="i:imm5">
+        <intro>
+          <para>Is the program label to be conditionally branched to. Its offset from the PC, a multiple of 2 and in the range 0 to 126, is encoded as "i:imm5" times 2.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/CBNZ/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">EncodingSpecificOperations();
+if nonzero != <a link="impl-shared.IsZero.1" file="shared_pseudocode.xml" hover="function: boolean IsZero(bits(N) x)">IsZero</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]) then
+    <a link="impl-aarch32.BranchWritePC.2" file="shared_pseudocode.xml" hover="function: BranchWritePC(bits(32) address, BranchType branch_type)">BranchWritePC</a>(PC + imm32, <a link="BranchType_DIR" file="shared_pseudocode.xml" hover="enumeration BranchType {&#13; BranchType_DIRCALL, BranchType_INDCALL, BranchType_ERET, BranchType_DBGEXIT, BranchType_RET, BranchType_DIR, BranchType_INDIR, BranchType_EXCEPTION, BranchType_RESET, BranchType_UNKNOWN}">BranchType_DIR</a>);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

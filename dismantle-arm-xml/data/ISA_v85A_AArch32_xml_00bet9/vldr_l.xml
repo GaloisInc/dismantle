@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VLDR_l" title="VLDR (literal) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="address-form" value="literal" />
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VLDR" />
+  </docvars>
+  <heading>VLDR (literal)</heading>
+  <desc>
+    <brief>
+      <para>Load SIMD&amp;FP register (literal)</para>
+    </brief>
+    <authored>
+      <para>Load SIMD&amp;FP register (literal) loads a single register from the Advanced SIMD and floating-point register file, using an address from the PC value and an immediate offset.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, <xref linkend="AArch32.hcptr">HCPTR</xref>, and <xref linkend="AArch32.fpexc">FPEXC</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+    <syntaxnotes>
+      <para>The alternative syntax permits the addition or subtraction of the offset and the immediate offset to be specified separately, including permitting a subtraction of 0 that cannot be specified using the normal syntax. For more information, see <xref linkend="BABGCIBA">Use of labels in UAL instruction syntax</xref>.</para>
+    </syntaxnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="3" isa="A32">
+      <docvars>
+        <docvar key="address-form" value="literal" />
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VLDR" />
+      </docvars>
+      <iclassintro count="3"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VLDR/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VLDR_l_A1_H" oneofinclass="3" oneof="6" label="Half-precision scalar" bitdiffs="size == 01">
+        <docvars>
+          <docvar key="address-form" value="literal" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="halfprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VLDR" />
+        </docvars>
+        <arch_variants>
+          <arch_variant name="ARMv8.2" />
+        </arch_variants>
+        <box hibit="9" width="2" name="size">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.16 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="label" hover="The label of literal data item to be loaded">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.16 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, [PC, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="For the single-precision scalar or double-precision scalar variants: is the optional unsigned immediate byte offset (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="VLDR_l_A1_S" oneofinclass="3" oneof="6" label="Single-precision scalar" bitdiffs="size == 10">
+        <docvars>
+          <docvar key="address-form" value="literal" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VLDR" />
+        </docvars>
+        <box hibit="9" width="2" name="size">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><a link="32" hover="Optional data size specifier for 32-bit memory accesses that can be used in the assembler source code">{.32}</a><text> </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="label" hover="The label of literal data item to be loaded">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><a link="32" hover="Optional data size specifier for 32-bit memory accesses that can be used in the assembler source code">{.32}</a><text> </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, [PC, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="For the single-precision scalar or double-precision scalar variants: is the optional unsigned immediate byte offset (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="VLDR_l_A1_D" oneofinclass="3" oneof="6" label="Double-precision scalar" bitdiffs="size == 11">
+        <docvars>
+          <docvar key="address-form" value="literal" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VLDR" />
+        </docvars>
+        <box hibit="9" width="2" name="size">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><a link="64" hover="Optional data size specifier for 64-bit memory accesses that can be used in the assembler source code">{.64}</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="label" hover="The label of literal data item to be loaded">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><a link="64" hover="Optional data size specifier for 64-bit memory accesses that can be used in the assembler source code">{.64}</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, [PC, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="For the single-precision scalar or double-precision scalar variants: is the optional unsigned immediate byte offset (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VLDR/A1_A.txt" mylink="aarch32.instrs.VLDR.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if size == '00' || (size == '01' &amp;&amp; !<a link="impl-shared.HaveFP16Ext.0" file="shared_pseudocode.xml" hover="function: boolean HaveFP16Ext()">HaveFP16Ext</a>()) then UNDEFINED;
+if size == '01' &amp;&amp; cond != '1110' then UNPREDICTABLE;
+esize = 8 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(size);  add = (U == '1');
+imm32 = if esize == 16 then <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'0', 32) else <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);
+case size of
+    when '01' d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);
+    when '10' d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);
+    when '11' d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);
+n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">size == '01' &amp;&amp; cond != '1110'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type>
+            <cu_type_text>The instruction executes as if it passes the Condition code check.</cu_type_text>
+          </cu_type>
+          <cu_type>
+            <cu_type_text>The instruction executes as NOP. This means it behaves as if it fails the Condition code check.</cu_type_text>
+          </cu_type>
+          <arch_variants>
+            <arch_variant name="ARMv8.2-A" />
+          </arch_variants>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="3" isa="T32">
+      <docvars>
+        <docvar key="address-form" value="literal" />
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VLDR" />
+      </docvars>
+      <iclassintro count="3"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VLDR/T1_A.txt" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VLDR_l_T1_H" oneofinclass="3" oneof="6" label="Half-precision scalar" bitdiffs="size == 01">
+        <docvars>
+          <docvar key="address-form" value="literal" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="halfprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VLDR" />
+        </docvars>
+        <arch_variants>
+          <arch_variant name="ARMv8.2" />
+        </arch_variants>
+        <box hibit="9" width="2" name="size">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.16 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="label" hover="The label of literal data item to be loaded">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.16 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, [PC, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="For the single-precision scalar or double-precision scalar variants: is the optional unsigned immediate byte offset (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="VLDR_l_T1_S" oneofinclass="3" oneof="6" label="Single-precision scalar" bitdiffs="size == 10">
+        <docvars>
+          <docvar key="address-form" value="literal" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VLDR" />
+        </docvars>
+        <box hibit="9" width="2" name="size">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><a link="32" hover="Optional data size specifier for 32-bit memory accesses that can be used in the assembler source code">{.32}</a><text> </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="label" hover="The label of literal data item to be loaded">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><a link="32" hover="Optional data size specifier for 32-bit memory accesses that can be used in the assembler source code">{.32}</a><text> </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, [PC, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="For the single-precision scalar or double-precision scalar variants: is the optional unsigned immediate byte offset (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="VLDR_l_T1_D" oneofinclass="3" oneof="6" label="Double-precision scalar" bitdiffs="size == 11">
+        <docvars>
+          <docvar key="address-form" value="literal" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VLDR" />
+        </docvars>
+        <box hibit="9" width="2" name="size">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><a link="64" hover="Optional data size specifier for 64-bit memory accesses that can be used in the assembler source code">{.64}</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="label" hover="The label of literal data item to be loaded">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>VLDR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><a link="64" hover="Optional data size specifier for 64-bit memory accesses that can be used in the assembler source code">{.64}</a><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, [PC, #</text><a link="_plusminus_" hover="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a link="imm" hover="For the single-precision scalar or double-precision scalar variants: is the optional unsigned immediate byte offset (field &quot;imm8&quot;)">&lt;imm&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VLDR/T1_A.txt" mylink="aarch32.instrs.VLDR.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if size == '00' || (size == '01' &amp;&amp; !<a link="impl-shared.HaveFP16Ext.0" file="shared_pseudocode.xml" hover="function: boolean HaveFP16Ext()">HaveFP16Ext</a>()) then UNDEFINED;
+if size == '01' &amp;&amp; <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()  then UNPREDICTABLE;
+esize = 8 &lt;&lt; <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(size);  add = (U == '1');
+imm32 = if esize == 16 then <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'0', 32) else <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);
+case size of
+    when '01' d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);
+    when '10' d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);
+    when '11' d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);
+n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">size == '01' &amp;&amp; InITBlock()</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type>
+            <cu_type_text>The instruction executes as if it passes the Condition code check.</cu_type_text>
+          </cu_type>
+          <cu_type>
+            <cu_type_text>The instruction executes as NOP. This means it behaves as if it fails the Condition code check.</cu_type_text>
+          </cu_type>
+          <arch_variants>
+            <arch_variant name="ARMv8.2-A" />
+          </arch_variants>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VLDR_l_A1_H, VLDR_l_T1_H" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDR_l_A1_H, VLDR_l_T1_H" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDR_l_A1_D, VLDR_l_T1_D" symboldefcount="1">
+      <symbol link="64">.64</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is an optional data size specifier for 64-bit memory accesses that can be used in the assembler source code, but is otherwise ignored.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDR_l_A1_D, VLDR_l_T1_D" symboldefcount="1">
+      <symbol link="dd">&lt;Dd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDR_l_A1_S, VLDR_l_T1_S" symboldefcount="1">
+      <symbol link="32">.32</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is an optional data size specifier for 32-bit memory accesses that can be used in the assembler source code, but is otherwise ignored.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDR_l_A1_H, VLDR_l_T1_H" symboldefcount="1">
+      <symbol link="sd">&lt;Sd&gt;</symbol>
+      <account encodedin="Vd:D">
+        <intro>
+          <para>Is the 32-bit name of the SIMD&amp;FP destination register, encoded in the "Vd:D" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDR_l_A1_H, VLDR_l_T1_H" symboldefcount="1">
+      <symbol link="label">&lt;label&gt;</symbol>
+      <account encodedin="imm8">
+        <intro>
+          <para>The label of the literal data item to be loaded.</para>
+          <para>For the single-precision scalar or double-precision scalar variants: the assembler calculates the required value of the offset from the Align(PC, 4) value of the instruction to this label. Permitted values are multiples of 4 in the range -1020 to 1020.</para>
+          <para>For the half-precision scalar variant: the assembler calculates the required value of the offset from the Align(PC, 4) value of the instruction to this label. Permitted values are multiples of 2 in the range -510 to 510.</para>
+          <para>If the offset is zero or positive, <field>imm32</field> is equal to the offset and <field>add</field> == <enumvalue>TRUE</enumvalue>.</para>
+          <para>If the offset is negative, <field>imm32</field> is equal to minus the offset and <field>add</field> == <enumvalue>FALSE</enumvalue>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VLDR_l_A1_H, VLDR_l_T1_H" symboldefcount="1">
+      <symbol link="_plusminus_">+/-</symbol>
+      <definition encodedin="U">
+        <intro>Specifies the offset is added to or subtracted from the base register, defaulting to + if omitted and </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">U</entry>
+                <entry class="symbol">+/-</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="symbol">-</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="symbol">+</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="VLDR_l_A1_H, VLDR_l_T1_H" symboldefcount="1">
+      <symbol link="imm">&lt;imm&gt;</symbol>
+      <account encodedin="imm8">
+        <intro>
+          <para>For the single-precision scalar or double-precision scalar variants: is the optional unsigned immediate byte offset, a multiple of 4, in the range 0 to 1020, defaulting to 0, and encoded in the "imm8" field as &lt;imm&gt;/4.</para>
+          <para>For the half-precision scalar variant: is the optional unsigned immediate byte offset, a multiple of 2, in the range 0 to 510, defaulting to 0, and encoded in the "imm8" field as &lt;imm&gt;/2.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VLDR/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckVFPEnabled.1" file="shared_pseudocode.xml" hover="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(TRUE);
+    base = if n == 15 then <a link="impl-shared.Align.2" file="shared_pseudocode.xml" hover="function: integer Align(integer x, integer y)">Align</a>(PC,4) else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+    address = if add then (base + imm32) else (base - imm32);
+    case esize of
+        when 16
+            <a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d] = <a link="impl-shared.Zeros.1" file="shared_pseudocode.xml" hover="function: bits(N) Zeros(integer N)">Zeros</a>(16) : <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address,2];
+        when 32
+            <a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d] = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address,4];
+        when 64
+            word1 = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address,4];  word2 = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address+4,4];
+            // Combine the word-aligned words in the correct order for current endianness.
+            <a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d] = if <a link="impl-shared.BigEndian.0" file="shared_pseudocode.xml" hover="function: boolean BigEndian()">BigEndian</a>() then word1:word2 else word2:word1;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

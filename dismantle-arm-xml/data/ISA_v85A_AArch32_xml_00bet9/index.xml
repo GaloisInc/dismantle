@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="alphaindex.xsl" version="1.0"?>
+<!DOCTYPE alphaindex PUBLIC "-//ARM//DTD alphaindex //EN" "alphaindex.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<alphaindex>
+  <toptitle instructionset="AArch32" />
+  <iforms title="AArch32 -- Base Instructions (alphabetic order)">
+    <iform iformfile="adc_i.xml" heading="ADC, ADCS (immediate)" id="ADC_i">Add with Carry (immediate).</iform>
+    <iform iformfile="adc_r.xml" heading="ADC, ADCS (register)" id="ADC_r">Add with Carry (register).</iform>
+    <iform iformfile="adc_rr.xml" heading="ADC, ADCS (register-shifted register)" id="ADC_rr">Add with Carry (register-shifted register).</iform>
+    <iform iformfile="add_adr.xml" heading="ADD (immediate, to PC)" id="ADD_ADR">Add to PC: an alias of ADR.</iform>
+    <iform iformfile="add_i.xml" heading="ADD, ADDS (immediate)" id="ADD_i">Add (immediate).</iform>
+    <iform iformfile="add_r.xml" heading="ADD, ADDS (register)" id="ADD_r">Add (register).</iform>
+    <iform iformfile="add_rr.xml" heading="ADD, ADDS (register-shifted register)" id="ADD_rr">Add (register-shifted register).</iform>
+    <iform iformfile="add_sp_i.xml" heading="ADD, ADDS (SP plus immediate)" id="ADD_SP_i">Add to SP (immediate).</iform>
+    <iform iformfile="add_sp_r.xml" heading="ADD, ADDS (SP plus register)" id="ADD_SP_r">Add to SP (register).</iform>
+    <iform iformfile="adr.xml" heading="ADR" id="ADR">Form PC-relative address.</iform>
+    <iform iformfile="and_i.xml" heading="AND, ANDS (immediate)" id="AND_i">Bitwise AND (immediate).</iform>
+    <iform iformfile="and_r.xml" heading="AND, ANDS (register)" id="AND_r">Bitwise AND (register).</iform>
+    <iform iformfile="and_rr.xml" heading="AND, ANDS (register-shifted register)" id="AND_rr">Bitwise AND (register-shifted register).</iform>
+    <iform iformfile="asr_mov_r.xml" heading="ASR (immediate)" id="ASR_MOV_r">Arithmetic Shift Right (immediate): an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="asr_mov_rr.xml" heading="ASR (register)" id="ASR_MOV_rr">Arithmetic Shift Right (register): an alias of MOV, MOVS (register-shifted register).</iform>
+    <iform iformfile="asrs_mov_r.xml" heading="ASRS (immediate)" id="ASRS_MOV_r">Arithmetic Shift Right, setting flags (immediate): an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="asrs_mov_rr.xml" heading="ASRS (register)" id="ASRS_MOV_rr">Arithmetic Shift Right, setting flags (register): an alias of MOV, MOVS (register-shifted register).</iform>
+    <iform iformfile="b.xml" heading="B" id="B">Branch.</iform>
+    <iform iformfile="bfc.xml" heading="BFC" id="BFC">Bit Field Clear.</iform>
+    <iform iformfile="bfi.xml" heading="BFI" id="BFI">Bit Field Insert.</iform>
+    <iform iformfile="bic_i.xml" heading="BIC, BICS (immediate)" id="BIC_i">Bitwise Bit Clear (immediate).</iform>
+    <iform iformfile="bic_r.xml" heading="BIC, BICS (register)" id="BIC_r">Bitwise Bit Clear (register).</iform>
+    <iform iformfile="bic_rr.xml" heading="BIC, BICS (register-shifted register)" id="BIC_rr">Bitwise Bit Clear (register-shifted register).</iform>
+    <iform iformfile="bkpt.xml" heading="BKPT" id="BKPT">Breakpoint.</iform>
+    <iform iformfile="bl_i.xml" heading="BL, BLX (immediate)" id="BL_i">Branch with Link and optional Exchange (immediate).</iform>
+    <iform iformfile="blx_r.xml" heading="BLX (register)" id="BLX_r">Branch with Link and Exchange (register).</iform>
+    <iform iformfile="bx.xml" heading="BX" id="BX">Branch and Exchange.</iform>
+    <iform iformfile="bxj.xml" heading="BXJ" id="BXJ">Branch and Exchange, previously Branch and Exchange Jazelle.</iform>
+    <iform iformfile="cbnz.xml" heading="CBNZ, CBZ" id="CBNZ">Compare and Branch on Nonzero or Zero.</iform>
+    <iform iformfile="clrex.xml" heading="CLREX" id="CLREX">Clear-Exclusive.</iform>
+    <iform iformfile="clz.xml" heading="CLZ" id="CLZ">Count Leading Zeros.</iform>
+    <iform iformfile="cmn_i.xml" heading="CMN (immediate)" id="CMN_i">Compare Negative (immediate).</iform>
+    <iform iformfile="cmn_r.xml" heading="CMN (register)" id="CMN_r">Compare Negative (register).</iform>
+    <iform iformfile="cmn_rr.xml" heading="CMN (register-shifted register)" id="CMN_rr">Compare Negative (register-shifted register).</iform>
+    <iform iformfile="cmp_i.xml" heading="CMP (immediate)" id="CMP_i">Compare (immediate).</iform>
+    <iform iformfile="cmp_r.xml" heading="CMP (register)" id="CMP_r">Compare (register).</iform>
+    <iform iformfile="cmp_rr.xml" heading="CMP (register-shifted register)" id="CMP_rr">Compare (register-shifted register).</iform>
+    <iform iformfile="cps.xml" heading="CPS, CPSID, CPSIE" id="CPS">Change PE State.</iform>
+    <iform iformfile="crc32.xml" heading="CRC32" id="CRC32">CRC32.</iform>
+    <iform iformfile="crc32c.xml" heading="CRC32C" id="CRC32C">CRC32C.</iform>
+    <iform iformfile="csdb.xml" heading="CSDB" id="CSDB">Consumption of Speculative Data Barrier.</iform>
+    <iform iformfile="dbg.xml" heading="DBG" id="DBG">Debug hint.</iform>
+    <iform iformfile="dcps.xml" heading="DCPS1, DCPS2, DCPS3" id="DCPS">Debug Change PE State.</iform>
+    <iform iformfile="dmb.xml" heading="DMB" id="DMB">Data Memory Barrier.</iform>
+    <iform iformfile="dsb.xml" heading="DSB" id="DSB">Data Synchronization Barrier.</iform>
+    <iform iformfile="eor_i.xml" heading="EOR, EORS (immediate)" id="EOR_i">Bitwise Exclusive OR (immediate).</iform>
+    <iform iformfile="eor_r.xml" heading="EOR, EORS (register)" id="EOR_r">Bitwise Exclusive OR (register).</iform>
+    <iform iformfile="eor_rr.xml" heading="EOR, EORS (register-shifted register)" id="EOR_rr">Bitwise Exclusive OR (register-shifted register).</iform>
+    <iform iformfile="eret.xml" heading="ERET" id="ERET">Exception Return.</iform>
+    <iform iformfile="esb.xml" heading="ESB" id="ESB">Error Synchronization Barrier.</iform>
+    <iform iformfile="hlt.xml" heading="HLT" id="HLT">Halting Breakpoint.</iform>
+    <iform iformfile="hvc.xml" heading="HVC" id="HVC">Hypervisor Call.</iform>
+    <iform iformfile="isb.xml" heading="ISB" id="ISB">Instruction Synchronization Barrier.</iform>
+    <iform iformfile="it.xml" heading="IT" id="IT">If-Then.</iform>
+    <iform iformfile="lda.xml" heading="LDA" id="LDA">Load-Acquire Word.</iform>
+    <iform iformfile="ldab.xml" heading="LDAB" id="LDAB">Load-Acquire Byte.</iform>
+    <iform iformfile="ldaex.xml" heading="LDAEX" id="LDAEX">Load-Acquire Exclusive Word.</iform>
+    <iform iformfile="ldaexb.xml" heading="LDAEXB" id="LDAEXB">Load-Acquire Exclusive Byte.</iform>
+    <iform iformfile="ldaexd.xml" heading="LDAEXD" id="LDAEXD">Load-Acquire Exclusive Doubleword.</iform>
+    <iform iformfile="ldaexh.xml" heading="LDAEXH" id="LDAEXH">Load-Acquire Exclusive Halfword.</iform>
+    <iform iformfile="ldah.xml" heading="LDAH" id="LDAH">Load-Acquire Halfword.</iform>
+    <iform iformfile="ldc_i.xml" heading="LDC (immediate)" id="LDC_i">Load data to System register (immediate).</iform>
+    <iform iformfile="ldc_l.xml" heading="LDC (literal)" id="LDC_l">Load data to System register (literal).</iform>
+    <iform iformfile="ldm_e.xml" heading="LDM (exception return)" id="LDM_e">Load Multiple (exception return).</iform>
+    <iform iformfile="ldm_u.xml" heading="LDM (User registers)" id="LDM_u">Load Multiple (User registers).</iform>
+    <iform iformfile="ldm.xml" heading="LDM, LDMIA, LDMFD" id="LDM">Load Multiple (Increment After, Full Descending).</iform>
+    <iform iformfile="ldmda.xml" heading="LDMDA, LDMFA" id="LDMDA">Load Multiple Decrement After (Full Ascending).</iform>
+    <iform iformfile="ldmdb.xml" heading="LDMDB, LDMEA" id="LDMDB">Load Multiple Decrement Before (Empty Ascending).</iform>
+    <iform iformfile="ldmib.xml" heading="LDMIB, LDMED" id="LDMIB">Load Multiple Increment Before (Empty Descending).</iform>
+    <iform iformfile="ldr_i.xml" heading="LDR (immediate)" id="LDR_i">Load Register (immediate).</iform>
+    <iform iformfile="ldr_l.xml" heading="LDR (literal)" id="LDR_l">Load Register (literal).</iform>
+    <iform iformfile="ldr_r.xml" heading="LDR (register)" id="LDR_r">Load Register (register).</iform>
+    <iform iformfile="ldrb_i.xml" heading="LDRB (immediate)" id="LDRB_i">Load Register Byte (immediate).</iform>
+    <iform iformfile="ldrb_l.xml" heading="LDRB (literal)" id="LDRB_l">Load Register Byte (literal).</iform>
+    <iform iformfile="ldrb_r.xml" heading="LDRB (register)" id="LDRB_r">Load Register Byte (register).</iform>
+    <iform iformfile="ldrbt.xml" heading="LDRBT" id="LDRBT">Load Register Byte Unprivileged.</iform>
+    <iform iformfile="ldrd_i.xml" heading="LDRD (immediate)" id="LDRD_i">Load Register Dual (immediate).</iform>
+    <iform iformfile="ldrd_l.xml" heading="LDRD (literal)" id="LDRD_l">Load Register Dual (literal).</iform>
+    <iform iformfile="ldrd_r.xml" heading="LDRD (register)" id="LDRD_r">Load Register Dual (register).</iform>
+    <iform iformfile="ldrex.xml" heading="LDREX" id="LDREX">Load Register Exclusive.</iform>
+    <iform iformfile="ldrexb.xml" heading="LDREXB" id="LDREXB">Load Register Exclusive Byte.</iform>
+    <iform iformfile="ldrexd.xml" heading="LDREXD" id="LDREXD">Load Register Exclusive Doubleword.</iform>
+    <iform iformfile="ldrexh.xml" heading="LDREXH" id="LDREXH">Load Register Exclusive Halfword.</iform>
+    <iform iformfile="ldrh_i.xml" heading="LDRH (immediate)" id="LDRH_i">Load Register Halfword (immediate).</iform>
+    <iform iformfile="ldrh_l.xml" heading="LDRH (literal)" id="LDRH_l">Load Register Halfword (literal).</iform>
+    <iform iformfile="ldrh_r.xml" heading="LDRH (register)" id="LDRH_r">Load Register Halfword (register).</iform>
+    <iform iformfile="ldrht.xml" heading="LDRHT" id="LDRHT">Load Register Halfword Unprivileged.</iform>
+    <iform iformfile="ldrsb_i.xml" heading="LDRSB (immediate)" id="LDRSB_i">Load Register Signed Byte (immediate).</iform>
+    <iform iformfile="ldrsb_l.xml" heading="LDRSB (literal)" id="LDRSB_l">Load Register Signed Byte (literal).</iform>
+    <iform iformfile="ldrsb_r.xml" heading="LDRSB (register)" id="LDRSB_r">Load Register Signed Byte (register).</iform>
+    <iform iformfile="ldrsbt.xml" heading="LDRSBT" id="LDRSBT">Load Register Signed Byte Unprivileged.</iform>
+    <iform iformfile="ldrsh_i.xml" heading="LDRSH (immediate)" id="LDRSH_i">Load Register Signed Halfword (immediate).</iform>
+    <iform iformfile="ldrsh_l.xml" heading="LDRSH (literal)" id="LDRSH_l">Load Register Signed Halfword (literal).</iform>
+    <iform iformfile="ldrsh_r.xml" heading="LDRSH (register)" id="LDRSH_r">Load Register Signed Halfword (register).</iform>
+    <iform iformfile="ldrsht.xml" heading="LDRSHT" id="LDRSHT">Load Register Signed Halfword Unprivileged.</iform>
+    <iform iformfile="ldrt.xml" heading="LDRT" id="LDRT">Load Register Unprivileged.</iform>
+    <iform iformfile="lsl_mov_r.xml" heading="LSL (immediate)" id="LSL_MOV_r">Logical Shift Left (immediate): an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="lsl_mov_rr.xml" heading="LSL (register)" id="LSL_MOV_rr">Logical Shift Left (register): an alias of MOV, MOVS (register-shifted register).</iform>
+    <iform iformfile="lsls_mov_r.xml" heading="LSLS (immediate)" id="LSLS_MOV_r">Logical Shift Left, setting flags (immediate): an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="lsls_mov_rr.xml" heading="LSLS (register)" id="LSLS_MOV_rr">Logical Shift Left, setting flags (register): an alias of MOV, MOVS (register-shifted register).</iform>
+    <iform iformfile="lsr_mov_r.xml" heading="LSR (immediate)" id="LSR_MOV_r">Logical Shift Right (immediate): an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="lsr_mov_rr.xml" heading="LSR (register)" id="LSR_MOV_rr">Logical Shift Right (register): an alias of MOV, MOVS (register-shifted register).</iform>
+    <iform iformfile="lsrs_mov_r.xml" heading="LSRS (immediate)" id="LSRS_MOV_r">Logical Shift Right, setting flags (immediate): an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="lsrs_mov_rr.xml" heading="LSRS (register)" id="LSRS_MOV_rr">Logical Shift Right, setting flags (register): an alias of MOV, MOVS (register-shifted register).</iform>
+    <iform iformfile="mcr.xml" heading="MCR" id="MCR">Move to System register from general-purpose register or execute a System instruction.</iform>
+    <iform iformfile="mcrr.xml" heading="MCRR" id="MCRR">Move to System register from two general-purpose registers.</iform>
+    <iform iformfile="mla.xml" heading="MLA, MLAS" id="MLA">Multiply Accumulate.</iform>
+    <iform iformfile="mls.xml" heading="MLS" id="MLS">Multiply and Subtract.</iform>
+    <iform iformfile="mov_i.xml" heading="MOV, MOVS (immediate)" id="MOV_i">Move (immediate).</iform>
+    <iform iformfile="mov_r.xml" heading="MOV, MOVS (register)" id="MOV_r">Move (register).</iform>
+    <iform iformfile="mov_rr.xml" heading="MOV, MOVS (register-shifted register)" id="MOV_rr">Move (register-shifted register).</iform>
+    <iform iformfile="movt.xml" heading="MOVT" id="MOVT">Move Top.</iform>
+    <iform iformfile="mrc.xml" heading="MRC" id="MRC">Move to general-purpose register from System register.</iform>
+    <iform iformfile="mrrc.xml" heading="MRRC" id="MRRC">Move to two general-purpose registers from System register.</iform>
+    <iform iformfile="mrs.xml" heading="MRS" id="MRS">Move Special register to general-purpose register.</iform>
+    <iform iformfile="mrs_br.xml" heading="MRS (Banked register)" id="MRS_br">Move Banked or Special register to general-purpose register.</iform>
+    <iform iformfile="msr_br.xml" heading="MSR (Banked register)" id="MSR_br">Move general-purpose register to Banked or Special register.</iform>
+    <iform iformfile="msr_i.xml" heading="MSR (immediate)" id="MSR_i">Move immediate value to Special register.</iform>
+    <iform iformfile="msr_r.xml" heading="MSR (register)" id="MSR_r">Move general-purpose register to Special register.</iform>
+    <iform iformfile="mul.xml" heading="MUL, MULS" id="MUL">Multiply.</iform>
+    <iform iformfile="mvn_i.xml" heading="MVN, MVNS (immediate)" id="MVN_i">Bitwise NOT (immediate).</iform>
+    <iform iformfile="mvn_r.xml" heading="MVN, MVNS (register)" id="MVN_r">Bitwise NOT (register).</iform>
+    <iform iformfile="mvn_rr.xml" heading="MVN, MVNS (register-shifted register)" id="MVN_rr">Bitwise NOT (register-shifted register).</iform>
+    <iform iformfile="nop.xml" heading="NOP" id="NOP">No Operation.</iform>
+    <iform iformfile="orn_i.xml" heading="ORN, ORNS (immediate)" id="ORN_i">Bitwise OR NOT (immediate).</iform>
+    <iform iformfile="orn_r.xml" heading="ORN, ORNS (register)" id="ORN_r">Bitwise OR NOT (register).</iform>
+    <iform iformfile="orr_i.xml" heading="ORR, ORRS (immediate)" id="ORR_i">Bitwise OR (immediate).</iform>
+    <iform iformfile="orr_r.xml" heading="ORR, ORRS (register)" id="ORR_r">Bitwise OR (register).</iform>
+    <iform iformfile="orr_rr.xml" heading="ORR, ORRS (register-shifted register)" id="ORR_rr">Bitwise OR (register-shifted register).</iform>
+    <iform iformfile="pkh.xml" heading="PKHBT, PKHTB" id="PKH">Pack Halfword.</iform>
+    <iform iformfile="pld_l.xml" heading="PLD (literal)" id="PLD_l">Preload Data (literal).</iform>
+    <iform iformfile="pld_i.xml" heading="PLD, PLDW (immediate)" id="PLD_i">Preload Data (immediate).</iform>
+    <iform iformfile="pld_r.xml" heading="PLD, PLDW (register)" id="PLD_r">Preload Data (register).</iform>
+    <iform iformfile="pli_i.xml" heading="PLI (immediate, literal)" id="PLI_i">Preload Instruction (immediate, literal).</iform>
+    <iform iformfile="pli_r.xml" heading="PLI (register)" id="PLI_r">Preload Instruction (register).</iform>
+    <iform iformfile="pop.xml" heading="POP" id="POP">Pop Multiple Registers from Stack.</iform>
+    <iform iformfile="pop_ldm.xml" heading="POP (multiple registers)" id="POP_LDM">Pop Multiple Registers from Stack: an alias of LDM, LDMIA, LDMFD.</iform>
+    <iform iformfile="pop_ldr_i.xml" heading="POP (single register)" id="POP_LDR_i">Pop Single Register from Stack: an alias of LDR (immediate).</iform>
+    <iform iformfile="pssbb.xml" heading="PSSBB" id="PSSBB">Physical Speculative Store Bypass Barrier.</iform>
+    <iform iformfile="push.xml" heading="PUSH" id="PUSH">Push Multiple Registers to Stack.</iform>
+    <iform iformfile="push_stmdb.xml" heading="PUSH (multiple registers)" id="PUSH_STMDB">Push multiple registers to Stack: an alias of STMDB, STMFD.</iform>
+    <iform iformfile="push_str_i.xml" heading="PUSH (single register)" id="PUSH_STR_i">Push Single Register to Stack: an alias of STR (immediate).</iform>
+    <iform iformfile="qadd.xml" heading="QADD" id="QADD">Saturating Add.</iform>
+    <iform iformfile="qadd16.xml" heading="QADD16" id="QADD16">Saturating Add 16.</iform>
+    <iform iformfile="qadd8.xml" heading="QADD8" id="QADD8">Saturating Add 8.</iform>
+    <iform iformfile="qasx.xml" heading="QASX" id="QASX">Saturating Add and Subtract with Exchange.</iform>
+    <iform iformfile="qdadd.xml" heading="QDADD" id="QDADD">Saturating Double and Add.</iform>
+    <iform iformfile="qdsub.xml" heading="QDSUB" id="QDSUB">Saturating Double and Subtract.</iform>
+    <iform iformfile="qsax.xml" heading="QSAX" id="QSAX">Saturating Subtract and Add with Exchange.</iform>
+    <iform iformfile="qsub.xml" heading="QSUB" id="QSUB">Saturating Subtract.</iform>
+    <iform iformfile="qsub16.xml" heading="QSUB16" id="QSUB16">Saturating Subtract 16.</iform>
+    <iform iformfile="qsub8.xml" heading="QSUB8" id="QSUB8">Saturating Subtract 8.</iform>
+    <iform iformfile="rbit.xml" heading="RBIT" id="RBIT">Reverse Bits.</iform>
+    <iform iformfile="rev.xml" heading="REV" id="REV">Byte-Reverse Word.</iform>
+    <iform iformfile="rev16.xml" heading="REV16" id="REV16">Byte-Reverse Packed Halfword.</iform>
+    <iform iformfile="revsh.xml" heading="REVSH" id="REVSH">Byte-Reverse Signed Halfword.</iform>
+    <iform iformfile="rfe.xml" heading="RFE, RFEDA, RFEDB, RFEIA, RFEIB" id="RFE">Return From Exception.</iform>
+    <iform iformfile="ror_mov_r.xml" heading="ROR (immediate)" id="ROR_MOV_r">Rotate Right (immediate): an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="ror_mov_rr.xml" heading="ROR (register)" id="ROR_MOV_rr">Rotate Right (register): an alias of MOV, MOVS (register-shifted register).</iform>
+    <iform iformfile="rors_mov_r.xml" heading="RORS (immediate)" id="RORS_MOV_r">Rotate Right, setting flags (immediate): an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="rors_mov_rr.xml" heading="RORS (register)" id="RORS_MOV_rr">Rotate Right, setting flags (register): an alias of MOV, MOVS (register-shifted register).</iform>
+    <iform iformfile="rrx_mov_r.xml" heading="RRX" id="RRX_MOV_r">Rotate Right with Extend: an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="rrxs_mov_r.xml" heading="RRXS" id="RRXS_MOV_r">Rotate Right with Extend, setting flags: an alias of MOV, MOVS (register).</iform>
+    <iform iformfile="rsb_i.xml" heading="RSB, RSBS (immediate)" id="RSB_i">Reverse Subtract (immediate).</iform>
+    <iform iformfile="rsb_r.xml" heading="RSB, RSBS (register)" id="RSB_r">Reverse Subtract (register).</iform>
+    <iform iformfile="rsb_rr.xml" heading="RSB, RSBS (register-shifted register)" id="RSB_rr">Reverse Subtract (register-shifted register).</iform>
+    <iform iformfile="rsc_i.xml" heading="RSC, RSCS (immediate)" id="RSC_i">Reverse Subtract with Carry (immediate).</iform>
+    <iform iformfile="rsc_r.xml" heading="RSC, RSCS (register)" id="RSC_r">Reverse Subtract with Carry (register).</iform>
+    <iform iformfile="rsc_rr.xml" heading="RSC, RSCS (register-shifted register)" id="RSC_rr">Reverse Subtract (register-shifted register).</iform>
+    <iform iformfile="sadd16.xml" heading="SADD16" id="SADD16">Signed Add 16.</iform>
+    <iform iformfile="sadd8.xml" heading="SADD8" id="SADD8">Signed Add 8.</iform>
+    <iform iformfile="sasx.xml" heading="SASX" id="SASX">Signed Add and Subtract with Exchange.</iform>
+    <iform iformfile="sb.xml" heading="SB" id="SB">Speculation Barrier.</iform>
+    <iform iformfile="sbc_i.xml" heading="SBC, SBCS (immediate)" id="SBC_i">Subtract with Carry (immediate).</iform>
+    <iform iformfile="sbc_r.xml" heading="SBC, SBCS (register)" id="SBC_r">Subtract with Carry (register).</iform>
+    <iform iformfile="sbc_rr.xml" heading="SBC, SBCS (register-shifted register)" id="SBC_rr">Subtract with Carry (register-shifted register).</iform>
+    <iform iformfile="sbfx.xml" heading="SBFX" id="SBFX">Signed Bit Field Extract.</iform>
+    <iform iformfile="sdiv.xml" heading="SDIV" id="SDIV">Signed Divide.</iform>
+    <iform iformfile="sel.xml" heading="SEL" id="SEL">Select Bytes.</iform>
+    <iform iformfile="setend.xml" heading="SETEND" id="SETEND">Set Endianness.</iform>
+    <iform iformfile="setpan.xml" heading="SETPAN" id="SETPAN">Set Privileged Access Never.</iform>
+    <iform iformfile="sev.xml" heading="SEV" id="SEV">Send Event.</iform>
+    <iform iformfile="sevl.xml" heading="SEVL" id="SEVL">Send Event Local.</iform>
+    <iform iformfile="shadd16.xml" heading="SHADD16" id="SHADD16">Signed Halving Add 16.</iform>
+    <iform iformfile="shadd8.xml" heading="SHADD8" id="SHADD8">Signed Halving Add 8.</iform>
+    <iform iformfile="shasx.xml" heading="SHASX" id="SHASX">Signed Halving Add and Subtract with Exchange.</iform>
+    <iform iformfile="shsax.xml" heading="SHSAX" id="SHSAX">Signed Halving Subtract and Add with Exchange.</iform>
+    <iform iformfile="shsub16.xml" heading="SHSUB16" id="SHSUB16">Signed Halving Subtract 16.</iform>
+    <iform iformfile="shsub8.xml" heading="SHSUB8" id="SHSUB8">Signed Halving Subtract 8.</iform>
+    <iform iformfile="smc.xml" heading="SMC" id="SMC">Secure Monitor Call.</iform>
+    <iform iformfile="smlabb.xml" heading="SMLABB, SMLABT, SMLATB, SMLATT" id="SMLABB">Signed Multiply Accumulate (halfwords).</iform>
+    <iform iformfile="smlad.xml" heading="SMLAD, SMLADX" id="SMLAD">Signed Multiply Accumulate Dual.</iform>
+    <iform iformfile="smlal.xml" heading="SMLAL, SMLALS" id="SMLAL">Signed Multiply Accumulate Long.</iform>
+    <iform iformfile="smlalbb.xml" heading="SMLALBB, SMLALBT, SMLALTB, SMLALTT" id="SMLALBB">Signed Multiply Accumulate Long (halfwords).</iform>
+    <iform iformfile="smlald.xml" heading="SMLALD, SMLALDX" id="SMLALD">Signed Multiply Accumulate Long Dual.</iform>
+    <iform iformfile="smlawb.xml" heading="SMLAWB, SMLAWT" id="SMLAWB">Signed Multiply Accumulate (word by halfword).</iform>
+    <iform iformfile="smlsd.xml" heading="SMLSD, SMLSDX" id="SMLSD">Signed Multiply Subtract Dual.</iform>
+    <iform iformfile="smlsld.xml" heading="SMLSLD, SMLSLDX" id="SMLSLD">Signed Multiply Subtract Long Dual.</iform>
+    <iform iformfile="smmla.xml" heading="SMMLA, SMMLAR" id="SMMLA">Signed Most Significant Word Multiply Accumulate.</iform>
+    <iform iformfile="smmls.xml" heading="SMMLS, SMMLSR" id="SMMLS">Signed Most Significant Word Multiply Subtract.</iform>
+    <iform iformfile="smmul.xml" heading="SMMUL, SMMULR" id="SMMUL">Signed Most Significant Word Multiply.</iform>
+    <iform iformfile="smuad.xml" heading="SMUAD, SMUADX" id="SMUAD">Signed Dual Multiply Add.</iform>
+    <iform iformfile="smulbb.xml" heading="SMULBB, SMULBT, SMULTB, SMULTT" id="SMULBB">Signed Multiply (halfwords).</iform>
+    <iform iformfile="smull.xml" heading="SMULL, SMULLS" id="SMULL">Signed Multiply Long.</iform>
+    <iform iformfile="smulwb.xml" heading="SMULWB, SMULWT" id="SMULWB">Signed Multiply (word by halfword).</iform>
+    <iform iformfile="smusd.xml" heading="SMUSD, SMUSDX" id="SMUSD">Signed Multiply Subtract Dual.</iform>
+    <iform iformfile="srs.xml" heading="SRS, SRSDA, SRSDB, SRSIA, SRSIB" id="SRS">Store Return State.</iform>
+    <iform iformfile="ssat.xml" heading="SSAT" id="SSAT">Signed Saturate.</iform>
+    <iform iformfile="ssat16.xml" heading="SSAT16" id="SSAT16">Signed Saturate 16.</iform>
+    <iform iformfile="ssax.xml" heading="SSAX" id="SSAX">Signed Subtract and Add with Exchange.</iform>
+    <iform iformfile="ssbb.xml" heading="SSBB" id="SSBB">Speculative Store Bypass Barrier.</iform>
+    <iform iformfile="ssub16.xml" heading="SSUB16" id="SSUB16">Signed Subtract 16.</iform>
+    <iform iformfile="ssub8.xml" heading="SSUB8" id="SSUB8">Signed Subtract 8.</iform>
+    <iform iformfile="stc.xml" heading="STC" id="STC">Store data to System register.</iform>
+    <iform iformfile="stl.xml" heading="STL" id="STL">Store-Release Word.</iform>
+    <iform iformfile="stlb.xml" heading="STLB" id="STLB">Store-Release Byte.</iform>
+    <iform iformfile="stlex.xml" heading="STLEX" id="STLEX">Store-Release Exclusive Word.</iform>
+    <iform iformfile="stlexb.xml" heading="STLEXB" id="STLEXB">Store-Release Exclusive Byte.</iform>
+    <iform iformfile="stlexd.xml" heading="STLEXD" id="STLEXD">Store-Release Exclusive Doubleword.</iform>
+    <iform iformfile="stlexh.xml" heading="STLEXH" id="STLEXH">Store-Release Exclusive Halfword.</iform>
+    <iform iformfile="stlh.xml" heading="STLH" id="STLH">Store-Release Halfword.</iform>
+    <iform iformfile="stm_u.xml" heading="STM (User registers)" id="STM_u">Store Multiple (User registers).</iform>
+    <iform iformfile="stm.xml" heading="STM, STMIA, STMEA" id="STM">Store Multiple (Increment After, Empty Ascending).</iform>
+    <iform iformfile="stmda.xml" heading="STMDA, STMED" id="STMDA">Store Multiple Decrement After (Empty Descending).</iform>
+    <iform iformfile="stmdb.xml" heading="STMDB, STMFD" id="STMDB">Store Multiple Decrement Before (Full Descending).</iform>
+    <iform iformfile="stmib.xml" heading="STMIB, STMFA" id="STMIB">Store Multiple Increment Before (Full Ascending).</iform>
+    <iform iformfile="str_i.xml" heading="STR (immediate)" id="STR_i">Store Register (immediate).</iform>
+    <iform iformfile="str_r.xml" heading="STR (register)" id="STR_r">Store Register (register).</iform>
+    <iform iformfile="strb_i.xml" heading="STRB (immediate)" id="STRB_i">Store Register Byte (immediate).</iform>
+    <iform iformfile="strb_r.xml" heading="STRB (register)" id="STRB_r">Store Register Byte (register).</iform>
+    <iform iformfile="strbt.xml" heading="STRBT" id="STRBT">Store Register Byte Unprivileged.</iform>
+    <iform iformfile="strd_i.xml" heading="STRD (immediate)" id="STRD_i">Store Register Dual (immediate).</iform>
+    <iform iformfile="strd_r.xml" heading="STRD (register)" id="STRD_r">Store Register Dual (register).</iform>
+    <iform iformfile="strex.xml" heading="STREX" id="STREX">Store Register Exclusive.</iform>
+    <iform iformfile="strexb.xml" heading="STREXB" id="STREXB">Store Register Exclusive Byte.</iform>
+    <iform iformfile="strexd.xml" heading="STREXD" id="STREXD">Store Register Exclusive Doubleword.</iform>
+    <iform iformfile="strexh.xml" heading="STREXH" id="STREXH">Store Register Exclusive Halfword.</iform>
+    <iform iformfile="strh_i.xml" heading="STRH (immediate)" id="STRH_i">Store Register Halfword (immediate).</iform>
+    <iform iformfile="strh_r.xml" heading="STRH (register)" id="STRH_r">Store Register Halfword (register).</iform>
+    <iform iformfile="strht.xml" heading="STRHT" id="STRHT">Store Register Halfword Unprivileged.</iform>
+    <iform iformfile="strt.xml" heading="STRT" id="STRT">Store Register Unprivileged.</iform>
+    <iform iformfile="sub_adr.xml" heading="SUB (immediate, from PC)" id="SUB_ADR">Subtract from PC: an alias of ADR.</iform>
+    <iform iformfile="sub_i.xml" heading="SUB, SUBS (immediate)" id="SUB_i">Subtract (immediate).</iform>
+    <iform iformfile="sub_r.xml" heading="SUB, SUBS (register)" id="SUB_r">Subtract (register).</iform>
+    <iform iformfile="sub_rr.xml" heading="SUB, SUBS (register-shifted register)" id="SUB_rr">Subtract (register-shifted register).</iform>
+    <iform iformfile="sub_sp_i.xml" heading="SUB, SUBS (SP minus immediate)" id="SUB_SP_i">Subtract from SP (immediate).</iform>
+    <iform iformfile="sub_sp_r.xml" heading="SUB, SUBS (SP minus register)" id="SUB_SP_r">Subtract from SP (register).</iform>
+    <iform iformfile="svc.xml" heading="SVC" id="SVC">Supervisor Call.</iform>
+    <iform iformfile="sxtab.xml" heading="SXTAB" id="SXTAB">Signed Extend and Add Byte.</iform>
+    <iform iformfile="sxtab16.xml" heading="SXTAB16" id="SXTAB16">Signed Extend and Add Byte 16.</iform>
+    <iform iformfile="sxtah.xml" heading="SXTAH" id="SXTAH">Signed Extend and Add Halfword.</iform>
+    <iform iformfile="sxtb.xml" heading="SXTB" id="SXTB">Signed Extend Byte.</iform>
+    <iform iformfile="sxtb16.xml" heading="SXTB16" id="SXTB16">Signed Extend Byte 16.</iform>
+    <iform iformfile="sxth.xml" heading="SXTH" id="SXTH">Signed Extend Halfword.</iform>
+    <iform iformfile="tbb.xml" heading="TBB, TBH" id="TBB">Table Branch Byte or Halfword.</iform>
+    <iform iformfile="teq_i.xml" heading="TEQ (immediate)" id="TEQ_i">Test Equivalence (immediate).</iform>
+    <iform iformfile="teq_r.xml" heading="TEQ (register)" id="TEQ_r">Test Equivalence (register).</iform>
+    <iform iformfile="teq_rr.xml" heading="TEQ (register-shifted register)" id="TEQ_rr">Test Equivalence (register-shifted register).</iform>
+    <iform iformfile="tsb.xml" heading="TSB CSYNC" id="TSB">Trace Synchronization Barrier.</iform>
+    <iform iformfile="tst_i.xml" heading="TST (immediate)" id="TST_i">Test (immediate).</iform>
+    <iform iformfile="tst_r.xml" heading="TST (register)" id="TST_r">Test (register).</iform>
+    <iform iformfile="tst_rr.xml" heading="TST (register-shifted register)" id="TST_rr">Test (register-shifted register).</iform>
+    <iform iformfile="uadd16.xml" heading="UADD16" id="UADD16">Unsigned Add 16.</iform>
+    <iform iformfile="uadd8.xml" heading="UADD8" id="UADD8">Unsigned Add 8.</iform>
+    <iform iformfile="uasx.xml" heading="UASX" id="UASX">Unsigned Add and Subtract with Exchange.</iform>
+    <iform iformfile="ubfx.xml" heading="UBFX" id="UBFX">Unsigned Bit Field Extract.</iform>
+    <iform iformfile="udf.xml" heading="UDF" id="UDF">Permanently Undefined.</iform>
+    <iform iformfile="udiv.xml" heading="UDIV" id="UDIV">Unsigned Divide.</iform>
+    <iform iformfile="uhadd16.xml" heading="UHADD16" id="UHADD16">Unsigned Halving Add 16.</iform>
+    <iform iformfile="uhadd8.xml" heading="UHADD8" id="UHADD8">Unsigned Halving Add 8.</iform>
+    <iform iformfile="uhasx.xml" heading="UHASX" id="UHASX">Unsigned Halving Add and Subtract with Exchange.</iform>
+    <iform iformfile="uhsax.xml" heading="UHSAX" id="UHSAX">Unsigned Halving Subtract and Add with Exchange.</iform>
+    <iform iformfile="uhsub16.xml" heading="UHSUB16" id="UHSUB16">Unsigned Halving Subtract 16.</iform>
+    <iform iformfile="uhsub8.xml" heading="UHSUB8" id="UHSUB8">Unsigned Halving Subtract 8.</iform>
+    <iform iformfile="umaal.xml" heading="UMAAL" id="UMAAL">Unsigned Multiply Accumulate Accumulate Long.</iform>
+    <iform iformfile="umlal.xml" heading="UMLAL, UMLALS" id="UMLAL">Unsigned Multiply Accumulate Long.</iform>
+    <iform iformfile="umull.xml" heading="UMULL, UMULLS" id="UMULL">Unsigned Multiply Long.</iform>
+    <iform iformfile="uqadd16.xml" heading="UQADD16" id="UQADD16">Unsigned Saturating Add 16.</iform>
+    <iform iformfile="uqadd8.xml" heading="UQADD8" id="UQADD8">Unsigned Saturating Add 8.</iform>
+    <iform iformfile="uqasx.xml" heading="UQASX" id="UQASX">Unsigned Saturating Add and Subtract with Exchange.</iform>
+    <iform iformfile="uqsax.xml" heading="UQSAX" id="UQSAX">Unsigned Saturating Subtract and Add with Exchange.</iform>
+    <iform iformfile="uqsub16.xml" heading="UQSUB16" id="UQSUB16">Unsigned Saturating Subtract 16.</iform>
+    <iform iformfile="uqsub8.xml" heading="UQSUB8" id="UQSUB8">Unsigned Saturating Subtract 8.</iform>
+    <iform iformfile="usad8.xml" heading="USAD8" id="USAD8">Unsigned Sum of Absolute Differences.</iform>
+    <iform iformfile="usada8.xml" heading="USADA8" id="USADA8">Unsigned Sum of Absolute Differences and Accumulate.</iform>
+    <iform iformfile="usat.xml" heading="USAT" id="USAT">Unsigned Saturate.</iform>
+    <iform iformfile="usat16.xml" heading="USAT16" id="USAT16">Unsigned Saturate 16.</iform>
+    <iform iformfile="usax.xml" heading="USAX" id="USAX">Unsigned Subtract and Add with Exchange.</iform>
+    <iform iformfile="usub16.xml" heading="USUB16" id="USUB16">Unsigned Subtract 16.</iform>
+    <iform iformfile="usub8.xml" heading="USUB8" id="USUB8">Unsigned Subtract 8.</iform>
+    <iform iformfile="uxtab.xml" heading="UXTAB" id="UXTAB">Unsigned Extend and Add Byte.</iform>
+    <iform iformfile="uxtab16.xml" heading="UXTAB16" id="UXTAB16">Unsigned Extend and Add Byte 16.</iform>
+    <iform iformfile="uxtah.xml" heading="UXTAH" id="UXTAH">Unsigned Extend and Add Halfword.</iform>
+    <iform iformfile="uxtb.xml" heading="UXTB" id="UXTB">Unsigned Extend Byte.</iform>
+    <iform iformfile="uxtb16.xml" heading="UXTB16" id="UXTB16">Unsigned Extend Byte 16.</iform>
+    <iform iformfile="uxth.xml" heading="UXTH" id="UXTH">Unsigned Extend Halfword.</iform>
+    <iform iformfile="wfe.xml" heading="WFE" id="WFE">Wait For Event.</iform>
+    <iform iformfile="wfi.xml" heading="WFI" id="WFI">Wait For Interrupt.</iform>
+    <iform iformfile="yield.xml" heading="YIELD" id="YIELD">Yield hint.</iform>
+  </iforms>
+</alphaindex>

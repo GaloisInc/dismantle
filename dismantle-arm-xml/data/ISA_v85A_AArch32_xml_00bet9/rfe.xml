@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="RFE" title="RFE, RFEDA, RFEDB, RFEIA, RFEIB -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>RFE, RFEDA, RFEDB, RFEIA, RFEIB</heading>
+  <desc>
+    <brief>
+      <para>Return From Exception</para>
+    </brief>
+    <authored>
+      <para>Return From Exception loads two consecutive memory locations using an address in a base register:</para>
+      <list type="unordered">
+        <listitem><content>The word loaded from the lower address is treated as an instruction address. The PE branches to it.</content></listitem>
+        <listitem><content>The word loaded from the higher address is used to restore <xref linkend="BEIDIGBH">PSTATE</xref>. This word must be in the format of an SPSR.</content></listitem>
+      </list>
+      <para>An address adjusted by the size of the data loaded can optionally be written back to the base register.</para>
+      <para>The PE checks the value of the word loaded from the higher address for an illegal return event. See <xref linkend="CHDDDJDB">Illegal return events from AArch32 state</xref>.</para>
+      <para><instruction>RFE</instruction> is <arm-defined-word>undefined</arm-defined-word> in Hyp mode and <arm-defined-word>constrained unpredictable</arm-defined-word> in User mode.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+    <syntaxnotes>
+      <para><instruction>RFEFA</instruction>, <instruction>RFEEA</instruction>, <instruction>RFEFD</instruction>, and <instruction>RFEED</instruction> are pseudo-instructions for <instruction>RFEDA</instruction>, <instruction>RFEDB</instruction>, <instruction>RFEIA</instruction>, and <instruction>RFEIB</instruction> respectively, referring to their use for popping data from Full Ascending, Empty Ascending, Full Descending, and Empty Descending stacks.</para>
+    </syntaxnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="3">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="3" id="a1" no_encodings="4" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="4"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/RFE/A1_AS.txt">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="22" name="S" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="11" name="op" settings="11">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(1)</c>
+          <c>(0)</c>
+          <c>(1)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+        <box hibit="4" width="5" name="mode" settings="5">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="RFEDA_A1_AS" oneofinclass="4" oneof="6" label="Decrement After" bitdiffs="P == 0 &amp;&amp; U == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="dec-after" />
+          <docvar key="mnemonic" value="RFEDA" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>RFEDA</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a></asmtemplate>
+      </encoding>
+      <encoding name="RFEDB_A1_AS" oneofinclass="4" oneof="6" label="Decrement Before" bitdiffs="P == 1 &amp;&amp; U == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="dec-before" />
+          <docvar key="mnemonic" value="RFEDB" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>RFEDB</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a></asmtemplate>
+      </encoding>
+      <encoding name="RFEIA_A1_AS" oneofinclass="4" oneof="6" label="Increment After" bitdiffs="P == 0 &amp;&amp; U == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="RFE{IA}" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>RFE</text><a link="ia_1" hover="Optional suffix to indicate the Increment After variant">{IA}</a><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a></asmtemplate>
+      </encoding>
+      <encoding name="RFEIB_A1_AS" oneofinclass="4" oneof="6" label="Increment Before" bitdiffs="P == 1 &amp;&amp; U == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="inc-before" />
+          <docvar key="mnemonic" value="RFEIB" />
+        </docvars>
+        <box hibit="24" width="1" name="P">
+          <c>1</c>
+        </box>
+        <box hibit="23" width="1" name="U">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>RFEIB</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/RFE/A1_AS.txt" mylink="aarch32.instrs.RFE.A1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);
+wback = (W == '1');  increment = (U == '1');  wordhigher = (P == U);
+if n == 15 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="3" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="ldmstm-mode" value="dec-before" />
+        <docvar key="mnemonic" value="RFEDB" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/RFE/T1_AS.txt">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" width="2" name="opc" settings="2">
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" name="P" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="14" name="M" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="13" width="14" name="register_list" settings="14">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="RFE_T1_AS" oneofinclass="1" oneof="6" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="dec-before" />
+          <docvar key="mnemonic" value="RFEDB" />
+        </docvars>
+        <asmtemplate comment="Outside or last in IT block"><text>RFEDB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/RFE/T1_AS.txt" mylink="aarch32.instrs.RFE.T1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  wback = (W == '1');  increment = FALSE;  wordhigher = FALSE;
+if n == 15 then UNPREDICTABLE;
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() &amp;&amp; !<a link="impl-aarch32.LastInITBlock.0" file="shared_pseudocode.xml" hover="function: boolean LastInITBlock()">LastInITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T2" oneof="3" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="ldmstm-mode" value="inc-after" />
+        <docvar key="mnemonic" value="RFE{IA}" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/RFE/T2_AS.txt">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" width="2" name="opc" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" name="P" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="14" name="M" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="13" width="14" name="register_list" settings="14">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="RFE_T2_AS" oneofinclass="1" oneof="6" label="T2">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="RFE{IA}" />
+        </docvars>
+        <asmtemplate comment="Outside or last in IT block"><text>RFE</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/RFE/T2_AS.txt" mylink="aarch32.instrs.RFE.T2_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  wback = (W == '1');  increment = TRUE;  wordhigher = FALSE;
+if n == 15 then UNPREDICTABLE;
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() &amp;&amp; !<a link="impl-aarch32.LastInITBlock.0" file="shared_pseudocode.xml" hover="function: boolean LastInITBlock()">LastInITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="RFEIA_A1_AS" symboldefcount="1">
+      <symbol link="ia_1">IA</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is an optional suffix to indicate the Increment After variant.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RFE_T2_AS" symboldefcount="2">
+      <symbol link="ia">IA</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T2: is an optional suffix for the Increment After form.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RFEDA_A1_AS" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="dec-after" />
+          <docvar key="mnemonic" value="RFEDA" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. <syntax>&lt;c&gt;</syntax> must be <value>AL</value> or omitted.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RFE_T1_AS, RFE_T2_AS" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1 and T2: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RFEDA_A1_AS, RFE_T1_AS, RFE_T2_AS" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RFEDA_A1_AS, RFE_T1_AS, RFE_T2_AS" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose base register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="RFEDA_A1_AS, RFE_T1_AS, RFE_T2_AS" symboldefcount="1">
+      <symbol link="0d33">!</symbol>
+      <account encodedin="W">
+        <intro>
+          <para>The address adjusted by the size of the data loaded is written back to the base register. If specified, it is encoded in the "W" field as 1, otherwise this field defaults to 0.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/RFE/Op_AS.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    if PSTATE.EL == <a link="EL2" file="shared_pseudocode.xml" hover="constant bits(2) EL2 = '10'">EL2</a> then
+        UNDEFINED;
+    elsif PSTATE.EL == <a link="EL0" file="shared_pseudocode.xml" hover="constant bits(2) EL0 = '00'">EL0</a> then
+        UNPREDICTABLE;                        // UNDEFINED or NOP
+    else
+        address = if increment then <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]-8;
+        if wordhigher then address = address+4;
+        new_pc_value = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address,4];
+        spsr = <a link="impl-aarch32.MemA.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemA[bits(32) address, integer size]">MemA</a>[address+4,4];
+        if wback then <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[n] = if increment then <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]+8 else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]-8;
+        <a link="AArch32.ExceptionReturn.2" file="shared_pseudocode.xml" hover="function: AArch32.ExceptionReturn(bits(32) new_pc, bits(32) spsr)">AArch32.ExceptionReturn</a>(new_pc_value, spsr);</pstext>
+    </ps>
+  </ps_section>
+  <constrained_unpredictables ps_block="Operation">
+    <cu_case>
+      <cu_cause>
+        <pstext mayhavelinks="1">PSTATE.EL == EL0</pstext>
+      </cu_cause>
+      <cu_type constraint="Constraint_UNDEF" />
+      <cu_type constraint="Constraint_NOP" />
+    </cu_case>
+  </constrained_unpredictables>
+</instructionsection>

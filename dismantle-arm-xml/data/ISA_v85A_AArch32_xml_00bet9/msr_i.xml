@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="MSR_i" title="MSR (immediate) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="armarmheading" value="A1" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="isa" value="A32" />
+    <docvar key="mnemonic" value="MSR" />
+  </docvars>
+  <heading>MSR (immediate)</heading>
+  <desc>
+    <brief>
+      <para>Move immediate value to Special register</para>
+    </brief>
+    <authored>
+      <para>Move immediate value to Special register moves selected bits of an immediate value to the corresponding bits in the <xref linkend="CJAGBHBH">APSR</xref>, <xref linkend="CIHJBHJA">CPSR</xref>, or <xref linkend="CHDDAABB">SPSR</xref>_&lt;current_mode&gt;.</para>
+      <para>Because of the Do-Not-Modify nature of its reserved bits, the immediate form of <instruction>MSR</instruction> is normally only useful at the Application level for writing to <value>APSR_nzcvq</value> (<value>CPSR_f</value>).</para>
+      <para>If an <instruction>MSR</instruction> (immediate) moves selected bits of an immediate value to the <xref linkend="CIHJBHJA">CPSR</xref>, the PE checks whether the value being written to <xref linkend="BEIDIGBH">PSTATE</xref>.M is legal. See <xref linkend="CHDDFIGE">Illegal changes to PSTATE.M</xref>.</para>
+      <para>An <instruction>MSR</instruction> (immediate) executed in User mode:</para>
+      <list type="unordered">
+        <listitem><content>Is <arm-defined-word>constrained unpredictable</arm-defined-word> if it attempts to update the <xref linkend="CHDDAABB">SPSR</xref>.</content></listitem>
+        <listitem><content>Otherwise, does not update any <xref linkend="CIHJBHJA">CPSR</xref> field that is accessible only at EL1 or higher,</content></listitem>
+      </list>
+      <para>An <instruction>MSR</instruction> (immediate) executed in System mode is <arm-defined-word>constrained unpredictable</arm-defined-word> if it attempts to update the <xref linkend="CHDDAABB">SPSR</xref>.</para>
+      <para>The <xref linkend="CIHJBHJA">CPSR</xref>.E bit is writable from any mode using an <instruction>MSR</instruction> instruction.  Arm deprecates using this to change its value.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+      <para>Related encodings: <xref linkend="A32.encoding_index.movsr_hint_imm">Move Special Register and Hints (immediate)</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <iclass name="A1" oneof="1" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="MSR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/MSR_i/A1_AS.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" name="R" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="mask" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="14" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="11" width="12" name="imm12" usename="1">
+          <c colspan="12"></c>
+        </box>
+      </regdiagram>
+      <encoding name="MSR_i_A1_AS" oneofinclass="1" oneof="1" label="A1" bitdiffs="!(R == 0 &amp;&amp; mask == 0000)">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="MSR" />
+        </docvars>
+        <box hibit="22" width="7" name="R:mask">
+          <c>Z</c>
+          <c>Z</c>
+          <c>Z</c>
+          <c>Z</c>
+          <c>Z</c>
+        </box>
+        <asmtemplate><text>MSR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="spec_reg" hover="One of:&#10;* {value{APSR_&lt;bits&gt;}}">&lt;spec_reg&gt;</a><text>, #</text><a link="imm" hover="Immediate value">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/MSR_i/A1_AS.txt" mylink="aarch32.instrs.MSR_i.A1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if mask == '0000' &amp;&amp; R == '0' then SEE "Related encodings";
+imm32 = <a link="impl-aarch32.A32ExpandImm.1" file="shared_pseudocode.xml" hover="function: bits(32) A32ExpandImm(bits(12) imm12)">A32ExpandImm</a>(imm12);  write_spsr = (R == '1');
+if mask == '0000' then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">mask == '0000' &amp;&amp; R == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="MSR_i_A1_AS" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MSR_i_A1_AS" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MSR_i_A1_AS" symboldefcount="1">
+      <symbol link="spec_reg">&lt;spec_reg&gt;</symbol>
+      <account encodedin="mask">
+        <intro>
+          <para>Is one of:</para>
+          <list type="unordered">
+            <listitem><content><value>APSR_&lt;bits&gt;</value>.</content></listitem>
+            <listitem><content><value>CPSR_&lt;fields&gt;</value>.</content></listitem>
+            <listitem><content><value>SPSR_&lt;fields&gt;</value>.</content></listitem>
+          </list>
+          <para>For CPSR and SPSR, &lt;fields&gt; is a sequence of one or more of the following:</para>
+          <list type="param">
+            <listitem>
+              <param>c</param><content>mask&lt;0&gt; = '1' to enable writing of bits&lt;7:0&gt; of the destination PSR.</content>
+            </listitem>
+            <listitem>
+              <param>x</param><content>mask&lt;1&gt; = '1' to enable writing of bits&lt;15:8&gt; of the destination PSR.</content>
+            </listitem>
+            <listitem>
+              <param>s</param><content>mask&lt;2&gt; = '1' to enable writing of bits&lt;23:16&gt; of the destination PSR.</content>
+            </listitem>
+            <listitem>
+              <param>f</param><content>mask&lt;3&gt; = '1' to enable writing of bits&lt;31:24&gt; of the destination PSR.</content>
+            </listitem>
+          </list>
+          <para>For APSR, &lt;bits&gt; is one of <value>nzcvq</value>, <value>g</value>, or <value>nzcvqg</value>. These map to the following CPSR_&lt;fields&gt; values:</para>
+          <list type="unordered">
+            <listitem><content><value>APSR_nzcvq</value> is the same as <value>CPSR_f</value> (mask== '1000').</content></listitem>
+            <listitem><content><value>APSR_g</value> is the same as <value>CPSR_s</value> (mask == '0100').</content></listitem>
+            <listitem><content><value>APSR_nzcvqg</value> is the same as <value>CPSR_fs</value> (mask == '1100').</content></listitem>
+          </list>
+          <para>Arm recommends the <value>APSR_&lt;bits&gt;</value> forms when only the N, Z, C, V, Q, and GE[3:0] bits are being written. For more information, see <xref linkend="CJAGBHBH">The Application Program Status Register, APSR</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MSR_i_A1_AS" symboldefcount="1">
+      <symbol link="imm">&lt;imm&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is an immediate value. See <xref linkend="BABHDAJF">Modified immediate constants in A32 instructions</xref> for the range of values.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/MSR_i/Op_AS.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    if write_spsr then
+        if PSTATE.M IN {<a link="M32_User" file="shared_pseudocode.xml" hover="constant bits(5) M32_User = '10000'">M32_User</a>,<a link="M32_System" file="shared_pseudocode.xml" hover="constant bits(5) M32_System = '11111'">M32_System</a>} then
+            UNPREDICTABLE;
+        else
+            <a link="impl-aarch32.SPSRWriteByInstr.2" file="shared_pseudocode.xml" hover="function: SPSRWriteByInstr(bits(32) value, bits(4) bytemask)">SPSRWriteByInstr</a>(imm32, mask);
+    else
+        // Attempts to change to an illegal mode will invoke the Illegal Execution state mechanism
+        <a link="impl-aarch32.CPSRWriteByInstr.2" file="shared_pseudocode.xml" hover="function: CPSRWriteByInstr(bits(32) value, bits(4) bytemask)">CPSRWriteByInstr</a>(imm32, mask);</pstext>
+    </ps>
+  </ps_section>
+  <constrained_unpredictables ps_block="Operation">
+    <cu_case>
+      <cu_cause>
+        <pstext mayhavelinks="1">PSTATE.M IN {M32_User,M32_System} &amp;&amp; write_spsr</pstext>
+      </cu_cause>
+      <cu_type constraint="Constraint_UNDEF" />
+      <cu_type constraint="Constraint_NOP" />
+    </cu_case>
+  </constrained_unpredictables>
+</instructionsection>

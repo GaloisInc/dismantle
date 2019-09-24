@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><title>AArch32</title><link rel="stylesheet" type="text/css" href="insn.css" /></head>
+  <body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h1 class="alphindextitle">AArch32 -- SIMD&amp;FP Instructions (alphabetic order)</h1>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="aesd.html" name="AESD" id="AESD">AESD</a>:
+        AES single round decryption.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="aese.html" name="AESE" id="AESE">AESE</a>:
+        AES single round encryption.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="aesimc.html" name="AESIMC" id="AESIMC">AESIMC</a>:
+        AES inverse mix columns.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="aesmc.html" name="AESMC" id="AESMC">AESMC</a>:
+        AES mix columns.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="fldmx.html" name="FLDMX" id="FLDMX">FLDM*X (FLDMDBX, FLDMIAX)</a>:
+        FLDM*X.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="fstmx.html" name="FSTMX" id="FSTMX">FSTMDBX, FSTMIAX</a>:
+        FSTMX.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha1c.html" name="SHA1C" id="SHA1C">SHA1C</a>:
+        SHA1 hash update (choose).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha1h.html" name="SHA1H" id="SHA1H">SHA1H</a>:
+        SHA1 fixed rotate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha1m.html" name="SHA1M" id="SHA1M">SHA1M</a>:
+        SHA1 hash update (majority).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha1p.html" name="SHA1P" id="SHA1P">SHA1P</a>:
+        SHA1 hash update (parity).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha1su0.html" name="SHA1SU0" id="SHA1SU0">SHA1SU0</a>:
+        SHA1 schedule update 0.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha1su1.html" name="SHA1SU1" id="SHA1SU1">SHA1SU1</a>:
+        SHA1 schedule update 1.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha256h.html" name="SHA256H" id="SHA256H">SHA256H</a>:
+        SHA256 hash update part 1.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha256h2.html" name="SHA256H2" id="SHA256H2">SHA256H2</a>:
+        SHA256 hash update part 2.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha256su0.html" name="SHA256SU0" id="SHA256SU0">SHA256SU0</a>:
+        SHA256 schedule update 0.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="sha256su1.html" name="SHA256SU1" id="SHA256SU1">SHA256SU1</a>:
+        SHA256 schedule update 1.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vaba.html" name="VABA" id="VABA">VABA</a>:
+        Vector Absolute Difference and Accumulate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vabal.html" name="VABAL" id="VABAL">VABAL</a>:
+        Vector Absolute Difference and Accumulate Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vabd_f.html" name="VABD_f" id="VABD_f">VABD (floating-point)</a>:
+        Vector Absolute Difference (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vabd_i.html" name="VABD_i" id="VABD_i">VABD (integer)</a>:
+        Vector Absolute Difference (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vabdl_i.html" name="VABDL_i" id="VABDL_i">VABDL (integer)</a>:
+        Vector Absolute Difference Long (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vabs.html" name="VABS" id="VABS">VABS</a>:
+        Vector Absolute.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vacge.html" name="VACGE" id="VACGE">VACGE</a>:
+        Vector Absolute Compare Greater Than or Equal.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vacgt.html" name="VACGT" id="VACGT">VACGT</a>:
+        Vector Absolute Compare Greater Than.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vacle_vacge.html" name="VACLE_VACGE" id="VACLE_VACGE">VACLE</a>:
+        Vector Absolute Compare Less Than or Equal: an alias of VACGE.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vaclt_vacgt.html" name="VACLT_VACGT" id="VACLT_VACGT">VACLT</a>:
+        Vector Absolute Compare Less Than: an alias of VACGT.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vadd_f.html" name="VADD_f" id="VADD_f">VADD (floating-point)</a>:
+        Vector Add (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vadd_i.html" name="VADD_i" id="VADD_i">VADD (integer)</a>:
+        Vector Add (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vaddhn.html" name="VADDHN" id="VADDHN">VADDHN</a>:
+        Vector Add and Narrow, returning High Half.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vaddl.html" name="VADDL" id="VADDL">VADDL</a>:
+        Vector Add Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vaddw.html" name="VADDW" id="VADDW">VADDW</a>:
+        Vector Add Wide.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vand_vbic_i.html" name="VAND_VBIC_i" id="VAND_VBIC_i">VAND (immediate)</a>:
+        Vector Bitwise AND (immediate): an alias of VBIC (immediate).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vand_r.html" name="VAND_r" id="VAND_r">VAND (register)</a>:
+        Vector Bitwise AND (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vbic_i.html" name="VBIC_i" id="VBIC_i">VBIC (immediate)</a>:
+        Vector Bitwise Bit Clear (immediate).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vbic_r.html" name="VBIC_r" id="VBIC_r">VBIC (register)</a>:
+        Vector Bitwise Bit Clear (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vbif.html" name="VBIF" id="VBIF">VBIF</a>:
+        Vector Bitwise Insert if False.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vbit.html" name="VBIT" id="VBIT">VBIT</a>:
+        Vector Bitwise Insert if True.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vbsl.html" name="VBSL" id="VBSL">VBSL</a>:
+        Vector Bitwise Select.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcadd.html" name="VCADD" id="VCADD">VCADD</a>:
+        Vector Complex Add.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vceq_i.html" name="VCEQ_i" id="VCEQ_i">VCEQ (immediate #0)</a>:
+        Vector Compare Equal to Zero.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vceq_r.html" name="VCEQ_r" id="VCEQ_r">VCEQ (register)</a>:
+        Vector Compare Equal.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcge_i.html" name="VCGE_i" id="VCGE_i">VCGE (immediate #0)</a>:
+        Vector Compare Greater Than or Equal to Zero.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcge_r.html" name="VCGE_r" id="VCGE_r">VCGE (register)</a>:
+        Vector Compare Greater Than or Equal.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcgt_i.html" name="VCGT_i" id="VCGT_i">VCGT (immediate #0)</a>:
+        Vector Compare Greater Than Zero.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcgt_r.html" name="VCGT_r" id="VCGT_r">VCGT (register)</a>:
+        Vector Compare Greater Than.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcle_i.html" name="VCLE_i" id="VCLE_i">VCLE (immediate #0)</a>:
+        Vector Compare Less Than or Equal to Zero.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcle_vcge_r.html" name="VCLE_VCGE_r" id="VCLE_VCGE_r">VCLE (register)</a>:
+        Vector Compare Less Than or Equal: an alias of VCGE (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcls.html" name="VCLS" id="VCLS">VCLS</a>:
+        Vector Count Leading Sign Bits.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vclt_i.html" name="VCLT_i" id="VCLT_i">VCLT (immediate #0)</a>:
+        Vector Compare Less Than Zero.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vclt_vcgt_r.html" name="VCLT_VCGT_r" id="VCLT_VCGT_r">VCLT (register)</a>:
+        Vector Compare Less Than: an alias of VCGT (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vclz.html" name="VCLZ" id="VCLZ">VCLZ</a>:
+        Vector Count Leading Zeros.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcmla.html" name="VCMLA" id="VCMLA">VCMLA</a>:
+        Vector Complex Multiply Accumulate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcmla_s.html" name="VCMLA_s" id="VCMLA_s">VCMLA (by element)</a>:
+        Vector Complex Multiply Accumulate (by element).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcmp.html" name="VCMP" id="VCMP">VCMP</a>:
+        Vector Compare.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcmpe.html" name="VCMPE" id="VCMPE">VCMPE</a>:
+        Vector Compare, raising Invalid Operation on NaN.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcnt.html" name="VCNT" id="VCNT">VCNT</a>:
+        Vector Count Set Bits.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvt_ds.html" name="VCVT_ds" id="VCVT_ds">VCVT (between double-precision and single-precision)</a>:
+        Convert between double-precision and single-precision.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvt_xs.html" name="VCVT_xs" id="VCVT_xs">VCVT (between floating-point and fixed-point, Advanced SIMD)</a>:
+        Vector Convert between floating-point and fixed-point.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvt_xv.html" name="VCVT_xv" id="VCVT_xv">VCVT (between floating-point and fixed-point, floating-point)</a>:
+        Convert between floating-point and fixed-point.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvt_is.html" name="VCVT_is" id="VCVT_is">VCVT (between floating-point and integer, Advanced SIMD)</a>:
+        Vector Convert between floating-point and integer.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvt_hs.html" name="VCVT_hs" id="VCVT_hs">VCVT (between half-precision and single-precision, Advanced SIMD)</a>:
+        Vector Convert between half-precision and single-precision.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvt_iv.html" name="VCVT_iv" id="VCVT_iv">VCVT (floating-point to integer, floating-point)</a>:
+        Convert floating-point to integer with Round towards Zero.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvt_vi.html" name="VCVT_vi" id="VCVT_vi">VCVT (integer to floating-point, floating-point)</a>:
+        Convert integer to floating-point.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvta_asimd.html" name="VCVTA_asimd" id="VCVTA_asimd">VCVTA (Advanced SIMD)</a>:
+        Vector Convert floating-point to integer with Round to Nearest with Ties to Away.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvta_vfp.html" name="VCVTA_vfp" id="VCVTA_vfp">VCVTA (floating-point)</a>:
+        Convert floating-point to integer with Round to Nearest with Ties to Away.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvtb.html" name="VCVTB" id="VCVTB">VCVTB</a>:
+        Convert to or from a half-precision value in the bottom half of a single-precision register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvtm_asimd.html" name="VCVTM_asimd" id="VCVTM_asimd">VCVTM (Advanced SIMD)</a>:
+        Vector Convert floating-point to integer with Round towards -Infinity.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvtm_vfp.html" name="VCVTM_vfp" id="VCVTM_vfp">VCVTM (floating-point)</a>:
+        Convert floating-point to integer with Round towards -Infinity.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvtn_asimd.html" name="VCVTN_asimd" id="VCVTN_asimd">VCVTN (Advanced SIMD)</a>:
+        Vector Convert floating-point to integer with Round to Nearest.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvtn_vfp.html" name="VCVTN_vfp" id="VCVTN_vfp">VCVTN (floating-point)</a>:
+        Convert floating-point to integer with Round to Nearest.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvtp_asimd.html" name="VCVTP_asimd" id="VCVTP_asimd">VCVTP (Advanced SIMD)</a>:
+        Vector Convert floating-point to integer with Round towards +Infinity.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvtp_vfp.html" name="VCVTP_vfp" id="VCVTP_vfp">VCVTP (floating-point)</a>:
+        Convert floating-point to integer with Round towards +Infinity.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvtr_iv.html" name="VCVTR_iv" id="VCVTR_iv">VCVTR</a>:
+        Convert floating-point to integer.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vcvtt.html" name="VCVTT" id="VCVTT">VCVTT</a>:
+        Convert to or from a half-precision value in the top half of a single-precision register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vdiv.html" name="VDIV" id="VDIV">VDIV</a>:
+        Divide.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vdup_r.html" name="VDUP_r" id="VDUP_r">VDUP (general-purpose register)</a>:
+        Duplicate general-purpose register to vector.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vdup_s.html" name="VDUP_s" id="VDUP_s">VDUP (scalar)</a>:
+        Duplicate vector element to vector.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="veor.html" name="VEOR" id="VEOR">VEOR</a>:
+        Vector Bitwise Exclusive OR.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vext.html" name="VEXT" id="VEXT">VEXT (byte elements)</a>:
+        Vector Extract.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vext_vext.html" name="VEXT_VEXT" id="VEXT_VEXT">VEXT (multibyte elements)</a>:
+        Vector Extract: an alias of VEXT (byte elements).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vfma.html" name="VFMA" id="VFMA">VFMA</a>:
+        Vector Fused Multiply Accumulate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vfmal_s.html" name="VFMAL_s" id="VFMAL_s">VFMAL (by scalar)</a>:
+        Vector Floating-point Multiply-Add Long to accumulator (by scalar).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vfmal.html" name="VFMAL" id="VFMAL">VFMAL (vector)</a>:
+        Vector Floating-point Multiply-Add Long to accumulator (vector).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vfms.html" name="VFMS" id="VFMS">VFMS</a>:
+        Vector Fused Multiply Subtract.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vfmsl_s.html" name="VFMSL_s" id="VFMSL_s">VFMSL (by scalar)</a>:
+        Vector Floating-point Multiply-Subtract Long from accumulator (by scalar).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vfmsl.html" name="VFMSL" id="VFMSL">VFMSL (vector)</a>:
+        Vector Floating-point Multiply-Subtract Long from accumulator (vector).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vfnma.html" name="VFNMA" id="VFNMA">VFNMA</a>:
+        Vector Fused Negate Multiply Accumulate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vfnms.html" name="VFNMS" id="VFNMS">VFNMS</a>:
+        Vector Fused Negate Multiply Subtract.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vhadd.html" name="VHADD" id="VHADD">VHADD</a>:
+        Vector Halving Add.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vhsub.html" name="VHSUB" id="VHSUB">VHSUB</a>:
+        Vector Halving Subtract.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vins.html" name="VINS" id="VINS">VINS</a>:
+        Vector move Insertion.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vjcvt.html" name="VJCVT" id="VJCVT">VJCVT</a>:
+        Javascript Convert to signed fixed-point, rounding toward Zero.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld1_m.html" name="VLD1_m" id="VLD1_m">VLD1 (multiple single elements)</a>:
+        Load multiple single 1-element structures to one, two, three, or four registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld1_a.html" name="VLD1_a" id="VLD1_a">VLD1 (single element to all lanes)</a>:
+        Load single 1-element structure and replicate to all lanes of one register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld1_1.html" name="VLD1_1" id="VLD1_1">VLD1 (single element to one lane)</a>:
+        Load single 1-element structure to one lane of one register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld2_m.html" name="VLD2_m" id="VLD2_m">VLD2 (multiple 2-element structures)</a>:
+        Load multiple 2-element structures to two or four registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld2_a.html" name="VLD2_a" id="VLD2_a">VLD2 (single 2-element structure to all lanes)</a>:
+        Load single 2-element structure and replicate to all lanes of two registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld2_1.html" name="VLD2_1" id="VLD2_1">VLD2 (single 2-element structure to one lane)</a>:
+        Load single 2-element structure to one lane of two registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld3_m.html" name="VLD3_m" id="VLD3_m">VLD3 (multiple 3-element structures)</a>:
+        Load multiple 3-element structures to three registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld3_a.html" name="VLD3_a" id="VLD3_a">VLD3 (single 3-element structure to all lanes)</a>:
+        Load single 3-element structure and replicate to all lanes of three registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld3_1.html" name="VLD3_1" id="VLD3_1">VLD3 (single 3-element structure to one lane)</a>:
+        Load single 3-element structure to one lane of three registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld4_m.html" name="VLD4_m" id="VLD4_m">VLD4 (multiple 4-element structures)</a>:
+        Load multiple 4-element structures to four registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld4_a.html" name="VLD4_a" id="VLD4_a">VLD4 (single 4-element structure to all lanes)</a>:
+        Load single 4-element structure and replicate to all lanes of four registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vld4_1.html" name="VLD4_1" id="VLD4_1">VLD4 (single 4-element structure to one lane)</a>:
+        Load single 4-element structure to one lane of four registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vldm.html" name="VLDM" id="VLDM">VLDM, VLDMDB, VLDMIA</a>:
+        Load Multiple SIMD&amp;FP registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vldr_i.html" name="VLDR_i" id="VLDR_i">VLDR (immediate)</a>:
+        Load SIMD&amp;FP register (immediate).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vldr_l.html" name="VLDR_l" id="VLDR_l">VLDR (literal)</a>:
+        Load SIMD&amp;FP register (literal).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmax_f.html" name="VMAX_f" id="VMAX_f">VMAX (floating-point)</a>:
+        Vector Maximum (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmax_i.html" name="VMAX_i" id="VMAX_i">VMAX (integer)</a>:
+        Vector Maximum (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmaxnm.html" name="VMAXNM" id="VMAXNM">VMAXNM</a>:
+        Floating-point Maximum Number.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmin_f.html" name="VMIN_f" id="VMIN_f">VMIN (floating-point)</a>:
+        Vector Minimum (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmin_i.html" name="VMIN_i" id="VMIN_i">VMIN (integer)</a>:
+        Vector Minimum (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vminnm.html" name="VMINNM" id="VMINNM">VMINNM</a>:
+        Floating-point Minimum Number.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmla_s.html" name="VMLA_s" id="VMLA_s">VMLA (by scalar)</a>:
+        Vector Multiply Accumulate (by scalar).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmla_f.html" name="VMLA_f" id="VMLA_f">VMLA (floating-point)</a>:
+        Vector Multiply Accumulate (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmla_i.html" name="VMLA_i" id="VMLA_i">VMLA (integer)</a>:
+        Vector Multiply Accumulate (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmlal_s.html" name="VMLAL_s" id="VMLAL_s">VMLAL (by scalar)</a>:
+        Vector Multiply Accumulate Long (by scalar).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmlal_i.html" name="VMLAL_i" id="VMLAL_i">VMLAL (integer)</a>:
+        Vector Multiply Accumulate Long (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmls_s.html" name="VMLS_s" id="VMLS_s">VMLS (by scalar)</a>:
+        Vector Multiply Subtract (by scalar).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmls_f.html" name="VMLS_f" id="VMLS_f">VMLS (floating-point)</a>:
+        Vector Multiply Subtract (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmls_i.html" name="VMLS_i" id="VMLS_i">VMLS (integer)</a>:
+        Vector Multiply Subtract (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmlsl_s.html" name="VMLSL_s" id="VMLSL_s">VMLSL (by scalar)</a>:
+        Vector Multiply Subtract Long (by scalar).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmlsl_i.html" name="VMLSL_i" id="VMLSL_i">VMLSL (integer)</a>:
+        Vector Multiply Subtract Long (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmov_h.html" name="VMOV_h" id="VMOV_h">VMOV (between general-purpose register and half-precision)</a>:
+        Copy 16 bits of a general-purpose register to or from a 32-bit SIMD&amp;FP register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmov_s.html" name="VMOV_s" id="VMOV_s">VMOV (between general-purpose register and single-precision)</a>:
+        Copy a general-purpose register to or from a 32-bit SIMD&amp;FP register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmov_d.html" name="VMOV_d" id="VMOV_d">VMOV (between two general-purpose registers and a doubleword floating-point register)</a>:
+        Copy two general-purpose registers to or from a SIMD&amp;FP register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmov_ss.html" name="VMOV_ss" id="VMOV_ss">VMOV (between two general-purpose registers and two single-precision registers)</a>:
+        Copy two general-purpose registers to a pair of 32-bit SIMD&amp;FP registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmov_rs.html" name="VMOV_rs" id="VMOV_rs">VMOV (general-purpose register to scalar)</a>:
+        Copy a general-purpose register to a vector element.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmov_i.html" name="VMOV_i" id="VMOV_i">VMOV (immediate)</a>:
+        Copy immediate value to a SIMD&amp;FP register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmov_r.html" name="VMOV_r" id="VMOV_r">VMOV (register)</a>:
+        Copy between FP registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmov_vorr_r.html" name="VMOV_VORR_r" id="VMOV_VORR_r">VMOV (register, SIMD)</a>:
+        Copy between SIMD registers: an alias of VORR (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmov_sr.html" name="VMOV_sr" id="VMOV_sr">VMOV (scalar to general-purpose register)</a>:
+        Copy a vector element to a general-purpose register with sign or zero extension.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmovl.html" name="VMOVL" id="VMOVL">VMOVL</a>:
+        Vector Move Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmovn.html" name="VMOVN" id="VMOVN">VMOVN</a>:
+        Vector Move and Narrow.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmovx.html" name="VMOVX" id="VMOVX">VMOVX</a>:
+        Vector Move extraction.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmrs.html" name="VMRS" id="VMRS">VMRS</a>:
+        Move SIMD&amp;FP Special register to general-purpose register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmsr.html" name="VMSR" id="VMSR">VMSR</a>:
+        Move general-purpose register to SIMD&amp;FP Special register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmul_s.html" name="VMUL_s" id="VMUL_s">VMUL (by scalar)</a>:
+        Vector Multiply (by scalar).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmul_f.html" name="VMUL_f" id="VMUL_f">VMUL (floating-point)</a>:
+        Vector Multiply (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmul_i.html" name="VMUL_i" id="VMUL_i">VMUL (integer and polynomial)</a>:
+        Vector Multiply (integer and polynomial).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmull_s.html" name="VMULL_s" id="VMULL_s">VMULL (by scalar)</a>:
+        Vector Multiply Long (by scalar).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmull_i.html" name="VMULL_i" id="VMULL_i">VMULL (integer and polynomial)</a>:
+        Vector Multiply Long (integer and polynomial).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmvn_i.html" name="VMVN_i" id="VMVN_i">VMVN (immediate)</a>:
+        Vector Bitwise NOT (immediate).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vmvn_r.html" name="VMVN_r" id="VMVN_r">VMVN (register)</a>:
+        Vector Bitwise NOT (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vneg.html" name="VNEG" id="VNEG">VNEG</a>:
+        Vector Negate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vnmla.html" name="VNMLA" id="VNMLA">VNMLA</a>:
+        Vector Negate Multiply Accumulate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vnmls.html" name="VNMLS" id="VNMLS">VNMLS</a>:
+        Vector Negate Multiply Subtract.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vnmul.html" name="VNMUL" id="VNMUL">VNMUL</a>:
+        Vector Negate Multiply.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vorn_vorr_i.html" name="VORN_VORR_i" id="VORN_VORR_i">VORN (immediate)</a>:
+        Vector Bitwise OR NOT (immediate): an alias of VORR (immediate).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vorn_r.html" name="VORN_r" id="VORN_r">VORN (register)</a>:
+        Vector bitwise OR NOT (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vorr_i.html" name="VORR_i" id="VORR_i">VORR (immediate)</a>:
+        Vector Bitwise OR (immediate).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vorr_r.html" name="VORR_r" id="VORR_r">VORR (register)</a>:
+        Vector bitwise OR (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpadal.html" name="VPADAL" id="VPADAL">VPADAL</a>:
+        Vector Pairwise Add and Accumulate Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpadd_f.html" name="VPADD_f" id="VPADD_f">VPADD (floating-point)</a>:
+        Vector Pairwise Add (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpadd_i.html" name="VPADD_i" id="VPADD_i">VPADD (integer)</a>:
+        Vector Pairwise Add (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpaddl.html" name="VPADDL" id="VPADDL">VPADDL</a>:
+        Vector Pairwise Add Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpmax_f.html" name="VPMAX_f" id="VPMAX_f">VPMAX (floating-point)</a>:
+        Vector Pairwise Maximum (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpmax_i.html" name="VPMAX_i" id="VPMAX_i">VPMAX (integer)</a>:
+        Vector Pairwise Maximum (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpmin_f.html" name="VPMIN_f" id="VPMIN_f">VPMIN (floating-point)</a>:
+        Vector Pairwise Minimum (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpmin_i.html" name="VPMIN_i" id="VPMIN_i">VPMIN (integer)</a>:
+        Vector Pairwise Minimum (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpop_vldm.html" name="VPOP_VLDM" id="VPOP_VLDM">VPOP</a>:
+        Pop SIMD&amp;FP registers from Stack: an alias of VLDM, VLDMDB, VLDMIA.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vpush_vstm.html" name="VPUSH_VSTM" id="VPUSH_VSTM">VPUSH</a>:
+        Push SIMD&amp;FP registers to Stack: an alias of VSTM, VSTMDB, VSTMIA.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqabs.html" name="VQABS" id="VQABS">VQABS</a>:
+        Vector Saturating Absolute.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqadd.html" name="VQADD" id="VQADD">VQADD</a>:
+        Vector Saturating Add.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqdmlal.html" name="VQDMLAL" id="VQDMLAL">VQDMLAL</a>:
+        Vector Saturating Doubling Multiply Accumulate Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqdmlsl.html" name="VQDMLSL" id="VQDMLSL">VQDMLSL</a>:
+        Vector Saturating Doubling Multiply Subtract Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqdmulh.html" name="VQDMULH" id="VQDMULH">VQDMULH</a>:
+        Vector Saturating Doubling Multiply Returning High Half.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqdmull.html" name="VQDMULL" id="VQDMULL">VQDMULL</a>:
+        Vector Saturating Doubling Multiply Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqmovn.html" name="VQMOVN" id="VQMOVN">VQMOVN, VQMOVUN</a>:
+        Vector Saturating Move and Narrow.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqneg.html" name="VQNEG" id="VQNEG">VQNEG</a>:
+        Vector Saturating Negate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqrdmlah.html" name="VQRDMLAH" id="VQRDMLAH">VQRDMLAH</a>:
+        Vector Saturating Rounding Doubling Multiply Accumulate Returning High Half.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqrdmlsh.html" name="VQRDMLSH" id="VQRDMLSH">VQRDMLSH</a>:
+        Vector Saturating Rounding Doubling Multiply Subtract Returning High Half.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqrdmulh.html" name="VQRDMULH" id="VQRDMULH">VQRDMULH</a>:
+        Vector Saturating Rounding Doubling Multiply Returning High Half.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqrshl.html" name="VQRSHL" id="VQRSHL">VQRSHL</a>:
+        Vector Saturating Rounding Shift Left.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqrshrn_vqmovn.html" name="VQRSHRN_VQMOVN" id="VQRSHRN_VQMOVN">VQRSHRN (zero)</a>:
+        Vector Saturating Rounding Shift Right, Narrow: an alias of VQMOVN, VQMOVUN.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqrshrn.html" name="VQRSHRN" id="VQRSHRN">VQRSHRN, VQRSHRUN</a>:
+        Vector Saturating Rounding Shift Right, Narrow.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqrshrun_vqmovn.html" name="VQRSHRUN_VQMOVN" id="VQRSHRUN_VQMOVN">VQRSHRUN (zero)</a>:
+        Vector Saturating Rounding Shift Right, Narrow: an alias of VQMOVN, VQMOVUN.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqshl_r.html" name="VQSHL_r" id="VQSHL_r">VQSHL (register)</a>:
+        Vector Saturating Shift Left (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqshl_i.html" name="VQSHL_i" id="VQSHL_i">VQSHL, VQSHLU (immediate)</a>:
+        Vector Saturating Shift Left (immediate).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqshrn_vqmovn.html" name="VQSHRN_VQMOVN" id="VQSHRN_VQMOVN">VQSHRN (zero)</a>:
+        Vector Saturating Shift Right, Narrow: an alias of VQMOVN, VQMOVUN.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqshrn.html" name="VQSHRN" id="VQSHRN">VQSHRN, VQSHRUN</a>:
+        Vector Saturating Shift Right, Narrow.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqshrun_vqmovn.html" name="VQSHRUN_VQMOVN" id="VQSHRUN_VQMOVN">VQSHRUN (zero)</a>:
+        Vector Saturating Shift Right, Narrow: an alias of VQMOVN, VQMOVUN.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vqsub.html" name="VQSUB" id="VQSUB">VQSUB</a>:
+        Vector Saturating Subtract.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vraddhn.html" name="VRADDHN" id="VRADDHN">VRADDHN</a>:
+        Vector Rounding Add and Narrow, returning High Half.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrecpe.html" name="VRECPE" id="VRECPE">VRECPE</a>:
+        Vector Reciprocal Estimate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrecps.html" name="VRECPS" id="VRECPS">VRECPS</a>:
+        Vector Reciprocal Step.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrev16.html" name="VREV16" id="VREV16">VREV16</a>:
+        Vector Reverse in halfwords.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrev32.html" name="VREV32" id="VREV32">VREV32</a>:
+        Vector Reverse in words.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrev64.html" name="VREV64" id="VREV64">VREV64</a>:
+        Vector Reverse in doublewords.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrhadd.html" name="VRHADD" id="VRHADD">VRHADD</a>:
+        Vector Rounding Halving Add.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrinta_asimd.html" name="VRINTA_asimd" id="VRINTA_asimd">VRINTA (Advanced SIMD)</a>:
+        Vector Round floating-point to integer towards Nearest with Ties to Away.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrinta_vfp.html" name="VRINTA_vfp" id="VRINTA_vfp">VRINTA (floating-point)</a>:
+        Round floating-point to integer to Nearest with Ties to Away.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintm_asimd.html" name="VRINTM_asimd" id="VRINTM_asimd">VRINTM (Advanced SIMD)</a>:
+        Vector Round floating-point to integer towards -Infinity.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintm_vfp.html" name="VRINTM_vfp" id="VRINTM_vfp">VRINTM (floating-point)</a>:
+        Round floating-point to integer towards -Infinity.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintn_asimd.html" name="VRINTN_asimd" id="VRINTN_asimd">VRINTN (Advanced SIMD)</a>:
+        Vector Round floating-point to integer to Nearest.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintn_vfp.html" name="VRINTN_vfp" id="VRINTN_vfp">VRINTN (floating-point)</a>:
+        Round floating-point to integer to Nearest.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintp_asimd.html" name="VRINTP_asimd" id="VRINTP_asimd">VRINTP (Advanced SIMD)</a>:
+        Vector Round floating-point to integer towards +Infinity.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintp_vfp.html" name="VRINTP_vfp" id="VRINTP_vfp">VRINTP (floating-point)</a>:
+        Round floating-point to integer towards +Infinity.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintr_vfp.html" name="VRINTR_vfp" id="VRINTR_vfp">VRINTR</a>:
+        Round floating-point to integer.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintx_asimd.html" name="VRINTX_asimd" id="VRINTX_asimd">VRINTX (Advanced SIMD)</a>:
+        Vector round floating-point to integer inexact.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintx_vfp.html" name="VRINTX_vfp" id="VRINTX_vfp">VRINTX (floating-point)</a>:
+        Round floating-point to integer inexact.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintz_asimd.html" name="VRINTZ_asimd" id="VRINTZ_asimd">VRINTZ (Advanced SIMD)</a>:
+        Vector round floating-point to integer towards Zero.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrintz_vfp.html" name="VRINTZ_vfp" id="VRINTZ_vfp">VRINTZ (floating-point)</a>:
+        Round floating-point to integer towards Zero.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrshl.html" name="VRSHL" id="VRSHL">VRSHL</a>:
+        Vector Rounding Shift Left.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrshr.html" name="VRSHR" id="VRSHR">VRSHR</a>:
+        Vector Rounding Shift Right.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrshr_vorr_r.html" name="VRSHR_VORR_r" id="VRSHR_VORR_r">VRSHR (zero)</a>:
+        Vector Rounding Shift Right: an alias of VORR (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrshrn.html" name="VRSHRN" id="VRSHRN">VRSHRN</a>:
+        Vector Rounding Shift Right and Narrow.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrshrn_vmovn.html" name="VRSHRN_VMOVN" id="VRSHRN_VMOVN">VRSHRN (zero)</a>:
+        Vector Rounding Shift Right and Narrow: an alias of VMOVN.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrsqrte.html" name="VRSQRTE" id="VRSQRTE">VRSQRTE</a>:
+        Vector Reciprocal Square Root Estimate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrsqrts.html" name="VRSQRTS" id="VRSQRTS">VRSQRTS</a>:
+        Vector Reciprocal Square Root Step.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrsra.html" name="VRSRA" id="VRSRA">VRSRA</a>:
+        Vector Rounding Shift Right and Accumulate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vrsubhn.html" name="VRSUBHN" id="VRSUBHN">VRSUBHN</a>:
+        Vector Rounding Subtract and Narrow, returning High Half.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsdot_s.html" name="VSDOT_s" id="VSDOT_s">VSDOT (by element)</a>:
+        Dot Product index form with signed integers..</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsdot.html" name="VSDOT" id="VSDOT">VSDOT (vector)</a>:
+        Dot Product vector form with signed integers..</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsel.html" name="VSEL" id="VSEL">VSELEQ, VSELGE, VSELGT, VSELVS</a>:
+        Floating-point conditional select.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vshl_i.html" name="VSHL_i" id="VSHL_i">VSHL (immediate)</a>:
+        Vector Shift Left (immediate).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vshl_r.html" name="VSHL_r" id="VSHL_r">VSHL (register)</a>:
+        Vector Shift Left (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vshll.html" name="VSHLL" id="VSHLL">VSHLL</a>:
+        Vector Shift Left Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vshr.html" name="VSHR" id="VSHR">VSHR</a>:
+        Vector Shift Right.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vshr_vorr_r.html" name="VSHR_VORR_r" id="VSHR_VORR_r">VSHR (zero)</a>:
+        Vector Shift Right: an alias of VORR (register).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vshrn.html" name="VSHRN" id="VSHRN">VSHRN</a>:
+        Vector Shift Right Narrow.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vshrn_vmovn.html" name="VSHRN_VMOVN" id="VSHRN_VMOVN">VSHRN (zero)</a>:
+        Vector Shift Right Narrow: an alias of VMOVN.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsli.html" name="VSLI" id="VSLI">VSLI</a>:
+        Vector Shift Left and Insert.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsqrt.html" name="VSQRT" id="VSQRT">VSQRT</a>:
+        Square Root.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsra.html" name="VSRA" id="VSRA">VSRA</a>:
+        Vector Shift Right and Accumulate.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsri.html" name="VSRI" id="VSRI">VSRI</a>:
+        Vector Shift Right and Insert.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vst1_m.html" name="VST1_m" id="VST1_m">VST1 (multiple single elements)</a>:
+        Store multiple single elements from one, two, three, or four registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vst1_1.html" name="VST1_1" id="VST1_1">VST1 (single element from one lane)</a>:
+        Store single element from one lane of one register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vst2_m.html" name="VST2_m" id="VST2_m">VST2 (multiple 2-element structures)</a>:
+        Store multiple 2-element structures from two or four registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vst2_1.html" name="VST2_1" id="VST2_1">VST2 (single 2-element structure from one lane)</a>:
+        Store single 2-element structure from one lane of two registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vst3_m.html" name="VST3_m" id="VST3_m">VST3 (multiple 3-element structures)</a>:
+        Store multiple 3-element structures from three registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vst3_1.html" name="VST3_1" id="VST3_1">VST3 (single 3-element structure from one lane)</a>:
+        Store single 3-element structure from one lane of three registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vst4_m.html" name="VST4_m" id="VST4_m">VST4 (multiple 4-element structures)</a>:
+        Store multiple 4-element structures from four registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vst4_1.html" name="VST4_1" id="VST4_1">VST4 (single 4-element structure from one lane)</a>:
+        Store single 4-element structure from one lane of four registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vstm.html" name="VSTM" id="VSTM">VSTM, VSTMDB, VSTMIA</a>:
+        Store multiple SIMD&amp;FP registers.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vstr.html" name="VSTR" id="VSTR">VSTR</a>:
+        Store SIMD&amp;FP register.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsub_f.html" name="VSUB_f" id="VSUB_f">VSUB (floating-point)</a>:
+        Vector Subtract (floating-point).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsub_i.html" name="VSUB_i" id="VSUB_i">VSUB (integer)</a>:
+        Vector Subtract (integer).</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsubhn.html" name="VSUBHN" id="VSUBHN">VSUBHN</a>:
+        Vector Subtract and Narrow, returning High Half.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsubl.html" name="VSUBL" id="VSUBL">VSUBL</a>:
+        Vector Subtract Long.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vsubw.html" name="VSUBW" id="VSUBW">VSUBW</a>:
+        Vector Subtract Wide.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vswp.html" name="VSWP" id="VSWP">VSWP</a>:
+        Vector Swap.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vtbl.html" name="VTBL" id="VTBL">VTBL, VTBX</a>:
+        Vector Table Lookup and Extension.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vtrn.html" name="VTRN" id="VTRN">VTRN</a>:
+        Vector Transpose.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vtst.html" name="VTST" id="VTST">VTST</a>:
+        Vector Test Bits.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vudot_s.html" name="VUDOT_s" id="VUDOT_s">VUDOT (by element)</a>:
+        Dot Product index form with unsigned integers..</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vudot.html" name="VUDOT" id="VUDOT">VUDOT (vector)</a>:
+        Dot Product vector form with unsigned integers..</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vuzp.html" name="VUZP" id="VUZP">VUZP</a>:
+        Vector Unzip.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vuzp_vtrn.html" name="VUZP_VTRN" id="VUZP_VTRN">VUZP (alias)</a>:
+        Vector Unzip: an alias of VTRN.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vzip.html" name="VZIP" id="VZIP">VZIP</a>:
+        Vector Zip.</span></p></div>
+    <div class="iformindex"><p class="iformindex"><span class="insnheading"><a href="vzip_vtrn.html" name="VZIP_VTRN" id="VZIP_VTRN">VZIP (alias)</a>:
+        Vector Zip: an alias of VTRN.</span></p></div>
+  <hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+        Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1      
+        ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body>
+</html>

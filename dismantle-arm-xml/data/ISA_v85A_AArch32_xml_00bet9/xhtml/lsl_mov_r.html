@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>LSL (immediate) -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">LSL (immediate)</h2><p id="desc">
+      <p class="aml">Logical Shift Left (immediate) shifts a register value left by an immediate number of bits, shifting in zeros, and writes the result to the destination register.</p>
+    </p><p id="desc">
+        This is an alias of
+        <a href="mov_r.html">MOV, MOVS (register)</a>.
+        This means:
+        <ul><li>
+            The encodings in this description are named to match the encodings of 
+            <a href="mov_r.html">MOV, MOVS (register)</a>.
+          </li><li>
+            The description of 
+            <a href="mov_r.html">MOV, MOVS (register)</a>
+            gives the operational pseudocode for this instruction.
+          </li></ul></p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t2">T2</a>
+       and 
+      <a href="#t3">T3</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td colspan="4" class="lr">!= 1111</td><td class="l">0</td><td>0</td><td>0</td><td>1</td><td class="r">1</td><td class="l">0</td><td class="r">1</td><td class="lr">0</td><td class="l">(0)</td><td>(0)</td><td>(0)</td><td class="r">(0)</td><td colspan="4" class="lr">Rd</td><td colspan="5" class="lr">!= 00000</td><td class="l">0</td><td class="r">0</td><td class="lr">0</td><td colspan="4" class="lr">Rm</td></tr><tr class="secondrow"><td colspan="4" class="droppedname">cond</td><td colspan="5"></td><td colspan="2"></td><td class="droppedname">S</td><td colspan="4"></td><td colspan="4"></td><td colspan="5" class="droppedname">imm5</td><td colspan="2" class="droppedname">type</td><td></td><td colspan="4"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">MOV, shift or rotate by value</h4><p class="asm-code"><a name="LSL_MOV_r_A1" id="LSL_MOV_r_A1"></a>LSL{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {<a href="#rd_3" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>,} <a href="#rm_2" title="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, #<a href="#imm_5" title="Shift amount [0-31] (field &quot;imm5&quot;)">&lt;imm&gt;</a></p><p class="equivto">
+      is equivalent to
+    </p>
+          <p class="asm-code"><a href="mov_r.html#MOV_r_A1">MOV</a>{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rd_3" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>, <a href="#rm_2" title="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, LSL #<a href="#imm_5" title="Shift amount [0-31] (field &quot;imm5&quot;)">&lt;imm&gt;</a></p>
+          <p class="equivto">
+          and is always the preferred disassembly.
+        </p>
+        </div>
+    <h3 class="classheading"><a name="t2" id="t2"></a>T2</h3><div class="regdiagram-16"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">0</td><td>0</td><td class="r">0</td><td class="l">0</td><td class="r">0</td><td colspan="5" class="lr">!= 00000</td><td colspan="3" class="lr">Rm</td><td colspan="3" class="lr">Rd</td></tr><tr class="secondrow"><td colspan="3"></td><td colspan="2" class="droppedname">op</td><td colspan="5" class="droppedname">imm5</td><td colspan="3"></td><td colspan="3"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">T2</h4><p class="asm-code"><a name="LSL_MOV_r_T2" id="LSL_MOV_r_T2"></a>LSL<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {<a href="#rd_1" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>,} <a href="#rm_1" title="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, #<a href="#imm" title="Shift amount [1-31] (field &quot;imm5&quot;)">&lt;imm&gt;</a>
+        //
+      
+        (Inside IT block)
+      </p><p class="equivto">
+      is equivalent to
+    </p>
+          <p class="asm-code"><a href="mov_r.html#MOV_r_T2">MOV</a><a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rd_1" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>, <a href="#rm_1" title="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, LSL #<a href="#imm" title="Shift amount [1-31] (field &quot;imm5&quot;)">&lt;imm&gt;</a></p>
+          <p class="equivto">
+          and is the preferred disassembly when
+          <span class="pseudocode">InITBlock()</span>.
+        </p>
+        </div>
+    <h3 class="classheading"><a name="t3" id="t3"></a>T3</h3><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td class="r">1</td><td class="l">0</td><td>0</td><td>1</td><td class="r">0</td><td class="lr">0</td><td class="l">1</td><td>1</td><td>1</td><td class="r">1</td><td class="lr">(0)</td><td colspan="3" class="lr">imm3</td><td colspan="4" class="lr">Rd</td><td colspan="2" class="lr">imm2</td><td class="l">0</td><td class="r">0</td><td colspan="4" class="lr">Rm</td></tr><tr class="secondrow"><td colspan="7"></td><td colspan="4"></td><td class="droppedname">S</td><td colspan="4"></td><td></td><td colspan="3"></td><td colspan="4"></td><td colspan="2"></td><td colspan="2" class="droppedname">type</td><td colspan="4"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">MOV, shift or rotate by value</h4><p class="asm-code"><a name="LSL_MOV_r_T3" id="LSL_MOV_r_T3"></a>LSL<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>.W {<a href="#rd_1" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>,} <a href="#rm_1" title="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, #<a href="#imm_3" title="Shift amount [0-31] (field &quot;imm3:imm2&quot;)">&lt;imm&gt;</a>
+        //
+      
+        (Inside IT block, and &lt;Rd&gt;, &lt;Rm&gt;, &lt;imm&gt; can be represented in T2)
+      </p><p class="asm-code"><a name="LSL_MOV_r_T3" id="LSL_MOV_r_T3"></a>LSL{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {<a href="#rd_1" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>,} <a href="#rm_1" title="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, #<a href="#imm_3" title="Shift amount [0-31] (field &quot;imm3:imm2&quot;)">&lt;imm&gt;</a></p><p class="equivto">
+      is equivalent to
+    </p>
+          <p class="asm-code"><a href="mov_r.html#MOV_r_T3">MOV</a>{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rd_1" title="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a>, <a href="#rm_1" title="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a>, LSL #<a href="#imm_3" title="Shift amount [0-31] (field &quot;imm3:imm2&quot;)">&lt;imm&gt;</a></p>
+          <p class="equivto">
+          and is always the preferred disassembly.
+        </p>
+        </div>
+  <p class="encoding-notes"></p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;c&gt;</td><td><a name="c" id="c"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Rd&gt;</td><td><a name="rd_3" id="rd_3"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding A1: is the general-purpose destination register, encoded in the "Rd" field. Arm deprecates using the PC as the destination register, but if the PC is used, the instruction is a branch to the address calculated by the operation. This is an interworking branch, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</a>.</p>
+        
+      </td></tr><tr><td></td><td><a name="rd_1" id="rd_1"></a>
+        
+          <p class="aml">For encoding T2 and T3: is the general-purpose destination register, encoded in the "Rd" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Rm&gt;</td><td><a name="rm_2" id="rm_2"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding A1: is the general-purpose source register, encoded in the "Rm" field. The PC can be used, but this is deprecated.</p>
+        
+      </td></tr><tr><td></td><td><a name="rm_1" id="rm_1"></a>
+        
+          <p class="aml">For encoding T2 and T3: is the general-purpose source register, encoded in the "Rm" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;imm&gt;</td><td><a name="imm_5" id="imm_5"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding A1: is the shift amount, in the range 0 to 31, encoded in the "imm5" field as &lt;imm&gt; modulo 32.</p>
+        
+      </td></tr><tr><td></td><td><a name="imm" id="imm"></a>
+        
+          
+        
+        
+          <p class="aml">For encoding T2: is the shift amount, in the range 1 to 31, encoded in the "imm5" field as &lt;amount&gt; modulo 32.</p>
+        
+      </td></tr><tr><td></td><td><a name="imm_3" id="imm_3"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding T3: is the shift amount, in the range 0 to 31,  encoded in the "imm3:imm2" field as &lt;imm&gt; modulo 32.</p>
+        
+      </td></tr></table></div><p class="syntax-notes"></p><div class="alias_ps_section"><h3 class="pseudocode">Operation</h3><p>The description of 
+        <a href="mov_r.html">MOV, MOVS (register)</a> 
+        gives the operational pseudocode for this instruction.</p></div><hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

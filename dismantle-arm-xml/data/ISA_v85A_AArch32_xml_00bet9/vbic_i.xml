@@ -1,0 +1,509 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VBIC_i" title="VBIC (immediate) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VBIC" />
+  </docvars>
+  <heading>VBIC (immediate)</heading>
+  <desc>
+    <brief>
+      <para>Vector Bitwise Bit Clear (immediate)</para>
+    </brief>
+    <authored>
+      <para>Vector Bitwise Bit Clear (immediate) performs a bitwise AND between a register value and the complement of an immediate value, and returns the result into the destination vector.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, and <xref linkend="AArch32.hcptr">HCPTR</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>Related encodings: See <xref linkend="T32.encoding_index.simd_1r_imm">Advanced SIMD one register and modified immediate</xref> for the T32 instruction set, or <xref linkend="A32.encoding_index.simd1reg_imm">Advanced SIMD one register and modified immediate</xref> for the A32 instruction set.</para>
+    </encodingnotes>
+    <syntaxnotes>
+      <para>The I8, I64, and F32 data types are permitted as pseudo-instructions, if the immediate can be represented by this instruction, and are encoded using a permitted encoding of the I16 or I32 data type.</para>
+    </syntaxnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1 and this instruction passes its condition execution check:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="1">
+    <alias_list_intro>This instruction is used by the alias </alias_list_intro>
+    <aliasref aliaspageid="VAND_VBIC_i" aliasfile="vand_vbic_i.xml" hover="Vector Bitwise AND (immediate)" punct=".">
+      <text>VAND (immediate)</text>
+      <aliaspref>Never</aliaspref>
+    </aliasref>
+    <alias_list_outro>
+      <text>  See </text>
+      <aliastablelink />
+      <text> below for details of when the alias is preferred.</text>
+    </alias_list_outro>
+  </alias_list>
+  <classes>
+    <classesintro count="4">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt> and </txt>
+      <a href="#a2">A2</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="4" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VBIC" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VBIC_i/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="24" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="3" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="18" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="cmode" usename="1" settings="2">
+          <c>0</c>
+          <c>x</c>
+          <c>x</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" name="op" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VBIC_i_A1_D" oneofinclass="2" oneof="8" label="64-bit SIMD vector" bitdiffs="Q == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VBIC" />
+          <docvar key="simdvectorsize" value="double" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VBIC</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.I32 </text><text>{</text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>,</text><text>}</text><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, #</text><a link="imm" hover="Constant of specified type that is replicated to fill the destination register">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VBIC_i_A1_Q" oneofinclass="2" oneof="8" label="128-bit SIMD vector" bitdiffs="Q == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VBIC" />
+          <docvar key="simdvectorsize" value="quad" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VBIC</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.I32 </text><text>{</text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>,</text><text>}</text><text> </text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, #</text><a link="imm" hover="Constant of specified type that is replicated to fill the destination register">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VBIC_i/T1A1_A.txt" mylink="aarch32.instrs.VBIC_i.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if cmode&lt;0&gt; == '0' || cmode&lt;3:2&gt; == '11' then SEE "Related encodings";
+if Q == '1' &amp;&amp; Vd&lt;0&gt; == '1' then UNDEFINED;
+imm64 = <a link="impl-shared.AdvSIMDExpandImm.3" file="shared_pseudocode.xml" hover="function: bits(64) AdvSIMDExpandImm(bit op, bits(4) cmode, bits(8) imm8)">AdvSIMDExpandImm</a>('1', cmode, i:imm3:imm4);
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  regs = if Q == '0' then 1 else 2;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="A2" oneof="4" id="a2" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A2" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VBIC" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VBIC_i/T2A2_A.txt" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="24" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="3" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="18" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="cmode" usename="1" settings="3">
+          <c>1</c>
+          <c>0</c>
+          <c>x</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" name="op" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VBIC_i_A2_D" oneofinclass="2" oneof="8" label="64-bit SIMD vector" bitdiffs="Q == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A2" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VBIC" />
+          <docvar key="simdvectorsize" value="double" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VBIC</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.I16 </text><text>{</text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>,</text><text>}</text><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, #</text><a link="imm" hover="Constant of specified type that is replicated to fill the destination register">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VBIC_i_A2_Q" oneofinclass="2" oneof="8" label="128-bit SIMD vector" bitdiffs="Q == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A2" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VBIC" />
+          <docvar key="simdvectorsize" value="quad" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VBIC</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.I16 </text><text>{</text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>,</text><text>}</text><text> </text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, #</text><a link="imm" hover="Constant of specified type that is replicated to fill the destination register">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VBIC_i/T2A2_A.txt" mylink="aarch32.instrs.VBIC_i.T2A2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if cmode&lt;0&gt; == '0' || cmode&lt;3:2&gt; == '11' then SEE "Related encodings";
+if Q == '1' &amp;&amp; Vd&lt;0&gt; == '1' then UNDEFINED;
+imm64 = <a link="impl-shared.AdvSIMDExpandImm.3" file="shared_pseudocode.xml" hover="function: bits(64) AdvSIMDExpandImm(bit op, bits(4) cmode, bits(8) imm8)">AdvSIMDExpandImm</a>('1', cmode, i:imm3:imm4);
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  regs = if Q == '0' then 1 else 2;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="4" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VBIC" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VBIC_i/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="28" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="3" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="18" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="cmode" usename="1" settings="2">
+          <c>0</c>
+          <c>x</c>
+          <c>x</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" name="op" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VBIC_i_T1_D" oneofinclass="2" oneof="8" label="64-bit SIMD vector" bitdiffs="Q == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VBIC" />
+          <docvar key="simdvectorsize" value="double" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VBIC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.I32 </text><text>{</text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>,</text><text>}</text><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, #</text><a link="imm" hover="Constant of specified type that is replicated to fill the destination register">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VBIC_i_T1_Q" oneofinclass="2" oneof="8" label="128-bit SIMD vector" bitdiffs="Q == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VBIC" />
+          <docvar key="simdvectorsize" value="quad" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VBIC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.I32 </text><text>{</text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>,</text><text>}</text><text> </text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, #</text><a link="imm" hover="Constant of specified type that is replicated to fill the destination register">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VBIC_i/T1A1_A.txt" mylink="aarch32.instrs.VBIC_i.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if cmode&lt;0&gt; == '0' || cmode&lt;3:2&gt; == '11' then SEE "Related encodings";
+if Q == '1' &amp;&amp; Vd&lt;0&gt; == '1' then UNDEFINED;
+imm64 = <a link="impl-shared.AdvSIMDExpandImm.3" file="shared_pseudocode.xml" hover="function: bits(64) AdvSIMDExpandImm(bit op, bits(4) cmode, bits(8) imm8)">AdvSIMDExpandImm</a>('1', cmode, i:imm3:imm4);
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  regs = if Q == '0' then 1 else 2;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T2" oneof="4" id="t2" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VBIC" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VBIC_i/T2A2_A.txt" tworows="1">
+        <box hibit="31" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="28" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="3" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="18" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="cmode" usename="1" settings="3">
+          <c>1</c>
+          <c>0</c>
+          <c>x</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" name="Q" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" name="op" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VBIC_i_T2_D" oneofinclass="2" oneof="8" label="64-bit SIMD vector" bitdiffs="Q == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VBIC" />
+          <docvar key="simdvectorsize" value="double" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VBIC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.I16 </text><text>{</text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>,</text><text>}</text><text> </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, #</text><a link="imm" hover="Constant of specified type that is replicated to fill the destination register">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VBIC_i_T2_Q" oneofinclass="2" oneof="8" label="128-bit SIMD vector" bitdiffs="Q == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VBIC" />
+          <docvar key="simdvectorsize" value="quad" />
+        </docvars>
+        <box hibit="6" width="1" name="Q">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VBIC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.I16 </text><text>{</text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>,</text><text>}</text><text> </text><a link="qd" hover="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a><text>, #</text><a link="imm" hover="Constant of specified type that is replicated to fill the destination register">&lt;imm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VBIC_i/T2A2_A.txt" mylink="aarch32.instrs.VBIC_i.T2A2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if cmode&lt;0&gt; == '0' || cmode&lt;3:2&gt; == '11' then SEE "Related encodings";
+if Q == '1' &amp;&amp; Vd&lt;0&gt; == '1' then UNDEFINED;
+imm64 = <a link="impl-shared.AdvSIMDExpandImm.3" file="shared_pseudocode.xml" hover="function: bits(64) AdvSIMDExpandImm(bit op, bits(4) cmode, bits(8) imm8)">AdvSIMDExpandImm</a>('1', cmode, i:imm3:imm4);
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  regs = if Q == '0' then 1 else 2;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VBIC_i_A1_Q, VBIC_i_A2_Q" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1 and A2: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. This encoding must be unconditional.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VBIC_i_T1_Q, VBIC_i_T2_Q" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1 and T2: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VBIC_i_A1_Q, VBIC_i_A2_Q, VBIC_i_T1_Q, VBIC_i_T2_Q" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VBIC_i_A1_Q, VBIC_i_A2_Q, VBIC_i_T1_Q, VBIC_i_T2_Q" symboldefcount="1">
+      <symbol link="qd">&lt;Qd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 128-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field as &lt;Qd&gt;*2.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VBIC_i_A1_D, VBIC_i_A2_D, VBIC_i_T1_D, VBIC_i_T2_D" symboldefcount="1">
+      <symbol link="dd">&lt;Dd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VBIC_i_A1_Q, VBIC_i_A2_Q, VBIC_i_T1_Q, VBIC_i_T2_Q" symboldefcount="1">
+      <symbol link="imm">&lt;imm&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is a constant of the specified type that is replicated to fill the destination register. For details of the range of constants available and the encoding of <syntax>&lt;imm&gt;</syntax>, see <xref linkend="CJAIDJDJ">Modified immediate constants in T32 and A32 Advanced SIMD instructions</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <aliastablehook anchor="aliasconditions">Alias Conditions</aliastablehook>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VBIC_i/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckAdvSIMDEnabled.0" file="shared_pseudocode.xml" hover="function: CheckAdvSIMDEnabled()">CheckAdvSIMDEnabled</a>();
+    for r = 0 to regs-1
+        <a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d+r] = <a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[d+r] AND NOT(imm64);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

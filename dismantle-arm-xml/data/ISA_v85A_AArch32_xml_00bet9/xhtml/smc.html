@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>SMC -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">SMC</h2><p id="desc">
+      <p class="aml">Secure Monitor Call causes a Secure Monitor Call exception.  For more information see <a class="armarm-xref" title="Reference to Armv8 ARM section">Secure Monitor Call (SMC) exception</a>.</p>
+      <p class="aml"><span class="asm-code">SMC</span> is available only for software executing at EL1 or higher. It is <span class="arm-defined-word">undefined</span> in User mode.</p>
+      <p class="aml">If the values of <a class="armarm-xref" title="Reference to Armv8 ARM section">HCR</a>.TSC and <a class="armarm-xref" title="Reference to Armv8 ARM section">SCR</a>.SCD are both 0, execution of an <span class="asm-code">SMC</span> instruction at EL1 or higher generates a Secure Monitor Call exception that is taken to EL3. When EL3 is using AArch32 this exception is taken to Monitor mode. When EL3 is using AArch64, it is the <a class="armarm-xref" title="Reference to Armv8 ARM section">SCR_EL3</a>.SMD bit, rather than the <a class="armarm-xref" title="Reference to Armv8 ARM section">SCR</a>.SCD bit, that can change the effect of executing an SMC instruction.</p>
+      <p class="aml">If the value of <a class="armarm-xref" title="Reference to Armv8 ARM section">HCR</a>.TSC is 1, execution of an <span class="asm-code">SMC</span> instruction in a Non-secure EL1 mode generates an exception that is taken to EL2, regardless of the value of <a class="armarm-xref" title="Reference to Armv8 ARM section">SCR</a>.SCD. When EL2 is using AArch32, this is a Hyp Trap exception that is taken to Hyp mode. For more information see <a class="armarm-xref" title="Reference to Armv8 ARM section">Traps to Hyp mode of Non-secure EL1 execution of SMC instructions</a>.</p>
+      <p class="aml">If the value of <a class="armarm-xref" title="Reference to Armv8 ARM section">HCR</a>.TSC is 0 and the value of <a class="armarm-xref" title="Reference to Armv8 ARM section">SCR</a>.SCD is 1, the SMC instruction is:</p>
+      <ul>
+        <li><span class="arm-defined-word">undefined</span> in Non-secure state.</li>
+        <li><span class="arm-defined-word">constrained unpredictable</span> if executed in Secure state at EL1 or higher.</li>
+      </ul>
+    </p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t1">T1</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td colspan="4" class="lr">!= 1111</td><td class="l">0</td><td>0</td><td>0</td><td>1</td><td class="r">0</td><td class="l">1</td><td class="r">1</td><td class="lr">0</td><td class="l">(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td class="r">(0)</td><td class="l">0</td><td>1</td><td>1</td><td class="r">1</td><td colspan="4" class="lr">imm4</td></tr><tr class="secondrow"><td colspan="4" class="droppedname">cond</td><td colspan="5"></td><td colspan="2"></td><td></td><td colspan="12"></td><td colspan="4"></td><td colspan="4"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">A1</h4><p class="asm-code"><a name="SMC_A1_AS" id="SMC_A1_AS"></a>SMC{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {#}<a href="#imm4" title="4-bit unsigned immediate value [0-15] (field &quot;imm4&quot;)">&lt;imm4&gt;</a></p></div><p class="pseudocode">// imm4 is for assembly/disassembly only and is ignored by hardware</p>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td class="r">1</td><td class="lr">1</td><td colspan="4" class="lr">imm4</td><td class="l">1</td><td class="r">0</td><td class="lr">0</td><td class="lr">0</td><td class="l">(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td>(0)</td><td class="r">(0)</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">T1</h4><p class="asm-code"><a name="SMC_T1_AS" id="SMC_T1_AS"></a>SMC{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} {#}<a href="#imm4" title="4-bit unsigned immediate value [0-15] (field &quot;imm4&quot;)">&lt;imm4&gt;</a></p></div><p class="pseudocode">// imm4 is for assembly/disassembly only and is ignored by hardware
+if <a href="shared_pseudocode.html#impl-aarch32.InITBlock.0" title="function: boolean InITBlock()">InITBlock</a>() &amp;&amp; !<a href="shared_pseudocode.html#impl-aarch32.LastInITBlock.0" title="function: boolean LastInITBlock()">LastInITBlock</a>() then UNPREDICTABLE;</p>
+  <p class="encoding-notes">
+      <p class="aml">For more information about the <span class="arm-defined-word">constrained unpredictable</span> behavior of this instruction, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Architectural Constraints on UNPREDICTABLE behaviors</a>.</p>
+    </p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;c&gt;</td><td><a name="c" id="c"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;imm4&gt;</td><td><a name="imm4" id="imm4"></a>
+        
+          <p class="aml">Is a 4-bit unsigned immediate value, in the range 0 to 15, encoded in the "imm4" field. This is ignored by the PE. The Secure Monitor Call exception handler (Secure Monitor code) can use this value to determine what service is being requested, but Arm does not recommend this.</p>
+        
+      </td></tr></table></div><p class="syntax-notes"></p>
+    <div class="ps" psname="commonps"><a name="commonps" id="commonps"></a><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode">if <a href="shared_pseudocode.html#impl-aarch32.ConditionPassed.0" title="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+
+    <a href="shared_pseudocode.html#AArch32.CheckForSMCUndefOrTrap.0" title="function: AArch32.CheckForSMCUndefOrTrap()">AArch32.CheckForSMCUndefOrTrap</a>();
+
+    if !<a href="shared_pseudocode.html#impl-shared.ELUsingAArch32.1" title="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a href="shared_pseudocode.html#EL3" title="constant bits(2) EL3 = '11'">EL3</a>) then
+        if SCR_EL3.SMD == '1' then
+            // SMC disabled.
+            UNDEFINED;
+    else
+        if SCR.SCD == '1' then
+            // SMC disabled
+            if <a href="shared_pseudocode.html#impl-shared.IsSecure.0" title="function: boolean IsSecure()">IsSecure</a>() then
+                // Executes either as a NOP or UNALLOCATED.
+                c = <a href="shared_pseudocode.html#impl-shared.ConstrainUnpredictable.1" title="function: Constraint ConstrainUnpredictable(Unpredictable which)">ConstrainUnpredictable</a>(<a href="shared_pseudocode.html#Unpredictable_SMD" title="enumeration Unpredictable { Unpredictable_WBOVERLAPLD,&#13;  Unpredictable_WBOVERLAPST,&#13;  Unpredictable_LDPOVERLAP,&#13;  Unpredictable_BASEOVERLAP,&#13;  Unpredictable_DATAOVERLAP,&#13;  Unpredictable_DEVPAGE2,&#13;  Unpredictable_INSTRDEVICE,&#13;  Unpredictable_RESCPACR,&#13;  Unpredictable_RESMAIR,&#13;  Unpredictable_RESTEXCB,&#13;  Unpredictable_RESPRRR,&#13;  Unpredictable_RESDACR,&#13;  Unpredictable_RESVTCRS,&#13;  Unpredictable_RESTnSZ,&#13;  Unpredictable_OORTnSZ,&#13;  Unpredictable_LARGEIPA,&#13;  Unpredictable_ESRCONDPASS,&#13;  Unpredictable_ILZEROIT,&#13;  Unpredictable_ILZEROT,&#13;  Unpredictable_BPVECTORCATCHPRI,&#13;  Unpredictable_VCMATCHHALF,&#13;  Unpredictable_VCMATCHDAPA,&#13;  Unpredictable_WPMASKANDBAS,&#13;  Unpredictable_WPBASCONTIGUOUS,&#13;  Unpredictable_RESWPMASK,&#13;  Unpredictable_WPMASKEDBITS,&#13;  Unpredictable_RESBPWPCTRL,&#13;  Unpredictable_BPNOTIMPL,&#13;  Unpredictable_RESBPTYPE,&#13;  Unpredictable_BPNOTCTXCMP,&#13;  Unpredictable_BPMATCHHALF,&#13;  Unpredictable_BPMISMATCHHALF,&#13;  Unpredictable_RESTARTALIGNPC,&#13;  Unpredictable_RESTARTZEROUPPERPC,&#13;  Unpredictable_ZEROUPPER,&#13;  Unpredictable_ERETZEROUPPERPC,&#13;  Unpredictable_A32FORCEALIGNPC,&#13;  Unpredictable_SMD,&#13;  Unpredictable_NONFAULT,&#13;  Unpredictable_SVEZEROUPPER,&#13;  Unpredictable_SVELDNFDATA,&#13;  Unpredictable_SVELDNFZERO,&#13;  Unpredictable_AFUPDATE,&#13;  Unpredictable_IESBinDebug,&#13;  Unpredictable_ZEROPMSEVFR,&#13;  Unpredictable_NOOPTYPES,&#13;  Unpredictable_ZEROMINLATENCY,&#13;  Unpredictable_ZEROBTYPE,&#13;  Unpredictable_CLEARERRITEZERO}">Unpredictable_SMD</a>);
+                assert c IN {<a href="shared_pseudocode.html#Constraint_NOP" title="enumeration Constraint    { Constraint_NONE,  Constraint_UNKNOWN, Constraint_UNDEF, Constraint_UNDEFEL0, Constraint_NOP, Constraint_TRUE,&#13; Constraint_FALSE,&#13; Constraint_DISABLED,&#13; Constraint_UNCOND, Constraint_COND, Constraint_ADDITIONAL_DECODE,  Constraint_WBSUPPRESS, Constraint_FAULT,&#13;  Constraint_FORCE, Constraint_FORCENOSLCHECK}">Constraint_NOP</a>, <a href="shared_pseudocode.html#Constraint_UNDEF" title="enumeration Constraint    { Constraint_NONE,  Constraint_UNKNOWN, Constraint_UNDEF, Constraint_UNDEFEL0, Constraint_NOP, Constraint_TRUE,&#13; Constraint_FALSE,&#13; Constraint_DISABLED,&#13; Constraint_UNCOND, Constraint_COND, Constraint_ADDITIONAL_DECODE,  Constraint_WBSUPPRESS, Constraint_FAULT,&#13;  Constraint_FORCE, Constraint_FORCENOSLCHECK}">Constraint_UNDEF</a>};
+                if c == <a href="shared_pseudocode.html#Constraint_NOP" title="enumeration Constraint    { Constraint_NONE,  Constraint_UNKNOWN, Constraint_UNDEF, Constraint_UNDEFEL0, Constraint_NOP, Constraint_TRUE,&#13; Constraint_FALSE,&#13; Constraint_DISABLED,&#13; Constraint_UNCOND, Constraint_COND, Constraint_ADDITIONAL_DECODE,  Constraint_WBSUPPRESS, Constraint_FAULT,&#13;  Constraint_FORCE, Constraint_FORCENOSLCHECK}">Constraint_NOP</a> then <a href="shared_pseudocode.html#impl-shared.EndOfInstruction.0" title="function: EndOfInstruction()">EndOfInstruction</a>();
+            UNDEFINED;
+
+    if !<a href="shared_pseudocode.html#impl-shared.ELUsingAArch32.1" title="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a href="shared_pseudocode.html#EL3" title="constant bits(2) EL3 = '11'">EL3</a>) then
+        <a href="shared_pseudocode.html#AArch64.CallSecureMonitor.1" title="function: AArch64.CallSecureMonitor(bits(16) immediate)">AArch64.CallSecureMonitor</a>(<a href="shared_pseudocode.html#impl-shared.Zeros.1" title="function: bits(N) Zeros(integer N)">Zeros</a>(16));
+    else
+        <a href="shared_pseudocode.html#AArch32.TakeSMCException.0" title="function: AArch32.TakeSMCException()">AArch32.TakeSMCException</a>();</p>
+    </div>
+  <h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">SCR.SCD == '1' &amp;&amp; IsSecure()</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li></ul><hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

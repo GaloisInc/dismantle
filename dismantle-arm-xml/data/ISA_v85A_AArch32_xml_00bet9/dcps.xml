@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="DCPS" title="DCPS1, DCPS2, DCPS3 -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="armarmheading" value="T1" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="isa" value="T32" />
+  </docvars>
+  <heading>DCPS1, DCPS2, DCPS3</heading>
+  <desc>
+    <brief>
+      <para>Debug Change PE State</para>
+    </brief>
+    <authored>
+      <para>DCPSx, Debug Change PE State to ELx, where x is 1, 2, or 3.</para>
+      <para>When executed in Debug state, the target Exception level of the instruction is:</para>
+      <list type="unordered">
+        <listitem><content>ELx, if the instruction is executed at an Exception level lower than ELx.</content></listitem>
+        <listitem><content>Otherwise, the Exception level at which the instruction is executed.</content></listitem>
+      </list>
+      <para>On executing a DCPSx instruction in Debug state when the instruction is not <arm-defined-word>undefined</arm-defined-word>:</para>
+      <list type="unordered">
+        <listitem><content>If the instruction is executed at an Exception level that is lower than the target Exception level the PE enters the target Exception level, Elx, and:<list type="unordered"><listitem><content>If ELx is using AArch64, the PE selects SP_ELx.</content></listitem><listitem><content>If the target Exception level is EL1 using AArch32 the PE enters Supervisor mode.</content></listitem><listitem><content>If the instruction was executed in Non-secure state and the target Exception level is EL2 using AArch32 the PE enters Hyp mode.</content></listitem><listitem><content>If the target Exception level is EL3 using AArch32 the PE enters Supervisor mode and SCR.NS is set to 0.</content></listitem></list></content></listitem>
+        <listitem><content>Otherwise, there is no change to the Exception level and:<list type="unordered"><listitem><content>If the instruction was executed at EL1 the PE enters Supervisor mode.</content></listitem><listitem><content>If the instruction was executed at EL2 the PE remains in Hyp mode.</content></listitem><listitem><content>If the instruction was a <instruction>DCPS1</instruction> instruction executed at EL3 the PE enters Supervisor mode and SCR.NS is set to 0.</content></listitem><listitem><content>If the instruction was a <instruction>DCPS3</instruction> instruction executed at EL3 the PE enters Monitor mode and SCR.NS is set to 0.</content></listitem></list></content></listitem>
+      </list>
+      <para>These instructions are always <arm-defined-word>undefined</arm-defined-word> in Non-debug state.</para>
+      <para><instruction>DCPS1</instruction> is <arm-defined-word>undefined</arm-defined-word> at EL0 if:</para>
+      <list type="unordered">
+        <listitem><content>EL2 is using AArch64 and enabled in the current Security state, and HCR_EL2.TGE == 1.</content></listitem>
+        <listitem><content>EL2 is using AArch32 in Non-Secure state, and HCR.TGE == 1.</content></listitem>
+      </list>
+      <para><instruction>DCPS2</instruction> is <arm-defined-word>undefined</arm-defined-word> at all Exception levels if EL2 is not implemented.</para>
+      <para><instruction>DCPS2</instruction> is <arm-defined-word>undefined</arm-defined-word> in the following states if EL2 is implemented:</para>
+      <list type="unordered">
+        <listitem><content>At EL0 and EL1, when EL2 is not enabled in the current Security state.</content></listitem>
+        <listitem><content>At EL3 if EL3 is using AArch32.</content></listitem>
+      </list>
+      <para><instruction>DCPS3</instruction> is <arm-defined-word>undefined</arm-defined-word> at all Exception levels if either:</para>
+      <list type="unordered">
+        <listitem><content>EDSCR.SDD == 1.</content></listitem>
+        <listitem><content>EL3 is not implemented.</content></listitem>
+      </list>
+      <para>On executing a DCPSx instruction that is not <arm-defined-word>undefined</arm-defined-word> and targets ELx:</para>
+      <list type="unordered">
+        <listitem><content>If ELx is using AArch64:<list type="unordered"><listitem><content>ELR_ELx, SPSR_ELx, and ESR_ELx become <arm-defined-word>unknown</arm-defined-word>.</content></listitem><listitem><content>DLR_EL0 and DSPSR_EL0 become <arm-defined-word>unknown</arm-defined-word>.</content></listitem></list></content></listitem>
+        <listitem><content>If ELx is using AArch32 DLR and DSPSR become <arm-defined-word>unknown</arm-defined-word> and:<list type="unordered"><listitem><content>If the target Exception level is EL1 or EL3, the LR and SPSR of the target PE mode become <arm-defined-word>unknown</arm-defined-word>.</content></listitem><listitem><content>If the target Exception level is EL2, then ELR_hyp, SPSR_hyp, and HSR become <arm-defined-word>unknown</arm-defined-word>.</content></listitem></list></content></listitem>
+      </list>
+      <para>For more information on the operation of these instructions, see <xref linkend="dcps">DCPS</xref>.</para>
+    </authored>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <iclass name="T1" oneof="1" id="t1" no_encodings="3" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="3"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/DCPS/T1_A.txt">
+        <box hibit="31" width="12" settings="12">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="imm4" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="11" width="10" name="imm10" settings="10">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="1" width="2" name="opt" usename="1">
+          <c colspan="2"></c>
+        </box>
+      </regdiagram>
+      <encoding name="DCPS1_T1" oneofinclass="3" oneof="3" label="DCPS1" bitdiffs="opt == 01">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="DCPS1" />
+        </docvars>
+        <box hibit="1" width="2" name="opt">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>DCPS1</text></asmtemplate>
+      </encoding>
+      <encoding name="DCPS2_T1" oneofinclass="3" oneof="3" label="DCPS2" bitdiffs="opt == 10">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="DCPS2" />
+        </docvars>
+        <box hibit="1" width="2" name="opt">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>DCPS2</text></asmtemplate>
+      </encoding>
+      <encoding name="DCPS3_T1" oneofinclass="3" oneof="3" label="DCPS3" bitdiffs="opt == 11">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="DCPS3" />
+        </docvars>
+        <box hibit="1" width="2" name="opt">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>DCPS3</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/DCPS/T1_A.txt" mylink="aarch32.instrs.DCPS.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if !<a link="impl-shared.Halted.0" file="shared_pseudocode.xml" hover="function: boolean Halted()">Halted</a>() || opt == '00' then UNDEFINED;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all"></explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/DCPS/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute"><a link="impl-shared.DCPSInstruction.1" file="shared_pseudocode.xml" hover="function: DCPSInstruction(bits(2) target_el)">DCPSInstruction</a>(opt);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VCVT_xv" title="VCVT (between floating-point and fixed-point, floating-point) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VCVT" />
+  </docvars>
+  <heading>VCVT (between floating-point and fixed-point, floating-point)</heading>
+  <desc>
+    <brief>
+      <para>Convert between floating-point and fixed-point</para>
+    </brief>
+    <authored>
+      <para>Convert between floating-point and fixed-point converts a value in a register from floating-point to fixed-point, or from fixed-point to floating-point. Software can specify the fixed-point value as either signed or unsigned.</para>
+      <para>The fixed-point value can be 16-bit or 32-bit. Conversions from fixed-point values take their operand from the low-order bits of the source register and ignore any remaining bits. Signed conversions to fixed-point values sign-extend the result value to the destination register width. Unsigned conversions to fixed-point values zero-extend the result value to the destination register width.</para>
+      <para>The floating-point to fixed-point operation uses the Round towards Zero rounding mode. The fixed-point to floating-point operation uses the Round to Nearest rounding mode.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, <xref linkend="AArch32.hcptr">HCPTR</xref>, and <xref linkend="AArch32.fpexc">FPEXC</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>, and particularly <xref linkend="CEGDIADD">VCVT (between floating-point and fixed-point)</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="6" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VCVT" />
+      </docvars>
+      <iclassintro count="6"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VCVT_xv/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" name="o1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="18" name="op" usename="1">
+          <c></c>
+        </box>
+        <box hibit="17" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="16" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="sf" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="7" name="sx" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VCVT_toxv_A1_H" oneofinclass="6" oneof="12" label="Half-precision scalar" bitdiffs="op == 0 &amp;&amp; sf == 01">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="halfprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <arch_variants>
+          <arch_variant name="ARMv8.2" />
+        </arch_variants>
+        <box hibit="18" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F16.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text> </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_xv_A1_H" oneofinclass="6" oneof="12" label="Half-precision scalar" bitdiffs="op == 1 &amp;&amp; sf == 01">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="halfprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <arch_variants>
+          <arch_variant name="ARMv8.2" />
+        </arch_variants>
+        <box hibit="18" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text>.F16 </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_toxv_A1_S" oneofinclass="6" oneof="12" label="Single-precision scalar" bitdiffs="op == 0 &amp;&amp; sf == 10">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <box hibit="18" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F32.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text> </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_xv_A1_S" oneofinclass="6" oneof="12" label="Single-precision scalar" bitdiffs="op == 1 &amp;&amp; sf == 10">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <box hibit="18" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text>.F32 </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_toxv_A1_D" oneofinclass="6" oneof="12" label="Double-precision scalar" bitdiffs="op == 0 &amp;&amp; sf == 11">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <box hibit="18" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F64.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text> </text><a link="ddm" hover="64-bit SIMD&amp;FP destination and source register (field &quot;D:Vd&quot;)">&lt;Ddm&gt;</a><text>, </text><a link="ddm" hover="64-bit SIMD&amp;FP destination and source register (field &quot;D:Vd&quot;)">&lt;Ddm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_xv_A1_D" oneofinclass="6" oneof="12" label="Double-precision scalar" bitdiffs="op == 1 &amp;&amp; sf == 11">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <box hibit="18" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text>.F64 </text><a link="ddm" hover="64-bit SIMD&amp;FP destination and source register (field &quot;D:Vd&quot;)">&lt;Ddm&gt;</a><text>, </text><a link="ddm" hover="64-bit SIMD&amp;FP destination and source register (field &quot;D:Vd&quot;)">&lt;Ddm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VCVT_xv/A1_A.txt" mylink="aarch32.instrs.VCVT_xv.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if sf == '00' || (sf == '01' &amp;&amp; !<a link="impl-shared.HaveFP16Ext.0" file="shared_pseudocode.xml" hover="function: boolean HaveFP16Ext()">HaveFP16Ext</a>()) then UNDEFINED;
+if sf == '01' &amp;&amp; cond != '1110' then UNPREDICTABLE;
+to_fixed = (op == '1');  unsigned = (U == '1');
+size = if sx == '0' then 16 else 32;
+frac_bits = size - <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(imm4:i);
+case sf of
+    when '01' fp_size = 16; d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);
+    when '10' fp_size = 32; d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);
+    when '11' fp_size = 64; d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);
+
+if frac_bits &lt; 0 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">frac_bits &lt; 0</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNKNOWN" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="6" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VCVT" />
+      </docvars>
+      <iclassintro count="6"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VCVT_xv/T1_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" name="o1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="18" name="op" usename="1">
+          <c></c>
+        </box>
+        <box hibit="17" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="16" name="U" usename="1">
+          <c></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="sf" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="7" name="sx" usename="1">
+          <c></c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VCVT_toxv_T1_H" oneofinclass="6" oneof="12" label="Half-precision scalar" bitdiffs="op == 0 &amp;&amp; sf == 01">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="halfprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <arch_variants>
+          <arch_variant name="ARMv8.2" />
+        </arch_variants>
+        <box hibit="18" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F16.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text> </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_xv_T1_H" oneofinclass="6" oneof="12" label="Half-precision scalar" bitdiffs="op == 1 &amp;&amp; sf == 01">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="halfprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <arch_variants>
+          <arch_variant name="ARMv8.2" />
+        </arch_variants>
+        <box hibit="18" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text>.F16 </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_toxv_T1_S" oneofinclass="6" oneof="12" label="Single-precision scalar" bitdiffs="op == 0 &amp;&amp; sf == 10">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <box hibit="18" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F32.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text> </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_xv_T1_S" oneofinclass="6" oneof="12" label="Single-precision scalar" bitdiffs="op == 1 &amp;&amp; sf == 10">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <box hibit="18" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text>.F32 </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, </text><a link="sdm" hover="32-bit SIMD&amp;FP destination and source register (field &quot;Vd:D&quot;)">&lt;Sdm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_toxv_T1_D" oneofinclass="6" oneof="12" label="Double-precision scalar" bitdiffs="op == 0 &amp;&amp; sf == 11">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <box hibit="18" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F64.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text> </text><a link="ddm" hover="64-bit SIMD&amp;FP destination and source register (field &quot;D:Vd&quot;)">&lt;Ddm&gt;</a><text>, </text><a link="ddm" hover="64-bit SIMD&amp;FP destination and source register (field &quot;D:Vd&quot;)">&lt;Ddm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVT_xv_T1_D" oneofinclass="6" oneof="12" label="Double-precision scalar" bitdiffs="op == 1 &amp;&amp; sf == 11">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVT" />
+        </docvars>
+        <box hibit="18" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="9" width="2" name="sf">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.</text><a link="dt" hover="Data type for fixed-point number (field &quot;U:sx&quot;)">&lt;dt&gt;</a><text>.F64 </text><a link="ddm" hover="64-bit SIMD&amp;FP destination and source register (field &quot;D:Vd&quot;)">&lt;Ddm&gt;</a><text>, </text><a link="ddm" hover="64-bit SIMD&amp;FP destination and source register (field &quot;D:Vd&quot;)">&lt;Ddm&gt;</a><text>, #</text><a link="fbits" hover="The number of fraction bits in the fixed-point number:&#10;* If {syntax{&lt;dt&gt;}} is {value{S16}} or {value{U16}}">&lt;fbits&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VCVT_xv/T1_A.txt" mylink="aarch32.instrs.VCVT_xv.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if sf == '00' || (sf == '01' &amp;&amp; !<a link="impl-shared.HaveFP16Ext.0" file="shared_pseudocode.xml" hover="function: boolean HaveFP16Ext()">HaveFP16Ext</a>()) then UNDEFINED;
+if sf == '01' &amp;&amp; <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;
+to_fixed = (op == '1');  unsigned = (U == '1');
+size = if sx == '0' then 16 else 32;
+frac_bits = size - <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(imm4:i);
+case sf of
+    when '01' fp_size = 16; d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);
+    when '10' fp_size = 32; d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D);
+    when '11' fp_size = 64; d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);
+
+if frac_bits &lt; 0 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">frac_bits &lt; 0</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_UNKNOWN" />
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VCVT_toxv_A1_H, VCVT_toxv_T1_H" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VCVT_toxv_A1_H, VCVT_toxv_T1_H" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VCVT_toxv_A1_H, VCVT_toxv_T1_H" symboldefcount="1">
+      <symbol link="dt">&lt;dt&gt;</symbol>
+      <definition encodedin="U:sx">
+        <intro>Is the data type for the fixed-point number, </intro>
+        <table class="valuetable">
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry class="bitfield">U</entry>
+                <entry class="bitfield">sx</entry>
+                <entry class="symbol">&lt;dt&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="symbol">S16</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="symbol">S32</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="symbol">U16</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="symbol">U32</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="VCVT_toxv_A1_H, VCVT_toxv_T1_H" symboldefcount="1">
+      <symbol link="sdm">&lt;Sdm&gt;</symbol>
+      <account encodedin="Vd:D">
+        <intro>
+          <para>Is the 32-bit name of the SIMD&amp;FP destination and source register, encoded in the "Vd:D" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VCVT_toxv_A1_D, VCVT_toxv_T1_D" symboldefcount="1">
+      <symbol link="ddm">&lt;Ddm&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP destination and source register, encoded in the "D:Vd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VCVT_toxv_A1_H, VCVT_toxv_T1_H" symboldefcount="1">
+      <symbol link="fbits">&lt;fbits&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>The number of fraction bits in the fixed-point number:</para>
+          <list type="unordered">
+            <listitem><content>If <syntax>&lt;dt&gt;</syntax> is <value>S16</value> or <value>U16</value>, <syntax>&lt;fbits&gt;</syntax> must be in the range 0-16. (16 - <syntax>&lt;fbits&gt;</syntax>) is encoded in <field>[imm4, i]</field></content></listitem>
+            <listitem><content>If <syntax>&lt;dt&gt;</syntax> is <value>S32</value> or <value>U32</value>, <syntax>&lt;fbits&gt;</syntax> must be in the range 1-32. (32 - <syntax>&lt;fbits&gt;</syntax>) is encoded in <field>[imm4, i]</field>.</content></listitem>
+          </list>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VCVT_xv/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a link="impl-aarch32.CheckVFPEnabled.1" file="shared_pseudocode.xml" hover="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(TRUE);
+    if to_fixed then
+        bits(size) result;
+        case fp_size of
+            when 16
+                result = <a link="impl-shared.FPToFixed.5" file="shared_pseudocode.xml" hover="function: bits(M) FPToFixed(bits(N) op, integer fbits, boolean unsigned, FPCRType fpcr, FPRounding rounding)">FPToFixed</a>(<a link="impl-aarch32.S.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) S[integer n]">S</a>[d]&lt;15:0&gt;, frac_bits, unsigned, FPSCR, <a link="FPRounding_ZERO" file="shared_pseudocode.xml" hover="enumeration FPRounding  {FPRounding_TIEEVEN, FPRounding_POSINF,&#13; FPRounding_NEGINF,  FPRounding_ZERO,&#13; FPRounding_TIEAWAY, FPRounding_ODD}">FPRounding_ZERO</a>);
+                <a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d] = <a link="impl-shared.Extend.3" file="shared_pseudocode.xml" hover="function: bits(N) Extend(bits(M) x, integer N, boolean unsigned)">Extend</a>(result, 32, unsigned);
+            when 32
+                result = <a link="impl-shared.FPToFixed.5" file="shared_pseudocode.xml" hover="function: bits(M) FPToFixed(bits(N) op, integer fbits, boolean unsigned, FPCRType fpcr, FPRounding rounding)">FPToFixed</a>(<a link="impl-aarch32.S.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) S[integer n]">S</a>[d], frac_bits, unsigned, FPSCR, <a link="FPRounding_ZERO" file="shared_pseudocode.xml" hover="enumeration FPRounding  {FPRounding_TIEEVEN, FPRounding_POSINF,&#13; FPRounding_NEGINF,  FPRounding_ZERO,&#13; FPRounding_TIEAWAY, FPRounding_ODD}">FPRounding_ZERO</a>);
+                <a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d] = <a link="impl-shared.Extend.3" file="shared_pseudocode.xml" hover="function: bits(N) Extend(bits(M) x, integer N, boolean unsigned)">Extend</a>(result, 32, unsigned);
+            when 64
+                result = <a link="impl-shared.FPToFixed.5" file="shared_pseudocode.xml" hover="function: bits(M) FPToFixed(bits(N) op, integer fbits, boolean unsigned, FPCRType fpcr, FPRounding rounding)">FPToFixed</a>(<a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[d], frac_bits, unsigned, FPSCR, <a link="FPRounding_ZERO" file="shared_pseudocode.xml" hover="enumeration FPRounding  {FPRounding_TIEEVEN, FPRounding_POSINF,&#13; FPRounding_NEGINF,  FPRounding_ZERO,&#13; FPRounding_TIEAWAY, FPRounding_ODD}">FPRounding_ZERO</a>);
+                <a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d] = <a link="impl-shared.Extend.3" file="shared_pseudocode.xml" hover="function: bits(N) Extend(bits(M) x, integer N, boolean unsigned)">Extend</a>(result, 64, unsigned);
+    else
+        case fp_size of
+            when 16
+                bits(16) fp16 = <a link="impl-shared.FixedToFP.5" file="shared_pseudocode.xml" hover="function: bits(N) FixedToFP(bits(M) op, integer fbits, boolean unsigned, FPCRType fpcr, FPRounding rounding)">FixedToFP</a>(<a link="impl-aarch32.S.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) S[integer n]">S</a>[d]&lt;size-1:0&gt;, frac_bits, unsigned, FPSCR, <a link="FPRounding_TIEEVEN" file="shared_pseudocode.xml" hover="enumeration FPRounding  {FPRounding_TIEEVEN, FPRounding_POSINF,&#13; FPRounding_NEGINF,  FPRounding_ZERO,&#13; FPRounding_TIEAWAY, FPRounding_ODD}">FPRounding_TIEEVEN</a>);
+                <a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d] = <a link="impl-shared.Zeros.1" file="shared_pseudocode.xml" hover="function: bits(N) Zeros(integer N)">Zeros</a>(16):fp16;
+            when 32
+                <a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d] = <a link="impl-shared.FixedToFP.5" file="shared_pseudocode.xml" hover="function: bits(N) FixedToFP(bits(M) op, integer fbits, boolean unsigned, FPCRType fpcr, FPRounding rounding)">FixedToFP</a>(<a link="impl-aarch32.S.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) S[integer n]">S</a>[d]&lt;size-1:0&gt;, frac_bits, unsigned, FPSCR, <a link="FPRounding_TIEEVEN" file="shared_pseudocode.xml" hover="enumeration FPRounding  {FPRounding_TIEEVEN, FPRounding_POSINF,&#13; FPRounding_NEGINF,  FPRounding_ZERO,&#13; FPRounding_TIEAWAY, FPRounding_ODD}">FPRounding_TIEEVEN</a>);
+            when 64
+                <a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d] = <a link="impl-shared.FixedToFP.5" file="shared_pseudocode.xml" hover="function: bits(N) FixedToFP(bits(M) op, integer fbits, boolean unsigned, FPCRType fpcr, FPRounding rounding)">FixedToFP</a>(<a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[d]&lt;size-1:0&gt;, frac_bits, unsigned, FPSCR, <a link="FPRounding_TIEEVEN" file="shared_pseudocode.xml" hover="enumeration FPRounding  {FPRounding_TIEEVEN, FPRounding_POSINF,&#13; FPRounding_NEGINF,  FPRounding_ZERO,&#13; FPRounding_TIEAWAY, FPRounding_ODD}">FPRounding_TIEEVEN</a>);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

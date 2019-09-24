@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="TBB" title="TBB, TBH -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="armarmheading" value="T1" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="isa" value="T32" />
+  </docvars>
+  <heading>TBB, TBH</heading>
+  <desc>
+    <brief>
+      <para>Table Branch Byte or Halfword</para>
+    </brief>
+    <authored>
+      <para>Table Branch Byte or Halfword causes a PC-relative forward branch using a table of single byte or halfword offsets. A base register provides a pointer to the table, and a second register supplies an index into the table. The branch length is twice the value returned from the table.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <iclass name="T1" oneof="1" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/TBB/T1_A.txt">
+        <box hibit="31" width="12" settings="12">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="14" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>(1)</c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="10" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="9" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="8" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="7" width="3" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="4" name="H" usename="1">
+          <c></c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="TBB_T1" oneofinclass="2" oneof="2" label="Byte" bitdiffs="H == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="loadstore-size" value="ls-byte" />
+          <docvar key="mnemonic" value="TBB" />
+        </docvars>
+        <box hibit="4" width="1" name="H">
+          <c>0</c>
+        </box>
+        <asmtemplate comment="Outside or last in IT block"><text>TBB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> [</text><a link="rn" hover="General-purpose base register holding address of table of branch lengths (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="General-purpose index register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>]</text></asmtemplate>
+      </encoding>
+      <encoding name="TBH_T1" oneofinclass="2" oneof="2" label="Halfword" bitdiffs="H == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="loadstore-size" value="ls-halfword" />
+          <docvar key="mnemonic" value="TBH" />
+        </docvars>
+        <box hibit="4" width="1" name="H">
+          <c>1</c>
+        </box>
+        <asmtemplate comment="Outside or last in IT block"><text>TBH</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> [</text><a link="rn" hover="General-purpose base register holding address of table of branch lengths (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm_1" hover="General-purpose index register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, LSL #1]</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/TBB/T1_A.txt" mylink="aarch32.instrs.TBB.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  is_tbh = (H == '1');
+if m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() &amp;&amp; !<a link="impl-aarch32.LastInITBlock.0" file="shared_pseudocode.xml" hover="function: boolean LastInITBlock()">LastInITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="TBB_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="TBB_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="TBB_T1" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose base register holding the address of the table of branch lengths, encoded in the "Rn" field. The PC can be used. If it is, the table immediately follows this instruction.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="TBB_T1" symboldefcount="1">
+      <symbol link="rm">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <docvars>
+          <docvar key="loadstore-size" value="ls-byte" />
+          <docvar key="mnemonic" value="TBB" />
+        </docvars>
+        <intro>
+          <para>For the byte variant: is the general-purpose index register, encoded in the "Rm" field. This register contains an integer pointing to a single byte in the table. The offset in the table is the value of the index.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="TBH_T1" symboldefcount="2">
+      <symbol link="rm_1">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <docvars>
+          <docvar key="loadstore-size" value="ls-halfword" />
+          <docvar key="mnemonic" value="TBH" />
+        </docvars>
+        <intro>
+          <para>For the halfword variant: is the general-purpose index register, encoded in the "Rm" field. This register contains an integer pointing to a halfword in the table. The offset in the table is twice the value of the index.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/TBB/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    if is_tbh then
+        halfwords = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(<a link="impl-aarch32.MemU.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemU[bits(32) address, integer size]">MemU</a>[<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]+<a link="impl-shared.LSL.2" file="shared_pseudocode.xml" hover="function: bits(N) LSL(bits(N) x, integer shift)">LSL</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m],1), 2]);
+    else
+        halfwords = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(<a link="impl-aarch32.MemU.read.2" file="shared_pseudocode.xml" hover="accessor: bits(8*size) MemU[bits(32) address, integer size]">MemU</a>[<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]+<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m], 1]);
+    <a link="impl-aarch32.BranchWritePC.2" file="shared_pseudocode.xml" hover="function: BranchWritePC(bits(32) address, BranchType branch_type)">BranchWritePC</a>(PC + 2*halfwords, <a link="BranchType_INDIR" file="shared_pseudocode.xml" hover="enumeration BranchType {&#13; BranchType_DIRCALL, BranchType_INDCALL, BranchType_ERET, BranchType_DBGEXIT, BranchType_RET, BranchType_DIR, BranchType_INDIR, BranchType_EXCEPTION, BranchType_RESET, BranchType_UNKNOWN}">BranchType_INDIR</a>);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

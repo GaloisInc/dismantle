@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="ADR" title="ADR -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="ADR" />
+  </docvars>
+  <heading>ADR</heading>
+  <desc>
+    <brief>
+      <para>Form PC-relative address</para>
+    </brief>
+    <authored>
+      <para>Form PC-relative address adds an immediate value to the PC value to form a PC-relative address, and writes the result to the destination register.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+    <syntaxnotes>
+      <para>The instruction aliases permit the addition or subtraction of the offset and the immediate offset to be specified separately, including permitting a subtraction of 0 that cannot be specified using the normal syntax. For more information, see <xref linkend="BABGCIBA">Use of labels in UAL instruction syntax</xref>.</para>
+    </syntaxnotes>
+  </desc>
+  <alias_list howmany="2">
+    <alias_list_intro>This instruction is used by the aliases </alias_list_intro>
+    <aliasref aliaspageid="ADD_ADR" aliasfile="add_adr.xml" hover="Add to PC" punct=" and ">
+      <text>ADD (immediate, to PC)</text>
+      <aliaspref>Never</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="SUB_ADR" aliasfile="sub_adr.xml" hover="Subtract from PC" punct=".">
+      <text>SUB (immediate, from PC)</text>
+      <aliaspref labels="T2">i:imm3:imm8 == '000000000000'</aliaspref>
+      <aliaspref labels="A2">imm12 == '000000000000'</aliaspref>
+    </aliasref>
+    <alias_list_outro>
+      <text>  See </text>
+      <aliastablelink />
+      <text> below for details of when each alias is preferred.</text>
+    </alias_list_outro>
+  </alias_list>
+  <classes>
+    <classesintro count="5">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt> and </txt>
+      <a href="#a2">A2</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>, </txt>
+      <a href="#t2">T2</a>
+      <txt> and </txt>
+      <a href="#t3">T3</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="5" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="ADR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/ADR/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="4" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" width="3" name="opc" settings="3">
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="S" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="12" name="imm12" usename="1">
+          <c colspan="12"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADR_A1" oneofinclass="1" oneof="5" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="ADR" />
+        </docvars>
+        <asmtemplate><text>ADR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="label_2" hover="The label of an instruction or literal data item whose address is to be loaded into {syntax{&lt;Rd&gt;}}">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADR/A1_A.txt" mylink="aarch32.instrs.ADR.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  imm32 = <a link="impl-aarch32.A32ExpandImm.1" file="shared_pseudocode.xml" hover="function: bits(32) A32ExpandImm(bits(12) imm12)">A32ExpandImm</a>(imm12);  add = TRUE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="A2" oneof="5" id="a2" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="ADR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/ADR/A2_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="4" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" width="3" name="opc" settings="3">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="S" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="12" name="imm12" usename="1">
+          <c colspan="12"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADR_A2" oneofinclass="1" oneof="5" label="A2">
+        <docvars>
+          <docvar key="armarmheading" value="A2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="ADR" />
+        </docvars>
+        <asmtemplate><text>ADR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="label_2" hover="The label of an instruction or literal data item whose address is to be loaded into {syntax{&lt;Rd&gt;}}">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADR/A2_A.txt" mylink="aarch32.instrs.ADR.A2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  imm32 = <a link="impl-aarch32.A32ExpandImm.1" file="shared_pseudocode.xml" hover="function: bits(32) A32ExpandImm(bits(12) imm12)">A32ExpandImm</a>(imm12);  add = FALSE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="5" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="ADR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/ADR/T1_A.txt">
+        <box hibit="31" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="27" name="SP" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="26" width="3" name="Rd" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="23" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADR_T1" oneofinclass="1" oneof="5" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="ADR" />
+        </docvars>
+        <asmtemplate><text>ADR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="label" hover="The label of an instruction or literal data item whose address is to be loaded into {syntax{&lt;Rd&gt;}}">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADR/T1_A.txt" mylink="aarch32.instrs.ADR.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm8:'00', 32);  add = TRUE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T2" oneof="5" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="ADR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/ADR/T2_A.txt">
+        <box hibit="31" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="26" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="25" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" name="o1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="o2" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="14" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADR_T2" oneofinclass="1" oneof="5" label="T2">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="ADR" />
+        </docvars>
+        <asmtemplate><text>ADR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="label_1" hover="The label of an instruction or literal data item whose address is to be loaded into {syntax{&lt;Rd&gt;}}">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADR/T2_A.txt" mylink="aarch32.instrs.ADR.T2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(i:imm3:imm8, 32);  add = FALSE;
+if d == 15 then UNPREDICTABLE;     // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T3" oneof="5" id="t3" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T3" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="ADR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/ADR/T3_A.txt">
+        <box hibit="31" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="26" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="25" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" name="o1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="o2" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="14" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="ADR_T3" oneofinclass="1" oneof="5" label="T3">
+        <docvars>
+          <docvar key="armarmheading" value="T3" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="ADR" />
+        </docvars>
+        <asmtemplate comment="&lt;Rd&gt;, &lt;label&gt; can be presented in T1"><text>ADR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>.W </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="label_1" hover="The label of an instruction or literal data item whose address is to be loaded into {syntax{&lt;Rd&gt;}}">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>ADR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="label_1" hover="The label of an instruction or literal data item whose address is to be loaded into {syntax{&lt;Rd&gt;}}">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/ADR/T3_A.txt" mylink="aarch32.instrs.ADR.T3_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  imm32 = <a link="impl-shared.ZeroExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(i:imm3:imm8, 32);  add = TRUE;
+if d == 15 then UNPREDICTABLE;   // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="ADR_A1, ADR_A2, ADR_T1, ADR_T2, ADR_T3" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADR_A1, ADR_A2, ADR_T1, ADR_T2, ADR_T3" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADR_A1, ADR_A2" symboldefcount="1">
+      <symbol link="rd_1">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <docvars>
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1 and A2: is the general-purpose destination register, encoded in the "Rd" field. If the PC is used, the instruction is a branch to the address calculated by the operation. This is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADR_T1, ADR_T2, ADR_T3" symboldefcount="2">
+      <symbol link="rd">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <docvars>
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1, T2 and T3: is the general-purpose destination register, encoded in the "Rd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADR_A1, ADR_A2" symboldefcount="1">
+      <symbol link="label_2">&lt;label&gt;</symbol>
+      <account encodedin="imm12">
+        <docvars>
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1 and A2: the label of an instruction or literal data item whose address is to be loaded into <syntax>&lt;Rd&gt;</syntax>. The assembler calculates the required value of the offset from the <function>Align(PC, 4)</function> value of the <instruction>ADR</instruction> instruction to this label.</para>
+          <para>If the offset is zero or positive, encoding A1 is used, with <field>imm32</field> equal to the offset.</para>
+          <para>If the offset is negative, encoding A2 is used, with <field>imm32</field> equal to the size of the offset. That is, the use of encoding A2 indicates that the required offset is minus the value of <field>imm32</field>.</para>
+          <para>Permitted values of the size of the offset are any of the constants described in <xref linkend="BABHDAJF">Modified immediate constants in A32 instructions</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADR_T1" symboldefcount="2">
+      <symbol link="label">&lt;label&gt;</symbol>
+      <account encodedin="imm8">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: the label of an instruction or literal data item whose address is to be loaded into <syntax>&lt;Rd&gt;</syntax>. The assembler calculates the required value of the offset from the <function>Align(PC, 4)</function> value of the <instruction>ADR</instruction> instruction to this label. Permitted values of the size of the offset are multiples of 4 in the range 0 to 1020.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="ADR_T2, ADR_T3" symboldefcount="3">
+      <symbol link="label_1">&lt;label&gt;</symbol>
+      <account encodedin="i:imm3:imm8">
+        <docvars>
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T2 and T3: the label of an instruction or literal data item whose address is to be loaded into <syntax>&lt;Rd&gt;</syntax>. The assembler calculates the required value of the offset from the <function>Align(PC, 4)</function> value of the <instruction>ADR</instruction> instruction to this label.</para>
+          <para>If the offset is zero or positive, encoding T3 is used, with <field>imm32</field> equal to the offset.</para>
+          <para>If the offset is negative, encoding T2 is used, with <field>imm32</field> equal to the size of the offset. That is, the use of encoding T2 indicates that the required offset is minus the value of <field>imm32</field>.</para>
+          <para>Permitted values of the size of the offset are 0-4095.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <aliastablehook anchor="aliasconditions">Alias Conditions</aliastablehook>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/ADR/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    result = if add then (<a link="impl-shared.Align.2" file="shared_pseudocode.xml" hover="function: integer Align(integer x, integer y)">Align</a>(PC,4) + imm32) else (<a link="impl-shared.Align.2" file="shared_pseudocode.xml" hover="function: integer Align(integer x, integer y)">Align</a>(PC,4) - imm32);
+    if d == 15 then          // Can only occur for A32 encodings
+        <a link="impl-aarch32.ALUWritePC.1" file="shared_pseudocode.xml" hover="function: ALUWritePC(bits(32) address)">ALUWritePC</a>(result);
+    else
+        <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[d] = result;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

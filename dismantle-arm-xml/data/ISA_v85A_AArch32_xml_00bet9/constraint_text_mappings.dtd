@@ -1,0 +1,11 @@
+<!--
+
+XML language accounts for constraint_text_mappings.xml
+Copyright (c) 2016-2018 Arm Limited or its affiliates. All rights reserved.
+This document is Non-Confidential.
+
+--> 
+
+<!ELEMENT constraint_text_mappings (constraint_text_mapping*)>
+<!ELEMENT constraint_text_mapping (constraint_id, constraint_text)>
+

@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VMRS" title="VMRS -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VMRS" />
+  </docvars>
+  <heading>VMRS</heading>
+  <desc>
+    <brief>
+      <para>Move SIMD&amp;FP Special register to general-purpose register</para>
+    </brief>
+    <authored>
+      <para>Move SIMD&amp;FP Special register to general-purpose register moves the value of an Advanced SIMD and floating-point System register to a general-purpose register. When the specified System register is the <xref linkend="AArch32.fpscr">FPSCR</xref>, a form of the instruction transfers the <xref linkend="AArch32.fpscr">FPSCR</xref>.{N, Z, C, V} condition flags to the <xref linkend="AArch32.apsr">APSR</xref>.{N, Z, C, V} condition flags.</para>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, <xref linkend="AArch32.hcptr">HCPTR</xref>, and <xref linkend="AArch32.fpexc">FPEXC</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+      <para>When these settings permit the execution of floating-point and Advanced SIMD instructions, if the specified floating-point System register is not the <xref linkend="AArch32.fpscr">FPSCR</xref>, the instruction is <arm-defined-word>undefined</arm-defined-word> if executed in User mode.</para>
+      <para>In an implementation that includes EL2, when <xref linkend="AArch32.hcr">HCR</xref>.TID0 is set to 1, any <instruction>VMRS</instruction> access to <xref linkend="AArch32.fpsid">FPSID</xref> from a Non-secure EL1 mode that would be permitted if <xref linkend="AArch32.hcr">HCR</xref>.TID0 was set to 0 generates a Hyp Trap exception. For more information, see <xref linkend="CHDFGEDI">ID group 0, Primary device identification registers</xref>.</para>
+      <para>For simplicity, the <instruction>VMRS</instruction> pseudocode does not show the possible trap to Hyp mode.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VMRS" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VMRS/T1A1_AS.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="reg" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="5" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="2" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="1" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="0" settings="1">
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="VMRS_A1_AS" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VMRS" />
+        </docvars>
+        <asmtemplate><text>VMRS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt" hover="General-purpose destination register (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, </text><a link="spec_reg" hover="Source Advanced SIMD and floating-point System register (field &quot;reg&quot;)">&lt;spec_reg&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VMRS/T1A1_AS.txt" mylink="aarch32.instrs.VMRS.T1A1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);
+if !(reg IN {'000x', '0101', '011x', '1000'}) then UNPREDICTABLE;
+if t == 15 &amp;&amp; reg != '0001' then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">!(reg IN {'000x', '0101', '011x', '1000'})</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction transfers an <arm-defined-word>unknown</arm-defined-word> value to the specified target register. When the Rt field holds the value <value>0b1111</value>, the specified target register is the <xref linkend="AArch32.apsr">APSR</xref>.{N, Z, C, V} bits, and these bits become <arm-defined-word>unknown</arm-defined-word>. Otherwise, the specified target register is the register specified by the <syntax>Rt</syntax> field, R0 - R14.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VMRS" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VMRS/T1A1_AS.txt">
+        <box hibit="31" width="11" settings="11">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="reg" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rt" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="5" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="2" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="1" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="0" settings="1">
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="VMRS_T1_AS" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VMRS" />
+        </docvars>
+        <asmtemplate><text>VMRS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rt" hover="General-purpose destination register (field &quot;Rt&quot;)">&lt;Rt&gt;</a><text>, </text><a link="spec_reg" hover="Source Advanced SIMD and floating-point System register (field &quot;reg&quot;)">&lt;spec_reg&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VMRS/T1A1_AS.txt" mylink="aarch32.instrs.VMRS.T1A1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">t = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rt);
+if !(reg IN {'000x', '0101', '011x', '1000'}) then UNPREDICTABLE;
+if t == 15 &amp;&amp; reg != '0001' then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">!(reg IN {'000x', '0101', '011x', '1000'})</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction transfers an <arm-defined-word>unknown</arm-defined-word> value to the specified target register. When the Rt field holds the value <value>0b1111</value>, the specified target register is the <xref linkend="AArch32.apsr">APSR</xref>.{N, Z, C, V} bits, and these bits become <arm-defined-word>unknown</arm-defined-word>. Otherwise, the specified target register is the register specified by the <syntax>Rt</syntax> field, R0 - R14.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VMRS_A1_AS, VMRS_T1_AS" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMRS_A1_AS, VMRS_T1_AS" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMRS_A1_AS, VMRS_T1_AS" symboldefcount="1">
+      <symbol link="rt">&lt;Rt&gt;</symbol>
+      <account encodedin="Rt">
+        <intro>
+          <para>Is the general-purpose destination register, encoded in the "Rt" field. Is one of:</para>
+          <list type="param">
+            <listitem>
+              <param>R0-R14</param><content>General-purpose register.</content>
+            </listitem>
+            <listitem>
+              <param>APSR_nzcv</param><content>Permitted only when <syntax>&lt;spec_reg&gt;</syntax> is <value>FPSCR</value>. Encoded as <binarynumber>0b1111</binarynumber>. The instruction transfers the <xref linkend="AArch32.fpscr">FPSCR</xref>.{N, Z, C, V} condition flags to the <xref linkend="AArch32.apsr">APSR</xref>.{N, Z, C, V} condition flags.</content>
+            </listitem>
+          </list>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VMRS_A1_AS, VMRS_T1_AS" symboldefcount="1">
+      <symbol link="spec_reg">&lt;spec_reg&gt;</symbol>
+      <definition encodedin="reg">
+        <intro>Is the source Advanced SIMD and floating-point System register, </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">reg</entry>
+                <entry class="symbol">&lt;spec_reg&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0000</entry>
+                <entry class="symbol">FPSID</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0001</entry>
+                <entry class="symbol">FPSCR</entry>
+              </row>
+              <row>
+                <entry class="bitfield">001x</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0100</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0101</entry>
+                <entry class="symbol">MVFR2</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0110</entry>
+                <entry class="symbol">MVFR1</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0111</entry>
+                <entry class="symbol">MVFR0</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1000</entry>
+                <entry class="symbol">FPEXC</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1001</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">101x</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">11xx</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VMRS/Op_AS.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    if reg == '0001' then                 // FPSCR
+        <a link="impl-aarch32.CheckVFPEnabled.1" file="shared_pseudocode.xml" hover="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(TRUE);
+        if t == 15 then
+            PSTATE.&lt;N,Z,C,V&gt; = FPSR.&lt;N,Z,C,V&gt;;
+        else
+            <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t] = FPSCR;
+    elsif PSTATE.EL == <a link="EL0" file="shared_pseudocode.xml" hover="constant bits(2) EL0 = '00'">EL0</a> then
+        UNDEFINED;                        // Non-FPSCR registers accessible only at PL1 or above
+    else
+        <a link="impl-aarch32.CheckVFPEnabled.1" file="shared_pseudocode.xml" hover="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(FALSE);           // Non-FPSCR registers are not affected by FPEXC.EN
+        <a link="AArch32.CheckAdvSIMDOrFPRegisterTraps.1" file="shared_pseudocode.xml" hover="function: AArch32.CheckAdvSIMDOrFPRegisterTraps(bits(4) reg)">AArch32.CheckAdvSIMDOrFPRegisterTraps</a>(reg);
+        case reg of
+            when '0000'  <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t] = FPSID;
+            when '0101'  <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t] = MVFR2;
+            when '0110'  <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t] = MVFR1;
+            when '0111'  <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t] = MVFR0;
+            when '1000'  <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[t] = FPEXC;
+            otherwise    <a link="impl-shared.Unreachable.0" file="shared_pseudocode.xml" hover="function: Unreachable()">Unreachable</a>();   // Dealt with above or in encoding-specific pseudocode</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>IT -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">IT</h2><p id="desc">
+      <p class="aml">If-Then makes up to four following instructions (the IT block) conditional. The conditions for the instructions in the IT block are the same as, or the inverse of, the condition the <span class="asm-code">IT</span> instruction specifies for the first instruction in the block.</p>
+      <p class="aml">The <span class="asm-code">IT</span> instruction itself does not affect the condition flags, but the execution of the instructions in the IT block can change the condition flags.</p>
+      <p class="aml">16-bit instructions in the IT block, other than <span class="asm-code">CMP</span>, <span class="asm-code">CMN</span> and <span class="asm-code">TST</span>, do not set the condition flags. An <span class="asm-code">IT</span> instruction with the AL condition can change the behavior without conditional execution.</p>
+      <p class="aml">The architecture permits exception return to an instruction in the IT block only if the restoration of the <a class="armarm-xref" title="Reference to Armv8 ARM section">CPSR</a> restores ITSTATE to a state consistent with the conditions specified by the <span class="asm-code">IT</span> instruction.  Any other exception return to an instruction in an IT block is <span class="arm-defined-word">unpredictable</span>. Any branch to a target instruction in an IT block is not permitted, and if such a branch is made it is <span class="arm-defined-word">unpredictable</span> what condition is used when executing that target instruction and any subsequent instruction in the IT block.</p>
+      <p class="aml">Many uses of the IT instruction are deprecated for performance reasons, and an implementation might include ITD controls that can disable those uses of IT, making them <span class="arm-defined-word">undefined</span>.</p>
+      <p class="aml">For more information see <a class="armarm-xref" title="Reference to Armv8 ARM section">Conditional execution</a> and <a class="armarm-xref" title="Reference to Armv8 ARM section">Conditional instructions</a>. The first of these sections includes more information about the ITD controls.</p>
+    </p>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><p class="desc"></p><div class="regdiagram-16"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td class="r">1</td><td colspan="4" class="lr">firstcond</td><td colspan="4" class="lr">!= 0000</td></tr><tr class="secondrow"><td colspan="8"></td><td colspan="4"></td><td colspan="4" class="droppedname">mask</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">T1</h4><p class="asm-code"><a name="IT_T1" id="IT_T1"></a>IT{<a href="#x" title="The condition for second instruction in the IT block (field &quot;mask[3]&quot;)">&lt;x&gt;</a>{<a href="#y" title="The condition for third instruction in the IT block (field &quot;mask[2]&quot;)">&lt;y&gt;</a>{<a href="#z" title="The condition for fourth instruction in the IT block (field &quot;mask[1]&quot;)">&lt;z&gt;</a>}}}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#cond" title="The condition for first instruction in the IT block (field &quot;firstcond&quot;)">&lt;cond&gt;</a></p></div><p class="pseudocode">if mask == '0000' then SEE "Related encodings";
+if firstcond == '1111' || (firstcond == '1110' &amp;&amp; <a href="shared_pseudocode.html#impl-shared.BitCount.1" title="function: integer BitCount(bits(N) x)">BitCount</a>(mask) != 1) then UNPREDICTABLE;
+if <a href="shared_pseudocode.html#impl-aarch32.InITBlock.0" title="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;</p><h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">firstcond == '1111' || (firstcond == '1110' &amp;&amp; BitCount(mask) != 1)</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The '1111' condition is treated as being the same as the '1110' condition, meaning always, and the ITSTATE state machine is progressed in the same way as for any other cond_base value.</li></ul>
+  <p class="encoding-notes">
+      <p class="aml">For more information about the <span class="arm-defined-word">constrained unpredictable</span> behavior of this instruction, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Architectural Constraints on UNPREDICTABLE behaviors</a>.</p>
+      <p class="aml">Related encodings: <a class="armarm-xref" title="Reference to Armv8 ARM section">Miscellaneous 16-bit instructions</a>.</p>
+    </p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;x&gt;</td><td><a name="x" id="x"></a>
+        
+          <p class="aml">The condition for the second instruction in the IT block. If omitted, the "mask" field is set to 0b1000. If present it is encoded in the "mask[3]" field:</p>
+          <dl>
+            <dt>T</dt><dd>firstcond[0]</dd>
+            <dt>E</dt><dd>NOT firstcond[0]</dd>
+          </dl>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;y&gt;</td><td><a name="y" id="y"></a>
+        
+          <p class="aml">The condition for the third instruction in the IT block. If omitted and &lt;x&gt; is present, the "mask[2:0]" field is set to 0b100. If &lt;y&gt; is present it is encoded in the "mask[2]" field:</p>
+          <dl>
+            <dt>T</dt><dd>firstcond[0]</dd>
+            <dt>E</dt><dd>NOT firstcond[0]</dd>
+          </dl>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;z&gt;</td><td><a name="z" id="z"></a>
+        
+          <p class="aml">The condition for the fourth instruction in the IT block. If omitted and &lt;y&gt; is present, the "mask[1:0]" field is set to 0b10. If &lt;z&gt; is present, the "mask[0]" field is set to 1, and it is encoded in the "mask[1]" field:</p>
+          <dl>
+            <dt>T</dt><dd>firstcond[0]</dd>
+            <dt>E</dt><dd>NOT firstcond[0]</dd>
+          </dl>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;cond&gt;</td><td><a name="cond" id="cond"></a>
+        
+          <p class="aml">The condition for the first instruction in the IT block, encoded in the "firstcond" field. See <a class="armarm-xref" title="Reference to Armv8 ARM section">Condition codes</a> for the range of conditions available, and the encodings.</p>
+        
+      </td></tr></table></div><p class="syntax-notes">
+      <p class="aml">The conditions specified in an <span class="asm-code">IT</span> instruction must match those specified in the syntax of the instructions in its IT block. When assembling to A32 code, assemblers check <span class="asm-code">IT</span> instruction syntax for validity but do not generate assembled instructions for them. See <a class="armarm-xref" title="Reference to Armv8 ARM section">Conditional instructions</a>.</p>
+    </p>
+    <div class="ps" psname="commonps"><a name="commonps" id="commonps"></a><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode">EncodingSpecificOperations();
+<a href="shared_pseudocode.html#AArch32.CheckITEnabled.1" title="function: AArch32.CheckITEnabled(bits(4) mask)">AArch32.CheckITEnabled</a>(mask);
+PSTATE.IT&lt;7:0&gt; = firstcond:mask;
+ShouldAdvanceIT = FALSE;</p>
+    </div>
+  <hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

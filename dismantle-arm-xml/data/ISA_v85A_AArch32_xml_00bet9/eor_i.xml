@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="EOR_i" title="EOR, EORS (immediate) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>EOR, EORS (immediate)</heading>
+  <desc>
+    <brief>
+      <para>Bitwise Exclusive OR (immediate)</para>
+    </brief>
+    <authored>
+      <para>Bitwise Exclusive OR (immediate) performs a bitwise Exclusive OR of a register value and an immediate value, and writes the result to the destination register.</para>
+      <para>If the destination register is not the PC, the EORS variant of the instruction updates the condition flags based on the result.</para>
+      <para>The field descriptions for <syntax>&lt;Rd&gt;</syntax> identify the encodings where the PC is permitted as the destination register. ARM deprecates any use of these encodings. However, when the destination register is the PC:</para>
+      <list type="unordered">
+        <listitem><content>The EOR variant of the instruction is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>.</content></listitem>
+        <listitem><content>The EORS variant of the instruction performs an exception return without the use of the stack. In this case:<list type="unordered"><listitem><content>The PE branches to the address written to the PC, and restores <xref linkend="BEIDIGBH">PSTATE</xref> from SPSR_&lt;current_mode&gt;.</content></listitem><listitem><content>The PE checks SPSR_&lt;current_mode&gt; for an illegal return event. See <xref linkend="CHDDDJDB">Illegal return events from AArch32 state</xref>.</content></listitem><listitem><content>The instruction is <arm-defined-word>undefined</arm-defined-word> in Hyp mode.</content></listitem><listitem><content>The instruction is <arm-defined-word>constrained unpredictable</arm-defined-word> in User mode and System mode.</content></listitem></list></content></listitem>
+      </list>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1 and this instruction does not use R15 as either its source or destination:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/EOR_i/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="4" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="23" width="3" name="opc" settings="3">
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" name="S" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="12" name="imm12" usename="1">
+          <c colspan="12"></c>
+        </box>
+      </regdiagram>
+      <encoding name="EOR_i_A1" oneofinclass="2" oneof="4" label="EOR" bitdiffs="S == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="EOR" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>EOR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rn_1" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, #</text><a link="const_1" hover="An immediate value">&lt;const&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="EORS_i_A1" oneofinclass="2" oneof="4" label="EORS" bitdiffs="S == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="EORS" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>EORS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd_1" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rn_1" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, #</text><a link="const_1" hover="An immediate value">&lt;const&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/EOR_i/A1_A.txt" mylink="aarch32.instrs.EOR_i.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  setflags = (S == '1');
+(imm32, carry) = <a link="impl-aarch32.A32ExpandImm_C.2" file="shared_pseudocode.xml" hover="function: (bits(32), bit) A32ExpandImm_C(bits(12) imm12, bit carry_in)">A32ExpandImm_C</a>(imm12, PSTATE.C);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/EOR_i/T1_A.txt">
+        <box hibit="31" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="26" name="i" usename="1">
+          <c></c>
+        </box>
+        <box hibit="25" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="24" width="4" name="op1" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="S" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="14" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="EOR_i_T1" oneofinclass="2" oneof="4" label="EOR" bitdiffs="S == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="EOR" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>EOR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rn" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, #</text><a link="const" hover="An immediate value">&lt;const&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="EORS_i_T1" oneofinclass="2" oneof="4" label="EORS" bitdiffs="S == 1 &amp;&amp; Rd != 1111">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="EORS" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>1</c>
+        </box>
+        <box hibit="11" width="4" name="Rd">
+          <c>N</c>
+          <c>N</c>
+          <c>N</c>
+          <c>N</c>
+        </box>
+        <asmtemplate><text>EORS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rn" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, #</text><a link="const" hover="An immediate value">&lt;const&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/EOR_i/T1_A.txt" mylink="aarch32.instrs.EOR_i.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if Rd == '1111' &amp;&amp; S == '1' then SEE "TEQ (immediate)";
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  setflags = (S == '1');
+(imm32, carry) = <a link="impl-aarch32.T32ExpandImm_C.2" file="shared_pseudocode.xml" hover="function: (bits(32), bit) T32ExpandImm_C(bits(12) imm12, bit carry_in)">T32ExpandImm_C</a>(i:imm3:imm8, PSTATE.C);
+if (d == 15 &amp;&amp; !setflags) || n == 15 then UNPREDICTABLE;
+// Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="EOR_i_A1, EOR_i_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="EOR_i_A1, EOR_i_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="EOR_i_A1" symboldefcount="1">
+      <symbol link="rd_1">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the general-purpose destination register, encoded in the "Rd" field. If omitted, this register is the same as <syntax>&lt;Rn&gt;</syntax>. Arm deprecates using the PC as the destination register, but if the PC is used:</para>
+          <list type="unordered">
+            <listitem><content>For the EOR variant, the instruction is a branch to the address calculated by the operation. This is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>.</content></listitem>
+            <listitem><content>For the EORS variant, the instruction performs an exception return, that restores <xref linkend="BEIDIGBH">PSTATE</xref> from SPSR_&lt;current_mode&gt;.</content></listitem>
+          </list>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="EOR_i_T1" symboldefcount="2">
+      <symbol link="rd">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is the general-purpose destination register, encoded in the "Rd" field. If omitted, this register is the same as <syntax>&lt;Rn&gt;</syntax>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="EOR_i_A1" symboldefcount="1">
+      <symbol link="rn_1">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is the general-purpose source register, encoded in the "Rn" field. The PC can be used, but this is deprecated.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="EOR_i_T1" symboldefcount="2">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is the general-purpose source register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="EOR_i_A1" symboldefcount="1">
+      <symbol link="const_1">&lt;const&gt;</symbol>
+      <account encodedin="imm12">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: an immediate value. See <xref linkend="BABHDAJF">Modified immediate constants in A32 instructions</xref> for the range of values.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="EOR_i_T1" symboldefcount="2">
+      <symbol link="const">&lt;const&gt;</symbol>
+      <account encodedin="i:imm3:imm8">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: an immediate value. See <xref linkend="BABGHAGA">Modified immediate constants in T32 instructions</xref> for the range of values.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/EOR_i/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    result = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] EOR imm32;
+    if d == 15 then          // Can only occur for A32 encoding
+        if setflags then
+            <a link="impl-aarch32.ALUExceptionReturn.1" file="shared_pseudocode.xml" hover="function: ALUExceptionReturn(bits(32) address)">ALUExceptionReturn</a>(result);
+        else
+            <a link="impl-aarch32.ALUWritePC.1" file="shared_pseudocode.xml" hover="function: ALUWritePC(bits(32) address)">ALUWritePC</a>(result);
+    else
+        <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[d] = result;
+        if setflags then
+            PSTATE.N = result&lt;31&gt;;
+            PSTATE.Z = <a link="impl-shared.IsZeroBit.1" file="shared_pseudocode.xml" hover="function: bit IsZeroBit(bits(N) x)">IsZeroBit</a>(result);
+            PSTATE.C = carry;
+            // PSTATE.V unchanged</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

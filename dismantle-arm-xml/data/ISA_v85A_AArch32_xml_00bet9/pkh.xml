@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="PKH" title="PKHBT, PKHTB -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>PKHBT, PKHTB</heading>
+  <desc>
+    <brief>
+      <para>Pack Halfword</para>
+    </brief>
+    <authored>
+      <para>Pack Halfword combines one halfword of its first operand with the other halfword of its shifted second operand.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, this instruction has passed its condition execution check, and does not use R15 as either its source or destination:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/PKH/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="8" settings="8">
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="5" name="imm5" usename="1">
+          <c colspan="5"></c>
+        </box>
+        <box hibit="6" name="tb" usename="1">
+          <c></c>
+        </box>
+        <box hibit="5" width="2" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="PKHBT_A1" oneofinclass="2" oneof="4" label="PKHBT" bitdiffs="tb == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="PKHBT" />
+        </docvars>
+        <box hibit="6" width="1" name="tb">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>PKHBT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rn" hover="First general-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text> </text><text>{</text><text>, LSL #</text><a link="imm_1" hover="The shift to apply to the value read from {syntax{&lt;Rm&gt;}} (field &quot;imm5&quot;)">&lt;imm&gt;</a><text>}</text></asmtemplate>
+      </encoding>
+      <encoding name="PKHTB_A1" oneofinclass="2" oneof="4" label="PKHTB" bitdiffs="tb == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="PKHTB" />
+        </docvars>
+        <box hibit="6" width="1" name="tb">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>PKHTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rn" hover="First general-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text> </text><text>{</text><text>, ASR #</text><a link="imm_2" hover="The shift to apply to the value read from {syntax{&lt;Rm&gt;}} (field &quot;imm5&quot;)">&lt;imm&gt;</a><text>}</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/PKH/A1_A.txt" mylink="aarch32.instrs.PKH.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  tbform = (tb == '1');
+(shift_t, shift_n) = <a link="impl-aarch32.DecodeImmShift.2" file="shared_pseudocode.xml" hover="function: (SRType, integer) DecodeImmShift(bits(2) type, bits(5) imm5)">DecodeImmShift</a>(tb:'0', imm5);
+if d == 15 || n == 15 || m == 15 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/PKH/T1_A.txt" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="24" width="4" name="op1" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="S" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="14" width="3" name="imm3" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="2" name="imm2" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="5" name="tb" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" name="T" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="PKHBT_T1" oneofinclass="2" oneof="4" label="PKHBT" bitdiffs="tb == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="PKHBT" />
+        </docvars>
+        <box hibit="5" width="1" name="tb">
+          <c>0</c>
+        </box>
+        <asmtemplate comment="tbform == FALSE"><text>PKHBT</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rn" hover="First general-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text> </text><text>{</text><text>, LSL #</text><a link="imm" hover="The shift to apply to the value read from {syntax{&lt;Rm&gt;}} (field &quot;imm3:imm2&quot;)">&lt;imm&gt;</a><text>}</text></asmtemplate>
+      </encoding>
+      <encoding name="PKHTB_T1" oneofinclass="2" oneof="4" label="PKHTB" bitdiffs="tb == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="PKHTB" />
+        </docvars>
+        <box hibit="5" width="1" name="tb">
+          <c>1</c>
+        </box>
+        <asmtemplate comment="tbform == TRUE"><text>PKHTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><text>{</text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>,</text><text>}</text><text> </text><a link="rn" hover="First general-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>, </text><a link="rm" hover="Second general-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text> </text><text>{</text><text>, ASR #</text><a link="imm" hover="The shift to apply to the value read from {syntax{&lt;Rm&gt;}} (field &quot;imm3:imm2&quot;)">&lt;imm&gt;</a><text>}</text></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/PKH/T1_A.txt" mylink="aarch32.instrs.PKH.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if S == '1' || T == '1' then UNDEFINED;
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  tbform = (tb == '1');
+(shift_t, shift_n) = <a link="impl-aarch32.DecodeImmShift.2" file="shared_pseudocode.xml" hover="function: (SRType, integer) DecodeImmShift(bits(2) type, bits(5) imm5)">DecodeImmShift</a>(tb:'0', imm3:imm2);
+if d == 15 || n == 15 || m == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="PKHBT_A1, PKHBT_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PKHBT_A1, PKHBT_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PKHBT_A1, PKHBT_T1" symboldefcount="1">
+      <symbol link="rd">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <intro>
+          <para>Is the general-purpose destination register, encoded in the "Rd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PKHBT_A1, PKHBT_T1" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the first general-purpose source register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PKHBT_A1, PKHBT_T1" symboldefcount="1">
+      <symbol link="rm">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <intro>
+          <para>Is the second general-purpose source register, encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PKHBT_A1" symboldefcount="1">
+      <symbol link="imm_1">&lt;imm&gt;</symbol>
+      <account encodedin="imm5">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="PKHBT" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: the shift to apply to the value read from <syntax>&lt;Rm&gt;</syntax>, encoded in the "imm5" field.  Is one of:</para>
+          <list type="param">
+            <listitem>
+              <param>omitted</param><content>No shift, encoded as <binarynumber>0b00000</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>1-31</param><content>Left shift by specified number of bits, encoded as a binary number.</content>
+            </listitem>
+          </list>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PKHTB_A1" symboldefcount="2">
+      <symbol link="imm_2">&lt;imm&gt;</symbol>
+      <account encodedin="imm5">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="PKHTB" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: the shift to apply to the value read from <syntax>&lt;Rm&gt;</syntax>, encoded in the "imm5" field.  Is one of:</para>
+          <list type="param">
+            <listitem>
+              <param>omitted</param><content>Instruction is a pseudo-instruction and is assembled as though <instruction>PKHBT{&lt;c&gt;}{&lt;q&gt;} &lt;Rd&gt;, &lt;Rm&gt;, &lt;Rn&gt;</instruction> had been written.</content>
+            </listitem>
+            <listitem>
+              <param>1-32</param><content>Arithmetic right shift by specified number of bits. A shift by 32 bits is encoded as <binarynumber>0b00000</binarynumber>. Other shift amounts are encoded as binary numbers.</content>
+            </listitem>
+          </list>
+          <note>
+            <para>An assembler can permit <syntax>&lt;imm&gt;</syntax> = 0 to mean the same thing as omitting the shift, but this is not standard UAL and must not be used for disassembly.</para>
+          </note>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PKHBT_T1" symboldefcount="3">
+      <symbol link="imm">&lt;imm&gt;</symbol>
+      <account encodedin="imm3:imm2">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="PKHBT" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: the shift to apply to the value read from <syntax>&lt;Rm&gt;</syntax>, encoded in the "imm3:imm2" field.</para>
+          <para>For <instruction>PKHBT</instruction>, it is one of:</para>
+          <list type="param">
+            <listitem>
+              <param>omitted</param><content>No shift, encoded as <binarynumber>0b00000</binarynumber>.</content>
+            </listitem>
+            <listitem>
+              <param>1-31</param><content>Left shift by specified number of bits, encoded as a binary number.</content>
+            </listitem>
+          </list>
+          <para>For <instruction>PKHTB</instruction>, it is one of:</para>
+          <list type="param">
+            <listitem>
+              <param>omitted</param><content>Instruction is a pseudo-instruction and is assembled as though <instruction>PKHBT{&lt;c&gt;}{&lt;q&gt;} &lt;Rd&gt;, &lt;Rm&gt;, &lt;Rn&gt;</instruction> had been written.</content>
+            </listitem>
+            <listitem>
+              <param>1-32</param><content>Arithmetic right shift by specified number of bits. A shift by 32 bits is encoded as <binarynumber>0b00000</binarynumber>. Other shift amounts are encoded as binary numbers.</content>
+            </listitem>
+          </list>
+          <note>
+            <para>An assembler can permit <syntax>&lt;imm&gt;</syntax> = 0 to mean the same thing as omitting the shift, but this is not standard UAL and must not be used for disassembly.</para>
+          </note>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/PKH/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    operand2 = <a link="impl-aarch32.Shift.4" file="shared_pseudocode.xml" hover="function: bits(N) Shift(bits(N) value, SRType type, integer amount, bit carry_in)">Shift</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m], shift_t, shift_n, PSTATE.C);  // PSTATE.C ignored
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[d]&lt;15:0&gt;  = if tbform then operand2&lt;15:0&gt; else <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]&lt;15:0&gt;;
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[d]&lt;31:16&gt; = if tbform then <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n]&lt;31:16&gt;    else operand2&lt;31:16&gt;;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

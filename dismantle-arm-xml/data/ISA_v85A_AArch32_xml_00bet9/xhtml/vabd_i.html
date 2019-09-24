@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>VABD (integer) -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">VABD (integer)</h2><p id="desc">
+      <p class="aml">Vector Absolute Difference (integer) subtracts the elements of one vector from the corresponding elements of another vector, and places the absolute values of the results in the elements of the destination vector.</p>
+      <p class="aml">Operand and result elements are all integers of the same length.</p>
+      <p class="aml">Depending on settings in the <a class="armarm-xref" title="Reference to Armv8 ARM section">CPACR</a>, <a class="armarm-xref" title="Reference to Armv8 ARM section">NSACR</a>, and <a class="armarm-xref" title="Reference to Armv8 ARM section">HCPTR</a> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <span class="arm-defined-word">undefined</span>, or trapped to Hyp mode. For more information see <a class="armarm-xref" title="Reference to Armv8 ARM section">Enabling Advanced SIMD and floating-point support</a>.</p>
+    </p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t1">T1</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><p class="desc"></p><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td class="r">1</td><td class="lr">U</td><td class="lr">0</td><td class="lr">D</td><td colspan="2" class="lr">size</td><td colspan="4" class="lr">Vn</td><td colspan="4" class="lr">Vd</td><td class="l">0</td><td>1</td><td>1</td><td class="r">1</td><td class="lr">N</td><td class="lr">Q</td><td class="lr">M</td><td class="lr">0</td><td colspan="4" class="lr">Vm</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">64-bit SIMD vector<span class="bitdiff"> (Q == 0)</span></h4><p class="asm-code"><a name="VABD_i_A1_D" id="VABD_i_A1_D"></a>VABD{<a href="#c_1" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>}.<a href="#dt" title="Data type for elements of operands (field &quot;U:size&quot;)">&lt;dt&gt;</a> {<a href="#dd" title="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a>, }<a href="#dn" title="First 64-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Dn&gt;</a>, <a href="#dm" title="Second 64-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></p></div><div class="encoding"><h4 class="encoding">128-bit SIMD vector<span class="bitdiff"> (Q == 1)</span></h4><p class="asm-code"><a name="VABD_i_A1_Q" id="VABD_i_A1_Q"></a>VABD{<a href="#c_1" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>}.<a href="#dt" title="Data type for elements of operands (field &quot;U:size&quot;)">&lt;dt&gt;</a> {<a href="#qd" title="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a>, }<a href="#qn" title="First 128-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Qn&gt;</a>, <a href="#qm" title="Second 128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></p></div><p class="pseudocode">if size == '11' then UNDEFINED;
+if Q == '1' &amp;&amp; (Vd&lt;0&gt; == '1' || Vn&lt;0&gt; == '1' || Vm&lt;0&gt; == '1') then UNDEFINED;
+unsigned = (U == '1');  long_destination = FALSE;
+esize = 8 &lt;&lt; <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(size);  elements = 64 DIV esize;
+d = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  n = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(N:Vn);  m = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);  regs = if Q == '0' then 1 else 2;</p>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><p class="desc"></p><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td class="r">1</td><td class="lr">U</td><td class="l">1</td><td>1</td><td>1</td><td>1</td><td class="r">0</td><td class="lr">D</td><td colspan="2" class="lr">size</td><td colspan="4" class="lr">Vn</td><td colspan="4" class="lr">Vd</td><td class="l">0</td><td>1</td><td>1</td><td class="r">1</td><td class="lr">N</td><td class="lr">Q</td><td class="lr">M</td><td class="lr">0</td><td colspan="4" class="lr">Vm</td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">64-bit SIMD vector<span class="bitdiff"> (Q == 0)</span></h4><p class="asm-code"><a name="VABD_i_T1_D" id="VABD_i_T1_D"></a>VABD{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>}.<a href="#dt" title="Data type for elements of operands (field &quot;U:size&quot;)">&lt;dt&gt;</a> {<a href="#dd" title="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a>, }<a href="#dn" title="First 64-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Dn&gt;</a>, <a href="#dm" title="Second 64-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></p></div><div class="encoding"><h4 class="encoding">128-bit SIMD vector<span class="bitdiff"> (Q == 1)</span></h4><p class="asm-code"><a name="VABD_i_T1_Q" id="VABD_i_T1_Q"></a>VABD{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>}.<a href="#dt" title="Data type for elements of operands (field &quot;U:size&quot;)">&lt;dt&gt;</a> {<a href="#qd" title="128-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Qd&gt;</a>, }<a href="#qn" title="First 128-bit SIMD&amp;FP source register (field &quot;N:Vn&quot;)">&lt;Qn&gt;</a>, <a href="#qm" title="Second 128-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Qm&gt;</a></p></div><p class="pseudocode">if size == '11' then UNDEFINED;
+if Q == '1' &amp;&amp; (Vd&lt;0&gt; == '1' || Vn&lt;0&gt; == '1' || Vm&lt;0&gt; == '1') then UNDEFINED;
+unsigned = (U == '1');  long_destination = FALSE;
+esize = 8 &lt;&lt; <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(size);  elements = 64 DIV esize;
+d = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(D:Vd);  n = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(N:Vn);  m = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);  regs = if Q == '0' then 1 else 2;</p>
+  <p class="encoding-notes"></p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;c&gt;</td><td><a name="c_1" id="c_1"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding A1: see <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>. This encoding must be unconditional.</p>
+        
+      </td></tr><tr><td></td><td><a name="c" id="c"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding T1: see <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;dt&gt;</td><td><a name="dt" id="dt"></a>
+        Is the data type for the elements of the operands, 
+    encoded in 
+    <q>U:size</q>:
+      
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">U</th>
+                <th class="bitfield">size</th>
+                <th class="symbol">&lt;dt&gt;</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">0</td>
+                <td class="bitfield">00</td>
+                <td class="symbol">S8</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0</td>
+                <td class="bitfield">01</td>
+                <td class="symbol">S16</td>
+              </tr>
+              <tr>
+                <td class="bitfield">0</td>
+                <td class="bitfield">10</td>
+                <td class="symbol">S32</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1</td>
+                <td class="bitfield">00</td>
+                <td class="symbol">U8</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1</td>
+                <td class="bitfield">01</td>
+                <td class="symbol">U16</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1</td>
+                <td class="bitfield">10</td>
+                <td class="symbol">U32</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Qd&gt;</td><td><a name="qd" id="qd"></a>
+        
+          <p class="aml">Is the 128-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field as &lt;Qd&gt;*2.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Qn&gt;</td><td><a name="qn" id="qn"></a>
+        
+          <p class="aml">Is the 128-bit name of the first SIMD&amp;FP source register, encoded in the "N:Vn" field as &lt;Qn&gt;*2.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Qm&gt;</td><td><a name="qm" id="qm"></a>
+        
+          <p class="aml">Is the 128-bit name of the second SIMD&amp;FP source register, encoded in the "M:Vm" field as &lt;Qm&gt;*2.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Dd&gt;</td><td><a name="dd" id="dd"></a>
+        
+          <p class="aml">Is the 64-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Dn&gt;</td><td><a name="dn" id="dn"></a>
+        
+          <p class="aml">Is the 64-bit name of the first SIMD&amp;FP source register, encoded in the "N:Vn" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Dm&gt;</td><td><a name="dm" id="dm"></a>
+        
+          <p class="aml">Is the 64-bit name of the second SIMD&amp;FP source register, encoded in the "M:Vm" field.</p>
+        
+      </td></tr></table></div><p class="syntax-notes"></p>
+    <div class="ps" psname="commonps"><a name="commonps" id="commonps"></a><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode">if <a href="shared_pseudocode.html#impl-aarch32.ConditionPassed.0" title="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();  <a href="shared_pseudocode.html#impl-aarch32.CheckAdvSIMDEnabled.0" title="function: CheckAdvSIMDEnabled()">CheckAdvSIMDEnabled</a>();
+    for r = 0 to regs-1
+        for e = 0 to elements-1
+            op1 = <a href="shared_pseudocode.html#impl-shared.Elem.read.3" title="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a href="shared_pseudocode.html#impl-aarch32.Din.read.1" title="accessor: bits(64) Din[integer n]">Din</a>[n+r],e,esize];
+            op2 = <a href="shared_pseudocode.html#impl-shared.Elem.read.3" title="accessor: bits(size) Elem[bits(N) vector, integer e, integer size]">Elem</a>[<a href="shared_pseudocode.html#impl-aarch32.Din.read.1" title="accessor: bits(64) Din[integer n]">Din</a>[m+r],e,esize];
+            absdiff = <a href="shared_pseudocode.html#impl-shared.Abs.1" title="function: integer Abs(integer x)">Abs</a>(<a href="shared_pseudocode.html#impl-shared.Int.2" title="function: integer Int(bits(N) x, boolean unsigned)">Int</a>(op1,unsigned) - <a href="shared_pseudocode.html#impl-shared.Int.2" title="function: integer Int(bits(N) x, boolean unsigned)">Int</a>(op2,unsigned));
+            if long_destination then
+                <a href="shared_pseudocode.html#impl-shared.Elem.write.3" title="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a href="shared_pseudocode.html#impl-aarch32.Q.write.1" title="accessor: Q[integer n] = bits(128) value">Q</a>[d&gt;&gt;1],e,2*esize] = absdiff&lt;2*esize-1:0&gt;;
+            else
+                <a href="shared_pseudocode.html#impl-shared.Elem.write.3" title="accessor: Elem[bits(N) &amp;vector, integer e, integer size] = bits(size) value">Elem</a>[<a href="shared_pseudocode.html#impl-aarch32.D.write.1" title="accessor: D[integer n] = bits(64) value">D</a>[d+r],e,esize] = absdiff&lt;esize-1:0&gt;;</p>
+    </div>
+  <h3>Operational information</h3>
+    <p class="aml">If CPSR.DIT is 1 and this instruction passes its condition execution check:</p>
+    <ul>
+      <li>The execution time of this instruction is independent of:<ul><li>The values of the data supplied in any of its registers.</li><li>The values of the NZCV flags.</li></ul></li>
+      <li>The response of this instruction to asynchronous exceptions does not vary based on:<ul><li>The values of the data supplied in any of its registers.</li><li>The values of the NZCV flags.</li></ul></li>
+    </ul>
+  <hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

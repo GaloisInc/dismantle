@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="MSR_br" title="MSR (Banked register) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="MSR" />
+  </docvars>
+  <heading>MSR (Banked register)</heading>
+  <desc>
+    <brief>
+      <para>Move general-purpose register to Banked or Special register</para>
+    </brief>
+    <authored>
+      <para>Move to Banked or Special register from general-purpose register moves the value of a general-purpose register to the Banked general-purpose register or <xref linkend="CHDDAABB">Saved Program Status Registers (SPSRs)</xref> of the specified mode, or to <xref linkend="BEIJHFCF">ELR_hyp</xref>.</para>
+      <para><instruction>MSR</instruction> (Banked register) is <arm-defined-word>unpredictable</arm-defined-word> if executed in User mode.</para>
+      <para>When EL3 is using AArch64, if an MSR (Banked register) instruction that is executed in a Secure EL1 mode would access SPSR_mon, SP_mon, or LR_mon, it is trapped to EL3.</para>
+      <para>The effect of using an <instruction>MSR</instruction> (Banked register) instruction with a register argument that is not valid for the current mode is <arm-defined-word>unpredictable</arm-defined-word>. For more information see <xref linkend="CHDFDJDA">Usage restrictions on the Banked register transfer instructions</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="MSR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/MSR_br/A1_AS.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" name="R" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="M1" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" name="Rd" settings="4">
+          <c>(1)</c>
+          <c>(1)</c>
+          <c>(1)</c>
+          <c>(1)</c>
+        </box>
+        <box hibit="11" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="10" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="9" name="B" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="8" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="7" width="4" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="MSR_br_A1_AS" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="MSR" />
+        </docvars>
+        <asmtemplate><text>MSR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="banked_reg" hover="Banked register to be transferred to or from (field &quot;R:M:M1&quot;)">&lt;banked_reg&gt;</a><text>, </text><a link="rn" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/MSR_br/A1_AS.txt" mylink="aarch32.instrs.MSR_br.A1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  write_spsr = (R == '1');
+if n == 15 then UNPREDICTABLE;
+SYSm = M:M1;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="MSR" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/MSR_br/T1_AS.txt">
+        <box hibit="31" width="11" settings="11">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="20" name="R" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="13" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="11" width="4" name="M1" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="5" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="4" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="3" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="2" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="1" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="0" settings="1">
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="MSR_br_T1_AS" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MSR" />
+        </docvars>
+        <asmtemplate><text>MSR</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="banked_reg" hover="Banked register to be transferred to or from (field &quot;R:M:M1&quot;)">&lt;banked_reg&gt;</a><text>, </text><a link="rn" hover="General-purpose source register (field &quot;Rn&quot;)">&lt;Rn&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/MSR_br/T1_AS.txt" mylink="aarch32.instrs.MSR_br.T1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  write_spsr = (R == '1');
+if n == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13
+SYSm = M:M1;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="MSR_br_A1_AS, MSR_br_T1_AS" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MSR_br_A1_AS, MSR_br_T1_AS" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MSR_br_A1_AS, MSR_br_T1_AS" symboldefcount="1">
+      <symbol link="banked_reg">&lt;banked_reg&gt;</symbol>
+      <definition encodedin="R:M:M1">
+        <intro>Is the name of the banked register to be transferred to or from, </intro>
+        <table class="valuetable">
+          <tgroup cols="4">
+            <thead>
+              <row>
+                <entry class="bitfield">R</entry>
+                <entry class="bitfield">M</entry>
+                <entry class="bitfield">M1</entry>
+                <entry class="symbol">&lt;banked_reg&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0000</entry>
+                <entry class="symbol">R8_usr</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0001</entry>
+                <entry class="symbol">R9_usr</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0010</entry>
+                <entry class="symbol">R10_usr</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0011</entry>
+                <entry class="symbol">R11_usr</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0100</entry>
+                <entry class="symbol">R12_usr</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0101</entry>
+                <entry class="symbol">SP_usr</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0110</entry>
+                <entry class="symbol">LR_usr</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0111</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1000</entry>
+                <entry class="symbol">R8_fiq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1001</entry>
+                <entry class="symbol">R9_fiq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1010</entry>
+                <entry class="symbol">R10_fiq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1011</entry>
+                <entry class="symbol">R11_fiq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1100</entry>
+                <entry class="symbol">R12_fiq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1101</entry>
+                <entry class="symbol">SP_fiq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1110</entry>
+                <entry class="symbol">LR_fiq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1111</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0000</entry>
+                <entry class="symbol">LR_irq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0001</entry>
+                <entry class="symbol">SP_irq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0010</entry>
+                <entry class="symbol">LR_svc</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0011</entry>
+                <entry class="symbol">SP_svc</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0100</entry>
+                <entry class="symbol">LR_abt</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0101</entry>
+                <entry class="symbol">SP_abt</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0110</entry>
+                <entry class="symbol">LR_und</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0111</entry>
+                <entry class="symbol">SP_und</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">10xx</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1100</entry>
+                <entry class="symbol">LR_mon</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1101</entry>
+                <entry class="symbol">SP_mon</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1110</entry>
+                <entry class="symbol">ELR_hyp</entry>
+              </row>
+              <row>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1111</entry>
+                <entry class="symbol">SP_hyp</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">0xxx</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">10xx</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">110x</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1110</entry>
+                <entry class="symbol">SPSR_fiq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0</entry>
+                <entry class="bitfield">1111</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0000</entry>
+                <entry class="symbol">SPSR_irq</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0001</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0010</entry>
+                <entry class="symbol">SPSR_svc</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0011</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0100</entry>
+                <entry class="symbol">SPSR_abt</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0101</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0110</entry>
+                <entry class="symbol">SPSR_und</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">0111</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">10xx</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1100</entry>
+                <entry class="symbol">SPSR_mon</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1101</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1110</entry>
+                <entry class="symbol">SPSR_hyp</entry>
+              </row>
+              <row>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1</entry>
+                <entry class="bitfield">1111</entry>
+                <entry class="symbol">UNPREDICTABLE</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="MSR_br_A1_AS, MSR_br_T1_AS" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose source register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/MSR_br/Op_AS.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    if PSTATE.EL == <a link="EL0" file="shared_pseudocode.xml" hover="constant bits(2) EL0 = '00'">EL0</a> then
+        UNPREDICTABLE;
+    else
+        mode = PSTATE.M;
+        if write_spsr then
+            <a link="impl-aarch32.SPSRaccessValid.2" file="shared_pseudocode.xml" hover="function: SPSRaccessValid(bits(5) SYSm, bits(5) mode)">SPSRaccessValid</a>(SYSm, mode);             // Check for UNPREDICTABLE cases
+            case SYSm of
+                when '01110'  SPSR_fiq = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '10000'  SPSR_irq = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '10010'  SPSR_svc = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '10100'  SPSR_abt = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '10110'  SPSR_und = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '11100'
+                    if !<a link="impl-shared.ELUsingAArch32.1" file="shared_pseudocode.xml" hover="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) then <a link="AArch64.MonitorModeTrap.0" file="shared_pseudocode.xml" hover="function: AArch64.MonitorModeTrap()">AArch64.MonitorModeTrap</a>();
+                    SPSR_mon = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '11110'  SPSR_hyp = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+        else
+            <a link="impl-aarch32.BankedRegisterAccessValid.2" file="shared_pseudocode.xml" hover="function: BankedRegisterAccessValid(bits(5) SYSm, bits(5) mode)">BankedRegisterAccessValid</a>(SYSm, mode);  // Check for UNPREDICTABLE cases
+            case SYSm of
+                when '00xxx'                       // Access the User mode registers
+                    m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(SYSm&lt;2:0&gt;) + 8;
+                    <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[m,<a link="M32_User" file="shared_pseudocode.xml" hover="constant bits(5) M32_User = '10000'">M32_User</a>] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '01xxx'                       // Access the FIQ mode registers
+                    m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(SYSm&lt;2:0&gt;) + 8;
+                    <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[m,<a link="M32_FIQ" file="shared_pseudocode.xml" hover="constant bits(5) M32_FIQ = '10001'">M32_FIQ</a>] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '1000x'                       // Access the IRQ mode registers
+                    m = 14 - <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(SYSm&lt;0&gt;);        // LR when SYSm&lt;0&gt; == 0, otherwise SP
+                    <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[m,<a link="M32_IRQ" file="shared_pseudocode.xml" hover="constant bits(5) M32_IRQ = '10010'">M32_IRQ</a>] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '1001x'                       // Access the Supervisor mode registers
+                    m = 14 - <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(SYSm&lt;0&gt;);        // LR when SYSm&lt;0&gt; == 0, otherwise SP
+                    <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[m,<a link="M32_Svc" file="shared_pseudocode.xml" hover="constant bits(5) M32_Svc = '10011'">M32_Svc</a>] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '1010x'                       // Access the Abort mode registers
+                    m = 14 - <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(SYSm&lt;0&gt;);        // LR when SYSm&lt;0&gt; == 0, otherwise SP
+                    <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[m,<a link="M32_Abort" file="shared_pseudocode.xml" hover="constant bits(5) M32_Abort = '10111'">M32_Abort</a>] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '1011x'                       // Access the Undefined mode registers
+                    m = 14 - <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(SYSm&lt;0&gt;);        // LR when SYSm&lt;0&gt; == 0, otherwise SP
+                    <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[m,<a link="M32_Undef" file="shared_pseudocode.xml" hover="constant bits(5) M32_Undef = '11011'">M32_Undef</a>] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '1110x'                       // Access Monitor registers
+                    if !<a link="impl-shared.ELUsingAArch32.1" file="shared_pseudocode.xml" hover="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) then <a link="AArch64.MonitorModeTrap.0" file="shared_pseudocode.xml" hover="function: AArch64.MonitorModeTrap()">AArch64.MonitorModeTrap</a>();
+                    m = 14 - <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(SYSm&lt;0&gt;);        // LR when SYSm&lt;0&gt; == 0, otherwise SP
+                    <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[m,<a link="M32_Monitor" file="shared_pseudocode.xml" hover="constant bits(5) M32_Monitor = '10110'">M32_Monitor</a>] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '11110'                       // Access ELR_hyp register
+                    ELR_hyp = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+                when '11111'                       // Access SP_hyp register
+                    <a link="impl-aarch32.Rmode.write.2" file="shared_pseudocode.xml" hover="accessor: Rmode[integer n, bits(5) mode] = bits(32) value">Rmode</a>[13,<a link="M32_Hyp" file="shared_pseudocode.xml" hover="constant bits(5) M32_Hyp = '11010'">M32_Hyp</a>] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];</pstext>
+    </ps>
+  </ps_section>
+  <constrained_unpredictables ps_block="Operation">
+    <cu_case>
+      <cu_cause>
+        <pstext mayhavelinks="1">PSTATE.EL == EL0</pstext>
+      </cu_cause>
+      <cu_type constraint="Constraint_UNDEF" />
+      <cu_type constraint="Constraint_NOP" />
+    </cu_case>
+  </constrained_unpredictables>
+</instructionsection>

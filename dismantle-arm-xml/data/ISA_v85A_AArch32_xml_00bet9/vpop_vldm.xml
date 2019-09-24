@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VPOP_VLDM" title="VPOP -- AArch32" type="alias">
+  <docvars>
+    <docvar key="alias_mnemonic" value="VPOP" />
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="ldmstm-mode" value="inc-after" />
+    <docvar key="mnemonic" value="VLDM" />
+  </docvars>
+  <heading>VPOP</heading>
+  <desc>
+    <brief>Pop SIMD&amp;FP registers from Stack</brief>
+    <longer> loads multiple consecutive Advanced SIMD and floating-point register file registers from the stack</longer>
+  </desc>
+  <aliasto refiform="vldm.xml" iformid="VLDM">VLDM, VLDMDB, VLDMIA</aliasto>
+  <classes>
+    <classesintro count="4">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt> and </txt>
+      <a href="#a2">A2</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="4" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="fpdatasize" value="doubleprec" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="23" name="U" usename="1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" usename="1" settings="1" psbits="1">
+          <c>1</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" width="7" name="imm8&lt;7:1&gt;" usename="1">
+          <c colspan="7"></c>
+        </box>
+        <box hibit="0" name="imm8&lt;0&gt;" usename="1" settings="1">
+          <c>0</c>
+        </box>
+      </regdiagram>
+      <encoding name="VPOP_VLDM_A1" oneofinclass="1" oneof="4" label="Increment After">
+        <docvars>
+          <docvar key="alias_mnemonic" value="VPOP" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="VLDM" />
+        </docvars>
+        <asmtemplate><text>VPOP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="vldm.xml#VLDM_A1">VLDM</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> SP!, </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+    <iclass name="A2" oneof="4" id="a2" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A2" />
+        <docvar key="fpdatasize" value="singleprec" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="23" name="U" usename="1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" usename="1" settings="1" psbits="1">
+          <c>1</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VPOP_VLDM_A2" oneofinclass="1" oneof="4" label="Increment After">
+        <docvars>
+          <docvar key="alias_mnemonic" value="VPOP" />
+          <docvar key="armarmheading" value="A2" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="VLDM" />
+        </docvars>
+        <asmtemplate><text>VPOP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="vldm.xml#VLDM_A2">VLDM</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> SP!, </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+    <iclass name="T1" oneof="4" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="fpdatasize" value="doubleprec" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="23" name="U" usename="1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" usename="1" settings="1" psbits="1">
+          <c>1</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="7" width="7" name="imm8&lt;7:1&gt;" usename="1">
+          <c colspan="7"></c>
+        </box>
+        <box hibit="0" name="imm8&lt;0&gt;" usename="1" settings="1">
+          <c>0</c>
+        </box>
+      </regdiagram>
+      <encoding name="VPOP_VLDM_T1" oneofinclass="1" oneof="4" label="Increment After">
+        <docvars>
+          <docvar key="alias_mnemonic" value="VPOP" />
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="fpdatasize" value="doubleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="VLDM" />
+        </docvars>
+        <asmtemplate><text>VPOP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="vldm.xml#VLDM_T1">VLDM</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> SP!, </text><a link="dreglist" hover="List of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred (field &quot;D:Vd&quot;)">&lt;dreglist&gt;</a></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+    <iclass name="T2" oneof="4" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="fpdatasize" value="singleprec" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="23" name="U" usename="1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" name="W" usename="1" settings="1" psbits="1">
+          <c>1</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" width="2" name="size" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="7" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VPOP_VLDM_T2" oneofinclass="1" oneof="4" label="Increment After">
+        <docvars>
+          <docvar key="alias_mnemonic" value="VPOP" />
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="fpdatasize" value="singleprec" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="ldmstm-mode" value="inc-after" />
+          <docvar key="mnemonic" value="VLDM" />
+        </docvars>
+        <asmtemplate><text>VPOP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="vldm.xml#VLDM_T2">VLDM</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>{</text><text>.</text><a link="size" hover="An optional data size specifier">&lt;size&gt;</a><text>}</text><text> SP!, </text><a link="sreglist" hover="List of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred (field &quot;Vd:D&quot;)">&lt;sreglist&gt;</a></asmtemplate>
+          <aliascond>Unconditionally</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VPOP_VLDM_A1, VPOP_VLDM_A2, VPOP_VLDM_T1, VPOP_VLDM_T2" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VPOP_VLDM_A1, VPOP_VLDM_A2, VPOP_VLDM_T1, VPOP_VLDM_T2" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VPOP_VLDM_A1, VPOP_VLDM_A2, VPOP_VLDM_T1, VPOP_VLDM_T2" symboldefcount="1">
+      <symbol link="size">&lt;size&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>An optional data size specifier. If present, it must be equal to the size in bits, 32 or 64, of the registers being transferred.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VPOP_VLDM_A2, VPOP_VLDM_T2" symboldefcount="1">
+      <symbol link="sreglist">&lt;sreglist&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is the list of consecutively numbered 32-bit SIMD&amp;FP registers to be transferred. The first register in the list is encoded in "Vd:D", and "imm8" is set to the number of registers in the list. The list must contain at least one register.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VPOP_VLDM_A1, VPOP_VLDM_T1" symboldefcount="1">
+      <symbol link="dreglist">&lt;dreglist&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is the list of consecutively numbered 64-bit SIMD&amp;FP registers to be transferred. The first register in the list is encoded in "D:Vd", and "imm8" is set to twice the number of registers in the list. The list must contain at least one register, and must not contain more than 16 registers.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+</instructionsection>

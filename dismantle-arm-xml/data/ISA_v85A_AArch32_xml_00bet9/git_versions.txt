@@ -1,0 +1,14 @@
+heads/v85-00bet9-release-branch-dirty
+diff --git a/data/a64/shoji_iclass_map.txt b/data/a64/shoji_iclass_map.txt
+index 6407c45..d07a558 100644
+--- a/data/a64/shoji_iclass_map.txt
++++ b/data/a64/shoji_iclass_map.txt
+@@ -141,7 +141,7 @@ sve_intx_shift_narrow=SVE2 bitwise shift right narrow
+ sve_intx_sra=SVE2 bitwise shift right and accumulate
+ sve_crypto_binary_const=SVE2 crypto constructive binary operations
+ sve_crypto_binary_dest=SVE2 crypto destructive binary operations
+-sve_crypto_ternary=SVE2 crypto bitwise ternary operations
++sve_int_tern_log=SVE2 bitwise ternary operations
+ sve_crypto_unary=SVE2 crypto unary operations
+ sve_crypto_xar=SVE2 crypto bitwise operations with rotate
+ sve_fp_fcadd=SVE floating-point complex add (predicated)

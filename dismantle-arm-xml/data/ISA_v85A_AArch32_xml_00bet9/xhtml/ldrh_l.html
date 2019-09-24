@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><link rel="stylesheet" type="text/css" href="insn.css" /><meta name="generator" content="iform.xsl" /><title>LDRH (literal) -- AArch32</title></head><body><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><hr /><h2 class="instruction-section">LDRH (literal)</h2><p id="desc">
+      <p class="aml">Load Register Halfword (literal) calculates an address from the PC value and an immediate offset, loads a halfword from memory, zero-extends it to form a 32-bit word, and writes it to a register. For information about memory accesses see <a class="armarm-xref" title="Reference to Armv8 ARM section">Memory accesses</a>.</p>
+    </p>
+    <p class="desc">
+      It has encodings from the following instruction sets:
+       A32 (
+      <a href="#a1">A1</a>
+      )
+       and 
+       T32 (
+      <a href="#t1">T1</a>
+      )
+      .
+    </p>
+    <h3 class="classheading"><a name="a1" id="a1"></a>A1</h3><div class="regdiagram-32"><table class="regdiagram"><thead><tr><td>31</td><td>30</td><td>29</td><td>28</td><td>27</td><td>26</td><td>25</td><td>24</td><td>23</td><td>22</td><td>21</td><td>20</td><td>19</td><td>18</td><td>17</td><td>16</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td colspan="4" class="lr">!= 1111</td><td class="l">0</td><td>0</td><td class="r">0</td><td class="lr">P</td><td class="lr">U</td><td class="lr">1</td><td class="lr">W</td><td class="lr">1</td><td class="l">1</td><td>1</td><td>1</td><td class="r">1</td><td colspan="4" class="lr">Rt</td><td colspan="4" class="lr">imm4H</td><td class="lr">1</td><td class="l">0</td><td class="r">1</td><td class="lr">1</td><td colspan="4" class="lr">imm4L</td></tr><tr class="secondrow"><td colspan="4" class="droppedname">cond</td><td colspan="3"></td><td></td><td></td><td></td><td></td><td></td><td colspan="4"></td><td colspan="4"></td><td colspan="4"></td><td></td><td colspan="2"></td><td></td><td colspan="4"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">A1<span class="bitdiff"> (!(P == 0 &amp;&amp; W == 1))</span></h4><p class="asm-code"><a name="LDRH_l_A1" id="LDRH_l_A1"></a>LDRH{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rt" title="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a>, <a href="#label_1" title="The label of literal data item that is to be loaded into {syntax{&lt;Rt&gt;}}">&lt;label&gt;</a>
+        //
+      
+        (Normal form)
+      </p><p class="asm-code"><a name="LDRH_l_A1" id="LDRH_l_A1"></a>LDRH{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rt" title="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a>, [PC, #<a href="#_plusminus_" title="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a href="#imm_1" title="8-bit unsigned immediate byte offset [0-255] (field &quot;imm4H:imm4L&quot;)">&lt;imm&gt;</a>]
+        //
+      
+        (Alternative form)
+      </p></div><p class="pseudocode">if P == '0' &amp;&amp; W == '1' then SEE "LDRHT";
+t = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(Rt);  imm32 = <a href="shared_pseudocode.html#impl-shared.ZeroExtend.2" title="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm4H:imm4L, 32);
+add = (U == '1');  wback = (P == '0') || (W == '1');
+if t == 15 || wback then UNPREDICTABLE;</p><h3>CONSTRAINED UNPREDICTABLE behavior</h3><p>If <span class="pseudocode">wback</span>, then one of the following behaviors must occur:</p><ul><li>The instruction is <span class="arm-defined-word">undefined</span>.</li><li>The instruction executes as <span class="asm-code">NOP</span>.</li><li>The instruction executes with the additional decode: wback = FALSE;.</li><li>The instruction treats bit[24] as the P bit, and bit[21] as the writeback (W) bit, and uses the same addressing mode as described in <a class="armarm-xref" title="Reference to Armv8 ARM section">LDRH (immediate)</a>. The instruction uses post-indexed addressing when P == '0' and uses pre-indexed addressing otherwise. The instruction is handled as described in <a class="armarm-xref" title="Reference to Armv8 ARM section">Using R15</a>.</li></ul>
+    <h3 class="classheading"><a name="t1" id="t1"></a>T1</h3><div class="regdiagram-16x2"><table class="regdiagram"><thead><tr><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td><td>15</td><td>14</td><td>13</td><td>12</td><td>11</td><td>10</td><td>9</td><td>8</td><td>7</td><td>6</td><td>5</td><td>4</td><td>3</td><td>2</td><td>1</td><td>0</td></tr></thead><tbody><tr class="firstrow"><td class="l">1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td class="r">0</td><td class="lr">U</td><td class="l">0</td><td class="r">1</td><td class="lr">1</td><td class="l">1</td><td>1</td><td>1</td><td class="r">1</td><td colspan="4" class="lr">!= 1111</td><td colspan="12" class="lr">imm12</td></tr><tr class="secondrow"><td colspan="8"></td><td></td><td colspan="2"></td><td></td><td colspan="4"></td><td colspan="4" class="droppedname">Rt</td><td colspan="12"></td></tr></tbody></table></div><div class="encoding"><h4 class="encoding">T1</h4><p class="asm-code"><a name="LDRH_l_T1" id="LDRH_l_T1"></a>LDRH{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rt" title="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a>, <a href="#label" title="The label of literal data item that is to be loaded into {syntax{&lt;Rt&gt;}}">&lt;label&gt;</a>
+        //
+      
+        (Preferred syntax)
+      </p><p class="asm-code"><a name="LDRH_l_T1" id="LDRH_l_T1"></a>LDRH{<a href="#c" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a>}{<a href="#q" title="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a>} <a href="#rt" title="General-purpose register to be transferred (field &quot;Rt&quot;)">&lt;Rt&gt;</a>, [PC, #<a href="#_plusminus_" title="Specifies the offset is added to or subtracted from the base register (field &quot;U&quot;) [+,-]">{+/-}</a><a href="#imm" title="12-bit unsigned immediate byte offset [0-4095] (field &quot;imm12&quot;)">&lt;imm&gt;</a>]
+        //
+      
+        (Alternative syntax)
+      </p></div><p class="pseudocode">if Rt == '1111' then SEE "PLD (literal)";
+t = <a href="shared_pseudocode.html#impl-shared.UInt.1" title="function: integer UInt(bits(N) x)">UInt</a>(Rt);  imm32 = <a href="shared_pseudocode.html#impl-shared.ZeroExtend.2" title="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(imm12, 32);  add = (U == '1');
+// Armv8-A removes UNPREDICTABLE for R13</p>
+  <p class="encoding-notes">
+      <p class="aml">For more information about the <span class="arm-defined-word">constrained unpredictable</span> behavior of this instruction, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Architectural Constraints on UNPREDICTABLE behaviors</a>.</p>
+    </p><h3 class="explanations">Assembler Symbols</h3><div class="explanations"><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;c&gt;</td><td><a name="c" id="c"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;q&gt;</td><td><a name="q" id="q"></a>
+        
+          <p class="aml">See <a class="armarm-xref" title="Reference to Armv8 ARM section">Standard assembler syntax fields</a>.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;Rt&gt;</td><td><a name="rt" id="rt"></a>
+        
+          <p class="aml">Is the general-purpose register to be transferred, encoded in the "Rt" field.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;label&gt;</td><td><a name="label_1" id="label_1"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding A1: the label of the literal data item that is to be loaded into &lt;Rt&gt;. The assembler calculates the required value of the offset from the Align(PC, 4) value of the instruction to this label. Any value in the range -255 to 255 is permitted.</p>
+          <p class="aml">If the offset is zero or positive, imm32 is equal to the offset and add == TRUE, encoded as U == 1. If the offset is negative, imm32 is equal to minus the offset and add == FALSE, encoded as U == 0.</p>
+        
+      </td></tr><tr><td></td><td><a name="label" id="label"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding T1: the label of the literal data item that is to be loaded into &lt;Rt&gt;. The assembler calculates the required value of the offset from the Align(PC, 4) value of the instruction to this label. Permitted values of the offset are -4095 to 4095.</p>
+          <p class="aml">If the offset is zero or positive, imm32 is equal to the offset and add == TRUE, encoded as U == 1.</p>
+          <p class="aml">If the offset is negative, imm32 is equal to minus the offset and add == FALSE, encoded as U == 0.</p>
+        
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>+/-</td><td><a name="_plusminus_" id="_plusminus_"></a>
+        Specifies the offset is added to or subtracted from the base register, defaulting to + if omitted and 
+    encoded in 
+    <q>U</q>:
+      
+        <table class="valuetable">
+          
+            <thead>
+              <tr>
+                <th class="bitfield">U</th>
+                <th class="symbol">+/-</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="bitfield">0</td>
+                <td class="symbol">-</td>
+              </tr>
+              <tr>
+                <td class="bitfield">1</td>
+                <td class="symbol">+</td>
+              </tr>
+            </tbody>
+          
+        </table>
+      </td></tr></table><table><col class="asyn-l" /><col class="asyn-r" /><tr><td>&lt;imm&gt;</td><td><a name="imm_1" id="imm_1"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding A1: is the 8-bit unsigned immediate byte offset, in the range 0 to 255, defaulting to 0 if omitted, and encoded in the "imm4H:imm4L" field.</p>
+        
+      </td></tr><tr><td></td><td><a name="imm" id="imm"></a>
+        
+          
+          
+        
+        
+          <p class="aml">For encoding T1: is a 12-bit unsigned immediate byte offset, in the range 0 to 4095, encoded in the "imm12" field.</p>
+        
+      </td></tr></table></div><p class="syntax-notes">
+      <p class="aml">The alternative syntax permits the addition or subtraction of the offset and the immediate offset to be specified separately, including permitting a subtraction of 0 that cannot be specified using the normal syntax. For more information, see <a class="armarm-xref" title="Reference to Armv8 ARM section">Use of labels in UAL instruction syntax</a>.</p>
+    </p>
+    <div class="ps" psname="commonps"><a name="commonps" id="commonps"></a><h3 class="pseudocode">Operation</h3>
+      <p class="pseudocode">if <a href="shared_pseudocode.html#impl-aarch32.ConditionPassed.0" title="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    base = <a href="shared_pseudocode.html#impl-shared.Align.2" title="function: integer Align(integer x, integer y)">Align</a>(PC,4);
+    address = if add then (base + imm32) else (base - imm32);
+    data = <a href="shared_pseudocode.html#impl-aarch32.MemU.read.2" title="accessor: bits(8*size) MemU[bits(32) address, integer size]">MemU</a>[address,2];
+    <a href="shared_pseudocode.html#impl-aarch32.R.write.1" title="accessor: R[integer n] = bits(32) value">R</a>[t] = <a href="shared_pseudocode.html#impl-shared.ZeroExtend.2" title="function: bits(N) ZeroExtend(bits(M) x, integer N)">ZeroExtend</a>(data, 32);</p>
+    </div>
+  <h3>Operational information</h3>
+    <p class="aml">If CPSR.DIT is 1, the timing of this instruction is insensitive to the value of the data being loaded or stored.</p>
+  <hr /><table align="center"><tr><td><div class="topbar"><a href="index.html">Base Instructions</a></div></td><td><div class="topbar"><a href="fpsimdindex.html">SIMD&amp;FP Instructions</a></div></td><td><div class="topbar"><a href="a32_encindex.html">A32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="t32_encindex.html">T32 Instructions by Encoding</a></div></td><td><div class="topbar"><a href="shared_pseudocode.html">Shared Pseudocode</a></div></td><td><div class="topbar"><a href="notice.html">Proprietary Notice</a></div></td></tr></table><p class="versions">
+      Internal version only: isa v00_88, pseudocode v85-xml-00bet9_rc1_1
+      ; Build timestamp: 2018-12-12T12:33
+    </p><p class="copyconf">
+      Copyright © 2010-2018 Arm Limited or its affiliates. All rights reserved.
+      This document is Non-Confidential.
+    </p></body></html>

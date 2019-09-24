@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="VCVTB" title="VCVTB -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="fpsimd" />
+    <docvar key="mnemonic" value="VCVTB" />
+  </docvars>
+  <heading>VCVTB</heading>
+  <desc>
+    <brief>
+      <para>Convert to or from a half-precision value in the bottom half of a single-precision register</para>
+    </brief>
+    <authored>
+      <para>Convert to or from a half-precision value in the bottom half of a single-precision register does one of the following:</para>
+      <list type="unordered">
+        <listitem><content>Converts the half-precision value in the bottom half of a single-precision register to single-precision and writes the result to a single-precision register.</content></listitem>
+        <listitem><content>Converts the half-precision value in the bottom half of a single-precision register to double-precision and writes the result to a double-precision register.</content></listitem>
+        <listitem><content>Converts the single-precision value in a single-precision register to half-precision and writes the result into the bottom half of a single-precision register, preserving the other half of the destination register.</content></listitem>
+        <listitem><content>Converts the double-precision value in a double-precision register to half-precision and writes the result into the bottom half of a single-precision register, preserving the other half of the destination register.</content></listitem>
+      </list>
+      <para>Depending on settings in the <xref linkend="AArch32.cpacr">CPACR</xref>, <xref linkend="AArch32.nsacr">NSACR</xref>, <xref linkend="AArch32.hcptr">HCPTR</xref>, and <xref linkend="AArch32.fpexc">FPEXC</xref> registers, and the Security state and PE mode in which the instruction is executed, an attempt to execute the instruction might be <arm-defined-word>undefined</arm-defined-word>, or trapped to Hyp mode. For more information see <xref linkend="CIHIDDFF">Enabling Advanced SIMD and floating-point support</xref>.</para>
+    </authored>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="4" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="VCVTB" />
+      </docvars>
+      <iclassintro count="4"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/VCVTB/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" name="o1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="18" width="2" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="16" name="op" usename="1">
+          <c></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="8" name="sz" usename="1">
+          <c></c>
+        </box>
+        <box hibit="7" name="T" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VCVTB_A1_SH" oneofinclass="4" oneof="8" label="Half-precision to single-precision" bitdiffs="op == 0 &amp;&amp; sz == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="convert-type" value="half-to-single" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVTB" />
+        </docvars>
+        <box hibit="16" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="8" width="1" name="sz">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VCVTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F32.F16 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="sm" hover="32-bit SIMD&amp;FP source register (field &quot;Vm:M&quot;)">&lt;Sm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVTB_A1_DH" oneofinclass="4" oneof="8" label="Half-precision to double-precision" bitdiffs="op == 0 &amp;&amp; sz == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="convert-type" value="half-to-double" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVTB" />
+        </docvars>
+        <box hibit="16" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="8" width="1" name="sz">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F64.F16 </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="sm" hover="32-bit SIMD&amp;FP source register (field &quot;Vm:M&quot;)">&lt;Sm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVTB_A1_HS" oneofinclass="4" oneof="8" label="Single-precision to half-precision" bitdiffs="op == 1 &amp;&amp; sz == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="convert-type" value="single-to-half" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVTB" />
+        </docvars>
+        <box hibit="16" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="8" width="1" name="sz">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VCVTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F16.F32 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="sm" hover="32-bit SIMD&amp;FP source register (field &quot;Vm:M&quot;)">&lt;Sm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVTB_A1_HD" oneofinclass="4" oneof="8" label="Double-precision to half-precision" bitdiffs="op == 1 &amp;&amp; sz == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="convert-type" value="double-to-half" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="VCVTB" />
+        </docvars>
+        <box hibit="16" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="8" width="1" name="sz">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F16.F64 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VCVTB/T1A1_A.txt" mylink="aarch32.instrs.VCVTB.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">uses_double = (sz == '1'); convert_from_half = (op == '0');
+lowbit = (if T == '1' then 16 else 0);
+if uses_double then
+    if convert_from_half then
+        d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm:M);
+    else
+        d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);
+else
+    d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm:M);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="4" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="fpsimd" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="VCVTB" />
+      </docvars>
+      <iclassintro count="4"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/VCVTB/T1A1_A.txt" tworows="1">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" name="D" usename="1">
+          <c></c>
+        </box>
+        <box hibit="21" width="2" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="19" name="o1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="18" width="2" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="16" name="op" usename="1">
+          <c></c>
+        </box>
+        <box hibit="15" width="4" name="Vd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="9" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="8" name="sz" usename="1">
+          <c></c>
+        </box>
+        <box hibit="7" name="T" usename="1" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="5" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Vm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="VCVTB_T1_SH" oneofinclass="4" oneof="8" label="Half-precision to single-precision" bitdiffs="op == 0 &amp;&amp; sz == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="convert-type" value="half-to-single" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVTB" />
+        </docvars>
+        <box hibit="16" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="8" width="1" name="sz">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VCVTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F32.F16 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="sm" hover="32-bit SIMD&amp;FP source register (field &quot;Vm:M&quot;)">&lt;Sm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVTB_T1_DH" oneofinclass="4" oneof="8" label="Half-precision to double-precision" bitdiffs="op == 0 &amp;&amp; sz == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="convert-type" value="half-to-double" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVTB" />
+        </docvars>
+        <box hibit="16" width="1" name="op">
+          <c>0</c>
+        </box>
+        <box hibit="8" width="1" name="sz">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F64.F16 </text><a link="dd" hover="64-bit SIMD&amp;FP destination register (field &quot;D:Vd&quot;)">&lt;Dd&gt;</a><text>, </text><a link="sm" hover="32-bit SIMD&amp;FP source register (field &quot;Vm:M&quot;)">&lt;Sm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVTB_T1_HS" oneofinclass="4" oneof="8" label="Single-precision to half-precision" bitdiffs="op == 1 &amp;&amp; sz == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="convert-type" value="single-to-half" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVTB" />
+        </docvars>
+        <box hibit="16" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="8" width="1" name="sz">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>VCVTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F16.F32 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="sm" hover="32-bit SIMD&amp;FP source register (field &quot;Vm:M&quot;)">&lt;Sm&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="VCVTB_T1_HD" oneofinclass="4" oneof="8" label="Double-precision to half-precision" bitdiffs="op == 1 &amp;&amp; sz == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="convert-type" value="double-to-half" />
+          <docvar key="instr-class" value="fpsimd" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="VCVTB" />
+        </docvars>
+        <box hibit="16" width="1" name="op">
+          <c>1</c>
+        </box>
+        <box hibit="8" width="1" name="sz">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>VCVTB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text>.F16.F64 </text><a link="sd" hover="32-bit SIMD&amp;FP destination register (field &quot;Vd:D&quot;)">&lt;Sd&gt;</a><text>, </text><a link="dm" hover="64-bit SIMD&amp;FP source register (field &quot;M:Vm&quot;)">&lt;Dm&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/VCVTB/T1A1_A.txt" mylink="aarch32.instrs.VCVTB.T1A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">uses_double = (sz == '1'); convert_from_half = (op == '0');
+lowbit = (if T == '1' then 16 else 0);
+if uses_double then
+    if convert_from_half then
+        d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(D:Vd); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm:M);
+    else
+        d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(M:Vm);
+else
+    d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vd:D); m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Vm:M);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="VCVTB_A1_SH, VCVTB_T1_SH" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VCVTB_A1_SH, VCVTB_T1_SH" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VCVTB_A1_SH, VCVTB_T1_SH" symboldefcount="1">
+      <symbol link="sd">&lt;Sd&gt;</symbol>
+      <account encodedin="Vd:D">
+        <intro>
+          <para>Is the 32-bit name of the SIMD&amp;FP destination register, encoded in the "Vd:D" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VCVTB_A1_HD, VCVTB_T1_HD" symboldefcount="1">
+      <symbol link="dm">&lt;Dm&gt;</symbol>
+      <account encodedin="M:Vm">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP source register, encoded in the "M:Vm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VCVTB_A1_DH, VCVTB_T1_DH" symboldefcount="1">
+      <symbol link="dd">&lt;Dd&gt;</symbol>
+      <account encodedin="D:Vd">
+        <intro>
+          <para>Is the 64-bit name of the SIMD&amp;FP destination register, encoded in the "D:Vd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="VCVTB_A1_SH, VCVTB_T1_SH" symboldefcount="1">
+      <symbol link="sm">&lt;Sm&gt;</symbol>
+      <account encodedin="Vm:M">
+        <intro>
+          <para>Is the 32-bit name of the SIMD&amp;FP source register, encoded in the "Vm:M" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/VCVTB/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations(); <a link="impl-aarch32.CheckVFPEnabled.1" file="shared_pseudocode.xml" hover="function: CheckVFPEnabled(boolean include_fpexc_check)">CheckVFPEnabled</a>(TRUE);
+    bits(16) hp;
+    if convert_from_half then
+        hp = <a link="impl-aarch32.S.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) S[integer n]">S</a>[m]&lt;lowbit+15:lowbit&gt;;
+        if uses_double then
+            <a link="impl-aarch32.D.write.1" file="shared_pseudocode.xml" hover="accessor: D[integer n] = bits(64) value">D</a>[d] = <a link="impl-shared.FPConvert.2" file="shared_pseudocode.xml" hover="function: bits(M) FPConvert(bits(N) op, FPCRType fpcr)">FPConvert</a>(hp, FPSCR);
+        else
+            <a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d] = <a link="impl-shared.FPConvert.2" file="shared_pseudocode.xml" hover="function: bits(M) FPConvert(bits(N) op, FPCRType fpcr)">FPConvert</a>(hp, FPSCR);
+    else
+        if uses_double then
+            hp = <a link="impl-shared.FPConvert.2" file="shared_pseudocode.xml" hover="function: bits(M) FPConvert(bits(N) op, FPCRType fpcr)">FPConvert</a>(<a link="impl-aarch32.D.read.1" file="shared_pseudocode.xml" hover="accessor: bits(64) D[integer n]">D</a>[m], FPSCR);
+        else
+            hp = <a link="impl-shared.FPConvert.2" file="shared_pseudocode.xml" hover="function: bits(M) FPConvert(bits(N) op, FPCRType fpcr)">FPConvert</a>(<a link="impl-aarch32.S.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) S[integer n]">S</a>[m], FPSCR);
+        <a link="impl-aarch32.S.write.1" file="shared_pseudocode.xml" hover="accessor: S[integer n] = bits(32) value">S</a>[d]&lt;lowbit+15:lowbit&gt; = hp;</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

@@ -1,0 +1,8 @@
+# 
+# Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved.
+# 
+# This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to.
+main_isa: v00_88
+advsimd_isa: 
+pseudocode_commit: 
+pseudocode_version: v85-xml-00bet9_rc1_1
