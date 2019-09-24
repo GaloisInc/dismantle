@@ -23,7 +23,11 @@ library
   -- other-modules:
   -- other-extensions:
   build-depends:       base >=4.12 && <4.13,
+                       containers,
                        dismantle-tablegen,
+                       megaparsec,
+                       mtl,
+                       split,
                        text,
                        template-haskell,
                        xml

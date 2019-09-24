@@ -193,9 +193,7 @@ mkParser isa desc path = do
   -- They are associated with the bit masks required to build the
   -- trie.  The trie is constructed at run time for now.
   parserData <- forM (parsableInstructions isa desc) $ \i -> do
-    trieInput <- mkTrieInput isa i
-    let ((_, requiredMask, trueMask, negMask, negBits, _), _) = trieInput
-    return trieInput
+    mkTrieInput isa i
   let (trieInputs, decls) = unzip parserData
   case BT.byteTrie Nothing trieInputs of
     Left err -> reportError ("Error while building parse tables: " ++ show err) >> return []
@@ -244,16 +242,17 @@ bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroup
         _ -> w
 
 -- | Note that the 'Maybe Name' is always a 'Just' value.
-mkTrieInput :: ISA -> InstructionDescriptor -> Q ((String, BS.ByteString, BS.ByteString, BS.ByteString, BS.ByteString, Maybe Name), Dec)
+mkTrieInput :: ISA -> InstructionDescriptor -> Q ((String, BS.ByteString, BS.ByteString, [(BS.ByteString, BS.ByteString)], Maybe Name), Dec)
 mkTrieInput isa i = do
   pname <- newName ("insnParser" ++ mnemonic)
   let pexp = mkParserExpr isa i
   pdec <- valD (varP pname) (normalB pexp) []
-  return ((mnemonic, BS.pack requiredMask, BS.pack trueMask, BS.pack negMask, BS.pack negBits, Just pname), pdec)
+  return ((mnemonic, BS.pack requiredMask, BS.pack trueMask, negPairs, Just pname), pdec)
   where
     mnemonic = idMnemonic i
     (requiredMask, trueMask) = bitSpecAsBytes (idMask i)
-    (negMask, negBits) = bitSpecAsBytes (idNegMask i)
+    negPairs = pack <$> bitSpecAsBytes <$> idNegMasks i
+    pack (m, m') = (BS.pack m, BS.pack m')
 
 -- | Return a TH expression that defines an instruction parser
 --

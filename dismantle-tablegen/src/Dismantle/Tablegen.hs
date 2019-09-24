@@ -426,7 +426,7 @@ finishInstructionDescriptor isa def mbits ins outs =
               Little _ rewrite -> rewrite
           usedBits = rewriteUsedBits usedBits0
           i = InstructionDescriptor { idMask = usedBits
-                                    , idNegMask = replicate 32 BT.Any
+                                    , idNegMasks = [replicate 32 BT.Any]
                                     , idDefaultPrettyVariableValues = isaDefaultPrettyVariableValues isa
                                     , idPrettyVariableOverrides = fromMaybe [] $ lookup (defName def) $ isaPrettyOverrides isa
                                     , idMnemonic = defName def

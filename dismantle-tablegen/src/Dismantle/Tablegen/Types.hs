@@ -65,7 +65,7 @@ instance NFData OperandDescriptor where
 -- definition
 data InstructionDescriptor =
   InstructionDescriptor { idMask :: [BT.Bit]
-                        , idNegMask :: [BT.Bit]
+                        , idNegMasks :: [[BT.Bit]]
                         , idMnemonic :: String
                         , idInputOperands :: [OperandDescriptor]
                         , idOutputOperands :: [OperandDescriptor]

@@ -94,21 +94,18 @@ data Pattern = Pattern { requiredMask :: BS.ByteString
                        , trueMask :: BS.ByteString
                        -- ^ The bits that must be set (or not) in the positions
                        -- selected by the 'requiredMask'
-                       , negativeMask :: BS.ByteString
-                       -- ^ The mask of bits that must /not/ match for this
-                       -- pattern to apply
-                       , negativeBits :: BS.ByteString
-                       -- ^ The bits that must be set (or not) in the positions
-                       -- selected by the 'negativeMask' in order to reject the
-                       -- pattern
+                       , negativePairs :: [(BS.ByteString, BS.ByteString)]
+                       -- ^ a list of "negative" masks, where the lefthand side of
+                       -- each pair is the mask of bits that must /not/ match for
+                       -- this pattern to apply, and the righthand side is the bits
+                       -- that must be set (or not) in the positions selected by the
+                       -- lefthand side in order to reject the pattern
                        }
                deriving (Eq, Ord, Show)
 
 showPattern Pattern{..} =
   "Pattern { requiredMask = " ++ show (BS.unpack requiredMask) ++
   ", trueMask = " ++ show (BS.unpack trueMask) ++
-  ", negativeMask = " ++ show (BS.unpack negativeMask) ++
-  ", negativeBits = " ++ show (BS.unpack negativeBits) ++
   "}"
 
 -- | Return the number of bytes occupied by a 'Pattern'
@@ -183,8 +180,8 @@ instance MonadFail (TrieM e) where
 
 
 -- | Construct a 'ByteTrie' from a list of mappings and a default element
-byteTrie :: e -> [(String, BS.ByteString, BS.ByteString, BS.ByteString, BS.ByteString, e)] -> Either TrieError (ByteTrie e)
-byteTrie defElt mappings = mkTrie defElt (mapM_ (\(n, r, t, nm, nb, e) -> assertMapping n r t nm nb e) mappings)
+byteTrie :: e -> [(String, BS.ByteString, BS.ByteString, [(BS.ByteString, BS.ByteString)], e)] -> Either TrieError (ByteTrie e)
+byteTrie defElt mappings = mkTrie defElt (mapM_ (\(n, r, t, nps, e) -> assertMapping n r t nps e) mappings)
   where showMapping (s, bs0, bs1, bs2, bs3, _) = show (s, BS.unpack bs0, BS.unpack bs1, BS.unpack bs2, BS.unpack bs3)
 
 -- | Construct a 'ByteTrie' through a monadic assertion-oriented interface.
@@ -359,17 +356,16 @@ patternMatches byteIndex byte p _ = -- (Pattern { requiredMask = req, trueMask =
     patRequireByte = requiredMask p `BS.index` byteIndex
     patTrueByte = trueMask p `BS.index` byteIndex
 
--- | Return 'True' if a 'BS.ByteString' does not match with the negative bits in a
--- 'Pattern'.
+-- | Return 'True' if a 'BS.ByteString' does not match with any of the negative bit
+-- masks in a pattern.
 -- FIXME: We do not check that the bytestrings have the same length
 negativePatternMatches :: BS.ByteString -> Pattern -> e -> Bool
-negativePatternMatches bs p _ =
-  let ret = case (all (==0) (BS.unpack (negativeMask p))) of
-        True -> True
-        False -> not (and (zipWith3 negativeByteMatches (BS.unpack $ negativeMask p) (BS.unpack $ negativeBits p) (BS.unpack bs)))
-  in -- trace ("negativePatternMatches " ++ show (BS.unpack bs) ++ " " ++ showPattern p ++ " = " ++ show ret) $
-     ret
-  where negativeByteMatches :: Word8 -> Word8 -> Word8 -> Bool
+negativePatternMatches bs p _ = all (uncurry (negativeMatch bs)) (negativePairs p)
+  where negativeMatch bs negMask negBits =
+          case (all (==0) (BS.unpack negMask)) of
+            True -> True
+            False -> not (and (zipWith3 negativeByteMatches (BS.unpack negMask) (BS.unpack negBits) (BS.unpack bs)))
+        negativeByteMatches :: Word8 -> Word8 -> Word8 -> Bool
         negativeByteMatches negByteMask negByteBits byte = (byte .&. negByteMask) == negByteBits
 
 -- | Assert a mapping from a bit pattern to a value.
@@ -377,8 +373,8 @@ negativePatternMatches bs p _ =
 -- The bit pattern must have a length that is a multiple of 8.  This
 -- function can error out with a pure error ('TrieError') if an
 -- overlapping bit pattern is asserted.
-assertMapping :: String -> BS.ByteString -> BS.ByteString -> BS.ByteString -> BS.ByteString -> a -> TrieM a ()
-assertMapping mnemonic patReq patTrue patNegMask patNegBits val
+assertMapping :: String -> BS.ByteString -> BS.ByteString -> [(BS.ByteString, BS.ByteString)] -> a -> TrieM a ()
+assertMapping mnemonic patReq patTrue patNegPairs val
   | BS.length patReq /= BS.length patTrue || BS.null patReq =
     E.throwError (InvalidPatternLength pat)
   | otherwise = do
@@ -397,7 +393,7 @@ assertMapping mnemonic patReq patTrue patNegMask patNegBits val
                                , tsEltIdSrc = nextElementIndex eid
                                }
   where
-    pat = Pattern patReq patTrue patNegMask patNegBits
+    pat = Pattern patReq patTrue patNegPairs
 
 -- Unsafe things
 
