@@ -34,6 +34,7 @@ data XMLException = InvalidXML
                   | InvalidBoxWidth X.Element
                   | InvalidConstraint String
                   | InvalidBoxHibit X.Element
+                  | InvalidBoxName X.Element
   deriving Show
 
 instance E.Exception XMLException
@@ -74,11 +75,12 @@ iclassToInsnDesc arch iclass = do
   mnemonic <- encodingMnemonic iclass
   idMask <- fixedEncodingMask iclass
   idNegMasks <- negativeEncodingMasks iclass
+  idInputOperands <- operandDescriptors iclass
   let desc = DT.InstructionDescriptor
              { DT.idMask = concat (reverse (LS.chunksOf 8 idMask))
              , DT.idNegMasks = concat <$> reverse <$> LS.chunksOf 8 <$> idNegMasks
              , DT.idMnemonic = mnemonic
-             , DT.idInputOperands = undefined
+             , DT.idInputOperands = idInputOperands
              , DT.idOutputOperands = undefined
              , DT.idNamespace = undefined
              , DT.idDecoderNamespace = undefined
@@ -163,3 +165,26 @@ negativeEncodingMasks iclass = do
   return constraintMasks
   where readBit '0' = BT.ExpectedBit False
         readBit '1' = BT.ExpectedBit True
+
+operandDescriptors :: X.Element -> XML [DT.OperandDescriptor]
+operandDescriptors iclass = do
+  rd <- regdiagram iclass
+  let boxes = X.findElements (qname "box") rd
+  descs <- fmap catMaybes $ forM boxes $ \box -> case X.findAttr (qname "usename") box of
+    Just "1" -> do
+      name <- case X.findAttr (qname "name") box of
+        Nothing -> E.throw $ InvalidBoxName box
+        Just name -> return name
+      hibit <- case X.findAttr (qname "hibit") box of
+        Nothing -> E.throw $ InvalidBoxHibit box
+        Just s -> return $ read s
+      let boxWidth = read $ fromMaybe "1" (X.findAttr (qname "width") box)
+      let desc = DT.OperandDescriptor { DT.opName = name
+                                      , DT.opChunks = [( DT.IBit (hibit - boxWidth + 1)
+                                                       , PT.OBit 0
+                                                       , fromIntegral boxWidth)]
+                                      , DT.opType = DT.OperandType (printf "bv%d" boxWidth)
+                                      }
+      return $ Just desc
+    Nothing -> return Nothing
+  return descs
