@@ -67,7 +67,8 @@ encodingToInstDesc fltr arch e
       mnemonic <- encodingMnemonic e
       let desc = DT.InstructionDescriptor
                  { DT.idMask = concat (reverse (L.chunksOf 8 (fixedEncodingMask e)))
-                 , DT.idNegMask = concat (reverse (L.chunksOf 8 (negativeEncodingMask e)))
+                 -- FIXME: This should really be empty if the negative mask is trivial.
+                 , DT.idNegMasks = [concat (reverse (L.chunksOf 8 (negativeEncodingMask e)))]
                  , DT.idMnemonic = mnemonic
                  , DT.idInputOperands = map toOperandDescriptor (AS.encFields e)
                  , DT.idOutputOperands = [] -- See Note [Output Operands]
