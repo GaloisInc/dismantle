@@ -19,15 +19,23 @@ extra-source-files:  CHANGELOG.md
 
 library
   exposed-modules:   Dismantle.XML,
+                     Dismantle.XML.AArch32,
+                     Dismantle.XML.AArch32.ISA,
                      Dismantle.XML.TH
   -- other-modules:
   -- other-extensions:
   build-depends:       base >=4.12 && <4.13,
+                       binary,
+                       bytestring,
                        containers,
+                       directory,
                        dismantle-tablegen,
+                       filepath,
                        megaparsec,
                        mtl,
+                       parameterized-utils,
                        split,
+                       strict,
                        text,
                        template-haskell,
                        xml

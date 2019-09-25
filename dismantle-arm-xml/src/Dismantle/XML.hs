@@ -2,7 +2,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Dismantle.XML
-  ( DT.ISA(..)
+  ( loadXML
+  , XMLException(..)
+  , DT.ISA(..)
   , DT.Endianness(..)
   , DT.OperandPayload(..)
   , DT.FormOverride(..)
@@ -17,7 +19,9 @@ import           Data.List (stripPrefix)
 import           Data.List.Split as LS
 import qualified Data.Map as M
 import           Data.Maybe (catMaybes, fromMaybe)
+import qualified Data.Set as S
 import           Data.Void (Void)
+import qualified System.IO.Strict as SIO
 import qualified Text.Megaparsec as P
 import           Text.Printf (printf)
 import qualified Text.XML.Light as X
@@ -29,7 +33,7 @@ import qualified Dismantle.Tablegen.Parser.Types as PT
 data XMLException = InvalidXML
                   | MissingRegDiagram X.Element
                   | MissingPSName X.Element
-                  | MnemonicParseError (P.ParseErrorBundle String Void)
+                  | MnemonicParseError FilePath String
                   | InvalidBoxColumn X.Element X.Element
                   | InvalidBoxWidth X.Element
                   | InvalidConstraint String
@@ -50,25 +54,50 @@ newtype XML a = XML (MS.StateT XMLState IO a)
            , MS.MonadIO
            )
 
-data XMLState = XMLState { usedNames :: M.Map String Int }
+data XMLState = XMLState { usedNames :: M.Map String Int
+                         , currentFileName :: Maybe FilePath
+                         }
 
 runXML :: XML a -> IO a
-runXML (XML a) = MS.evalStateT a (XMLState M.empty)
+runXML (XML a) = MS.evalStateT a (XMLState M.empty Nothing)
 
 qname :: String -> X.QName
 qname str = X.QName str Nothing Nothing
+
+-- | Given a list of XML instruction files, build an ISA descriptor.
+loadXML :: (X.Element -> Bool) -> String -> [FilePath] -> IO DT.ISADescriptor
+loadXML fltr arch fps = runXML $ do
+  instrs <- concat <$> mapM (loadXMLInstruction fltr arch) fps
+  return $ DT.ISADescriptor { DT.isaInstructions = instrs
+                            , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
+                            , DT.isaErrors = []
+                            }
+
+instrOperandTypes :: DT.InstructionDescriptor -> [DT.OperandType]
+instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutputOperands idesc)
 
 -- | Given a path to an XML instruction file, extract a list of instruction
 -- descriptors for each encoding in the file.
 loadXMLInstruction :: (X.Element -> Bool) -> String -> FilePath -> XML [DT.InstructionDescriptor]
 loadXMLInstruction fltr arch fp = do
-  s <- MS.liftIO $ readFile fp -- FIXME: file read error?
+  s <- MS.liftIO $ SIO.readFile fp -- FIXME: file read error?
+  MS.liftIO $ print $ "processing XML file: " ++ fp
   case X.parseXMLDoc s of
     Nothing -> E.throw InvalidXML
     Just xmlContent -> do
-      let iclasses = filter fltr (X.findElements (qname "iclass") xmlContent)
-      descriptors <- mapM (iclassToInsnDesc arch) iclasses
-      return descriptors
+      let instructionSections = X.findChildren (qname "instructionsection") xmlContent
+          mInstructionSection = case instructionSections of
+            [is] -> Just is
+            _ -> Nothing
+          mType = X.findAttr (qname "type") =<< mInstructionSection
+      case mType of
+        Just "instruction" -> do
+          MS.modify' $ \s -> s { currentFileName = Just fp }
+          let iclasses = filter fltr (X.findElements (qname "iclass") xmlContent)
+          descriptors <- mapM (iclassToInsnDesc arch) iclasses
+          MS.modify' $ \s -> s { currentFileName = Nothing }
+          return descriptors
+        _ -> return []
 
 iclassToInsnDesc :: String -> X.Element -> XML DT.InstructionDescriptor
 iclassToInsnDesc arch iclass = do
@@ -81,15 +110,21 @@ iclassToInsnDesc arch iclass = do
              , DT.idNegMasks = concat <$> reverse <$> LS.chunksOf 8 <$> idNegMasks
              , DT.idMnemonic = mnemonic
              , DT.idInputOperands = idInputOperands
-             , DT.idOutputOperands = undefined
-             , DT.idNamespace = undefined
-             , DT.idDecoderNamespace = undefined
-             , DT.idAsmString = undefined
-             , DT.idPseudo = undefined
-             , DT.idDefaultPrettyVariableValues = undefined
-             , DT.idPrettyVariableOverrides = undefined
+             , DT.idOutputOperands = []
+             , DT.idNamespace = arch
+             -- FIXME: Is this ok for decoder namespace? (compare with ASL)
+             , DT.idDecoderNamespace = arch
+             , DT.idAsmString = asmString iclass mnemonic
+             , DT.idPseudo = False
+             , DT.idDefaultPrettyVariableValues = []
+             , DT.idPrettyVariableOverrides = []
              }
   return desc
+
+-- | FIXME: We should be able to generate the asm string from the XML, but I'm
+-- punting on that for now.
+asmString :: X.Element -> String -> String
+asmString _iclass mn = mn
 
 regdiagram :: X.Element -> XML X.Element
 regdiagram iclass = case X.findElement (qname "regdiagram") iclass of
@@ -105,16 +140,26 @@ encodingMnemonic iclass = do
   case X.findAttr (qname "psname") rd of
     Nothing -> E.throw $ MissingPSName rd
     Just nm -> case P.runParser nameParser "" nm of
-      Left err -> E.throw $ MnemonicParseError err
-      Right nm -> do
-        names <- MS.gets usedNames
-        case M.lookup nm names of
-          Nothing -> do
-            MS.modify' $ \s -> s { usedNames = M.insert nm 0 (usedNames s) }
-            return nm
-          Just nUses -> do
-            MS.modify' $ \s -> s { usedNames = M.insertWith (\_ oldCount -> oldCount + 1) nm 0 (usedNames s) }
-            return (printf "%s_%d" nm nUses)
+      Left err -> mnemonicErr nm
+        -- case X.findChildren (qname "encoding") iclass of
+        --   [enc] -> case X.findAttr (qname "name") enc of
+        --     Just nm' -> processName nm'
+        --     Nothing -> mnemonicErr nm
+        --   _ -> mnemonicErr nm
+      Right nm -> processName nm
+  where mnemonicErr :: String -> XML a
+        mnemonicErr nm = do fileName <- MS.gets currentFileName
+                            E.throw $ MnemonicParseError (fromMaybe "" fileName) nm
+        processName :: String -> XML String
+        processName nm = do
+          names <- MS.gets usedNames
+          case M.lookup nm names of
+            Nothing -> do
+              MS.modify' $ \s -> s { usedNames = M.insert nm 0 (usedNames s) }
+              return nm
+            Just nUses -> do
+              MS.modify' $ \s -> s { usedNames = M.insertWith (\_ oldCount -> oldCount + 1) nm 0 (usedNames s) }
+              return (printf "%s_%d" nm nUses)
 
 nameParser :: Parser String
 nameParser = do

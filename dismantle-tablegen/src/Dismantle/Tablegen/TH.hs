@@ -78,11 +78,11 @@ loadISA isa path overridePaths = do
 genISA :: ISA -> FilePath -> [FilePath] -> DecsQ
 genISA isa path overridePaths = do
   desc <- loadISA isa path overridePaths
-  genISADesc isa desc path overridePaths
+  genISADesc isa desc [path] overridePaths
 
-genISADesc :: ISA -> ISADescriptor -> FilePath -> [FilePath] -> DecsQ
-genISADesc isa desc path overrides = do
-  mapM_ qAddDependentFile (path : overrides)
+genISADesc :: ISA -> ISADescriptor -> [FilePath] -> [FilePath] -> DecsQ
+genISADesc isa desc paths overrides = do
+  mapM_ qAddDependentFile (paths ++ overrides)
 
   case isaErrors desc of
     [] -> return ()
@@ -94,7 +94,7 @@ genISADesc isa desc path overrides = do
   reprTypeDecls <- mkReprType isa >>= sequence
   setWrapperType <- [d| newtype NESetWrapper o p = NESetWrapper { unwrapNESet :: (NES.Set ($(conT $ mkName "Opcode") o p)) } |]
   ppDef <- mkPrettyPrinter desc
-  parserDef <- mkParser isa desc path
+  parserDef <- mkParser isa desc
   asmDef <- mkAssembler isa desc
   return $ concat [ operandType
                   , opcodeType
@@ -186,9 +186,8 @@ opcodeTypeName = mkName "Opcode"
 operandTypeName :: Name
 operandTypeName = mkName "Operand"
 
-mkParser :: ISA -> ISADescriptor -> FilePath -> Q [Dec]
-mkParser isa desc path = do
-  qAddDependentFile path
+mkParser :: ISA -> ISADescriptor -> Q [Dec]
+mkParser isa desc = do
   -- Build up a table of AST fragments that are parser expressions.
   -- They are associated with the bit masks required to build the
   -- trie.  The trie is constructed at run time for now.
