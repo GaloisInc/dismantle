@@ -81,23 +81,20 @@ instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutput
 loadXMLInstruction :: (X.Element -> Bool) -> String -> FilePath -> XML [DT.InstructionDescriptor]
 loadXMLInstruction fltr arch fp = do
   s <- MS.liftIO $ SIO.readFile fp -- FIXME: file read error?
-  MS.liftIO $ print $ "processing XML file: " ++ fp
+  MS.liftIO $ putStr $ "processing XML file: " ++ fp
   case X.parseXMLDoc s of
     Nothing -> E.throw InvalidXML
     Just xmlContent -> do
-      let instructionSections = X.findChildren (qname "instructionsection") xmlContent
-          mInstructionSection = case instructionSections of
-            [is] -> Just is
-            _ -> Nothing
-          mType = X.findAttr (qname "type") =<< mInstructionSection
+      let mType = X.findAttr (qname "type") xmlContent
       case mType of
         Just "instruction" -> do
           MS.modify' $ \s -> s { currentFileName = Just fp }
           let iclasses = filter fltr (X.findElements (qname "iclass") xmlContent)
           descriptors <- mapM (iclassToInsnDesc arch) iclasses
           MS.modify' $ \s -> s { currentFileName = Nothing }
+          MS.liftIO $ putStrLn " good"
           return descriptors
-        _ -> return []
+        _ -> MS.liftIO (putStrLn " bad") >> return []
 
 iclassToInsnDesc :: String -> X.Element -> XML DT.InstructionDescriptor
 iclassToInsnDesc arch iclass = do

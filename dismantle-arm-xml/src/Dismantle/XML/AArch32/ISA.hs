@@ -64,6 +64,7 @@ operandPayloadTypes =
   , ("Bv4", unsignedImmediate (Proxy @4))
   , ("Bv5", unsignedImmediate (Proxy @5))
   , ("Bv6", unsignedImmediate (Proxy @6))
+  , ("Bv7", unsignedImmediate (Proxy @7))
   , ("Bv8", unsignedImmediate (Proxy @8))
   , ("Bv12", unsignedImmediate (Proxy @12))
   , ("Bv15", unsignedImmediate (Proxy @15))
