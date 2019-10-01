@@ -13,10 +13,10 @@ import qualified Dismantle.XML as DX
 import qualified Dismantle.Tablegen.TH as DTH
 
 genISA :: (X.Element -> Bool) -> DX.ISA -> FilePath -> TH.DecsQ
-genISA fltr isa dir = do
-  (desc, xmlFiles) <- TH.runIO $ withCurrentDirectory dir $ do
-    files <- sort <$> listDirectory "."
-    let xmlFiles = filter ("xml" `isExtensionOf`) files
-    desc <- DX.loadXML fltr (DX.isaName isa) xmlFiles
-    return (desc, xmlFiles)
-  DTH.genISADesc isa desc xmlFiles []
+genISA fltr isa dir = undefined
+  -- (desc, xmlFiles) <- TH.runIO $ withCurrentDirectory dir $ do
+  --   files <- sort <$> listDirectory "."
+  --   let xmlFiles = filter ("xml" `isExtensionOf`) files
+  --   desc <- DX.loadXML fltr (DX.isaName isa) xmlFiles
+  --   return (desc, xmlFiles)
+  -- DTH.genISADesc isa desc xmlFiles []
