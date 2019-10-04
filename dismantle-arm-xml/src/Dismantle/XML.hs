@@ -15,7 +15,7 @@ module Dismantle.XML
 import qualified Control.Exception as E
 import           Control.Monad (forM)
 import qualified Control.Monad.State.Strict as MS
-import           Data.List (stripPrefix, find)
+import           Data.List (stripPrefix, find, nub)
 import           Data.List.Split as LS
 import qualified Data.Map as M
 import           Data.Maybe (catMaybes, fromMaybe)
@@ -30,21 +30,15 @@ import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import qualified Dismantle.Tablegen.Parser.Types as PT
 
-data XMLException = InvalidXML
-                  | MissingRegDiagram X.Element
-                  | MultipleRegDiagrams X.Element
-                  | MissingPSName X.Element
-                  | MnemonicParseError FilePath String
-                  | InvalidBoxColumn X.Element X.Element
-                  | InvalidBoxWidth X.Element
-                  | InvalidConstraint String
-                  | InvalidBoxHibit X.Element
-                  | InvalidBoxName X.Element
-                  | MissingDecodeConstraints X.Element
-                  | MissingName X.Element
-                  | MissingVal X.Element
+data XMLException = MissingChildElement String X.Element
+                  | MissingAttr String X.Element
                   | MissingField X.Element String
+                  | InvalidChildElement String X.Element
+                  | InvalidAttr String X.Element
+                  | MultipleChildElements String X.Element
+                  | MnemonicParseError FilePath String
                   | InvalidPattern String
+                  | MismatchingFieldLengths [Field] [BT.Bit]
   deriving Show
 
 instance E.Exception XMLException
@@ -76,16 +70,23 @@ loadXML :: (X.Element -> Bool) -> String -> FilePath -> IO DT.ISADescriptor
 loadXML fltr arch dirPath = runXML $ do
   fileStr <- MS.liftIO $ readFile (dirPath ++ "/a32_encindex.xml")
   let xmlContent = X.parseXML fileStr
-  undefined
+  instrs <- undefined
+  return $ DT.ISADescriptor { DT.isaInstructions = instrs
+                            , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
+                            , DT.isaErrors = []
+                            }
   -- instrs <- concat <$> mapM (loadXMLInstruction fltr arch) fps
   -- return $ DT.ISADescriptor { DT.isaInstructions = instrs
   --                           , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
   --                           , DT.isaErrors = []
   --                           }
 
+instrOperandTypes :: DT.InstructionDescriptor -> [DT.OperandType]
+instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutputOperands idesc)
+
 xmlEncodingIndex :: X.Element -> XML DT.ISADescriptor
 xmlEncodingIndex encIx = do
-  let iclass_sects = X.findElements (qname "iclass_sect") encIx
+  let iclass_sects = X.findChildren (qname "iclass_sect") encIx
   undefined
 
 xmlIclassSect :: X.Element -> XML [DT.InstructionDescriptor]
@@ -101,13 +102,13 @@ iclassMatchPattern :: X.Element -> XML [BT.Bit]
 iclassMatchPattern iclass_sect = do
   rd <- case X.findChild (qname "regdiagram") iclass_sect of
           Just rd -> return rd
-          Nothing -> E.throw (MissingRegDiagram iclass_sect)
+          Nothing -> E.throw (MissingChildElement "regdiagram" iclass_sect)
   let boxes = X.findChildren (qname "box") rd
   mask <- fmap concat $ forM boxes $ \box -> do
-    let width = read $ fromMaybe "1" (X.findAttr (qname "width") box)
-        cs = X.findElements (qname "c") box
+    let width = maybe 1 read (X.findAttr (qname "width") box)
+        cs = X.findChildren (qname "c") box
     boxMask <- fmap concat $ forM cs $ \c -> do
-      let colspan = read $ fromMaybe "1" (X.findAttr (qname "colspan") c)
+      let colspan = maybe 1 read (X.findAttr (qname "colspan") c)
       case X.strContent c of
         "1" -> return $ [BT.ExpectedBit True]
         "(1)" -> return $ [BT.ExpectedBit True]
@@ -116,7 +117,7 @@ iclassMatchPattern iclass_sect = do
         _ -> return $ replicate colspan BT.Any
     if length boxMask == width
       then return boxMask
-      else E.throw $ InvalidBoxWidth box
+      else E.throw $ InvalidAttr "width" box
   return mask
 
 -- | Get all the named fields from an iclass. This includes some bits that are
@@ -126,18 +127,18 @@ iclassFields :: X.Element -> XML [Field]
 iclassFields iclass_sect = do
   rd <- case X.findChild (qname "regdiagram") iclass_sect of
     Just rd -> return rd
-    Nothing -> E.throw (MissingRegDiagram iclass_sect)
+    Nothing -> E.throw (MissingChildElement "regdiagram" iclass_sect)
   let boxes = X.findChildren (qname "box") rd
   fields <- fmap catMaybes $ forM boxes $ \box -> do
-    let width = read $ fromMaybe "1" (X.findAttr (qname "width") box)
+    let width = maybe 1 read (X.findAttr (qname "width") box)
     case X.findAttr (qname "usename") box of
       Just "1" -> do
         name <- case X.findAttr (qname "name") box of
           Just name -> return name
-          Nothing -> E.throw (InvalidBoxName box)
+          Nothing -> E.throw (InvalidAttr "name" box)
         hibit <- case X.findAttr (qname "hibit") box of
           Just hibit -> return $ read hibit
-          Nothing -> E.throw (InvalidBoxHibit box)
+          Nothing -> E.throw (InvalidAttr "hibit" box)
         return $ Just $ Field { fieldName = name
                               , fieldHibit = hibit
                               , fieldWidth = width
@@ -169,25 +170,19 @@ iclassNegPatterns flds iclass_sect = do
   forM constraints $ \constraint -> do
     names <- case X.findAttr (qname "name") constraint of
       Just name -> return $ LS.splitOn ":" name
-      Nothing -> E.throw (MissingName constraint)
-    constraintFields <- traverse lookupField names
+      Nothing -> E.throw (MissingAttr "name" constraint)
+    constraintFields <- traverse (lookupField iclass_sect flds) names
     valPattern <- case X.findAttr (qname "val") constraint of
       Just valStr -> case traverse charToBit valStr of
         Nothing -> E.throw (InvalidPattern valStr)
         Just pat -> return pat
-      Nothing -> E.throw (MissingVal constraint)
-    computeConstraintPattern constraintFields valPattern (replicate 32 BT.Any)
-  where lookupField :: String -> XML Field
-        lookupField name = case find (\fld -> fieldName fld == name) flds of
-          Nothing -> E.throw $ MissingField iclass_sect name
-          Just fld -> return fld
+      Nothing -> E.throw (MissingAttr "val" constraint)
+    computePattern constraintFields valPattern (replicate 32 BT.Any)
 
-        computeConstraintPattern :: [Field] -> [BT.Bit] -> [BT.Bit] -> XML [BT.Bit]
-        computeConstraintPattern [] [] fullPat = return fullPat
-        computeConstraintPattern (fld:flds) pat fullPat = do
-          let (fldPat, rstPat) = splitAt (fieldWidth fld) pat
-              fullPat' = placeAt (31 - fieldHibit fld) fldPat fullPat
-          computeConstraintPattern flds rstPat fullPat'
+lookupField :: X.Element -> [Field] -> String -> XML Field
+lookupField iclass_sect flds name = case find (\fld -> fieldName fld == name) flds of
+  Nothing -> E.throw $ MissingField iclass_sect name
+  Just fld -> return fld
 
 placeAt :: Int -> [a] -> [a] -> [a]
 placeAt ix subList l =
@@ -211,19 +206,85 @@ data Field = Field { fieldName :: String
                    }
   deriving (Eq, Show)
 
+-- | Given an iclass and a list of its fields, extract the fields we are going to
+-- match against. We return a list of lists because sometimes there are multiple
+-- fields concatenated together.
+iclassMatchFields :: X.Element -> [Field] -> XML [[Field]]
+iclassMatchFields iclass_sect flds = do
+  let bitfieldElts = X.filterElements isBitfieldElt iclass_sect
+      isBitfieldElt elt = X.qName (X.elName elt) == "th" && X.findAttr (qname "class") elt == Just "bitfields"
+      getFields elt = do
+        let fieldNames = LS.splitOn ":" (X.strContent elt)
+        fields <- traverse (lookupField iclass_sect flds) fieldNames
+        return fields
+  fields <- traverse getFields bitfieldElts
+  return fields
+
 xmlLeaf :: [BT.Bit]
            -- ^ bit pattern to match iclass
         -> [[BT.Bit]]
            -- ^ list of negative bit patterns to rule out iclass
-        -> [Field]
+        -> [[Field]]
            -- ^ list of fields we are case-ing over
         -> X.Element
            -- ^ instruction table entry ("leaf")
         -> XML DT.InstructionDescriptor
-xmlLeaf matchPattern negPatterns leaf = do
-  undefined
+xmlLeaf iclassPat iclassNegPats bitflds leaf = do
+  -- First, gather all *positive* matches and overlay them over the match pattern
+  let pats = X.filterChildren (\c -> X.findAttr (qname "class") c == Just "bitfield") leaf
+  fldPats <- forM (zip bitflds pats) $ \(flds, fldElt) -> do
+    let fldWidth = sum (fieldWidth <$> flds)
+    case X.strContent fldElt of
+      "" -> return $ replicate fldWidth BT.Any
+      s | Just antiPat <- stripPrefix "!= " s -> return $ replicate fldWidth BT.Any
+        | otherwise -> case traverse charToBit s of
+            Just pat -> return pat
+            Nothing -> E.throw $ InvalidPattern s
+  leafMatchPat <- computeMatchPattern bitflds fldPats iclassPat
+  -- Next, gather all *negative* matches and gather them into individual negative
+  -- patterns
+  leafNegPats <- fmap catMaybes $ forM (zip bitflds pats) $ \(flds, fldElt) -> do
+    let fldWidth = sum (fieldWidth <$> flds)
+    case X.strContent fldElt of
+      s | Just antiPatStr <- stripPrefix "!= " s -> case traverse charToBit antiPatStr of
+            Just antiPat -> do
+              fullAntiPat <- computePattern flds antiPat (replicate 32 BT.Any)
+              return $ Just fullAntiPat
+            Nothing -> E.throw $ InvalidPattern s
+      _ -> return Nothing
+  return $ DT.InstructionDescriptor
+    { DT.idMask = leafMatchPat
+    , DT.idNegMasks = nub (iclassNegPats ++ leafNegPats)
+    , DT.idMnemonic = "" -- undefined
+    , DT.idInputOperands = [] -- undefined
+    , DT.idOutputOperands = [] -- undefined
+    , DT.idNamespace = "" -- undefined
+    , DT.idDecoderNamespace = "" --undefined
+    , DT.idAsmString = "" -- undefined
+    , DT.idPseudo = False -- undefined
+    , DT.idDefaultPrettyVariableValues = []
+    , DT.idPrettyVariableOverrides = []
+    }
+  -- FIXME: below is a fold, so we should be able to rewrite it as such
+  where computeMatchPattern :: [[Field]] -> [[BT.Bit]] -> [BT.Bit] -> XML [BT.Bit]
+        computeMatchPattern [] [] fullPat = return fullPat
+        computeMatchPattern (flds:rstFlds) (pat:fldPats) fullPat = do
+          fullPat' <- computePattern flds pat fullPat
+          computeMatchPattern rstFlds fldPats fullPat'
+        computeMatchPattern _ _ _ = error "computeMatchPattern"
 
 -- | Given a leaf element, open up the referenced file to discover the correct
 -- mnemonic.
 leafMnemonic :: X.Element -> XML String
 leafMnemonic = undefined
+
+-- | Given a list of fields, and a bit pattern whose length is the same as the sum of
+-- all the field lengths, return a "full" bit pattern reflecting the effect of
+-- combining all those patterns together.
+computePattern :: [Field] -> [BT.Bit] -> [BT.Bit] -> XML [BT.Bit]
+computePattern [] [] fullPat = return fullPat
+computePattern (fld : rstFlds) pat fullPat | length pat >= fieldWidth fld = do
+  let (fldPat, rstPat) = splitAt (fieldWidth fld) pat
+      fullPat' = placeAt (31 - fieldHibit fld) fldPat fullPat
+  computePattern rstFlds rstPat fullPat'
+computePattern flds pat _ = E.throw $ MismatchingFieldLengths flds pat
