@@ -75,7 +75,7 @@ loadXML fltr arch dirPath = runXML $ do
   xmlElement <- case X.parseXMLDoc fileStr of
     Just c -> return c
     Nothing -> E.throw $ InvalidXmlFile fullPath
-  let iclass_sects = X.findElements (qname "iclass_sect") xmlElement
+  let iclass_sects = filter fltr (X.findElements (qname "iclass_sect") xmlElement)
   instrs <- fmap concat $ forM iclass_sects $ \iclass_sect -> do
     fields <- iclassFields iclass_sect
     matchPattern <- iclassMatchPattern iclass_sect
@@ -253,16 +253,17 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
               return $ Just fullAntiPat
             Nothing -> E.throw $ InvalidPattern s
       _ -> return Nothing
+  mnemonic <- leafMnemonic leaf
   return $ DT.InstructionDescriptor
-    { DT.idMask = leafMatchPat
-    , DT.idNegMasks = nub (iclassNegPats ++ leafNegPats)
-    , DT.idMnemonic = "" -- undefined
-    , DT.idInputOperands = [] -- undefined
-    , DT.idOutputOperands = [] -- undefined
-    , DT.idNamespace = "" -- undefined
-    , DT.idDecoderNamespace = "" --undefined
-    , DT.idAsmString = "" -- undefined
-    , DT.idPseudo = False -- undefined
+    { DT.idMask = concat (reverse (LS.chunksOf 8 leafMatchPat))
+    , DT.idNegMasks = (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats)
+    , DT.idMnemonic = mnemonic
+    , DT.idInputOperands = []
+    , DT.idOutputOperands = []
+    , DT.idNamespace = ""
+    , DT.idDecoderNamespace = ""
+    , DT.idAsmString = ""
+    , DT.idPseudo = False
     , DT.idDefaultPrettyVariableValues = []
     , DT.idPrettyVariableOverrides = []
     }
@@ -305,8 +306,11 @@ leafMnemonic leaf = do
       return $ iformname ++ "_" ++ label
   let iclasses = X.findElements (qname "iclass") xmlElement
       matchingIclass iclass = let encodingElts = X.findChildren (qname "encoding") iclass
-                                  correctEncoding encElt = X.findAttr (qname "name") encElt == Just encName
-                              in any correctEncoding encodingElts
+                                  correctEncoding encElt =
+                                    X.findAttr (qname "name") encElt == Just encName
+                                  matchingLabel = X.findAttr (qname "name") iclass ==
+                                                  X.findAttr (qname "label") leaf
+                              in any correctEncoding encodingElts || matchingLabel
   iclass <- case filter matchingIclass iclasses of
     [iclass] -> return iclass
     [] -> E.throw $ MnemonicError "no matching iclass" leaf

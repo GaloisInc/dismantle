@@ -50,9 +50,10 @@ isa = DX.ISA { DX.isaName = "AARCH32"
 
 
 isARM :: X.Element -> Bool
-isARM iclass = case X.findAttr (X.QName "isa" Nothing Nothing) iclass of
-  Nothing -> error $ "BUG: iclass missing \"isa\" attribute: \n" ++ show iclass
-  Just isaStr -> isaStr == "A32"
+isARM _ = True
+-- isARM iclass = case X.findAttr (X.QName "isa" Nothing Nothing) iclass of
+--   Nothing -> error $ "BUG: iclass missing \"isa\" attribute: \n" ++ show iclass
+--   Just isaStr -> isaStr == "A32"
 
 -- | In the XML specs, all fields are unsigned bitvectors (which are sometimes
 -- treated as signed)
