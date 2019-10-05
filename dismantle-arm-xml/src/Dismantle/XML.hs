@@ -36,9 +36,10 @@ data XMLException = MissingChildElement String X.Element
                   | InvalidChildElement String X.Element
                   | InvalidAttr String X.Element
                   | MultipleChildElements String X.Element
-                  | MnemonicParseError FilePath String
+                  | MnemonicError X.Element
                   | InvalidPattern String
                   | MismatchingFieldLengths [Field] [BT.Bit]
+                  | InvalidXmlFile String
   deriving Show
 
 instance E.Exception XMLException
@@ -55,7 +56,7 @@ newtype XML a = XML (MS.StateT XMLState IO a)
            )
 
 data XMLState = XMLState { usedNames :: M.Map String Int
-                         , currentFileName :: Maybe FilePath
+                         , xmlPath :: Maybe FilePath
                          }
 
 runXML :: XML a -> IO a
@@ -68,33 +69,33 @@ qname str = X.QName str Nothing Nothing
 -- descriptor.
 loadXML :: (X.Element -> Bool) -> String -> FilePath -> IO DT.ISADescriptor
 loadXML fltr arch dirPath = runXML $ do
-  fileStr <- MS.liftIO $ readFile (dirPath ++ "/a32_encindex.xml")
-  let xmlContent = X.parseXML fileStr
-  instrs <- undefined
+  MS.modify' $ \st -> st { xmlPath = Just dirPath }
+  let fullPath = dirPath ++ "/a32_encindex.xml"
+  fileStr <- MS.liftIO $ readFile fullPath
+  xmlElement <- case X.parseXMLDoc fileStr of
+    Just c -> return c
+    Nothing -> E.throw $ InvalidXmlFile fullPath
+  let iclass_sects = X.findElements (qname "iclass_sect") xmlElement
+  instrs <- fmap concat $ forM iclass_sects $ \iclass_sect -> do
+    fields <- iclassFields iclass_sect
+    matchPattern <- iclassMatchPattern iclass_sect
+    matchFlds <- iclassMatchFields fields iclass_sect
+    negPatterns <- iclassNegPatterns fields iclass_sect
+    let leaves = X.filterElements isLeaf iclass_sect
+        isLeaf elt = X.qName (X.elName elt) == "tr" &&
+                     X.findAttr (qname "class") elt == Just "instructiontable" &&
+                     X.findAttr (qname "undef") elt /= Just "1" &&
+                     X.findAttr (qname "unpred") elt /= Just "1" &&
+                     X.findAttr (qname "reserved_nop_hint") elt /= Just "1"
+    descs <- forM leaves $ \leaf -> xmlLeaf matchPattern negPatterns matchFlds leaf
+    return descs
   return $ DT.ISADescriptor { DT.isaInstructions = instrs
                             , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
                             , DT.isaErrors = []
                             }
-  -- instrs <- concat <$> mapM (loadXMLInstruction fltr arch) fps
-  -- return $ DT.ISADescriptor { DT.isaInstructions = instrs
-  --                           , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
-  --                           , DT.isaErrors = []
-  --                           }
 
 instrOperandTypes :: DT.InstructionDescriptor -> [DT.OperandType]
 instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutputOperands idesc)
-
-xmlEncodingIndex :: X.Element -> XML DT.ISADescriptor
-xmlEncodingIndex encIx = do
-  let iclass_sects = X.findChildren (qname "iclass_sect") encIx
-  undefined
-
-xmlIclassSect :: X.Element -> XML [DT.InstructionDescriptor]
-xmlIclassSect iclass_sect = do
-  matchPattern <- iclassMatchPattern iclass_sect
-  fields <- iclassFields iclass_sect
-  negPatterns <- iclassNegPatterns fields iclass_sect
-  undefined
 
 -- | Given an iclass_sect, process the regdiagram child to obtain a bitpattern to
 -- match.
@@ -209,8 +210,8 @@ data Field = Field { fieldName :: String
 -- | Given an iclass and a list of its fields, extract the fields we are going to
 -- match against. We return a list of lists because sometimes there are multiple
 -- fields concatenated together.
-iclassMatchFields :: X.Element -> [Field] -> XML [[Field]]
-iclassMatchFields iclass_sect flds = do
+iclassMatchFields :: [Field] -> X.Element -> XML [[Field]]
+iclassMatchFields flds iclass_sect = do
   let bitfieldElts = X.filterElements isBitfieldElt iclass_sect
       isBitfieldElt elt = X.qName (X.elName elt) == "th" && X.findAttr (qname "class") elt == Just "bitfields"
       getFields elt = do
@@ -276,7 +277,67 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
 -- | Given a leaf element, open up the referenced file to discover the correct
 -- mnemonic.
 leafMnemonic :: X.Element -> XML String
-leafMnemonic = undefined
+leafMnemonic leaf = do
+  dirPath <- do
+    mXmlDir <- MS.gets xmlPath
+    case mXmlDir of
+      Just dir -> return dir
+      Nothing -> error "BAD"
+  filePath <- case X.findAttr (qname "iformfile") leaf of
+    Nothing -> E.throw $ MissingAttr "iformfile" leaf
+    Just filePath -> return filePath
+  let fullFilePath = dirPath ++ "/" ++ filePath
+  fileStr <- MS.liftIO $ readFile fullFilePath
+  xmlElement <- case X.parseXMLDoc fileStr of
+    Just c -> return c
+    Nothing -> E.throw $ InvalidXmlFile fullFilePath
+  encName <- case X.findAttr (qname "encname") leaf of
+    Just encName -> return encName
+    Nothing -> do
+      iformname <- case X.filterChild (\c -> X.findAttr (qname "class") c == Just "iformname") leaf of
+        Nothing -> E.throw $ MnemonicError leaf
+        Just iformnameElt -> case X.findAttr (qname "iformid") iformnameElt of
+          Nothing -> E.throw $ MnemonicError leaf
+          Just iformname -> return iformname
+      label <- case X.findAttr (qname "label") leaf of
+        Nothing -> E.throw $ MnemonicError leaf
+        Just label -> return label
+      return $ iformname ++ "_" ++ label
+  let iclasses = X.findElements (qname "iclass") xmlElement
+      matchingIclass iclass = let encodingElts = X.findChildren (qname "encoding") iclass
+                                  correctEncoding encElt = X.findAttr (qname "name") encElt == Just "encName"
+                              in any correctEncoding encodingElts
+  iclass <- case filter matchingIclass iclasses of
+    [iclass] -> return iclass
+    _ -> E.throw $ MnemonicError leaf
+  psname <- case X.findAttr (qname "psname") =<< X.findChild (qname "regdiagram") iclass of
+    Just psname -> return psname
+    Nothing -> E.throw $ MnemonicError leaf
+  case P.runParser nameParser "" psname of
+    Left _ -> E.throw $ MnemonicError leaf
+    Right nm -> processName nm
+
+  where processName :: String -> XML String
+        processName nm = return nm
+          -- names <- MS.gets usedNames
+          -- case M.lookup nm names of
+          --   Nothing -> do
+          --     MS.modify' $ \s -> s { usedNames = M.insert nm 0 (usedNames s) }
+          --     return nm
+          --   Just nUses -> do
+          --     MS.modify' $ \s -> s { usedNames = M.insertWith (\_ oldCount -> oldCount + 1) nm 0 (usedNames s) }
+          --     return (printf "%s_%d" nm nUses)
+
+type Parser = P.Parsec Void String
+
+nameParser :: Parser String
+nameParser = do
+  _ <- P.chunk "aarch32/instrs/"
+  instrName <- P.takeWhileP Nothing (/= '/')
+  _ <- P.chunk "/"
+  encName <- P.takeWhileP Nothing (/= '.')
+  _ <- P.chunk ".txt"
+  return $ instrName <> "_" <> encName
 
 -- | Given a list of fields, and a bit pattern whose length is the same as the sum of
 -- all the field lengths, return a "full" bit pattern reflecting the effect of
