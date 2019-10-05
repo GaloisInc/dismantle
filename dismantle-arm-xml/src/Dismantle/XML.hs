@@ -36,7 +36,7 @@ data XMLException = MissingChildElement String X.Element
                   | InvalidChildElement String X.Element
                   | InvalidAttr String X.Element
                   | MultipleChildElements String X.Element
-                  | MnemonicError X.Element
+                  | MnemonicError String X.Element
                   | InvalidPattern String
                   | MismatchingFieldLengths [Field] [BT.Bit]
                   | InvalidXmlFile String
@@ -295,26 +295,27 @@ leafMnemonic leaf = do
     Just encName -> return encName
     Nothing -> do
       iformname <- case X.filterChild (\c -> X.findAttr (qname "class") c == Just "iformname") leaf of
-        Nothing -> E.throw $ MnemonicError leaf
+        Nothing -> E.throw $ MnemonicError "no iformname" leaf
         Just iformnameElt -> case X.findAttr (qname "iformid") iformnameElt of
-          Nothing -> E.throw $ MnemonicError leaf
+          Nothing -> E.throw $ MnemonicError "no iformid" leaf
           Just iformname -> return iformname
       label <- case X.findAttr (qname "label") leaf of
-        Nothing -> E.throw $ MnemonicError leaf
+        Nothing -> E.throw $ MnemonicError "no label" leaf
         Just label -> return label
       return $ iformname ++ "_" ++ label
   let iclasses = X.findElements (qname "iclass") xmlElement
       matchingIclass iclass = let encodingElts = X.findChildren (qname "encoding") iclass
-                                  correctEncoding encElt = X.findAttr (qname "name") encElt == Just "encName"
+                                  correctEncoding encElt = X.findAttr (qname "name") encElt == Just encName
                               in any correctEncoding encodingElts
   iclass <- case filter matchingIclass iclasses of
     [iclass] -> return iclass
-    _ -> E.throw $ MnemonicError leaf
+    [] -> E.throw $ MnemonicError "no matching iclass" leaf
+    _  -> E.throw $ MnemonicError "multiple matching iclasses" leaf
   psname <- case X.findAttr (qname "psname") =<< X.findChild (qname "regdiagram") iclass of
     Just psname -> return psname
-    Nothing -> E.throw $ MnemonicError leaf
+    Nothing -> E.throw $ MnemonicError "no psname" leaf
   case P.runParser nameParser "" psname of
-    Left _ -> E.throw $ MnemonicError leaf
+    Left _ -> E.throw $ MnemonicError "psname parse error" leaf
     Right nm -> processName nm
 
   where processName :: String -> XML String
