@@ -71,7 +71,7 @@ loadXML :: (X.Element -> Bool) -> String -> FilePath -> IO DT.ISADescriptor
 loadXML fltr arch dirPath = runXML $ do
   MS.modify' $ \st -> st { xmlPath = Just dirPath }
   let fullPath = dirPath ++ "/a32_encindex.xml"
-  fileStr <- MS.liftIO $ readFile fullPath
+  fileStr <- MS.liftIO $ SIO.readFile fullPath
   xmlElement <- case X.parseXMLDoc fileStr of
     Just c -> return c
     Nothing -> E.throw $ InvalidXmlFile fullPath
@@ -101,9 +101,7 @@ instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutput
 -- match.
 iclassMatchPattern :: X.Element -> XML [BT.Bit]
 iclassMatchPattern iclass_sect = do
-  rd <- case X.findChild (qname "regdiagram") iclass_sect of
-          Just rd -> return rd
-          Nothing -> E.throw (MissingChildElement "regdiagram" iclass_sect)
+  rd <- getChild "regdiagram" iclass_sect
   let boxes = X.findChildren (qname "box") rd
   mask <- fmap concat $ forM boxes $ \box -> do
     let width = maybe 1 read (X.findAttr (qname "width") box)
@@ -126,20 +124,14 @@ iclassMatchPattern iclass_sect = do
 -- instruction ("Rn", "cond", "S").
 iclassFields :: X.Element -> XML [Field]
 iclassFields iclass_sect = do
-  rd <- case X.findChild (qname "regdiagram") iclass_sect of
-    Just rd -> return rd
-    Nothing -> E.throw (MissingChildElement "regdiagram" iclass_sect)
+  rd <- getChild "regdiagram" iclass_sect
   let boxes = X.findChildren (qname "box") rd
   fields <- fmap catMaybes $ forM boxes $ \box -> do
     let width = maybe 1 read (X.findAttr (qname "width") box)
     case X.findAttr (qname "usename") box of
       Just "1" -> do
-        name <- case X.findAttr (qname "name") box of
-          Just name -> return name
-          Nothing -> E.throw (InvalidAttr "name" box)
-        hibit <- case X.findAttr (qname "hibit") box of
-          Just hibit -> return $ read hibit
-          Nothing -> E.throw (InvalidAttr "hibit" box)
+        name <- getAttr "name" box
+        hibit <- read <$> getAttr "hibit" box
         return $ Just $ Field { fieldName = name
                               , fieldHibit = hibit
                               , fieldWidth = width
@@ -169,15 +161,12 @@ iclassNegPatterns flds iclass_sect = do
     Nothing -> return [] -- no constraints
   -- For each one, compute the corresponding bit pattern
   forM constraints $ \constraint -> do
-    names <- case X.findAttr (qname "name") constraint of
-      Just name -> return $ LS.splitOn ":" name
-      Nothing -> E.throw (MissingAttr "name" constraint)
+    names <- LS.splitOn ":" <$> getAttr "name" constraint
     constraintFields <- traverse (lookupField iclass_sect flds) names
-    valPattern <- case X.findAttr (qname "val") constraint of
-      Just valStr -> case traverse charToBit valStr of
-        Nothing -> E.throw (InvalidPattern valStr)
-        Just pat -> return pat
-      Nothing -> E.throw (MissingAttr "val" constraint)
+    valStr <- getAttr "val" constraint
+    valPattern <- case traverse charToBit valStr of
+      Nothing -> E.throw (InvalidPattern valStr)
+      Just pat -> return pat
     computePattern constraintFields valPattern (replicate 32 BT.Any)
 
 lookupField :: X.Element -> [Field] -> String -> XML Field
@@ -254,11 +243,12 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
             Nothing -> E.throw $ InvalidPattern s
       _ -> return Nothing
   mnemonic <- leafMnemonic leaf
+  operands <- leafOperandDescriptors leaf
   return $ DT.InstructionDescriptor
     { DT.idMask = concat (reverse (LS.chunksOf 8 leafMatchPat))
     , DT.idNegMasks = (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats)
     , DT.idMnemonic = mnemonic
-    , DT.idInputOperands = []
+    , DT.idInputOperands = operands
     , DT.idOutputOperands = []
     , DT.idNamespace = ""
     , DT.idDecoderNamespace = ""
@@ -275,10 +265,9 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
           computeMatchPattern rstFlds fldPats fullPat'
         computeMatchPattern _ _ _ = error "computeMatchPattern"
 
--- | Given a leaf element, open up the referenced file to discover the correct
--- mnemonic.
-leafMnemonic :: X.Element -> XML String
-leafMnemonic leaf = do
+-- | Given a leaf, open up the referenced file to get the corresponding iclass.
+leaf_iclass :: X.Element -> XML X.Element
+leaf_iclass leaf = do
   dirPath <- do
     mXmlDir <- MS.gets xmlPath
     case mXmlDir of
@@ -288,7 +277,7 @@ leafMnemonic leaf = do
     Nothing -> E.throw $ MissingAttr "iformfile" leaf
     Just filePath -> return filePath
   let fullFilePath = dirPath ++ "/" ++ filePath
-  fileStr <- MS.liftIO $ readFile fullFilePath
+  fileStr <- MS.liftIO $ SIO.readFile fullFilePath
   xmlElement <- case X.parseXMLDoc fileStr of
     Just c -> return c
     Nothing -> E.throw $ InvalidXmlFile fullFilePath
@@ -315,6 +304,13 @@ leafMnemonic leaf = do
     [iclass] -> return iclass
     [] -> E.throw $ MnemonicError "no matching iclass" leaf
     _  -> E.throw $ MnemonicError "multiple matching iclasses" leaf
+  return iclass
+
+-- | Given a leaf element, open up the referenced file to discover the correct
+-- mnemonic.
+leafMnemonic :: X.Element -> XML String
+leafMnemonic leaf = do
+  iclass <- leaf_iclass leaf
   psname <- case X.findAttr (qname "psname") =<< X.findChild (qname "regdiagram") iclass of
     Just psname -> return psname
     Nothing -> E.throw $ MnemonicError "no psname" leaf
@@ -332,6 +328,32 @@ leafMnemonic leaf = do
             Just nUses -> do
               MS.modify' $ \s -> s { usedNames = M.insertWith (\_ oldCount -> oldCount + 1) nm 0 (usedNames s) }
               return (printf "%s_%d" nm nUses)
+
+leafOperandDescriptors :: X.Element -> XML [DT.OperandDescriptor]
+leafOperandDescriptors leaf = do
+  iclass <- leaf_iclass leaf
+  rd <- case X.findChild (qname "regdiagram") iclass of
+    Nothing -> E.throw $ MissingChildElement "regdiagram" iclass
+    Just regdiagram -> return regdiagram
+  let boxes = X.findElements (qname "box") rd
+  descs <- fmap catMaybes $ forM boxes $ \box -> case X.findAttr (qname "usename") box of
+    Just "1" -> do
+      name <- case X.findAttr (qname "name") box of
+        Nothing -> E.throw $ MissingAttr "name"box
+        Just name -> return name
+      hibit <- case X.findAttr (qname "hibit") box of
+        Nothing -> E.throw $ MissingAttr "hibit" box
+        Just s -> return $ read s
+      let boxWidth = read $ fromMaybe "1" (X.findAttr (qname "width") box)
+      let desc = DT.OperandDescriptor { DT.opName = name
+                                      , DT.opChunks = [( DT.IBit (hibit - boxWidth + 1)
+                                                       , PT.OBit 0
+                                                       , fromIntegral boxWidth)]
+                                      , DT.opType = DT.OperandType (printf "bv%d" boxWidth)
+                                      }
+      return $ Just desc
+    Nothing -> return Nothing
+  return descs
 
 type Parser = P.Parsec Void String
 
@@ -354,3 +376,13 @@ computePattern (fld : rstFlds) pat fullPat | length pat >= fieldWidth fld = do
       fullPat' = placeAt (31 - fieldHibit fld) fldPat fullPat
   computePattern rstFlds rstPat fullPat'
 computePattern flds pat _ = E.throw $ MismatchingFieldLengths flds pat
+
+getChild :: String -> X.Element -> XML X.Element
+getChild name elt = case X.findChild (qname name) elt of
+  Nothing -> E.throw $ MissingChildElement name elt
+  Just child -> return child
+
+getAttr :: String -> X.Element -> XML String
+getAttr name elt = case X.findAttr (qname name) elt of
+  Nothing -> E.throw $ MissingAttr name elt
+  Just attr -> return attr

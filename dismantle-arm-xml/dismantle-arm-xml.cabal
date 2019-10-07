@@ -41,3 +41,20 @@ library
                        xml
   hs-source-dirs:      src
   default-language:    Haskell2010
+
+test-suite dismantle-arm-xml-tests
+  default-language: Haskell2010
+  type: exitcode-stdio-1.0
+  ghc-options: -Wall -Wcompat
+  hs-source-dirs: test
+  main-is: Main.hs
+  build-depends: base,
+                 bytestring,
+                 dismantle-tablegen,
+                 dismantle-arm-xml,
+                 tasty,
+                 tasty-hunit,
+                 parameterized-utils,
+                 pretty,
+                 text
+
