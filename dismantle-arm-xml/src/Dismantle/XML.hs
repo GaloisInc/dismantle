@@ -323,15 +323,15 @@ leafMnemonic leaf = do
     Right nm -> processName nm
 
   where processName :: String -> XML String
-        processName nm = return nm
-          -- names <- MS.gets usedNames
-          -- case M.lookup nm names of
-          --   Nothing -> do
-          --     MS.modify' $ \s -> s { usedNames = M.insert nm 0 (usedNames s) }
-          --     return nm
-          --   Just nUses -> do
-          --     MS.modify' $ \s -> s { usedNames = M.insertWith (\_ oldCount -> oldCount + 1) nm 0 (usedNames s) }
-          --     return (printf "%s_%d" nm nUses)
+        processName nm = do
+          names <- MS.gets usedNames
+          case M.lookup nm names of
+            Nothing -> do
+              MS.modify' $ \s -> s { usedNames = M.insert nm 0 (usedNames s) }
+              return nm
+            Just nUses -> do
+              MS.modify' $ \s -> s { usedNames = M.insertWith (\_ oldCount -> oldCount + 1) nm 0 (usedNames s) }
+              return (printf "%s_%d" nm nUses)
 
 type Parser = P.Parsec Void String
 

@@ -19,4 +19,5 @@ genISA fltr isa dir = do
     let xmlFiles = filter ("xml" `isExtensionOf`) files
     desc <- DX.loadXML fltr (DX.isaName isa) "."
     return (desc, xmlFiles)
-  DTH.genISADesc isa desc xmlFiles []
+  TH.runIO $ putStrLn "Successfully generated ISA description."
+  DTH.genISADesc isa desc (((dir ++ "/") ++) <$> xmlFiles) []
