@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Dismantle.Testing.Regex
     ( mkRegex
@@ -12,6 +13,7 @@ module Dismantle.Testing.Regex
     )
     where
 
+import           Control.Monad.Fail
 import           Data.String
 import qualified Data.Text as DT
 import qualified Data.Text.Lazy as DLT
@@ -19,10 +21,10 @@ import qualified Text.Regex.TDFA as RE
 
 
 mkRegex :: String -> Either String RE.Regex
-mkRegex = RE.makeRegexM
+mkRegex = runEitherString . RE.makeRegexM
 
 mkRegexT :: DT.Text -> Either String RE.Regex
-mkRegexT = RE.makeRegexM . DT.unpack
+mkRegexT = mkRegex . DT.unpack
 
 countMatches :: (IsString source, RE.RegexLike RE.Regex source) =>
                 source -> RE.Regex -> Int
@@ -32,15 +34,12 @@ hasMatches :: (IsString source, RE.RegexLike RE.Regex source) =>
               source -> RE.Regex -> Bool
 hasMatches t r = RE.matchTest r t
 
+newtype EitherString a = EitherString { runEitherString :: Either String a }
+    deriving (Eq, Ord, Read, Show, Functor, Applicative, Monad)
+
+instance MonadFail EitherString where fail = EitherString . Left
 
 -- --------------------------------------------------
-
-instance RE.Extract DT.Text where
-    before n s = DT.pack $ RE.before n $ DT.unpack s
-    after n s = DT.pack $ RE.after n $ DT.unpack s
-    empty = DT.empty
-    extract r s = DT.pack $ RE.extract r $ DT.unpack s
-
 
 instance RE.RegexLike RE.Regex DT.Text where
     matchOnce r = RE.matchOnce r . DT.unpack
@@ -58,12 +57,6 @@ instance RE.RegexLike RE.Regex DT.Text where
 
 
 -- --------------------------------------------------
-
-instance RE.Extract DLT.Text where
-    before n s = DLT.pack $ RE.before n $ DLT.unpack s
-    after n s = DLT.pack $ RE.after n $ DLT.unpack s
-    empty = DLT.empty
-    extract r s = DLT.pack $ RE.extract r $ DLT.unpack s
 
 instance RE.RegexLike RE.Regex DLT.Text where
     matchOnce r = RE.matchOnce r . DLT.unpack
