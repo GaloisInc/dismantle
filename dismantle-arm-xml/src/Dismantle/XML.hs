@@ -55,7 +55,11 @@ newtype XML a = XML (MS.StateT XMLState IO a)
            , MS.MonadIO
            )
 
-data XMLState = XMLState { usedNames :: M.Map String Int
+data NameUsage = NameUsage { numUses :: Int
+                           , masksWithNames :: [([BT.Bit], String)]
+                           }
+
+data XMLState = XMLState { usedNames :: M.Map String NameUsage
                          , xmlPath :: Maybe FilePath
                          }
 
@@ -76,7 +80,7 @@ loadXML fltr arch dirPath = runXML $ do
     Just c -> return c
     Nothing -> E.throw $ InvalidXmlFile fullPath
   let iclass_sects = filter fltr (X.findElements (qname "iclass_sect") xmlElement)
-  instrs <- fmap concat $ forM iclass_sects $ \iclass_sect -> do
+  instrs <- fmap (catMaybes . concat) $ forM iclass_sects $ \iclass_sect -> do
     fields <- iclassFields iclass_sect
     matchPattern <- iclassMatchPattern iclass_sect
     matchFlds <- iclassMatchFields fields iclass_sect
@@ -218,7 +222,7 @@ xmlLeaf :: [BT.Bit]
            -- ^ list of fields we are case-ing over
         -> X.Element
            -- ^ instruction table entry ("leaf")
-        -> XML DT.InstructionDescriptor
+        -> XML (Maybe DT.InstructionDescriptor)
 xmlLeaf iclassPat iclassNegPats bitflds leaf = do
   -- First, gather all *positive* matches and overlay them over the match pattern
   let pats = X.filterChildren (\c -> X.findAttr (qname "class") c == Just "bitfield") leaf
@@ -230,6 +234,9 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
         | otherwise -> case traverse charToBit s of
             Just pat -> return pat
             Nothing -> E.throw $ InvalidPattern s
+  (operands, operandFlds) <- leafOperandDescriptors leaf
+  -- leafMatchPat <- removeOperands operandFlds <$> computeMatchPattern bitflds
+  -- fldPats iclassPat
   leafMatchPat <- computeMatchPattern bitflds fldPats iclassPat
   -- Next, gather all *negative* matches and gather them into individual negative
   -- patterns
@@ -242,21 +249,24 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
               return $ Just fullAntiPat
             Nothing -> E.throw $ InvalidPattern s
       _ -> return Nothing
-  mnemonic <- leafMnemonic leaf
-  operands <- leafOperandDescriptors leaf
-  return $ DT.InstructionDescriptor
-    { DT.idMask = concat (reverse (LS.chunksOf 8 leafMatchPat))
-    , DT.idNegMasks = (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats)
-    , DT.idMnemonic = mnemonic
-    , DT.idInputOperands = operands
-    , DT.idOutputOperands = []
-    , DT.idNamespace = ""
-    , DT.idDecoderNamespace = ""
-    , DT.idAsmString = ""
-    , DT.idPseudo = False
-    , DT.idDefaultPrettyVariableValues = []
-    , DT.idPrettyVariableOverrides = []
-    }
+  mMnemonic <- leafMnemonic leafMatchPat leaf
+  case mMnemonic of
+    Just mnemonic -> do
+      let desc = DT.InstructionDescriptor
+            { DT.idMask = concat (reverse (LS.chunksOf 8 leafMatchPat))
+            , DT.idNegMasks = (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats)
+            , DT.idMnemonic = mnemonic
+            , DT.idInputOperands = operands
+            , DT.idOutputOperands = []
+            , DT.idNamespace = ""
+            , DT.idDecoderNamespace = ""
+            , DT.idAsmString = ""
+            , DT.idPseudo = False
+            , DT.idDefaultPrettyVariableValues = []
+            , DT.idPrettyVariableOverrides = []
+            }
+      return $ Just desc
+    Nothing -> return Nothing
   -- FIXME: below is a fold, so we should be able to rewrite it as such
   where computeMatchPattern :: [[Field]] -> [[BT.Bit]] -> [BT.Bit] -> XML [BT.Bit]
         computeMatchPattern [] [] fullPat = return fullPat
@@ -264,6 +274,11 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
           fullPat' <- computePattern flds pat fullPat
           computeMatchPattern rstFlds fldPats fullPat'
         computeMatchPattern _ _ _ = error "computeMatchPattern"
+
+        removeOperands :: [Field] -> [BT.Bit] -> [BT.Bit]
+        removeOperands [] pat = pat
+        removeOperands (fld:rstFlds) pat =
+          removeOperands rstFlds (placeAt (31 - fieldHibit fld) (replicate (fieldWidth fld) BT.Any) pat)
 
 -- | Given a leaf, open up the referenced file to get the corresponding iclass.
 leaf_iclass :: X.Element -> XML X.Element
@@ -308,8 +323,8 @@ leaf_iclass leaf = do
 
 -- | Given a leaf element, open up the referenced file to discover the correct
 -- mnemonic.
-leafMnemonic :: X.Element -> XML String
-leafMnemonic leaf = do
+leafMnemonic :: [BT.Bit] -> X.Element -> XML (Maybe String)
+leafMnemonic matchPat leaf = do
   iclass <- leaf_iclass leaf
   psname <- case X.findAttr (qname "psname") =<< X.findChild (qname "regdiagram") iclass of
     Just psname -> return psname
@@ -318,18 +333,28 @@ leafMnemonic leaf = do
     Left _ -> E.throw $ MnemonicError "psname parse error" leaf
     Right nm -> processName nm
 
-  where processName :: String -> XML String
+  where processName :: String -> XML (Maybe String)
         processName nm = do
           names <- MS.gets usedNames
           case M.lookup nm names of
             Nothing -> do
-              MS.modify' $ \s -> s { usedNames = M.insert nm 0 (usedNames s) }
-              return nm
-            Just nUses -> do
-              MS.modify' $ \s -> s { usedNames = M.insertWith (\_ oldCount -> oldCount + 1) nm 0 (usedNames s) }
-              return (printf "%s_%d" nm nUses)
+              let nameUsage = NameUsage { numUses = 0
+                                        , masksWithNames = [(matchPat, nm)]
+                                        }
+              MS.modify' $ \s -> s { usedNames = M.insert nm nameUsage (usedNames s) }
+              return $ Just nm
+            Just nameUsage -> do
+              case lookup matchPat (masksWithNames nameUsage) of
+                Just _ -> return Nothing
+                Nothing -> do
+                  let newName = printf "%s_%d" nm (numUses nameUsage)
+                      nameUsage' = NameUsage { numUses = numUses nameUsage + 1
+                                             , masksWithNames = masksWithNames nameUsage ++ [(matchPat, newName)]
+                                             }
+                  MS.modify' $ \s -> s { usedNames = M.insert nm nameUsage' (usedNames s) }
+                  return $ Just newName
 
-leafOperandDescriptors :: X.Element -> XML [DT.OperandDescriptor]
+leafOperandDescriptors :: X.Element -> XML ([DT.OperandDescriptor], [Field])
 leafOperandDescriptors leaf = do
   iclass <- leaf_iclass leaf
   rd <- case X.findChild (qname "regdiagram") iclass of
@@ -345,15 +370,19 @@ leafOperandDescriptors leaf = do
         Nothing -> E.throw $ MissingAttr "hibit" box
         Just s -> return $ read s
       let boxWidth = read $ fromMaybe "1" (X.findAttr (qname "width") box)
-      let desc = DT.OperandDescriptor { DT.opName = name
+          desc = DT.OperandDescriptor { DT.opName = name
                                       , DT.opChunks = [( DT.IBit (hibit - boxWidth + 1)
                                                        , PT.OBit 0
                                                        , fromIntegral boxWidth)]
                                       , DT.opType = DT.OperandType (printf "bv%d" boxWidth)
                                       }
-      return $ Just desc
+          fld = Field { fieldName = name
+                      , fieldHibit = hibit
+                      , fieldWidth = boxWidth
+                      }
+      return $ Just (desc, fld)
     Nothing -> return Nothing
-  return descs
+  return (unzip descs)
 
 type Parser = P.Parsec Void String
 
