@@ -114,9 +114,10 @@ iclassMatchPattern iclass_sect = do
       let colspan = maybe 1 read (X.findAttr (qname "colspan") c)
       case X.strContent c of
         "1" -> return $ [BT.ExpectedBit True]
-        "(1)" -> return $ [BT.ExpectedBit True]
         "0" -> return $ [BT.ExpectedBit False]
-        "(0)" -> return $ [BT.ExpectedBit False]
+        -- If we see (1) or (0), interpret it as "any"
+        -- "(1)" -> return $ [BT.ExpectedBit True]
+        -- "(0)" -> return $ [BT.ExpectedBit False]
         _ -> return $ replicate colspan BT.Any
     if length boxMask == width
       then return boxMask
@@ -255,6 +256,8 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
       let desc = DT.InstructionDescriptor
             { DT.idMask = concat (reverse (LS.chunksOf 8 leafMatchPat))
             , DT.idNegMasks = (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats)
+            -- { DT.idMask = leafMatchPat -- concat (reverse (LS.chunksOf 8 leafMatchPat))
+            -- , DT.idNegMasks = iclassNegPats ++ leafNegPats -- (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats)
             , DT.idMnemonic = mnemonic
             , DT.idInputOperands = operands
             , DT.idOutputOperands = []

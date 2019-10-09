@@ -155,26 +155,25 @@ arm = ATC { testingISA = ARM.isa
 
 main :: IO ()
 main = do
---  let i = ARM.Instruction ARM.MOV_i_A1_A (ARM.Bv4 (WI.w 0x0) :< ARM.Bv1 (WI.w 0) :<
---  ARM.Bv4 (WI.w 0x0) :< ARM.Bv12 (WI.w 0x0) :< Nil)
-  let i = ARM.Instruction ARM.LDC_l_T1A1_A
-          (ARM.Bv4 (WI.w 0) :<
-           ARM.Bv1 (WI.w 0) :<
-           ARM.Bv1 (WI.w 0) :<
-           ARM.Bv1 (WI.w 0) :<
-           ARM.Bv8 (WI.w 0) :<
-           Nil)
+  -- let i = ARM.Instruction ARM.LDRD_r_A1_A
+  --         (ARM.Bv4 (WI.w 0) :<
+  --          ARM.Bv1 (WI.w 0) :<
+  --          ARM.Bv1 (WI.w 0) :<
+  --          ARM.Bv1 (WI.w 0) :<
+  --          ARM.Bv4 (WI.w 1) :<
+  --          ARM.Bv4 (WI.w 14) :<
+  --          ARM.Bv4 (WI.w 8) :<
+  --          Nil)
   -- print i
-  let ai = ARM.assembleInstruction i
-  print $ BL.unpack ai
-  let (_, mi) = ARM.disassembleInstruction ai
-  case mi of
-    Nothing -> print "Failure"
-    Just i' -> print i'
-  -- tg <- binaryTestSuite arm "tests/bin"
-  -- T.defaultMain $ T.testGroup "dismantle-arm" [tg]
-
-  return ()
+  -- let ai = ARM.assembleInstruction i
+  -- -- let ai = BL.pack [0xD8,0xEE,0x01,0x00]
+  -- print $ BL.unpack ai
+  -- let (_, mi) = ARM.disassembleInstruction ai
+  -- case mi of
+  --   Nothing -> print "Failure"
+  --   Just i' -> print i'
+  tg <- binaryTestSuite arm "test/bin"
+  T.defaultMain $ T.testGroup "dismantle-arm" [tg]
 
 normalize :: TL.Text -> TL.Text
 normalize =

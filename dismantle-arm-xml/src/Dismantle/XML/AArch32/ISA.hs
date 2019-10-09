@@ -33,7 +33,7 @@ fromWord32 w = BP.runPut (BP.putWord32le w)
 isa :: DX.ISA
 isa = DX.ISA { DX.isaName = "AARCH32"
              , DX.isaTgenBitPreprocess = id
-             , DX.isaInputEndianness = DX.Little LBS.reverse (concat . reverse . L.chunksOf 8)
+             , DX.isaInputEndianness = DX.Little id id -- LBS.reverse (concat . reverse . L.chunksOf 8)
              , DX.isaUnusedBitsPolicy = Nothing
              , DX.isaInstructionFilter = error "isaInstructionFilter is not used for XML"
              , DX.isaPseudoInstruction = const False
