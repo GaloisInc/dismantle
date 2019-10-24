@@ -377,7 +377,7 @@ leafOperandDescriptors leaf = do
                                       , DT.opChunks = [( DT.IBit (hibit - boxWidth + 1)
                                                        , PT.OBit 0
                                                        , fromIntegral boxWidth)]
-                                      , DT.opType = DT.OperandType (printf "bv%d" boxWidth)
+                                      , DT.opType = DT.OperandType (printf "Bv%d" boxWidth)
                                       }
           fld = Field { fieldName = name
                       , fieldHibit = hibit
