@@ -37,7 +37,7 @@ library
                    Data.Parameterized.Lift
                    Data.Set.NonEmpty
                    Data.Word.Indexed
-  build-depends:       base >=4.8 && <5,
+  build-depends:       base >=4.12 && <5,
                        ghc-prim,
                        template-haskell,
                        th-abstraction >= 0.2 && < 0.4,
@@ -62,7 +62,8 @@ library
                        tasty-hunit,
                        tasty-expected-failure,
                        megaparsec >= 7 && < 8,
-                       regex-tdfa,
+                       regex-tdfa >= 1.3.0,
+                       regex-base >= 0.94,
                        mtl >= 2 && < 3,
                        parameterized-utils >= 1 && < 2.1
   hs-source-dirs:      src

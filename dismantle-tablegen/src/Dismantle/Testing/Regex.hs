@@ -12,11 +12,14 @@ module Dismantle.Testing.Regex
     )
     where
 
+import qualified Control.Monad.Fail as MF
 import           Data.String
 import qualified Data.Text as DT
 import qualified Data.Text.Lazy as DLT
 import qualified Text.Regex.TDFA as RE
 
+instance MF.MonadFail (Either String) where
+  fail = Left
 
 mkRegex :: String -> Either String RE.Regex
 mkRegex = RE.makeRegexM
@@ -35,12 +38,6 @@ hasMatches t r = RE.matchTest r t
 
 -- --------------------------------------------------
 
-instance RE.Extract DT.Text where
-    before n s = DT.pack $ RE.before n $ DT.unpack s
-    after n s = DT.pack $ RE.after n $ DT.unpack s
-    empty = DT.empty
-    extract r s = DT.pack $ RE.extract r $ DT.unpack s
-
 
 instance RE.RegexLike RE.Regex DT.Text where
     matchOnce r = RE.matchOnce r . DT.unpack
@@ -58,12 +55,6 @@ instance RE.RegexLike RE.Regex DT.Text where
 
 
 -- --------------------------------------------------
-
-instance RE.Extract DLT.Text where
-    before n s = DLT.pack $ RE.before n $ DLT.unpack s
-    after n s = DLT.pack $ RE.after n $ DLT.unpack s
-    empty = DLT.empty
-    extract r s = DLT.pack $ RE.extract r $ DLT.unpack s
 
 instance RE.RegexLike RE.Regex DLT.Text where
     matchOnce r = RE.matchOnce r . DLT.unpack
