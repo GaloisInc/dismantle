@@ -155,10 +155,18 @@ arm = ATC { testingISA = ARM.isa
 
 main :: IO ()
 main = do
-  tg <- binaryTestSuite arm "tests/bin"
-  pt <- parserTests
-  mt <- miscArmTests
-  T.defaultMain $ T.testGroup "dismantle-arm" [tg, pt, mt]
+  -- tg <- binaryTestSuite arm "tests/bin"
+  -- pt <- parserTests
+  -- mt <- miscArmTests
+  -- T.defaultMain $ T.testGroup "dismantle-arm" [tg, pt, mt]
+  let i = ARM.Instruction ARM.MOV_i_A1_A (ARM.Bv4 (WI.w 0x0) :< ARM.Bv1 (WI.w 0) :< ARM.Bv4 (WI.w 0x0) :< ARM.Bv12 (WI.w 0x0) :< Nil)
+  -- print i
+  let ai = ARM.assembleInstruction i
+  print $ BL.unpack ai
+  let (_, mi) = ARM.disassembleInstruction ai
+  case mi of
+    Nothing -> print "Failure"
+    Just i' -> print i'
 
 normalize :: TL.Text -> TL.Text
 normalize =
