@@ -128,8 +128,8 @@ lookupByte bt byte
   where
     tableVal = btParseTables bt `SV.unsafeIndex` (fromIntegral byte + btStartIndex bt)
 
-data TrieError = OverlappingBitPattern [(Pattern, [String])]
-               | OverlappingBitPatternAt Int [Word8] [(Pattern, [String])]
+data TrieError = OverlappingBitPattern [(Pattern, [String], Int)]
+               | OverlappingBitPatternAt Int [Word8] [(Pattern, [String], Int)]
                -- ^ Byte index, byte, patterns
                | InvalidPatternLength Pattern
                | MonadFailErr String
@@ -142,7 +142,7 @@ instance Show TrieError where
       show bytes ++ " " ++ showPatList patList
     InvalidPatternLength p -> "InvalidPatternLength " ++ showPattern p
     MonadFailErr str -> "MonadFailErr " ++ show str
-    where showPat (p, mnemonics) = "(" ++ showPattern p ++ ", " ++ show mnemonics ++ ")"
+    where showPat (p, mnemonics, numBytes) = "(" ++ showPattern p ++ ", " ++ show mnemonics ++ ", " ++ show numBytes ++ ")"
           showPatList pats = "[" ++ L.intercalate "," (showPat <$> pats) ++ "]"
 
 -- | The state of the 'TrieM' monad
@@ -314,7 +314,7 @@ makePayload patterns byteIndex bytesSoFar byte =
           let pats = map fst (M.toList negativeMatchingPatterns)
               mnemonics = catMaybes $ (flip M.lookup mapping) <$> pats
 
-          E.throwError (OverlappingBitPatternAt byteIndex (BS.unpack bytesSoFar') $ zip pats $ (:[]) <$> mnemonics)
+          E.throwError (OverlappingBitPatternAt byteIndex (BS.unpack bytesSoFar') $ zip3 pats ((:[]) <$> mnemonics) (patternBytes <$> pats))
   where
     bytesSoFar' = BS.snoc bytesSoFar byte
     matchingPatterns = M.filterWithKey (patternMatches byteIndex byte) patterns
@@ -384,8 +384,8 @@ assertMapping mnemonic patReq patTrue patNegPairs val
             -- Get the mnemonic already mapped to this pattern
             mnemonics <- St.gets tsPatternMnemonics
             case M.lookup pat mnemonics of
-              Just oldMnemonic -> E.throwError (OverlappingBitPattern [(pat, [mnemonic, oldMnemonic])])
-              Nothing -> E.throwError (OverlappingBitPattern [(pat, [mnemonic])])
+              Just oldMnemonic -> E.throwError (OverlappingBitPattern [(pat, [mnemonic, oldMnemonic], patternBytes pat)])
+              Nothing -> E.throwError (OverlappingBitPattern [(pat, [mnemonic], patternBytes pat)])
         Nothing -> do
           eid <- St.gets tsEltIdSrc
           St.modify' $ \s -> s { tsPatterns = M.insert pat (eid, val) (tsPatterns s)

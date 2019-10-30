@@ -23,6 +23,7 @@ import qualified Data.Set as S
 import           Data.Void (Void)
 import qualified System.IO.Strict as SIO
 import qualified Text.Megaparsec as P
+import qualified Text.Megaparsec.Char as P
 import           Text.Printf (printf)
 import qualified Text.XML.Light as X
 
@@ -74,11 +75,25 @@ qname str = X.QName str Nothing Nothing
 loadXML :: (X.Element -> Bool) -> String -> FilePath -> IO DT.ISADescriptor
 loadXML fltr arch dirPath = runXML $ do
   MS.modify' $ \st -> st { xmlPath = Just dirPath }
-  let fullPath = dirPath ++ "/a32_encindex.xml"
+  loadSingleXML fltr (dirPath ++ "/a32_encindex.xml")
+  loadSingleXML fltr (dirPath ++ "/t32_encindex.xml")
+
+loadSingleXML :: (X.Element -> Bool) -> FilePath -> XML DT.ISADescriptor
+loadSingleXML fltr fullPath = do
+  -- read file
   fileStr <- MS.liftIO $ SIO.readFile fullPath
+
+  -- parse as XML
   xmlElement <- case X.parseXMLDoc fileStr of
     Just c -> return c
     Nothing -> E.throw $ InvalidXmlFile fullPath
+
+  -- load instructions
+  loadInstrs fltr xmlElement
+
+loadInstrs :: (X.Element -> Bool) -> X.Element -> XML DT.ISADescriptor
+loadInstrs fltr xmlElement = do
+  -- format as instructions
   let iclass_sects = filter fltr (X.findElements (qname "iclass_sect") xmlElement)
   instrs <- fmap (catMaybes . concat) $ forM iclass_sects $ \iclass_sect -> do
     fields <- iclassFields iclass_sect
@@ -166,18 +181,30 @@ iclassNegPatterns flds iclass_sect = do
     Nothing -> return [] -- no constraints
   -- For each one, compute the corresponding bit pattern
   forM constraints $ \constraint -> do
-    names <- LS.splitOn ":" <$> getAttr "name" constraint
+    nameAttr <- getAttr "name" constraint
+    names <- nameExps nameAttr
+
     constraintFields <- traverse (lookupField iclass_sect flds) names
     valStr <- getAttr "val" constraint
     valPattern <- case traverse charToBit valStr of
       Nothing -> E.throw (InvalidPattern valStr)
       Just pat -> return pat
+
     computePattern constraintFields valPattern (replicate 32 BT.Any)
 
-lookupField :: X.Element -> [Field] -> String -> XML Field
-lookupField iclass_sect flds name = case find (\fld -> fieldName fld == name) flds of
-  Nothing -> E.throw $ MissingField iclass_sect name
-  Just fld -> return fld
+lookupField :: X.Element -> [Field] -> NameExp -> XML Field
+lookupField iclass_sect flds nexp =
+  case nexp of
+    NameExpString name ->
+      case find (\fld -> fieldName fld == name) flds of
+        Nothing -> E.throw $ MissingField iclass_sect name
+        Just fld -> return fld
+
+    NameExpSlice subF hi lo -> do
+      fld <- lookupField iclass_sect flds subF
+      pure $ fld { fieldHibit = fieldHibit fld + hi
+                 , fieldWidth = hi - lo
+                 }
 
 placeAt :: Int -> [a] -> [a] -> [a]
 placeAt ix subList l =
@@ -190,6 +217,43 @@ charToBit '1' = Just $ BT.ExpectedBit True
 charToBit '0' = Just $ BT.ExpectedBit False
 charToBit 'x' = Just $ BT.Any
 charToBit _   = Nothing
+
+nameExps :: String -> XML [NameExp]
+nameExps ns =
+  case P.parseMaybe nameExpsParser ns of
+    Nothing -> E.throw (InvalidPattern ns)
+    Just ns -> pure ns
+
+nameExpsParser :: P.Parsec Void String [NameExp]
+nameExpsParser = P.sepBy nameExpParser (P.single ':')
+
+nameExpParser :: P.Parsec Void String NameExp
+nameExpParser = do
+    name   <- NameExpString <$> parseName
+    slices <- P.many $ parseSlice
+    pure $ case slices of
+      [] -> name
+      [(hi, lo)] -> NameExpSlice name hi lo
+      _ -> name  -- FIXME: this compensates for the errors in the XML
+                 --        ex. cond<3:1><3:1>
+
+  where
+    -- TODO: whitespace?
+    parseSlice = do
+      P.single '<'
+      hi <- parseInt
+      P.single ':'
+      lo <- parseInt
+      P.single '>'
+      pure (hi, lo)
+
+    parseName = P.many (P.alphaNumChar P.<|> P.single '_')
+    parseInt = read <$> P.many P.digitChar
+
+data NameExp =
+    NameExpString String
+  | NameExpSlice  NameExp Int Int
+  deriving(Show)
 
 data Constraint = Constraint { constraintName :: String
                              , constraintPattern :: [BT.Bit]
@@ -209,7 +273,7 @@ iclassMatchFields flds iclass_sect = do
   let bitfieldElts = X.filterElements isBitfieldElt iclass_sect
       isBitfieldElt elt = X.qName (X.elName elt) == "th" && X.findAttr (qname "class") elt == Just "bitfields"
       getFields elt = do
-        let fieldNames = LS.splitOn ":" (X.strContent elt)
+        fieldNames <- nameExps (X.strContent elt)
         fields <- traverse (lookupField iclass_sect flds) fieldNames
         return fields
   fields <- traverse getFields bitfieldElts

@@ -12346,7 +12346,7 @@
       </box>
     </regdiagram>
     <decode_constraints>
-      <decode_constraint name="P:W" op="!=" val="0xx0" />
+      <decode_constraint name="P:W" op="!=" val="00" />
     </decode_constraints>
     <instructiontable iclass="lddlit" cols="3">
       <col colno="1" printwidth="15*" />
