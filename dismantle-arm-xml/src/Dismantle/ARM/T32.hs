@@ -12,7 +12,7 @@
 -- have only the top-level splices, and will be valid Haskell. The
 -- second file can be used when generating TAGS.
 {-# OPTIONS_GHC -ddump-splices -ddump-to-file -dth-dec-file -Wno-missing-signatures #-}
-module Dismantle.XML.AArch32 (
+module Dismantle.ARM.T32 (
   Instruction,
   AnnotatedInstruction,
   GenericInstruction(..),
@@ -30,11 +30,11 @@ module Dismantle.XML.AArch32 (
 import Data.Parameterized.List ( List(..) )
 
 import Dismantle.Instruction
-import Dismantle.XML.TH ( genISA )
-import Dismantle.XML.AArch32.ISA ( isa, isARM )
+import Dismantle.ARM.TH ( genISA )
+import Dismantle.ARM.ISA ( isa, isARM )
 import Dismantle.Tablegen.TH ( genInstances )
 
-$(genISA isARM isa "data/ISA_v85A_AArch32_xml_00bet9")
+$(genISA isARM (isa "T32") ["t32_encindex.xml"] "data/ISA_v85A_AArch32_xml_00bet9")
 $(return [])
 
 -- We need a separate call to generate some instances, since the helper(s) that

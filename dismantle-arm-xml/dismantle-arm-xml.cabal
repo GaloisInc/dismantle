@@ -19,10 +19,10 @@ extra-source-files:  CHANGELOG.md
 
 library
   exposed-modules:   Dismantle.ARM,
-                     Dismantle.XML,
-                     Dismantle.XML.AArch32,
-                     Dismantle.XML.AArch32.ISA,
-                     Dismantle.XML.TH
+                     Dismantle.ARM.A32,
+                     Dismantle.ARM.T32,
+                     Dismantle.ARM.ISA,
+                     Dismantle.ARM.TH
   -- other-modules:
   -- other-extensions:
   build-depends:       asl-parser,

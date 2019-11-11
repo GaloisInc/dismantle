@@ -12,6 +12,7 @@ module Dismantle.Tablegen.Types (
 
 import GHC.Generics ( Generic )
 import Control.DeepSeq
+import Data.List (nub)
 import Data.Word ( Word8 )
 import Language.Haskell.TH.Syntax (Lift)
 
@@ -92,3 +93,15 @@ data ISADescriptor =
                 -- operand name.
                 }
   deriving (Show, Generic, NFData)
+
+instance Semigroup ISADescriptor where
+  d1 <> d2 = ISADescriptor { isaInstructions = isaInstructions d1 <> isaInstructions d2
+                           , isaOperands = nub (isaOperands d1 <> isaOperands d2)
+                           , isaErrors = nub (isaErrors d1 <> isaErrors d2)
+                           }
+
+instance Monoid ISADescriptor where
+  mempty = ISADescriptor { isaInstructions = []
+                         , isaOperands = []
+                         , isaErrors = []
+                         }

@@ -3,7 +3,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
-module Dismantle.XML.AArch32.ISA (
+module Dismantle.ARM.ISA (
   isa,
   isARM
   ) where
@@ -20,7 +20,7 @@ import qualified Language.Haskell.TH as TH
 import qualified Text.XML.Light as X
 
 import qualified Data.Word.Indexed as I
-import qualified Dismantle.XML as DX
+import qualified Dismantle.ARM as DA
 
 import Numeric (showHex)
 
@@ -30,24 +30,23 @@ asWord32 bs = BG.runGet BG.getWord32le bs
 fromWord32 :: Word32 -> LBS.ByteString
 fromWord32 w = BP.runPut (BP.putWord32le w)
 
-isa :: DX.ISA
-isa = DX.ISA { DX.isaName = "AARCH32"
-             , DX.isaTgenBitPreprocess = id
-             , DX.isaInputEndianness = DX.Little id id -- LBS.reverse (concat . reverse . L.chunksOf 8)
-             , DX.isaUnusedBitsPolicy = Nothing
-             , DX.isaInstructionFilter = error "isaInstructionFilter is not used for XML"
-             , DX.isaPseudoInstruction = const False
-             , DX.isaOperandPayloadTypes = operandPayloadTypes
-             , DX.isaIgnoreOperand = const False
-             , DX.isaFormOverrides = []
-             , DX.isaPrettyOverrides = []
-             , DX.isaInsnWordFromBytes = 'asWord32
-             , DX.isaInsnWordToBytes = 'fromWord32
-             , DX.isaInsnAssembleType = ''Word32
-             , DX.isaMapOperandPayloadType = id
-             , DX.isaDefaultPrettyVariableValues = []
-             }
-
+isa :: String -> DA.ISA
+isa archName = DA.ISA { DA.isaName = archName
+                      , DA.isaTgenBitPreprocess = id
+                      , DA.isaInputEndianness = DA.Little id id -- LBS.reverse (concat . reverse . L.chunksOf 8)
+                      , DA.isaUnusedBitsPolicy = Nothing
+                      , DA.isaInstructionFilter = error "isaInstructionFilter is not used for XML"
+                      , DA.isaPseudoInstruction = const False
+                      , DA.isaOperandPayloadTypes = operandPayloadTypes
+                      , DA.isaIgnoreOperand = const False
+                      , DA.isaFormOverrides = []
+                      , DA.isaPrettyOverrides = []
+                      , DA.isaInsnWordFromBytes = 'asWord32
+                      , DA.isaInsnWordToBytes = 'fromWord32
+                      , DA.isaInsnAssembleType = ''Word32
+                      , DA.isaMapOperandPayloadType = id
+                      , DA.isaDefaultPrettyVariableValues = []
+                      }
 
 isARM :: X.Element -> Bool
 isARM _ = True
@@ -57,7 +56,7 @@ isARM _ = True
 
 -- | In the XML specs, all fields are unsigned bitvectors (which are sometimes
 -- treated as signed)
-operandPayloadTypes :: [(String, DX.OperandPayload)]
+operandPayloadTypes :: [(String, DA.OperandPayload)]
 operandPayloadTypes =
   [ ("Bv1", unsignedImmediate (Proxy @1))
   , ("Bv2", unsignedImmediate (Proxy @2))
@@ -76,9 +75,9 @@ operandPayloadTypes =
   , ("Bv24", unsignedImmediate (Proxy @24))
   ]
   where
-    unsignedImmediate :: forall (n :: Nat) . (KnownNat n) => Proxy n -> DX.OperandPayload
-    unsignedImmediate p = DX.OperandPayload { DX.opTypeT = [t| I.W $(return (TH.LitT (TH.NumTyLit (natVal p)))) |]
-                                            , DX.opConE = Just [| I.w |]
-                                            , DX.opWordE = Just [| fromIntegral . I.unW |]
+    unsignedImmediate :: forall (n :: Nat) . (KnownNat n) => Proxy n -> DA.OperandPayload
+    unsignedImmediate p = DA.OperandPayload { DA.opTypeT = [t| I.W $(return (TH.LitT (TH.NumTyLit (natVal p)))) |]
+                                            , DA.opConE = Just [| I.w |]
+                                            , DA.opWordE = Just [| fromIntegral . I.unW |]
                                             }
 

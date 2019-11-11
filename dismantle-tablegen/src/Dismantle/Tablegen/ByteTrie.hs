@@ -138,8 +138,10 @@ data TrieError = OverlappingBitPattern [(Pattern, [String], Int)]
 instance Show TrieError where
   show err = case err of
     OverlappingBitPattern patList -> "OverlappingBitPattern " ++ showPatList patList
-    OverlappingBitPatternAt ix bytes patList -> "OverlappingBitPatternAt " ++ show ix ++ " " ++
-      show bytes ++ " " ++ showPatList patList
+    OverlappingBitPatternAt ix bytes patList ->
+      "OverlappingBitPatternAt index:" ++ show ix ++
+      " bytesSoFar: " ++ show bytes ++
+      " matching patterns: " ++ showPatList patList
     InvalidPatternLength p -> "InvalidPatternLength " ++ showPattern p
     MonadFailErr str -> "MonadFailErr " ++ show str
     where showPat (p, mnemonics, numBytes) = "(" ++ showPattern p ++ ", " ++ show mnemonics ++ ", " ++ show numBytes ++ ")"
@@ -314,10 +316,20 @@ makePayload patterns byteIndex bytesSoFar byte =
           let pats = map fst (M.toList negativeMatchingPatterns)
               mnemonics = catMaybes $ (flip M.lookup mapping) <$> pats
 
+          traceM $ show (patternBytes <$> M.keys negativeMatchingPatterns)
+
           E.throwError (OverlappingBitPatternAt byteIndex (BS.unpack bytesSoFar') $ zip3 pats ((:[]) <$> mnemonics) (patternBytes <$> pats))
   where
     bytesSoFar' = BS.snoc bytesSoFar byte
-    matchingPatterns = M.filterWithKey (patternMatches byteIndex byte) patterns
+    -- First, filter out the patterns that don't match the current byte at the given
+    -- byte index.
+    matchingPatterns' = M.filterWithKey (patternMatches byteIndex byte) patterns
+    -- FIXME: Next, reduce the matching patterns to only those with shortest
+    -- length. This should probably be done at the top level rather than here.
+    matchLength = minimum (patternBytes <$> M.keys matchingPatterns')
+    matchingPatterns = M.filterWithKey (\p _ -> patternBytes p == matchLength) matchingPatterns'
+
+    -- This should only be used to disambiguate when we no longer have any bytes left.
     negativeMatchingPatterns = M.filterWithKey (negativePatternMatches bytesSoFar') matchingPatterns
 
 -- | Return the element associated with the most specific pattern in the given
