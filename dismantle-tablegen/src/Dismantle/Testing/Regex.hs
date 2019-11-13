@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Dismantle.Testing.Regex
     ( mkRegex
@@ -12,20 +13,17 @@ module Dismantle.Testing.Regex
     )
     where
 
-import qualified Control.Monad.Fail as MF
+import           Control.Monad.Fail
 import           Data.String
 import qualified Data.Text as DT
 import qualified Data.Text.Lazy as DLT
 import qualified Text.Regex.TDFA as RE
 
-instance MF.MonadFail (Either String) where
-  fail = Left
-
 mkRegex :: String -> Either String RE.Regex
-mkRegex = RE.makeRegexM
+mkRegex = runEitherString . RE.makeRegexM
 
 mkRegexT :: DT.Text -> Either String RE.Regex
-mkRegexT = RE.makeRegexM . DT.unpack
+mkRegexT = mkRegex . DT.unpack
 
 countMatches :: (IsString source, RE.RegexLike RE.Regex source) =>
                 source -> RE.Regex -> Int
@@ -35,9 +33,10 @@ hasMatches :: (IsString source, RE.RegexLike RE.Regex source) =>
               source -> RE.Regex -> Bool
 hasMatches t r = RE.matchTest r t
 
+newtype EitherString a = EitherString { runEitherString :: Either String a }
+    deriving (Eq, Ord, Read, Show, Functor, Applicative, Monad)
 
--- --------------------------------------------------
-
+instance MonadFail EitherString where fail = EitherString . Left
 
 instance RE.RegexLike RE.Regex DT.Text where
     matchOnce r = RE.matchOnce r . DT.unpack

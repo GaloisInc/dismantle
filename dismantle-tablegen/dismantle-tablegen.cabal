@@ -62,8 +62,8 @@ library
                        tasty-hunit,
                        tasty-expected-failure,
                        megaparsec >= 7 && < 8,
-                       regex-tdfa >= 1.3.0,
                        regex-base >= 0.94,
+                       regex-tdfa,
                        mtl >= 2 && < 3,
                        parameterized-utils >= 1 && < 2.1
   hs-source-dirs:      src
