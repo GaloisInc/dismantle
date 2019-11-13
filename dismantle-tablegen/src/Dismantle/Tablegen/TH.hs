@@ -78,11 +78,11 @@ loadISA isa path overridePaths = do
 genISA :: ISA -> FilePath -> [FilePath] -> DecsQ
 genISA isa path overridePaths = do
   desc <- loadISA isa path overridePaths
-  genISADesc isa desc [path] overridePaths
+  genISADesc isa desc [path]
 
-genISADesc :: ISA -> ISADescriptor -> [FilePath] -> [FilePath] -> DecsQ
-genISADesc isa desc paths overrides = do
-  mapM_ qAddDependentFile (paths ++ overrides)
+genISADesc :: ISA -> ISADescriptor -> [FilePath] -> DecsQ
+genISADesc isa desc paths = do
+  mapM_ qAddDependentFile paths
 
   case isaErrors desc of
     [] -> return ()

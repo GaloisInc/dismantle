@@ -22,4 +22,4 @@ genISA fltr isa encFileNames dirPath = do
     desc <- F.fold <$> (T.forM encFileNames $ \encFileName -> DA.loadXML fltr (DA.isaName isa) encFileName ".")
     return (desc, xmlFiles)
   TH.runIO $ putStrLn "Successfully generated ISA description."
-  DTH.genISADesc isa desc (((dirPath ++ "/") ++) <$> xmlFiles) []
+  DTH.genISADesc isa desc (((dirPath ++ "/") ++) <$> xmlFiles)

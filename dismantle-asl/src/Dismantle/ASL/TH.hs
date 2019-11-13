@@ -16,4 +16,4 @@ genISA fltr isa path = do
     Left err -> TH.reportError (T.unpack err) >> return []
     Right insns -> do
       let desc = DA.loadASL fltr (DA.isaName isa) insns
-      DTH.genISADesc isa desc path []
+      DTH.genISADesc isa desc [path]
