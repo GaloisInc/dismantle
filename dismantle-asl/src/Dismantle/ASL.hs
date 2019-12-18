@@ -568,7 +568,7 @@ executionFeatures nm sym = do
   let fts = psf ++ [timeout]
   let cfg = WI.getConfiguration sym
   pathSetter <- WC.getOptionSetting CBO.solverInteractionFile cfg
-  res <- WC.setOpt pathSetter (T.pack "./yices.out")
+  res <- WC.setOpt pathSetter (T.pack "./output/yices.out")
   X.assert (null res) (return fts)
   --return []
 
