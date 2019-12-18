@@ -104,19 +104,19 @@ data TranslationTask = TranslateAll
                      | TranslateInstruction String String
 
 instsFilePath :: FilePath
-instsFilePath = "insts.parsed"
+instsFilePath = "arm_instrs.parsed"
 
 defsFilePath :: FilePath
-defsFilePath = "defs.parsed"
+defsFilePath = "arm_defs.parsed"
 
 regsFilePath :: FilePath
-regsFilePath = "regs.parsed"
+regsFilePath = "arm_regs.parsed"
 
 supportFilePath :: FilePath
 supportFilePath = "support.parsed"
 
 extraDefsFilePath :: FilePath
-extraDefsFilePath = "extradefs.parsed"
+extraDefsFilePath = "extra_defs.parsed"
 
 targetInstsFilePath :: FilePath
 targetInstsFilePath = "translated_instructions.txt"
@@ -130,11 +130,11 @@ defaultOptions = TranslatorOptions
   , optSkipTranslation = False
   , optCollectAllExceptions = False
   , optCollectExpectedExceptions = True
-  , optASLSpecFilePath = "./test/"
+  , optASLSpecFilePath = "./data/Parsed/"
   , optTranslationDepth = TranslateRecursive
   , optTranslationTask = TranslateArch32
   , optCheckSerialization = False
-  , optFormulaOutputFilePath = "./formulas.what4"
+  , optFormulaOutputFilePath = "./output/formulas.what4"
   }
 
 data StatOptions = StatOptions
