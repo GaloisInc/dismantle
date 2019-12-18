@@ -28,7 +28,6 @@ import           Data.Map ( Map )
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import           Data.Maybe ( catMaybes, mapMaybe )
-import           Text.Read (readMaybe)
 import           Data.Parameterized.Nonce
 import           Data.Bits( (.|.) )
 import           Data.Parameterized.Some ( Some(..) )
@@ -98,7 +97,6 @@ data TranslationDepth = TranslateRecursive
                       | TranslateShallow
 
 data TranslationTask = TranslateAll
-                     | TranslateTargets
                      | TranslateNoArch64
                      | TranslateArch32
                      | TranslateInstruction String String
@@ -117,9 +115,6 @@ supportFilePath = "support.parsed"
 
 extraDefsFilePath :: FilePath
 extraDefsFilePath = "extra_defs.parsed"
-
-targetInstsFilePath :: FilePath
-targetInstsFilePath = "translated_instructions.txt"
 
 defaultOptions :: TranslatorOptions
 defaultOptions = TranslatorOptions
@@ -158,8 +153,7 @@ arguments :: [OptDescr (Either (TranslatorOptions -> Maybe TranslatorOptions) (S
 arguments =
   [ Option "a" ["asl-spec"] (ReqArg (\f -> Left (\opts -> Just $ opts { optASLSpecFilePath = f })) "PATH")
     ("Path to parsed ASL specification. Requires: " ++ instsFilePath ++ " " ++ defsFilePath
-      ++ " " ++ regsFilePath ++ " " ++ supportFilePath ++ " " ++ extraDefsFilePath
-      ++ " " ++ targetInstsFilePath)
+      ++ " " ++ regsFilePath ++ " " ++ supportFilePath ++ " " ++ extraDefsFilePath)
 
   , Option "s" ["skip-simulation"] (NoArg (Left (\opts -> Just $ opts { optSkipTranslation = True })))
     "Skip symbolic execution step after translating into Crucible"
@@ -200,7 +194,6 @@ arguments =
   , Option [] ["translation-mode"] (ReqArg (\mode -> Left (\opts -> do
       task <- case mode of
         "all" -> return $ TranslateAll
-        "targets" -> return $ TranslateTargets
         "noArch64" -> return $ TranslateNoArch64
         "Arch32" -> return $ TranslateArch32
         _ -> case List.splitOn "/" mode of
@@ -209,7 +202,6 @@ arguments =
       return $ opts { optTranslationTask = task })) "MODE")
     ("Filter instructions according to MODE: \n" ++
      "all - translate all instructions from " ++ instsFilePath ++ ".\n" ++
-     "targets - translate instructions filtered by " ++ targetInstsFilePath ++ ".\n" ++
      "noArch64 - translate T16, T32 and A32 instructions.\n" ++
      "Arch32 - translate T32 and A32 instructions.\n" ++
      "<INSTRUCTION>/<ENCODING> - translate a single instruction/encoding pair.")
@@ -242,9 +234,6 @@ main = do
       exitFailure
     Just (opts, statOpts) -> do
       SomeSigMap sm <- case optTranslationTask opts of
-        TranslateTargets -> do
-          targetFilter <- getTargetFilter opts
-          runWithFilters (opts { optFilters = targetFilter })
         TranslateAll -> runWithFilters opts
         TranslateInstruction inst enc -> testInstruction opts inst enc
         TranslateNoArch64 -> runWithFilters (opts { optFilters = translateNoArch64 } )
@@ -803,49 +792,6 @@ catchIO k f = do
   case a of
     Left r -> return (Just r)
     Right err -> (\_ -> Nothing) <$> collectExcept k err
-
-readISetMaybe :: T.Text -> Maybe AS.InstructionSet
-readISetMaybe = \case
-  "A32" -> Just $ AS.A32
-  "T32" -> Just $ AS.T32
-  "T16" -> Just $ AS.T16
-  "A64" -> Just $ AS.A64
-  _ -> Nothing
-
--- Unused currently
-type InstructionFlag = ()
-
-getTargetInstrs :: TranslatorOptions -> IO (Map.Map InstructionIdent InstructionFlag)
-getTargetInstrs opts = do
-  t <- T.readFile ((optASLSpecFilePath opts) ++ targetInstsFilePath)
-  return $ Map.fromList (map getTriple (T.lines t))
-  where
-    isQuote '\"' = True
-    isQuote _ = False
-
-    getFlag [s] = readMaybe (T.unpack s)
-    getFlag [] = Just $ ()
-    getFlag _ = Nothing
-
-    getTriple l =
-      if | (instr : enc : iset : rest) <- T.words l
-         , Just is <- readISetMaybe iset
-         , Just flag <- getFlag rest ->
-           (InstructionIdent
-             { iName = T.dropAround isQuote instr
-             , iEnc = T.dropAround isQuote enc
-             , iSet = is
-             }, flag)
-         | otherwise -> X.throw $ BadTranslatedInstructionsFile
-
-
-
-
-getTargetFilter :: TranslatorOptions -> IO (Filters)
-getTargetFilter opts = do
-  targetInsts <- getTargetInstrs opts
-  return $ noFilter { instrFilter = \ident -> Map.member ident targetInsts }
-
 
 testInstruction :: TranslatorOptions -> String -> String -> IO (SomeSigMap)
 testInstruction opts instr enc = do
