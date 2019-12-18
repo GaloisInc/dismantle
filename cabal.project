@@ -1,3 +1,6 @@
 packages: */*.cabal
           deps/parameterized-utils/
           deps/arm-asl-parser/
+          deps/crucible/crucible/
+          deps/crucible/what4/
+          deps/crucible/what4-serialize/
