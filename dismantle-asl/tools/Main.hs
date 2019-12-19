@@ -249,13 +249,11 @@ main = do
       when (optCheckSerialization opts) $ do
         Some r <- liftIO $ newIONonceGenerator
         sym <- liftIO $ B.newExprBuilder B.FloatRealRepr NoBuilderData r
-        env <- Map.fromList <$> mkMemoryUFs sym
-
         lcfg <- U.mkLogCfg "check serialization"
         U.withLogCfg lcfg $
-          WP.readSymFnEnvFromFile (WP.defaultParserConfig sym){WP.pSymFnEnv = env} (optFormulaOutputFilePath opts) >>= \case
+          WP.readSymFnEnvFromFile (WP.defaultParserConfig sym) (optFormulaOutputFilePath opts) >>= \case
             Left err -> X.throw $ SimulationDeserializationFailure err ""
-            Right symFnEnv -> do
+            Right _ -> do
               logMsgIO opts 1 $ T.pack "Deserialization successful."
               return ()
   where
@@ -267,31 +265,6 @@ main = do
         statOpts' <- f statOpts
         return $ (opts, statOpts')
     applyOption Nothing _ = Nothing
-
-memoryUFSigs :: [(T.Text, ((Some (Ctx.Assignment WI.BaseTypeRepr), Some WI.BaseTypeRepr)))]
-memoryUFSigs = concatMap mkUF [1,2,4,8,16]
-  where
-    ramRepr = WI.BaseArrayRepr (Ctx.empty Ctx.:> WI.BaseBVRepr (WI.knownNat @32)) (WI.BaseBVRepr (WI.knownNat @8))
-    mkUF :: Integer -> [(T.Text, (Some (Ctx.Assignment WI.BaseTypeRepr), Some WI.BaseTypeRepr))]
-    mkUF sz
-      | Just (Some szRepr) <- WI.someNat sz
-      , Just WI.LeqProof <- WI.knownNat @1 `WI.testLeq` szRepr
-      , bvSize <- (WI.knownNat @8) `WI.natMultiply` szRepr
-      , WI.LeqProof <- WI.leqMulPos (WI.knownNat @8) szRepr =
-        [( "write_mem_" <> (T.pack (show sz))
-         , ( Some (Ctx.empty Ctx.:> ramRepr Ctx.:> (WI.BaseBVRepr (WI.knownNat @32)) Ctx.:> WI.BaseBVRepr bvSize)
-           , Some ramRepr))
-        ,( "read_mem_" <> (T.pack (show sz))
-         , ( Some (Ctx.empty Ctx.:> ramRepr Ctx.:> (WI.BaseBVRepr (WI.knownNat @32)))
-           , Some (WI.BaseBVRepr bvSize)))
-        ]
-    mkUF _ = error "unreachable"
-
-mkMemoryUFs :: B.ExprBuilder scope st fs -> IO [(T.Text, (U.SomeSome (B.ExprSymFn scope)))]
-mkMemoryUFs sym = forM memoryUFSigs $ \(name, (Some argTs, Some retT)) -> do
-  let symbol = U.makeSymbol (T.unpack name)
-  symFn <- WI.freshTotalUninterpFn sym symbol argTs retT
-  return $ ("uf." <> name, U.SomeSome symFn)
 
 runWithFilters :: TranslatorOptions -> IO (SomeSigMap)
 runWithFilters opts = do
@@ -325,6 +298,7 @@ runWithFilters' opts spec sigEnv sigState = do
   let allInstrs = imap (\i -> \nm -> (i,nm)) $ mapMaybe getInstr (collectInstructions (aslInstructions spec))
   let instrs = case numInstrs of {Just i -> take i (drop startidx allInstrs); _ -> drop startidx allInstrs}
   execSigMapWithScope opts sigState sigEnv $ do
+    addMemoryUFs
     forM_ instrs $ \(i, (ident, instr)) -> do
       logMsg 1 $ T.pack $ "Processing instruction: " ++ show i ++ "/" ++ show (length allInstrs)
       runTranslation instr ident
@@ -437,6 +411,35 @@ withOnlineBackend gen unsatFeat action = do
   CBO.withOnlineBackend B.FloatRealRepr gen feat $ \sym -> do
     WC.extendConfig Yices.yicesOptions (WI.getConfiguration sym)
     action sym
+
+memoryUFSigs :: [(T.Text, ((Some (Ctx.Assignment WI.BaseTypeRepr), Some WI.BaseTypeRepr)))]
+memoryUFSigs = concatMap mkUF [1,2,4,8,16]
+  where
+    ramRepr = WI.BaseArrayRepr (Ctx.empty Ctx.:> WI.BaseBVRepr (WI.knownNat @32)) (WI.BaseBVRepr (WI.knownNat @8))
+    mkUF :: Integer -> [(T.Text, (Some (Ctx.Assignment WI.BaseTypeRepr), Some WI.BaseTypeRepr))]
+    mkUF sz
+      | Just (Some szRepr) <- WI.someNat sz
+      , Just WI.LeqProof <- WI.knownNat @1 `WI.testLeq` szRepr
+      , bvSize <- (WI.knownNat @8) `WI.natMultiply` szRepr
+      , WI.LeqProof <- WI.leqMulPos (WI.knownNat @8) szRepr =
+        [( "write_mem_" <> (T.pack (show sz))
+         , ( Some (Ctx.empty Ctx.:> ramRepr Ctx.:> (WI.BaseBVRepr (WI.knownNat @32)) Ctx.:> WI.BaseBVRepr bvSize)
+           , Some ramRepr))
+        ,( "read_mem_" <> (T.pack (show sz))
+         , ( Some (Ctx.empty Ctx.:> ramRepr Ctx.:> (WI.BaseBVRepr (WI.knownNat @32)))
+           , Some (WI.BaseBVRepr bvSize)))
+        ]
+    mkUF _ = error "unreachable"
+
+addMemoryUFs :: SigMapM sym arch ()
+addMemoryUFs = do
+  nonceGenerator <- MSS.gets sNonceGenerator
+  ufs <- liftIO $ withOnlineBackend nonceGenerator CBO.NoUnsatFeatures $ \sym -> do
+    forM memoryUFSigs $ \(name, (Some argTs, Some retT)) -> do
+      let symbol = U.makeSymbol (T.unpack name)
+      symFn <- WI.freshTotalUninterpFn sym symbol argTs retT
+      return $ ("uf." <> name, U.SomeSome symFn)
+  MSS.modify $ \s -> s { sFormulas = ufs ++ (sFormulas s) }
 
 -- Extremely vague measure of function body size
 measureStmts :: [AS.Stmt] -> Int
