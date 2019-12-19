@@ -29,6 +29,8 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import           Data.Maybe ( catMaybes, mapMaybe )
 import           Data.Parameterized.Nonce
+import qualified Data.Parameterized.Ctx as Ctx
+import qualified Data.Parameterized.Context as Ctx
 import           Data.Bits( (.|.) )
 import           Data.Parameterized.Some ( Some(..) )
 import qualified Data.Text as T
@@ -219,6 +221,8 @@ usage = do
   let msg = "Usage: " <> pn <> " [options]"
   putStrLn $ usageInfo msg arguments
 
+data BuilderData t = NoBuilderData
+
 main :: IO ()
 main = do
   stringArgs <- IO.getArgs
@@ -240,7 +244,20 @@ main = do
         TranslateArch32 -> runWithFilters (opts { optFilters = translateArch32 } )
       reportStats statOpts sm
       logMsgIO opts 1 $ T.pack $ "Writing formulas to: " ++ show (optFormulaOutputFilePath opts)
-      T.writeFile (optFormulaOutputFilePath opts) (WP.printSymFnEnv (sFormulas sm))
+      T.writeFile (optFormulaOutputFilePath opts) (WP.printSymFnEnv (reverse (sFormulas sm)))
+
+      when (optCheckSerialization opts) $ do
+        Some r <- liftIO $ newIONonceGenerator
+        sym <- liftIO $ B.newExprBuilder B.FloatRealRepr NoBuilderData r
+        env <- Map.fromList <$> mkMemoryUFs sym
+
+        lcfg <- U.mkLogCfg "check serialization"
+        U.withLogCfg lcfg $
+          WP.readSymFnEnvFromFile (WP.defaultParserConfig sym){WP.pSymFnEnv = env} (optFormulaOutputFilePath opts) >>= \case
+            Left err -> X.throw $ SimulationDeserializationFailure err ""
+            Right symFnEnv -> do
+              logMsgIO opts 1 $ T.pack "Deserialization successful."
+              return ()
   where
     applyOption (Just (opts, statOpts)) arg = case arg of
       Left f -> do
@@ -250,6 +267,31 @@ main = do
         statOpts' <- f statOpts
         return $ (opts, statOpts')
     applyOption Nothing _ = Nothing
+
+memoryUFSigs :: [(T.Text, ((Some (Ctx.Assignment WI.BaseTypeRepr), Some WI.BaseTypeRepr)))]
+memoryUFSigs = concatMap mkUF [1,2,4,8,16]
+  where
+    ramRepr = WI.BaseArrayRepr (Ctx.empty Ctx.:> WI.BaseBVRepr (WI.knownNat @32)) (WI.BaseBVRepr (WI.knownNat @8))
+    mkUF :: Integer -> [(T.Text, (Some (Ctx.Assignment WI.BaseTypeRepr), Some WI.BaseTypeRepr))]
+    mkUF sz
+      | Just (Some szRepr) <- WI.someNat sz
+      , Just WI.LeqProof <- WI.knownNat @1 `WI.testLeq` szRepr
+      , bvSize <- (WI.knownNat @8) `WI.natMultiply` szRepr
+      , WI.LeqProof <- WI.leqMulPos (WI.knownNat @8) szRepr =
+        [( "write_mem_" <> (T.pack (show sz))
+         , ( Some (Ctx.empty Ctx.:> ramRepr Ctx.:> (WI.BaseBVRepr (WI.knownNat @32)) Ctx.:> WI.BaseBVRepr bvSize)
+           , Some ramRepr))
+        ,( "read_mem_" <> (T.pack (show sz))
+         , ( Some (Ctx.empty Ctx.:> ramRepr Ctx.:> (WI.BaseBVRepr (WI.knownNat @32)))
+           , Some (WI.BaseBVRepr bvSize)))
+        ]
+    mkUF _ = error "unreachable"
+
+mkMemoryUFs :: B.ExprBuilder scope st fs -> IO [(T.Text, (U.SomeSome (B.ExprSymFn scope)))]
+mkMemoryUFs sym = forM memoryUFSigs $ \(name, (Some argTs, Some retT)) -> do
+  let symbol = U.makeSymbol (T.unpack name)
+  symFn <- WI.freshTotalUninterpFn sym symbol argTs retT
+  return $ ("uf." <> name, U.SomeSome symFn)
 
 runWithFilters :: TranslatorOptions -> IO (SomeSigMap)
 runWithFilters opts = do
@@ -375,7 +417,7 @@ execSigMapWithScope opts sigState sigEnv action = do
           , sigEnv = sigEnv
           , instrDeps = Map.empty
           , funDeps = Map.empty
-          , sFormulas = Map.empty
+          , sFormulas = []
           , sOptions = opts
           , sNonceGenerator = nonceGenerator
           , sHandleAllocator = handleAllocator
@@ -506,7 +548,7 @@ simulateFunction key p = do
   case mresult of
     Just (_, symFn, mex) -> do
       logMsg 1 "Simulation succeeded!"
-      MSS.modify $ \s -> s { sFormulas = Map.insert (T.pack (prettyKey key)) (U.SomeSome symFn) (sFormulas s) }
+      MSS.modify $ \s -> s { sFormulas = (T.pack $ "uf." ++ prettyKey key, U.SomeSome symFn) : (sFormulas s) }
       case mex of
         Just ex -> void $ catchIO key $ X.throw ex
         _ -> return ()
@@ -677,7 +719,8 @@ reportStats sopts sm = do
       Nothing -> id
 
 prettyIdent :: InstructionIdent -> String
-prettyIdent (InstructionIdent nm enc iset) = show nm <> "_" <> show enc <> "_" <> show iset
+prettyIdent (InstructionIdent nm enc iset) = T.unpack $ nm <> "_" <> enc <> "_" <> (T.pack $ show iset)
+
 
 prettyKey :: ElemKey -> String
 prettyKey (KeyInstr ident) = prettyIdent ident
@@ -732,7 +775,7 @@ data SigMap scope arch where
             , sigEnv :: SigEnv
             , instrDeps :: Map.Map InstructionIdent (Set.Set T.Text)
             , funDeps :: Map.Map T.Text (Set.Set T.Text)
-            , sFormulas :: Map.Map T.Text (U.SomeSome (B.ExprSymFn scope))
+            , sFormulas :: [(T.Text, (U.SomeSome (B.ExprSymFn scope)))]
             , sOptions :: TranslatorOptions
             , sNonceGenerator :: NonceGenerator IO scope
             , sHandleAllocator :: CFH.HandleAllocator

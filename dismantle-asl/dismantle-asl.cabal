@@ -31,8 +31,6 @@ common shared-properties
                        crucible,
                        what4,
                        asl-parser,
-                       dismantle-tablegen,
-                       dismantle-arm-xml,
                        time
 
 library
