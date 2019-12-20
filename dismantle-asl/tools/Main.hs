@@ -104,19 +104,19 @@ data TranslationTask = TranslateAll
                      | TranslateInstruction String String
 
 instsFilePath :: FilePath
-instsFilePath = "arm_instrs.parsed"
+instsFilePath = "arm_instrs.sexpr"
 
 defsFilePath :: FilePath
-defsFilePath = "arm_defs.parsed"
+defsFilePath = "arm_defs.sexpr"
 
 regsFilePath :: FilePath
-regsFilePath = "arm_regs.parsed"
+regsFilePath = "arm_regs.sexpr"
 
 supportFilePath :: FilePath
-supportFilePath = "support.parsed"
+supportFilePath = "support.sexpr"
 
 extraDefsFilePath :: FilePath
-extraDefsFilePath = "extra_defs.parsed"
+extraDefsFilePath = "extra_defs.sexpr"
 
 defaultOptions :: TranslatorOptions
 defaultOptions = TranslatorOptions
