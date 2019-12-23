@@ -29,7 +29,7 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import           Data.Maybe ( catMaybes, mapMaybe )
 import           Data.Parameterized.Nonce
-import qualified Data.Parameterized.Ctx as Ctx
+-- import qualified Data.Parameterized.Ctx as Ctx
 import qualified Data.Parameterized.Context as Ctx
 import           Data.Bits( (.|.) )
 import           Data.Parameterized.Some ( Some(..) )
@@ -84,11 +84,9 @@ data TranslatorOptions = TranslatorOptions
   , optStartIndex :: Int
   , optNumberOfInstructions :: Maybe Int
   , optFilters :: Filters
-  , optSkipTranslation :: Bool
   , optCollectAllExceptions :: Bool
   , optCollectExpectedExceptions :: Bool
   , optASLSpecFilePath :: FilePath
-  , optTranslationTask :: TranslationTask
   , optTranslationDepth :: TranslationDepth
   , optCheckSerialization :: Bool
   , optFormulaOutputFilePath :: FilePath
@@ -97,11 +95,6 @@ data TranslatorOptions = TranslatorOptions
 
 data TranslationDepth = TranslateRecursive
                       | TranslateShallow
-
-data TranslationTask = TranslateAll
-                     | TranslateNoArch64
-                     | TranslateArch32
-                     | TranslateInstruction String String
 
 instsFilePath :: FilePath
 instsFilePath = "arm_instrs.sexpr"
@@ -123,13 +116,11 @@ defaultOptions = TranslatorOptions
   { optVerbosity = 1
   , optStartIndex = 0
   , optNumberOfInstructions = Nothing
-  , optFilters = noFilter
-  , optSkipTranslation = False
+  , optFilters = translateArch32 noFilter
   , optCollectAllExceptions = False
   , optCollectExpectedExceptions = True
   , optASLSpecFilePath = "./data/Parsed/"
   , optTranslationDepth = TranslateRecursive
-  , optTranslationTask = TranslateArch32
   , optCheckSerialization = False
   , optFormulaOutputFilePath = "./output/formulas.what4"
   }
@@ -156,9 +147,6 @@ arguments =
   [ Option "a" ["asl-spec"] (ReqArg (\f -> Left (\opts -> Just $ opts { optASLSpecFilePath = f })) "PATH")
     ("Path to parsed ASL specification. Requires: " ++ instsFilePath ++ " " ++ defsFilePath
       ++ " " ++ regsFilePath ++ " " ++ supportFilePath ++ " " ++ extraDefsFilePath)
-
-  , Option "s" ["skip-simulation"] (NoArg (Left (\opts -> Just $ opts { optSkipTranslation = True })))
-    "Skip symbolic execution step after translating into Crucible"
 
   , Option "c" ["collect-exceptions"] (NoArg (Left (\opts -> Just $ opts { optCollectAllExceptions = True })))
     "Handle and collect all exceptions thrown during translation"
@@ -195,18 +183,30 @@ arguments =
 
   , Option [] ["translation-mode"] (ReqArg (\mode -> Left (\opts -> do
       task <- case mode of
-        "all" -> return $ TranslateAll
-        "noArch64" -> return $ TranslateNoArch64
-        "Arch32" -> return $ TranslateArch32
+        "all" -> return $ translateAll
+        "noArch64" -> return $ translateNoArch64
+        "Arch32" -> return $ translateArch32
         _ -> case List.splitOn "/" mode of
-          [instr, enc] -> return $ TranslateInstruction instr enc
+          [instr, enc] -> return $ translateOnlyInstr (T.pack instr, T.pack enc)
           _ -> fail ""
-      return $ opts { optTranslationTask = task })) "MODE")
-    ("Filter instructions according to MODE: \n" ++
+      return $ opts { optFilters = task (optFilters opts) })) "TRANSLATION_MODE")
+    ("Filter instructions according to TRANSLATION_MODE: \n" ++
      "all - translate all instructions from " ++ instsFilePath ++ ".\n" ++
      "noArch64 - translate T16, T32 and A32 instructions.\n" ++
-     "Arch32 - translate T32 and A32 instructions.\n" ++
+     "Arch32 (default) - translate T32 and A32 instructions.\n" ++
      "<INSTRUCTION>/<ENCODING> - translate a single instruction/encoding pair.")
+
+  , Option [] ["simulation-mode"] (ReqArg (\mode -> Left (\opts -> do
+      task <- case mode of
+        "all (default)" -> return $ simulateAll
+        "instructions" -> return $ simulateInstructions
+        "none" -> return $ simulateNone
+        _ -> fail ""
+      return $ opts { optFilters = task (optFilters opts) })) "SIMULATION_MODE")
+    ("Filter instructions and functions for symbolic simulation according to SIMULATION_MODE: \n" ++
+     "all (default) - simulate all successfully translated instructions and functions. \n" ++
+     "instructions - simulate only instructions. \n" ++
+     "none - do not perform any symbolic execution.")
 
   , Option [] ["no-dependencies"] (NoArg (Left (\opts -> Just $ opts { optTranslationDepth = TranslateShallow } )))
     "Don't recursively translate function dependencies."
@@ -237,11 +237,7 @@ main = do
       usage
       exitFailure
     Just (opts, statOpts) -> do
-      SomeSigMap sm <- case optTranslationTask opts of
-        TranslateAll -> runWithFilters opts
-        TranslateInstruction inst enc -> testInstruction opts inst enc
-        TranslateNoArch64 -> runWithFilters (opts { optFilters = translateNoArch64 } )
-        TranslateArch32 -> runWithFilters (opts { optFilters = translateArch32 } )
+      SomeSigMap sm <- runWithFilters opts
       reportStats statOpts sm
       logMsgIO opts 1 $ T.pack $ "Writing formulas to: " ++ show (optFormulaOutputFilePath opts)
       T.writeFile (optFormulaOutputFilePath opts) (WP.printSymFnEnv (reverse (sFormulas sm)))
@@ -398,17 +394,16 @@ execSigMapWithScope opts sigState sigEnv action = do
           }
   SomeSigMap <$> execSigMapM action sigMap
 
-withOnlineBackend :: forall scope a.
-                          NonceGenerator IO scope
-                       -> CBO.UnsatFeatures
+withOnlineBackend :: forall scope arch a
+                        . ElemKey
                        -> (CBO.YicesOnlineBackend scope (B.Flags B.FloatReal) -> IO a)
-                       -> IO a
-withOnlineBackend gen unsatFeat action = do
+                       -> SigMapM scope arch (Maybe a)
+withOnlineBackend key action = do
   let feat =     useIntegerArithmetic
              .|. useBitvectors
              .|. useStructs
-             .|. CBO.unsatFeaturesToProblemFeatures unsatFeat
-  CBO.withOnlineBackend B.FloatRealRepr gen feat $ \sym -> do
+  gen <- MSS.gets sNonceGenerator
+  catchIO key $ CBO.withOnlineBackend B.FloatRealRepr gen feat $ \sym -> do
     WC.extendConfig Yices.yicesOptions (WI.getConfiguration sym)
     action sym
 
@@ -433,8 +428,7 @@ memoryUFSigs = concatMap mkUF [1,2,4,8,16]
 
 addMemoryUFs :: SigMapM sym arch ()
 addMemoryUFs = do
-  nonceGenerator <- MSS.gets sNonceGenerator
-  ufs <- liftIO $ withOnlineBackend nonceGenerator CBO.NoUnsatFeatures $ \sym -> do
+  Just ufs <- withOnlineBackend (KeyFun "memory") $ \sym -> do
     forM memoryUFSigs $ \(name, (Some argTs, Some retT)) -> do
       let symbol = U.makeSymbol (T.unpack name)
       symFn <- WI.freshTotalUninterpFn sym symbol argTs retT
@@ -463,18 +457,29 @@ translateFunction key sig stmts defs = do
   catchIO key $ AC.functionToCrucible defs sig handleAllocator stmts logLvl
 
 
--- | Simulate a function if we have one, and it is not filtered out
+-- | Simulate a function if we have one, and it is not filtered out.
+-- If we are skipping translation, then simply emit an uninterpreted function with
+-- the correct signature
 maybeSimulateFunction :: InstructionIdent
                       -> ElemKey
                       -> Maybe (AC.Function arch globalReads globalWrites init tps)
                       -> SigMapM sym arch ()
-maybeSimulateFunction fromInstr key mfunc = do
-  filteredOut <- case key of
-    KeyInstr instr -> isInstrTransFilteredOut instr
-    KeyFun fnName -> isFunTransFilteredOut fromInstr fnName
-  case (mfunc, filteredOut) of
-    (Just func, False) -> simulateFunction key func
-    _ -> return ()
+maybeSimulateFunction _ _ Nothing = return ()
+maybeSimulateFunction fromInstr key (Just func) =
+ isKeySimFilteredOut fromInstr key >>= \case
+   False -> simulateFunction key func
+   True -> do
+     Just symFn <- withOnlineBackend key $ \sym -> do
+        let sig = AC.funcSig func
+        let symbol = U.makeSymbol (T.unpack (funcName sig))
+        let retT = funcSigBaseRepr sig
+        let argTs = funcSigAllArgsRepr sig
+        WI.freshTotalUninterpFn sym symbol argTs retT
+     addFormula key symFn
+
+addFormula :: ElemKey -> B.ExprSymFn scope args ret -> SigMapM scope arch ()
+addFormula key symFn = MSS.modify $ \s -> s { sFormulas = (T.pack $ "uf." ++ prettyKey key, U.SomeSome symFn) : (sFormulas s)}
+
 
 data SimulationException where
   SimulationDeserializationFailure :: String -> T.Text -> SimulationException
@@ -518,40 +523,38 @@ simulateFunction key p = do
   checkSerialization <- MSS.gets (optCheckSerialization . sOptions)
   opts <- MSS.gets sOptions
   handleAllocator <- MSS.gets sHandleAllocator
-  nonceGenerator <- MSS.gets sNonceGenerator
-  mresult <- catchIO key $
-    withOnlineBackend nonceGenerator CBO.NoUnsatFeatures $ \backend -> do
-      let cfg = ASL.SimulatorConfig { simOutputHandle = IO.stdout
-                                    , simHandleAllocator = handleAllocator
-                                    , simSym = backend
-                                    }
-      let nm = prettyKey key
-      when checkSerialization $ B.startCaching backend
-      symFn <- ASL.simulateFunction cfg p
+  mresult <- withOnlineBackend key $ \backend -> do
+    let cfg = ASL.SimulatorConfig { simOutputHandle = IO.stdout
+                                  , simHandleAllocator = handleAllocator
+                                  , simSym = backend
+                                  }
+    let nm = prettyKey key
+    when checkSerialization $ B.startCaching backend
+    symFn <- ASL.simulateFunction cfg p
 
-      ex <- if checkSerialization then do
-        let (serializedSymFn, fenv) = WP.printSymFn' symFn
-        lcfg <- U.mkLogCfg "check serialization"
-        res <- U.withLogCfg lcfg $
-          WP.readSymFn (mkParserConfig backend fenv) serializedSymFn
-        case res of
-          Left err -> do
-            return $ Just $ SimulationDeserializationFailure err serializedSymFn
-          Right (U.SomeSome symFn') -> do
-            logMsgIO opts 1 $ "Serialization/Deserialization succeeded."
-            WN.testEquivSymFn backend symFn symFn' >>= \case
-              WN.ExprUnequal -> do
-                logMsgIO opts 1 $ "Mismatch in deserialized function."
-                return $ Just $ SimulationDeserializationMismatch serializedSymFn symFn symFn'
-              _ -> do
-                logMsgIO opts 1 $ "Deserialized function matches."
-                return Nothing
-        else return Nothing
-      return $ (nm, symFn, ex)
+    ex <- if checkSerialization then do
+      let (serializedSymFn, fenv) = WP.printSymFn' symFn
+      lcfg <- U.mkLogCfg "check serialization"
+      res <- U.withLogCfg lcfg $
+        WP.readSymFn (mkParserConfig backend fenv) serializedSymFn
+      case res of
+        Left err -> do
+          return $ Just $ SimulationDeserializationFailure err serializedSymFn
+        Right (U.SomeSome symFn') -> do
+          logMsgIO opts 1 $ "Serialization/Deserialization succeeded."
+          WN.testEquivSymFn backend symFn symFn' >>= \case
+            WN.ExprUnequal -> do
+              logMsgIO opts 1 $ "Mismatch in deserialized function."
+              return $ Just $ SimulationDeserializationMismatch serializedSymFn symFn symFn'
+            _ -> do
+              logMsgIO opts 1 $ "Deserialized function matches."
+              return Nothing
+      else return Nothing
+    return $ (nm, symFn, ex)
   case mresult of
     Just (_, symFn, mex) -> do
       logMsg 1 "Simulation succeeded!"
-      MSS.modify $ \s -> s { sFormulas = (T.pack $ "uf." ++ prettyKey key, U.SomeSome symFn) : (sFormulas s) }
+      addFormula key symFn
       case mex of
         Just ex -> void $ catchIO key $ X.throw ex
         _ -> return ()
@@ -589,23 +592,19 @@ logMsgIO opts logLvl msg = do
   let verbosity = (optVerbosity opts)
   E.when (verbosity >= logLvl) $ liftIO $ putStrLn (T.unpack msg)
 
+isKeySimFilteredOut :: InstructionIdent -> ElemKey -> SigMapM sym arch Bool
+isKeySimFilteredOut fromInstr key = case key of
+  KeyFun fnm -> do
+    test <- MSS.gets (funSimFilter . optFilters . sOptions)
+    return $ not $ test fromInstr fnm
+  KeyInstr instr -> do
+    test <- MSS.gets (instrSimFilter . optFilters . sOptions)
+    return $ not $ test instr
 
 isFunFilteredOut :: InstructionIdent -> T.Text -> SigMapM sym arch Bool
 isFunFilteredOut inm fnm = do
   test <- MSS.gets (funFilter . optFilters . sOptions)
   return $ not $ test inm fnm
-
-isFunTransFilteredOut :: InstructionIdent -> T.Text -> SigMapM sym arch Bool
-isFunTransFilteredOut inm fnm = do
-  test <- MSS.gets (funTranslationFilter . optFilters . sOptions)
-  skipTranslation <- MSS.gets (optSkipTranslation . sOptions)
-  return $ (not $ test inm fnm) || skipTranslation
-
-isInstrTransFilteredOut :: InstructionIdent -> SigMapM sym arch Bool
-isInstrTransFilteredOut inm = do
-  test <- MSS.gets (instrTranslationFilter . optFilters . sOptions)
-  skipTranslation <- MSS.gets (optSkipTranslation . sOptions)
-  return $ (not $ test inm) || skipTranslation
 
 data ExpectedException =
     RealValueUnsupported
@@ -759,8 +758,8 @@ finalDepsOf deps = Set.map (\(nm, env) -> mkFinalFunctionName env nm) deps
 
 data Filters = Filters { funFilter :: InstructionIdent -> T.Text -> Bool
                        , instrFilter :: InstructionIdent -> Bool
-                       , funTranslationFilter :: InstructionIdent -> T.Text -> Bool
-                       , instrTranslationFilter :: InstructionIdent -> Bool
+                       , funSimFilter :: InstructionIdent -> T.Text -> Bool
+                       , instrSimFilter :: InstructionIdent -> Bool
                        }
 
 data ElemKey =
@@ -839,10 +838,6 @@ catchIO k f = do
     Left r -> return (Just r)
     Right err -> (\_ -> Nothing) <$> collectExcept k err
 
-testInstruction :: TranslatorOptions -> String -> String -> IO (SomeSigMap)
-testInstruction opts instr enc = do
-  runWithFilters (opts { optFilters = translateOnlyInstr (T.pack instr, T.pack enc) })
-
 noFilter :: Filters
 noFilter = Filters
   (\_ -> \_ -> True)
@@ -850,25 +845,46 @@ noFilter = Filters
   (\_ -> \_ -> True)
   (\_ -> True)
 
-translateOnlyInstr :: (T.Text, T.Text) -> Filters
-translateOnlyInstr inm = Filters
-  (\(InstructionIdent nm enc _) -> \_ -> inm == (nm, enc))
-  (\(InstructionIdent nm enc _) -> (nm, enc) == inm)
-  (\(InstructionIdent nm enc _) -> \_ -> inm == (nm, enc))
-  (\(InstructionIdent nm enc _) -> (nm, enc) == inm)
+translateAll :: Filters -> Filters
+translateAll f =
+  f { funFilter = (\_ -> \_ -> True)
+    , instrFilter = (\_ -> True)
+    }
+
+translateOnlyInstr :: (T.Text, T.Text) -> Filters -> Filters
+translateOnlyInstr inm f =
+  f { funFilter = (\(InstructionIdent nm enc _) -> \_ -> inm == (nm, enc))
+    , instrFilter = (\(InstructionIdent nm enc _) -> (nm, enc) == inm)
+    }
 
 
-translateNoArch64 :: Filters
-translateNoArch64 = Filters
-  (\(InstructionIdent _ _ iset) -> \_ -> iset /= AS.A64 )
-  (\(InstructionIdent _ _ iset) -> iset /= AS.A64)
-  (\(InstructionIdent _ _ iset) -> \_ -> iset /= AS.A64)
-  (\(InstructionIdent _ _ iset) -> iset /= AS.A64)
+translateNoArch64 :: Filters -> Filters
+translateNoArch64 f =
+  f { funFilter = (\(InstructionIdent _ _ iset) -> \_ -> iset /= AS.A64 )
+    , instrFilter = (\(InstructionIdent _ _ iset) -> iset /= AS.A64)
+    }
 
 
-translateArch32 :: Filters
-translateArch32 = Filters
-  (\(InstructionIdent _ _ iset) -> \_ -> iset `elem` [AS.A32, AS.T32] )
-  (\(InstructionIdent _ _ iset) -> iset `elem` [AS.A32, AS.T32])
-  (\(InstructionIdent _ _ iset) -> \_ -> iset `elem` [AS.A32, AS.T32])
-  (\(InstructionIdent _ _ iset) -> iset `elem` [AS.A32, AS.T32])
+translateArch32 :: Filters -> Filters
+translateArch32 f =
+  f { funFilter = (\(InstructionIdent _ _ iset) -> \_ -> iset `elem` [AS.A32, AS.T32] )
+    , instrFilter = (\(InstructionIdent _ _ iset) -> iset `elem` [AS.A32, AS.T32])
+    }
+
+simulateAll :: Filters -> Filters
+simulateAll f =
+  f { funSimFilter = \_ _ -> True
+    , instrSimFilter = \_ -> True
+    }
+
+simulateInstructions :: Filters -> Filters
+simulateInstructions f =
+  f { funSimFilter = \_ _ -> False
+    , instrSimFilter = \_ -> True
+    }
+
+simulateNone :: Filters -> Filters
+simulateNone f =
+  f { funSimFilter = \_ _ -> False
+    , instrSimFilter = \_ -> False
+    }
