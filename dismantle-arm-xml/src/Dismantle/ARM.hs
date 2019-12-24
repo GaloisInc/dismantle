@@ -1,5 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Dismantle.ARM
   ( loadXML
@@ -12,13 +14,14 @@ module Dismantle.ARM
   , DT.UnusedBitsPolicy(..)
   ) where
 
+import           Control.Applicative ( (<|>) )
 import qualified Control.Exception as E
-import           Control.Monad (forM)
+import           Control.Monad ( forM, void )
 import qualified Control.Monad.State.Strict as MS
 import           Data.List (stripPrefix, find, nub)
 import           Data.List.Split as LS
 import qualified Data.Map as M
-import           Data.Maybe (catMaybes, fromMaybe)
+import           Data.Maybe (catMaybes, fromMaybe, isJust)
 import qualified Data.Set as S
 import           Data.Void (Void)
 import qualified System.IO.Strict as SIO
@@ -31,7 +34,10 @@ import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import qualified Dismantle.Tablegen.Parser.Types as PT
 
+import Debug.Trace
+
 data XMLException = MissingChildElement String X.Element
+                  | NoMatchingChildElement X.Element
                   | MissingAttr String X.Element
                   | MissingField X.Element String
                   | InvalidChildElement String X.Element
@@ -41,6 +47,7 @@ data XMLException = MissingChildElement String X.Element
                   | InvalidPattern String
                   | MismatchingFieldLengths [Field] [BT.Bit]
                   | InvalidXmlFile String
+                  | CannotParseRegisterInfo String
   deriving Show
 
 instance E.Exception XMLException
@@ -423,6 +430,8 @@ leafMnemonic matchPat leaf = do
 leafOperandDescriptors :: X.Element -> XML ([DT.OperandDescriptor], [Field])
 leafOperandDescriptors leaf = do
   iclass <- leaf_iclass leaf
+  reginfo <- scrapeRegisterInfo iclass
+  traceShowM reginfo
   rd <- case X.findChild (qname "regdiagram") iclass of
     Nothing -> E.throw $ MissingChildElement "regdiagram" iclass
     Just regdiagram -> return regdiagram
@@ -449,8 +458,219 @@ leafOperandDescriptors leaf = do
       return $ Just (desc, fld)
     Nothing -> return Nothing
   return (unzip descs)
+  where
+    scrapeRegisterInfo :: X.Element -> XML [(String, RegisterInfo)]
+    scrapeRegisterInfo iclass = concat <$> do
+      forChildren "encoding" iclass $ \encoding -> do
+        asmtemplate <- getChild "asmtemplate" encoding
+        catMaybes <$> (forChildrenWithAttr "hover" asmtemplate $ \e txt -> do
+          case P.runParser registerInfoParser "" txt of
+            Left err -> do
+              E.throw $ CannotParseRegisterInfo (show err)
+            Right (Just rinfo) -> do
+              case P.runParser registerNameParser "" (X.strContent e) of
+                Left err -> do
+                  E.throw $ CannotParseRegisterInfo (show err)
+                Right name -> do
+                   return $ Just $ (name, rinfo)
+            _ -> return Nothing)
+
+
+forChildrenWithAttr :: String -> X.Element -> (X.Element -> String -> XML a) -> XML [a]
+forChildrenWithAttr aname elt m = catMaybes <$> (forM (X.elChildren elt) $ \child -> do
+  case X.findAttr (qname aname) child of
+    Just v -> Just <$> m child v
+    Nothing -> return Nothing)
+
+forChildren :: String -> X.Element -> (X.Element -> XML a) -> XML [a]
+forChildren name elt m = case X.filterChildrenName ((==) $ qname name) elt of
+  [] -> E.throw $ MissingChildElement name elt
+  children -> mapM m children
 
 type Parser = P.Parsec Void String
+
+data RegisterDirection = Input | Output | InputOutput
+  deriving (Ord, Eq, Show)
+
+data RegisterKind = GPR | SPR | SIMDandFP | Banked
+  deriving (Ord, Eq, Show)
+
+data RegisterMode = Data | Accumulator | Base | Index | NoMode
+  deriving (Ord, Eq, Show)
+
+data RegisterInfo = RegisterInfo RegisterKind RegisterMode RegisterDirection [String]
+  deriving (Ord, Eq, Show)
+
+alternatives :: [Parser a] -> Parser a
+alternatives [] = error "No alternatives"
+alternatives [p] = P.try p
+alternatives (p : rst) = P.try p <|> alternatives rst
+
+optional :: Parser a -> Parser (Maybe a)
+optional p = (Just <$> P.try p) <|> return Nothing
+
+registerNameParser :: Parser String
+registerNameParser = do
+  P.char '<'
+  name <- P.takeWhile1P Nothing (/= '>')
+  P.char '>'
+  return name
+
+-- | Scrape the register tooltip to determine which operands are used
+-- as registers. The parser fails gracefully (returning 'Nothing') if
+-- the tooltip is recognized, but not specifying a register. The parser
+-- fails if the tooltip is unrecognized.
+
+registerInfoParser :: Parser (Maybe RegisterInfo)
+registerInfoParser = do
+  alternatives $
+    (map (\s -> P.chunk s >> return Nothing) knownPrefixes)
+    ++ [knownLiteralPrefix >> return Nothing]
+    ++ [Just <$> realRegisterInfoParser]
+  where
+    bitSizeStrings :: [String]
+    bitSizeStrings =
+      [ "4-bit", "8-bit", "12-bit", "16-bit", "24-bit", "32-bit", "64-bit", "128-bit" ]
+
+    bitSize :: Parser String
+    bitSize = alternatives (map P.chunk bitSizeStrings)
+
+    knownLiteralPrefix :: Parser ()
+    knownLiteralPrefix = do
+      void $ optional $ englishNumber
+      ws
+      void $ optional $ bitSize
+      ws
+      void $ alternatives $
+        [ P.chunk "unsigned"
+        , P.chunk "immediate"
+        ]
+      return ()
+
+    ws :: Parser ()
+    ws = P.takeWhileP Nothing (== ' ') >> return ()
+
+    englishNumber :: Parser Integer
+    englishNumber =
+      alternatives
+        [ P.chunk "First" >> return 1
+        , P.chunk "Second" >> return 2
+        , P.chunk "Third" >> return 3
+        , P.chunk "Fourth" >> return 4
+        , P.chunk "Fifth" >> return 5
+        ]
+
+    realRegisterInfoParser :: Parser (RegisterInfo)
+    realRegisterInfoParser = do
+      void $ optional $ englishNumber
+      ws
+      void $ optional $ bitSize
+      ws
+      (rkind, impliedDirection) <- kindParser
+      ws
+      rmode <- modeParser
+      ws
+      rdir <- directionParser impliedDirection
+      ws
+      fields <- fromMaybe [] <$> (optional $ fieldParser)
+      return (RegisterInfo rkind rmode rdir fields)
+      where
+        kindParser :: Parser (RegisterKind, Maybe RegisterDirection)
+        kindParser =
+          alternatives
+            [ P.chunk "General-purpose" >> return (GPR, Nothing)
+            , P.chunk "general-purpose" >> return (GPR, Nothing)
+            , P.chunk "The Arm source" >> return (GPR, Just Input)
+            , P.chunk "The source general-purpose" >> return (GPR, Just Input)
+            , P.chunk "The destination general-purpose" >> return (GPR, Just Output)
+            , P.chunk "Destination general-purpose" >> return (GPR, Just Output)
+            , P.chunk "Destination Advanced SIMD and floating-point System" >> return (SIMDandFP, Just Output)
+            , P.chunk "Source Advanced SIMD and floating-point System" >> return (SIMDandFP, Just Input)
+            , P.chunk "Special" >> return (SPR, Nothing)
+            , P.chunk "Banked" >> return (Banked, Nothing)
+            , P.chunk "SIMD&FP" >> return (SIMDandFP, Nothing)
+            ]
+
+        modeParser :: Parser RegisterMode
+        modeParser =
+          alternatives
+            [ P.chunk "data" >> return Data
+            , P.chunk "accumulator" >> return Accumulator
+            , P.chunk "base" >> return Base
+            , P.chunk "index" >> return Index
+            , return NoMode
+            ]
+
+        directionParser :: Maybe RegisterDirection -> Parser RegisterDirection
+        directionParser (Just impliedDirection) = P.chunk "register" >> return impliedDirection
+        directionParser Nothing =
+          alternatives
+              [ P.chunk "destination register" >> return Output
+              , P.chunk "register to be transferred" >> return Input
+              , P.chunk "source register" >> return Input
+              , P.chunk "input register" >> return Input
+              , P.chunk "output register" >> return Output
+              , P.chunk "register holding address to be branched to" >> return Input
+              , P.chunk "register to be accessed" >> return Input
+              , P.chunk "register into which the status result of store exclusive is written" >> return Output
+              , P.chunk "destination and source register" >> return InputOutput
+              , P.chunk "register" >> return InputOutput
+              ]
+
+        parseOneField :: Parser String
+        parseOneField = do
+           name <- P.takeWhile1P Nothing (\c -> c /= ':' && c /= '"')
+           void $ optional $ P.char ':'
+           return name
+
+        fieldParser :: Parser [String]
+        fieldParser = do
+          void $ P.takeWhileP Nothing (/= '(')
+          P.char '('
+          ((do
+           P.chunk "field \""
+           fields <- P.many parseOneField
+           P.chunk "\")"
+           return fields) <|> fieldParser)
+
+knownPrefixes :: [String]
+knownPrefixes =
+  [ "See ", "Type of shift", "One of:"
+  , "The immediate", "The label", "Shift amount"
+  , "Specifies the offset", "Specifies the index", "An immediate value"
+  , "Immediate value", "The shift", "Bit number of", "Width of"
+  , "Least significant", "Number of bits", "Rotate amount", "Bit position"
+  , "Optional shift amount", "The address adjusted", "Optional suffix"
+  , "Mode whose Banked SP", "Data type for elements", "Rotation applied to elements"
+  , "Element index", "An optional data size specifier", "Specifies base register writeback"
+  , "Optional data size specifier"
+  , "For the single-precision scalar or double-precision scalar variants: is the optional unsigned immediate byte offset",  "Immediate offset", "Data type for ", "The number of fraction bits in"
+  , "Signed floating-point constant", "The data size", "The scalar", "The data type"
+  , "Endianness to be selected", "Number of mode to change to"
+  , "Sequence of one or more of following, specifying which interrupt mask bits are affected"
+  , "Unsigned immediate", "Data size", "When {syntax{<size>}} =="
+  , "Optional alignment", "Specifies an optional limitation"
+  , "Optional 12-bit", "An optional data type", "Data type"
+  , "Location of extracted result in the concatenation of the operands"
+  , "Constant of specified type"
+  -- FIXME: these seem unused in Arch32?
+  , "System register encoding space"
+  , "Opc1 parameter within the System register encoding space"
+  , "Opc2 parameter within the System register encoding space"
+  , "CRm parameter within the System register encoding space"
+  , "CRn parameter within the System register encoding space"
+  -- FIXME: Vector instructions
+  , "The vectors containing the table"
+  , "The destination vector for a quadword operation"
+  , "List of one or more registers"
+  , "List containing the 64-bit names of SIMD&FP registers"
+  , "List containing the 64-bit names of two SIMD&FP registers"
+  , "List of consecutively numbered 32-bit SIMD&FP registers to be transferred"
+  , "List of consecutively numbered 64-bit SIMD&FP registers to be transferred"
+  , "List containing the 64-bit names of three SIMD&FP registers"
+  , "List containing the 64-bit names of four SIMD&FP registers"
+  , "List containing the single 64-bit SIMD&FP register holding element"
+  ]
 
 nameParser :: Parser String
 nameParser = do
@@ -471,6 +691,11 @@ computePattern (fld : rstFlds) pat fullPat | length pat >= fieldWidth fld = do
       fullPat' = placeAt (31 - fieldHibit fld) fldPat fullPat
   computePattern rstFlds rstPat fullPat'
 computePattern flds pat _ = E.throw $ MismatchingFieldLengths flds pat
+
+getChildWith :: (X.Element -> Bool) -> X.Element -> XML X.Element
+getChildWith f elt = case X.filterChild f elt of
+  Nothing -> E.throw $ NoMatchingChildElement elt
+  Just child -> return child
 
 getChild :: String -> X.Element -> XML X.Element
 getChild name elt = case X.findChild (qname name) elt of
