@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE MultiWayIf #-}
 
 module Dismantle.ARM
   ( loadXML
@@ -16,9 +17,10 @@ module Dismantle.ARM
 
 import           Control.Applicative ( (<|>) )
 import qualified Control.Exception as E
-import           Control.Monad ( forM, void )
+import           Control.Monad ( forM, void, when, unless, foldM )
+import qualified Control.Monad.Fail as MF
 import qualified Control.Monad.State.Strict as MS
-import           Data.List (stripPrefix, find, nub)
+import           Data.List (stripPrefix, find, nub, intersect, (\\) )
 import           Data.List.Split as LS
 import qualified Data.Map as M
 import           Data.Maybe (catMaybes, fromMaybe, isJust)
@@ -40,6 +42,7 @@ data XMLException = MissingChildElement String X.Element
                   | NoMatchingChildElement X.Element
                   | MissingAttr String X.Element
                   | MissingField X.Element String
+                  | MissingFieldForRegister RegisterInfo String
                   | InvalidChildElement String X.Element
                   | InvalidAttr String X.Element
                   | MultipleChildElements String X.Element
@@ -47,7 +50,9 @@ data XMLException = MissingChildElement String X.Element
                   | InvalidPattern String
                   | MismatchingFieldLengths [Field] [BT.Bit]
                   | InvalidXmlFile String
-                  | CannotParseRegisterInfo String
+                  | InnerParserFailure String String
+                  | UnexpectedAttributeValue String String
+
   deriving Show
 
 instance E.Exception XMLException
@@ -61,7 +66,16 @@ newtype XML a = XML (MS.StateT XMLState IO a)
            , Monad
            , MS.MonadState XMLState
            , MS.MonadIO
+           , MF.MonadFail
            )
+
+
+data InstructionLeaf = InstructionLeaf { ileafFull :: X.Element -- entire leaf
+                                       , ileafiClass :: X.Element -- iclass
+                                       , ileafSource :: X.Element -- the leaf in the encodings file
+                                       , ileafSourceFile :: String -- name of the encodings file
+                                       }
+
 
 data NameUsage = NameUsage { numUses :: Int
                            , masksWithNames :: [([BT.Bit], String)]
@@ -69,10 +83,11 @@ data NameUsage = NameUsage { numUses :: Int
 
 data XMLState = XMLState { usedNames :: M.Map String NameUsage
                          , xmlPath :: Maybe FilePath
+                         , xmlSubPath :: Maybe FilePath
                          }
 
 runXML :: XML a -> IO a
-runXML (XML a) = MS.evalStateT a (XMLState M.empty Nothing)
+runXML (XML a) = MS.evalStateT a (XMLState M.empty Nothing Nothing)
 
 qname :: String -> X.QName
 qname str = X.QName str Nothing Nothing
@@ -112,7 +127,9 @@ loadInstrs fltr xmlElement = do
                      X.findAttr (qname "undef") elt /= Just "1" &&
                      X.findAttr (qname "unpred") elt /= Just "1" &&
                      X.findAttr (qname "reserved_nop_hint") elt /= Just "1"
-    descs <- forM leaves $ \leaf -> xmlLeaf matchPattern negPatterns matchFlds leaf
+    descs <- forM leaves $ \leaf -> do
+      instructionLeaf <- load_leaf leaf
+      xmlLeaf matchPattern negPatterns matchFlds instructionLeaf
     return descs
   return $ DT.ISADescriptor { DT.isaInstructions = instrs
                             , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
@@ -291,10 +308,11 @@ xmlLeaf :: [BT.Bit]
            -- ^ list of negative bit patterns to rule out iclass
         -> [[Field]]
            -- ^ list of fields we are case-ing over
-        -> X.Element
+        -> InstructionLeaf
            -- ^ instruction table entry ("leaf")
         -> XML (Maybe DT.InstructionDescriptor)
-xmlLeaf iclassPat iclassNegPats bitflds leaf = do
+xmlLeaf iclassPat iclassNegPats bitflds ileaf = do
+  let leaf = ileafSource ileaf
   -- First, gather all *positive* matches and overlay them over the match pattern
   let pats = X.filterChildren (\c -> X.findAttr (qname "class") c == Just "bitfield") leaf
   fldPats <- forM (zip bitflds pats) $ \(flds, fldElt) -> do
@@ -305,7 +323,8 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
         | otherwise -> case traverse charToBit s of
             Just pat -> return pat
             Nothing -> E.throw $ InvalidPattern s
-  (operands, operandFlds) <- leafOperandDescriptors leaf
+  operandFlds <- leafFields ileaf
+  operands <- leafGetOperands ileaf operandFlds
   -- leafMatchPat <- removeOperands operandFlds <$> computeMatchPattern bitflds
   -- fldPats iclassPat
   leafMatchPat <- computeMatchPattern bitflds fldPats iclassPat
@@ -320,7 +339,7 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
               return $ Just fullAntiPat
             Nothing -> E.throw $ InvalidPattern s
       _ -> return Nothing
-  mMnemonic <- leafMnemonic leafMatchPat leaf
+  mMnemonic <- leafMnemonic leafMatchPat ileaf
   case mMnemonic of
     Just mnemonic -> do
       let desc = DT.InstructionDescriptor
@@ -353,9 +372,106 @@ xmlLeaf iclassPat iclassNegPats bitflds leaf = do
         removeOperands (fld:rstFlds) pat =
           removeOperands rstFlds (placeAt (31 - fieldHibit fld) (replicate (fieldWidth fld) BT.Any) pat)
 
--- | Given a leaf, open up the referenced file to get the corresponding iclass.
-leaf_iclass :: X.Element -> XML X.Element
-leaf_iclass leaf = do
+parseEncList :: String -> [String]
+parseEncList = LS.splitOn ", "
+
+
+
+flatText :: X.Element -> String
+flatText e = concat $ map flatContent (X.elContent e)
+  where
+    flatContent :: X.Content -> String
+    flatContent (X.Text str) = X.cdData $ str
+    flatContent (X.Elem e) = flatText e
+
+parseElement :: Parser a -> X.Element -> XML a
+parseElement p e = do
+  let txt = flatText e
+  case P.runParser p "" txt of
+    Left err -> E.throw $ InnerParserFailure (show err) txt
+    Right a -> return a
+
+
+-- | Build operand descriptors out of the given fields
+leafGetOperands :: InstructionLeaf -> [Field] -> XML [DT.OperandDescriptor]
+leafGetOperands ileaf allfields = do
+  let iclass = ileafiClass ileaf
+
+  targetEncodings <- forChildren "encoding" iclass $ \encoding -> do
+    getAttr "name" encoding
+
+  explanations <- getChild "explanations" (ileafFull ileaf)
+  subPath <- MS.gets xmlSubPath
+  rawRegisters <- catMaybes <$> (forChildren "explanation" explanations $ \explanation -> do
+    encs <- parseEncList <$> getAttr "enclist" explanation
+    if | not $ null $ intersect encs targetEncodings
+       , Just account <- X.findChild (qname "account") explanation -> do
+         para <- getChild "intro" account >>= getChild "para"
+         parseElement registerInfoParser para >>= \case
+           Just rinfo -> do
+             encodedin <- getAttr "encodedin" account
+             symbol <- getChild "symbol" explanation
+             symbolName <- parseElement registerNameParser symbol
+             return $ Just (symbolName, (encodedin, rinfo))
+           _ -> return Nothing
+        | otherwise -> return Nothing)
+
+  let processRegister (symbolName, (encodedin, rinfo)) = do
+        unless (regIndexMode rinfo == IndexBasic || null encodedin) $
+          E.throw $ UnexpectedAttributeValue "encodedin" encodedin
+        case regIndexMode rinfo of
+          IndexVector fieldNames -> do
+            fields <- forM fieldNames $ \fieldName -> do
+              lookupField (ileafSource ileaf) allfields (NameExpString fieldName)
+            return $ (symbolName, rinfo, fields)
+          IndexRegisterOffset baseregister -> do
+            case lookup baseregister rawRegisters of
+              Just rawinfo -> do
+                (_, _, fields) <- processRegister (baseregister, rawinfo)
+                return $ (symbolName, rinfo, fields)
+              Nothing -> E.throw $ MissingField iclass baseregister
+          IndexBasic -> do
+            fieldDescription <- case regMode rinfo of
+              ImplicitEncoding -> do
+                unless (null encodedin || encodedin == symbolName) $ do
+                  E.throw $ UnexpectedAttributeValue "encodedin" encodedin
+                return symbolName
+              _ -> return encodedin
+            exps <- nameExps fieldDescription
+            fields <- forM exps $ lookupField (ileafSource ileaf) allfields
+            return $ (symbolName, rinfo, fields)
+
+  rinfos <- mapM processRegister rawRegisters
+
+  let usedFields = concat $ map (\(_, _, fields) -> fields) rinfos
+  let unusedFields = allfields \\ usedFields
+
+  registerOps <- forM rinfos $ \(name, rinfo, fields) -> do
+    chunks <- forM fields $ \(Field name hibit width) -> do
+      return (DT.IBit (hibit - width + 1), PT.OBit 0, fromIntegral width)
+    opTypeBase <- case regKind rinfo of
+      GPR -> return "GPR"
+      SIMDandFP -> return "SIMDandFP"
+
+    let opType =  DT.OperandType opTypeBase
+
+    return $ DT.OperandDescriptor { DT.opName = name
+                                  , DT.opChunks = chunks
+                                  , DT.opType = opType
+                                  }
+
+  immediates <- forM unusedFields $ \(Field name hibit width) ->
+    return $ DT.OperandDescriptor { DT.opName = name
+                                  , DT.opChunks = [( DT.IBit (hibit - width + 1)
+                                                   , PT.OBit 0
+                                                   , fromIntegral width)]
+                                  , DT.opType = DT.OperandType (printf "Bv%d" width)
+                                  }
+  return $ registerOps ++ immediates
+
+-- | Given a leaf, get the entire referenced file
+load_leaf :: X.Element -> XML InstructionLeaf
+load_leaf leaf = do
   dirPath <- do
     mXmlDir <- MS.gets xmlPath
     case mXmlDir of
@@ -364,6 +480,7 @@ leaf_iclass leaf = do
   filePath <- case X.findAttr (qname "iformfile") leaf of
     Nothing -> E.throw $ MissingAttr "iformfile" leaf
     Just filePath -> return filePath
+  MS.modify $ \s -> s { xmlSubPath = Just filePath }
   let fullFilePath = dirPath ++ "/" ++ filePath
   fileStr <- MS.liftIO $ SIO.readFile fullFilePath
   xmlElement <- case X.parseXMLDoc fileStr of
@@ -392,13 +509,15 @@ leaf_iclass leaf = do
     [iclass] -> return iclass
     [] -> E.throw $ MnemonicError "no matching iclass" leaf
     _  -> E.throw $ MnemonicError "multiple matching iclasses" leaf
-  return iclass
+  return $ InstructionLeaf xmlElement iclass leaf filePath
+
 
 -- | Given a leaf element, open up the referenced file to discover the correct
 -- mnemonic.
-leafMnemonic :: [BT.Bit] -> X.Element -> XML (Maybe String)
-leafMnemonic matchPat leaf = do
-  iclass <- leaf_iclass leaf
+leafMnemonic :: [BT.Bit] -> InstructionLeaf -> XML (Maybe String)
+leafMnemonic matchPat ileaf = do
+  let iclass = ileafiClass ileaf
+  let leaf = ileafSource ileaf
   psname <- case X.findAttr (qname "psname") =<< X.findChild (qname "regdiagram") iclass of
     Just psname -> return psname
     Nothing -> E.throw $ MnemonicError "no psname" leaf
@@ -427,16 +546,14 @@ leafMnemonic matchPat leaf = do
                   MS.modify' $ \s -> s { usedNames = M.insert nm nameUsage' (usedNames s) }
                   return $ Just newName
 
-leafOperandDescriptors :: X.Element -> XML ([DT.OperandDescriptor], [Field])
-leafOperandDescriptors leaf = do
-  iclass <- leaf_iclass leaf
-  reginfo <- scrapeRegisterInfo iclass
-  traceShowM reginfo
+leafFields :: InstructionLeaf -> XML [Field]
+leafFields ileaf = do
+  let iclass = ileafiClass ileaf
   rd <- case X.findChild (qname "regdiagram") iclass of
     Nothing -> E.throw $ MissingChildElement "regdiagram" iclass
     Just regdiagram -> return regdiagram
   let boxes = X.findElements (qname "box") rd
-  descs <- fmap catMaybes $ forM boxes $ \box -> case X.findAttr (qname "usename") box of
+  fmap catMaybes $ forM boxes $ \box -> case X.findAttr (qname "usename") box of
     Just "1" -> do
       name <- case X.findAttr (qname "name") box of
         Nothing -> E.throw $ MissingAttr "name"box
@@ -445,36 +562,13 @@ leafOperandDescriptors leaf = do
         Nothing -> E.throw $ MissingAttr "hibit" box
         Just s -> return $ read s
       let boxWidth = read $ fromMaybe "1" (X.findAttr (qname "width") box)
-          desc = DT.OperandDescriptor { DT.opName = name
-                                      , DT.opChunks = [( DT.IBit (hibit - boxWidth + 1)
-                                                       , PT.OBit 0
-                                                       , fromIntegral boxWidth)]
-                                      , DT.opType = DT.OperandType (printf "Bv%d" boxWidth)
-                                      }
+
           fld = Field { fieldName = name
                       , fieldHibit = hibit
                       , fieldWidth = boxWidth
                       }
-      return $ Just (desc, fld)
+      return $ Just fld
     Nothing -> return Nothing
-  return (unzip descs)
-  where
-    scrapeRegisterInfo :: X.Element -> XML [(String, RegisterInfo)]
-    scrapeRegisterInfo iclass = concat <$> do
-      forChildren "encoding" iclass $ \encoding -> do
-        asmtemplate <- getChild "asmtemplate" encoding
-        catMaybes <$> (forChildrenWithAttr "hover" asmtemplate $ \e txt -> do
-          case P.runParser registerInfoParser "" txt of
-            Left err -> do
-              E.throw $ CannotParseRegisterInfo (show err)
-            Right (Just rinfo) -> do
-              case P.runParser registerNameParser "" (X.strContent e) of
-                Left err -> do
-                  E.throw $ CannotParseRegisterInfo (show err)
-                Right name -> do
-                   return $ Just $ (name, rinfo)
-            _ -> return Nothing)
-
 
 forChildrenWithAttr :: String -> X.Element -> (X.Element -> String -> XML a) -> XML [a]
 forChildrenWithAttr aname elt m = catMaybes <$> (forM (X.elChildren elt) $ \child -> do
@@ -483,31 +577,31 @@ forChildrenWithAttr aname elt m = catMaybes <$> (forM (X.elChildren elt) $ \chil
     Nothing -> return Nothing)
 
 forChildren :: String -> X.Element -> (X.Element -> XML a) -> XML [a]
-forChildren name elt m = case X.filterChildrenName ((==) $ qname name) elt of
-  [] -> E.throw $ MissingChildElement name elt
-  children -> mapM m children
+forChildren name elt m = mapM m $ X.filterChildrenName ((==) $ qname name) elt
 
 type Parser = P.Parsec Void String
 
 data RegisterDirection = Input | Output | InputOutput
   deriving (Ord, Eq, Show)
 
-data RegisterKind = GPR | SPR | SIMDandFP | Banked
+data RegisterKind = GPR | SIMDandFP
   deriving (Ord, Eq, Show)
 
-data RegisterMode = Data | Accumulator | Base | Index | NoMode
+data RegisterMode = Data | Accumulator | Base | Index | ImplicitEncoding | NoMode
   deriving (Ord, Eq, Show)
 
-data RegisterInfo = RegisterInfo RegisterKind RegisterMode RegisterDirection [String]
+data RegisterIndexMode = IndexBasic | IndexRegisterOffset String | IndexVector [String]
   deriving (Ord, Eq, Show)
 
-alternatives :: [Parser a] -> Parser a
-alternatives [] = error "No alternatives"
-alternatives [p] = P.try p
-alternatives (p : rst) = P.try p <|> alternatives rst
+data RegisterInfo =
+  RegisterInfo { regKind :: RegisterKind
+               , regMode :: RegisterMode
+               , regDirection :: RegisterDirection
+               , regIndexMode :: RegisterIndexMode -- for a logical register, how is it computed
+                                                   -- from the operand fields
+               }
+  deriving (Ord, Eq, Show)
 
-optional :: Parser a -> Parser (Maybe a)
-optional p = (Just <$> P.try p) <|> return Nothing
 
 registerNameParser :: Parser String
 registerNameParser = do
@@ -523,77 +617,110 @@ registerNameParser = do
 
 registerInfoParser :: Parser (Maybe RegisterInfo)
 registerInfoParser = do
-  alternatives $
+  P.optional $ encodingPreamble
+  ws
+  dropWords ["Is", "is", "An", "an", "The", "the", "optional", "a ", "Specifies", "If present,"]
+  ws
+  P.choice $
     (map (\s -> P.chunk s >> return Nothing) knownPrefixes)
-    ++ [knownLiteralPrefix >> return Nothing]
+    ++ [P.try knownLiteralPrefix >> return Nothing]
     ++ [Just <$> realRegisterInfoParser]
   where
     bitSizeStrings :: [String]
     bitSizeStrings =
-      [ "4-bit", "8-bit", "12-bit", "16-bit", "24-bit", "32-bit", "64-bit", "128-bit" ]
+      [ "3-bit", "4-bit", "5-bit", "6-bit", "8-bit", "12-bit", "16-bit", "24-bit", "32-bit", "64-bit", "128-bit" ]
+
+    dropWords :: [String] -> Parser ()
+    dropWords words =
+      void $ P.optional $ P.many $
+        (P.choice $ map (\w -> P.chunk w >> return ()) words) <|> (P.char ' ' >> return ())
+
+
+    encodingPreamble :: Parser ()
+    encodingPreamble = do
+      P.chunk "For"
+      P.many $ P.choice $ map P.chunk
+        [ "half-precision"
+        , "single-precision"
+        , "double-precision"
+        , "64-bit SIMD"
+        , "128-bit SIMD"
+        , "offset"
+        , "or"
+        , "the"
+        , "vector"
+        , "scalar"
+        , "post-indexed"
+        , "pre-indexed"
+        , "encoding"
+        , "variant"
+        , "variants"
+        , " "
+        ]
+
+      P.takeWhileP Nothing (/= ':')
+      P.char ':'
+      return ()
 
     bitSize :: Parser String
-    bitSize = alternatives (map P.chunk bitSizeStrings)
+    bitSize = P.choice (map P.chunk bitSizeStrings)
 
     knownLiteralPrefix :: Parser ()
     knownLiteralPrefix = do
-      void $ optional $ englishNumber
+      P.optional $ englishNumber
       ws
-      void $ optional $ bitSize
+      P.optional $ bitSize
       ws
-      void $ alternatives $
-        [ P.chunk "unsigned"
-        , P.chunk "immediate"
-        ]
-      return ()
+      P.optional $ P.chunk "unsigned"
+      ws
+      void $ P.chunk "immediate"
 
     ws :: Parser ()
     ws = P.takeWhileP Nothing (== ' ') >> return ()
 
     englishNumber :: Parser Integer
     englishNumber =
-      alternatives
-        [ P.chunk "First" >> return 1
-        , P.chunk "Second" >> return 2
-        , P.chunk "Third" >> return 3
-        , P.chunk "Fourth" >> return 4
-        , P.chunk "Fifth" >> return 5
+      P.choice
+        [ P.chunk "first" >> return 1
+        , P.chunk "second" >> return 2
+        , P.chunk "third" >> return 3
+        , P.chunk "fourth" >> return 4
+        , P.chunk "fifth" >> return 5
         ]
 
     realRegisterInfoParser :: Parser (RegisterInfo)
     realRegisterInfoParser = do
-      void $ optional $ englishNumber
+      P.optional $ englishNumber
       ws
-      void $ optional $ bitSize
+      P.optional $ bitSize
       ws
-      (rkind, impliedDirection) <- kindParser
+      P.optional $ P.chunk "name of the"
       ws
-      rmode <- modeParser
+      P.optional $ englishNumber
+      ws
+      (rkind, impliedDirection, impliedMode) <- kindParser
+      ws
+      rmode <- modeParser impliedMode
       ws
       rdir <- directionParser impliedDirection
       ws
-      fields <- fromMaybe [] <$> (optional $ fieldParser)
-      return (RegisterInfo rkind rmode rdir fields)
+      indexMode <- indexModeParser rkind
+      return (RegisterInfo rkind rmode rdir indexMode)
       where
-        kindParser :: Parser (RegisterKind, Maybe RegisterDirection)
+        kindParser :: Parser (RegisterKind, Maybe RegisterDirection, Maybe RegisterMode)
         kindParser =
-          alternatives
-            [ P.chunk "General-purpose" >> return (GPR, Nothing)
-            , P.chunk "general-purpose" >> return (GPR, Nothing)
-            , P.chunk "The Arm source" >> return (GPR, Just Input)
-            , P.chunk "The source general-purpose" >> return (GPR, Just Input)
-            , P.chunk "The destination general-purpose" >> return (GPR, Just Output)
-            , P.chunk "Destination general-purpose" >> return (GPR, Just Output)
-            , P.chunk "Destination Advanced SIMD and floating-point System" >> return (SIMDandFP, Just Output)
-            , P.chunk "Source Advanced SIMD and floating-point System" >> return (SIMDandFP, Just Input)
-            , P.chunk "Special" >> return (SPR, Nothing)
-            , P.chunk "Banked" >> return (Banked, Nothing)
-            , P.chunk "SIMD&FP" >> return (SIMDandFP, Nothing)
+          P.choice
+            [ P.chunk "general-purpose" >> return (GPR, Nothing, Nothing)
+            , P.chunk "Arm source" >> return (GPR, Just Input, Just ImplicitEncoding)
+            , P.chunk "source general-purpose" >> return (GPR, Just Input, Just ImplicitEncoding)
+            , P.chunk "destination general-purpose" >> return (GPR, Just Output, Just ImplicitEncoding)
+            , P.chunk "SIMD&FP" >> return (SIMDandFP, Nothing, Nothing)
             ]
 
-        modeParser :: Parser RegisterMode
-        modeParser =
-          alternatives
+        modeParser :: Maybe RegisterMode -> Parser RegisterMode
+        modeParser (Just impliedMode) = return impliedMode
+        modeParser Nothing =
+          P.choice
             [ P.chunk "data" >> return Data
             , P.chunk "accumulator" >> return Accumulator
             , P.chunk "base" >> return Base
@@ -604,7 +731,7 @@ registerInfoParser = do
         directionParser :: Maybe RegisterDirection -> Parser RegisterDirection
         directionParser (Just impliedDirection) = P.chunk "register" >> return impliedDirection
         directionParser Nothing =
-          alternatives
+          P.choice
               [ P.chunk "destination register" >> return Output
               , P.chunk "register to be transferred" >> return Input
               , P.chunk "source register" >> return Input
@@ -614,62 +741,87 @@ registerInfoParser = do
               , P.chunk "register to be accessed" >> return Input
               , P.chunk "register into which the status result of store exclusive is written" >> return Output
               , P.chunk "destination and source register" >> return InputOutput
+              , P.chunk "destination and second source register" >> return InputOutput
+              , P.chunk "source and destination register" >> return InputOutput
               , P.chunk "register" >> return InputOutput
               ]
+        indexModeParser :: RegisterKind -> Parser RegisterIndexMode
+        indexModeParser SIMDandFP = do
+          P.takeWhileP Nothing (/= '.')
+          P.choice
+            [ vectorIndexModeParser
+            , oneOffsetIndexModeParser
+            , return IndexBasic
+            ]
+        indexModeParser _ = return IndexBasic
 
-        parseOneField :: Parser String
-        parseOneField = do
-           name <- P.takeWhile1P Nothing (\c -> c /= ':' && c /= '"')
-           void $ optional $ P.char ':'
-           return name
+        oneOffsetIndexModeParser :: Parser RegisterIndexMode
+        oneOffsetIndexModeParser = do
+          P.chunk ". This is the next SIMD&FP register after <"
+          nm <- P.takeWhile1P Nothing (/= '>')
+          return $ IndexRegisterOffset nm
 
-        fieldParser :: Parser [String]
-        fieldParser = do
-          void $ P.takeWhileP Nothing (/= '(')
-          P.char '('
-          ((do
-           P.chunk "field \""
-           fields <- P.many parseOneField
-           P.chunk "\")"
-           return fields) <|> fieldParser)
+        vectorIndexModeParser :: Parser RegisterIndexMode
+        vectorIndexModeParser = do
+          P.chunk ". If <dt> is "
+          P.takeWhileP Nothing (/= ',')
+          P.chunk ", Dm is restricted to D0-D7. Dm is encoded in \"Vm<2:0>\", and x is encoded in \"M:Vm<3>\". If <dt> is "
+          P.takeWhileP Nothing (/= ',')
+          P.chunk ", Dm is restricted to D0-D15. Dm is encoded in \"Vm\", and x is encoded in \"M\"."
+          return $ IndexVector ["size", "M", "Vm"]
+
 
 knownPrefixes :: [String]
 knownPrefixes =
-  [ "See ", "Type of shift", "One of:"
-  , "The immediate", "The label", "Shift amount"
-  , "Specifies the offset", "Specifies the index", "An immediate value"
-  , "Immediate value", "The shift", "Bit number of", "Width of"
-  , "Least significant", "Number of bits", "Rotate amount", "Bit position"
-  , "Optional shift amount", "The address adjusted", "Optional suffix"
-  , "Mode whose Banked SP", "Data type for elements", "Rotation applied to elements"
-  , "Element index", "An optional data size specifier", "Specifies base register writeback"
-  , "Optional data size specifier"
-  , "For the single-precision scalar or double-precision scalar variants: is the optional unsigned immediate byte offset",  "Immediate offset", "Data type for ", "The number of fraction bits in"
-  , "Signed floating-point constant", "The data size", "The scalar", "The data type"
-  , "Endianness to be selected", "Number of mode to change to"
-  , "Sequence of one or more of following, specifying which interrupt mask bits are affected"
-  , "Unsigned immediate", "Data size", "When {syntax{<size>}} =="
-  , "Optional alignment", "Specifies an optional limitation"
-  , "Optional 12-bit", "An optional data type", "Data type"
-  , "Location of extracted result in the concatenation of the operands"
-  , "Constant of specified type"
-  -- FIXME: these seem unused in Arch32?
-  , "System register encoding space"
-  , "Opc1 parameter within the System register encoding space"
-  , "Opc2 parameter within the System register encoding space"
+  [ "shift amount", "one of:", "label of", "bit number", "width of the"
+  , "shift to apply", "number of the", "destination vector for a doubleword operation"
+  , "sequence of one or more of the following", "When <size> ==", "data type"
+  , "constant of the specified type"
+  , "location of the extracted result in the concatenation of the operands"
+  , "alignment", "suffix"
+  , "See Standard assembler syntax fields"
+  , "see Standard assembler syntax fields"
+  , "base register writeback"
+  , "limitation on the barrier operation"
+  , "stack pointer"
+  , "index register is added to or subtracted from the base register"
+  , "index register is added to the base register"
+  , "offset is added to the base register"
+  , "positive unsigned immediate byte offset"
+  , "program label"
+  , "condition"
+  , "size of the"
+  ]
+  ++
+  [ "least significant", "number of bits", "rotate amount", "bit position"
+  , "optional shift amount", "address adjusted", "optional suffix"
+  , "mode whose banked sp", "rotation applied to elements"
+  , "element index"
+  , "immediate offset", "number of fraction bits in"
+  , "signed floating-point constant", "data size", "scalar"
+  , "endianness to be selected", "number of mode to change to"
+  , "sequence of one or more of following, specifying which interrupt mask bits are affected"
+  , "unsigned immediate"
+  -- fixme: these seem unused in arch32?
+  , "system register encoding space"
+  , "opc1 parameter within the System register encoding space"
+  , "opc2 parameter within the System register encoding space"
   , "CRm parameter within the System register encoding space"
   , "CRn parameter within the System register encoding space"
-  -- FIXME: Vector instructions
-  , "The vectors containing the table"
-  , "The destination vector for a quadword operation"
-  , "List of one or more registers"
-  , "List containing the 64-bit names of SIMD&FP registers"
-  , "List containing the 64-bit names of two SIMD&FP registers"
-  , "List of consecutively numbered 32-bit SIMD&FP registers to be transferred"
-  , "List of consecutively numbered 64-bit SIMD&FP registers to be transferred"
-  , "List containing the 64-bit names of three SIMD&FP registers"
-  , "List containing the 64-bit names of four SIMD&FP registers"
-  , "List containing the single 64-bit SIMD&FP register holding element"
+  -- fixme: vector instructions
+  , "vectors containing the table"
+  , "destination vector for a quadword operation"
+  , "list of one or more registers"
+  , "list of consecutively numbered 32-bit SIMD&FP registers to be transferred"
+  , "list of consecutively numbered 64-bit SIMD&FP registers to be transferred"
+  , "list containing the 64-bit names of the SIMD&FP registers"
+  , "list containing the 64-bit names of two SIMD&FP registers"
+  , "list containing the 64-bit names of three SIMD&FP registers"
+  , "list containing the 64-bit names of four SIMD&FP registers"
+  , "list containing the single 64-bit name of the SIMD&FP register holding the element"
+  , "list containing the 64-bit names of the two SIMD&FP registers holding the element"
+  , "list containing the 64-bit names of the three SIMD&FP registers holding the element"
+  , "list containing the 64-bit names of the four SIMD&FP registers holding the element"
   ]
 
 nameParser :: Parser String
