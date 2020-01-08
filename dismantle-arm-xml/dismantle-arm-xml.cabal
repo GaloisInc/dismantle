@@ -36,9 +36,11 @@ library
                        megaparsec,
                        mtl,
                        parameterized-utils,
+                       pretty,
                        split,
                        strict,
                        text,
+                       transformers,
                        template-haskell,
                        xml
   hs-source-dirs:      src

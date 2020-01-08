@@ -3,6 +3,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveTraversable #-}
 
 module Dismantle.ARM
   ( loadXML
@@ -19,7 +21,10 @@ import           Control.Applicative ( (<|>) )
 import qualified Control.Exception as E
 import           Control.Monad ( forM, void, when, unless, foldM )
 import qualified Control.Monad.Fail as MF
+import           Control.Monad.Trans ( lift )
+import qualified Control.Monad.Trans.Reader as R
 import qualified Control.Monad.State.Strict as MS
+import           Data.Either ( partitionEithers )
 import           Data.List (stripPrefix, find, nub, intersect, (\\) )
 import           Data.List.Split as LS
 import qualified Data.Map as M
@@ -41,6 +46,7 @@ import Debug.Trace
 data XMLException = MissingChildElement String X.Element
                   | NoMatchingChildElement X.Element
                   | MissingAttr String X.Element
+                  | MissingEncoding String X.Element
                   | MissingField X.Element String
                   | MissingFieldForRegister RegisterInfo String
                   | InvalidChildElement String X.Element
@@ -52,6 +58,9 @@ data XMLException = MissingChildElement String X.Element
                   | InvalidXmlFile String
                   | InnerParserFailure String String
                   | UnexpectedAttributeValue String String
+                  | InvalidRegisterInfo RegisterInfo [Field]
+                  | InvalidField X.Element
+                  | BitdiffsParseError X.Element String String
 
   deriving Show
 
@@ -75,6 +84,7 @@ data InstructionLeaf = InstructionLeaf { ileafFull :: X.Element -- entire leaf
                                        , ileafSource :: X.Element -- the leaf in the encodings file
                                        , ileafSourceFile :: String -- name of the encodings file
                                        }
+  deriving Show
 
 
 data NameUsage = NameUsage { numUses :: Int
@@ -116,7 +126,7 @@ loadInstrs :: (X.Element -> Bool) -> X.Element -> XML DT.ISADescriptor
 loadInstrs fltr xmlElement = do
   -- format as instructions
   let iclass_sects = filter fltr (X.findElements (qname "iclass_sect") xmlElement)
-  instrs <- fmap (catMaybes . concat) $ forM iclass_sects $ \iclass_sect -> do
+  instrs <- fmap (concat . concat) $ forM iclass_sects $ \iclass_sect -> do
     fields <- iclassFields iclass_sect
     matchPattern <- iclassMatchPattern iclass_sect
     matchFlds <- iclassMatchFields fields iclass_sect
@@ -127,10 +137,12 @@ loadInstrs fltr xmlElement = do
                      X.findAttr (qname "undef") elt /= Just "1" &&
                      X.findAttr (qname "unpred") elt /= Just "1" &&
                      X.findAttr (qname "reserved_nop_hint") elt /= Just "1"
-    descs <- forM leaves $ \leaf -> do
-      instructionLeaf <- load_leaf leaf
-      xmlLeaf matchPattern negPatterns matchFlds instructionLeaf
-    return descs
+    forM leaves $ \leaf -> do
+      (encodingNames, instructionLeaf) <- load_leaf leaf
+      operandFlds <- leafFields instructionLeaf
+
+      encodings <- mapM (leafGetEncoding instructionLeaf operandFlds) encodingNames
+      xmlLeaf matchPattern negPatterns matchFlds instructionLeaf operandFlds encodings
   return $ DT.ISADescriptor { DT.isaInstructions = instrs
                             , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
                             , DT.isaErrors = []
@@ -138,6 +150,19 @@ loadInstrs fltr xmlElement = do
 
 instrOperandTypes :: DT.InstructionDescriptor -> [DT.OperandType]
 instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutputOperands idesc)
+
+getBoxMask :: X.Element -> XML [BT.Bit]
+getBoxMask box = do
+  let cs = X.findChildren (qname "c") box
+  fmap concat $ forM cs $ \c -> do
+    let colspan = maybe 1 read (X.findAttr (qname "colspan") c)
+    case X.strContent c of
+      "1" -> return $ [BT.ExpectedBit True]
+      "0" -> return $ [BT.ExpectedBit False]
+      -- If we see (1) or (0), interpret it as "any"
+      -- "(1)" -> return $ [BT.ExpectedBit True]
+      -- "(0)" -> return $ [BT.ExpectedBit False]
+      _ -> return $ replicate colspan BT.Any
 
 -- | Given an iclass_sect, process the regdiagram child to obtain a bitpattern to
 -- match.
@@ -148,15 +173,7 @@ iclassMatchPattern iclass_sect = do
   mask <- fmap concat $ forM boxes $ \box -> do
     let width = maybe 1 read (X.findAttr (qname "width") box)
         cs = X.findChildren (qname "c") box
-    boxMask <- fmap concat $ forM cs $ \c -> do
-      let colspan = maybe 1 read (X.findAttr (qname "colspan") c)
-      case X.strContent c of
-        "1" -> return $ [BT.ExpectedBit True]
-        "0" -> return $ [BT.ExpectedBit False]
-        -- If we see (1) or (0), interpret it as "any"
-        -- "(1)" -> return $ [BT.ExpectedBit True]
-        -- "(0)" -> return $ [BT.ExpectedBit False]
-        _ -> return $ replicate colspan BT.Any
+    boxMask <- getBoxMask box
     if length boxMask == width
       then return boxMask
       else E.throw $ InvalidAttr "width" box
@@ -248,7 +265,7 @@ nameExps ns =
     Just ns -> pure ns
 
 nameExpsParser :: P.Parsec Void String [NameExp]
-nameExpsParser = P.sepBy nameExpParser (P.single ':')
+nameExpsParser = P.sepBy1 nameExpParser (P.single ':')
 
 nameExpParser :: P.Parsec Void String NameExp
 nameExpParser = do
@@ -270,8 +287,8 @@ nameExpParser = do
       P.single '>'
       pure (hi, lo)
 
-    parseName = P.many (P.alphaNumChar P.<|> P.single '_')
-    parseInt = read <$> P.many P.digitChar
+    parseName = P.some (P.alphaNumChar P.<|> P.single '_')
+    parseInt = read <$> P.some P.digitChar
 
 data NameExp =
     NameExpString String
@@ -310,8 +327,12 @@ xmlLeaf :: [BT.Bit]
            -- ^ list of fields we are case-ing over
         -> InstructionLeaf
            -- ^ instruction table entry ("leaf")
-        -> XML (Maybe DT.InstructionDescriptor)
-xmlLeaf iclassPat iclassNegPats bitflds ileaf = do
+        -> [Field]
+           -- ^ fields specific to this leaf
+        -> [Encoding]
+           -- ^ constraints for this encoding
+        -> XML [DT.InstructionDescriptor]
+xmlLeaf iclassPat iclassNegPats bitflds ileaf operandFlds encodings = do
   let leaf = ileafSource ileaf
   -- First, gather all *positive* matches and overlay them over the match pattern
   let pats = X.filterChildren (\c -> X.findAttr (qname "class") c == Just "bitfield") leaf
@@ -323,13 +344,14 @@ xmlLeaf iclassPat iclassNegPats bitflds ileaf = do
         | otherwise -> case traverse charToBit s of
             Just pat -> return pat
             Nothing -> E.throw $ InvalidPattern s
-  operandFlds <- leafFields ileaf
-  operands <- leafGetOperands ileaf operandFlds
   -- leafMatchPat <- removeOperands operandFlds <$> computeMatchPattern bitflds
   -- fldPats iclassPat
   leafMatchPat <- computeMatchPattern bitflds fldPats iclassPat
   -- Next, gather all *negative* matches and gather them into individual negative
   -- patterns
+  --leafMnemonic leafMatchPat ileaf >>= \case
+    --Just mnemonic -> do
+  namespace <- leafMnemonic' ileaf
   leafNegPats <- fmap catMaybes $ forM (zip bitflds pats) $ \(flds, fldElt) -> do
     let fldWidth = sum (fieldWidth <$> flds)
     case X.strContent fldElt of
@@ -339,26 +361,28 @@ xmlLeaf iclassPat iclassNegPats bitflds ileaf = do
               return $ Just fullAntiPat
             Nothing -> E.throw $ InvalidPattern s
       _ -> return Nothing
-  mMnemonic <- leafMnemonic leafMatchPat ileaf
-  case mMnemonic of
-    Just mnemonic -> do
-      let desc = DT.InstructionDescriptor
-            { DT.idMask = concat (reverse (LS.chunksOf 8 leafMatchPat))
-            , DT.idNegMasks = (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats)
-            -- { DT.idMask = leafMatchPat -- concat (reverse (LS.chunksOf 8 leafMatchPat))
-            -- , DT.idNegMasks = iclassNegPats ++ leafNegPats -- (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats)
-            , DT.idMnemonic = mnemonic
-            , DT.idInputOperands = operands
-            , DT.idOutputOperands = []
-            , DT.idNamespace = ""
-            , DT.idDecoderNamespace = ""
-            , DT.idAsmString = ""
-            , DT.idPseudo = False
-            , DT.idDefaultPrettyVariableValues = []
-            , DT.idPrettyVariableOverrides = []
-            }
-      return $ Just desc
-    Nothing -> return Nothing
+  forM encodings $ \encoding -> do
+    operands <- leafGetOperands ileaf encoding operandFlds
+    (encodingMatchPat, encodingNegPats) <- deriveConstrainedMasks (encConstraints encoding) leafMatchPat
+    -- let encodingMnemonic = printf "%s_%s" mnemonic (encName encoding)
+
+    let desc = DT.InstructionDescriptor
+          { DT.idMask = concat (reverse (LS.chunksOf 8 encodingMatchPat))
+          , DT.idNegMasks = (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats ++ encodingNegPats)
+          -- { DT.idMask = leafMatchPat -- concat (reverse (LS.chunksOf 8 leafMatchPat))
+          -- , DT.idNegMasks = iclassNegPats ++ leafNegPats -- (concat . reverse . LS.chunksOf 8) <$> nub (iclassNegPats ++ leafNegPats)
+          , DT.idMnemonic = encName encoding
+          , DT.idInputOperands = operands
+          , DT.idOutputOperands = []
+          , DT.idNamespace = namespace
+          , DT.idDecoderNamespace = ""
+          , DT.idAsmString = ""
+          , DT.idPseudo = False
+          , DT.idDefaultPrettyVariableValues = []
+          , DT.idPrettyVariableOverrides = []
+          }
+    return $ desc
+    --Nothing -> return Nothing
   -- FIXME: below is a fold, so we should be able to rewrite it as such
   where computeMatchPattern :: [[Field]] -> [[BT.Bit]] -> [BT.Bit] -> XML [BT.Bit]
         computeMatchPattern [] [] fullPat = return fullPat
@@ -392,19 +416,135 @@ parseElement p e = do
     Right a -> return a
 
 
--- | Build operand descriptors out of the given fields
-leafGetOperands :: InstructionLeaf -> [Field] -> XML [DT.OperandDescriptor]
-leafGetOperands ileaf allfields = do
-  let iclass = ileafiClass ileaf
 
-  targetEncodings <- forChildren "encoding" iclass $ \encoding -> do
-    getAttr "name" encoding
+data PropTree a = PropLeaf a | PropNegate (PropTree a) | PropList [PropTree a]
+  deriving (Functor, Foldable, Traversable)
+
+
+splitPropTree :: PropTree (Either a b) -> (PropTree a, PropTree b)
+splitPropTree tree = case tree of
+  PropLeaf e -> case e of
+    Left a -> (PropLeaf a, PropList [])
+    Right b -> (PropList [], PropLeaf b)
+  PropList es ->
+    let (as, bs) = unzip $ map splitPropTree es
+    in (PropList as, PropList bs)
+  PropNegate p ->
+    let (a, b) = splitPropTree p
+    in (PropNegate a, PropNegate b)
+
+flatPropTree :: PropTree a -> [a]
+flatPropTree tree = case tree of
+  PropLeaf a -> [a]
+  PropList as -> concat $ map flatPropTree as
+  PropNegate _ -> error "Cannot flatten proptree with negations"
+
+splitClauses :: PropTree a -> ([a], [[a]])
+splitClauses tree =
+  let
+    (pos, rest) = splitPropTree $ collectWhilePositive tree
+  in (flatPropTree pos, collectNegatedClauses rest)
+  where
+    collectWhilePositive :: PropTree a -> PropTree (Either a a)
+    collectWhilePositive tree = case tree of
+      PropLeaf a -> PropLeaf $ Left a
+      PropList as -> PropList $ map collectWhilePositive as
+      PropNegate p -> fmap Right p
+
+    collectNegatedClauses :: PropTree a -> [[a]]
+    collectNegatedClauses tree = case tree of
+      PropLeaf a -> [[a]]
+      PropList as -> map flatPropTree as
+      PropNegate _ -> error "Double negation unsupported"
+
+
+deriveConstrainedMasks :: PropTree (Field, [BT.Bit]) -> [BT.Bit] -> XML ([BT.Bit], [[BT.Bit]])
+deriveConstrainedMasks constraints mask = do
+  let (positiveConstraints, negativeConstraints) = splitClauses constraints
+
+  let (positiveFields, positiveMasks) = unzip positiveConstraints
+  mask' <- computePattern positiveFields (concat positiveMasks) mask
+
+  negMasks <- forM negativeConstraints $ \negConstraint -> do
+    let (negFields, negMasks) = unzip negConstraint
+    computePattern negFields (concat negMasks) (replicate 32 BT.Any)
+
+  return (mask', negMasks)
+
+fieldConstraintsParser :: Parser (PropTree (String, [BT.Bit]))
+fieldConstraintsParser = outerParser
+  where
+
+    outerParser :: Parser (PropTree (String, [BT.Bit]))
+    outerParser = do
+      PropList <$> P.sepBy1 combinedParser ((void $ P.char ';') <|> (void $ P.chunk "&&"))
+
+    combinedParser :: Parser (PropTree (String, [BT.Bit]))
+    combinedParser = do
+      P.takeWhileP Nothing (== ' ')
+      P.choice [ negParser
+               , P.between (P.char '(') (P.char ')') outerParser
+               , atomParser
+               ]
+
+    negParser :: Parser (PropTree (String, [BT.Bit]))
+    negParser = do
+      P.char '!'
+      P.between (P.char '(') (P.char ')') (PropNegate <$> outerParser)
+
+    atomParser :: Parser (PropTree (String, [BT.Bit]))
+    atomParser = do
+      name <- P.takeWhile1P Nothing (/= ' ')
+      negate <- (P.chunk " == " >> return False) <|> (P.chunk " != " >> return True)
+      bits <- P.some bitParser
+      P.takeWhileP Nothing (== ' ')
+      if negate
+        then return $ PropNegate $ PropLeaf (name, bits)
+        else return $ PropLeaf (name, bits)
+
+    bitParser :: Parser BT.Bit
+    bitParser = do
+      P.choice
+        [ P.char '0' >> return (BT.ExpectedBit False)
+        , P.char '1' >> return (BT.ExpectedBit True)
+        , P.char 'x' >> return BT.Any
+        ]
+-- | A specialization of an instruction given a set of flags
+data Encoding = Encoding { encName :: String
+                         , encConstraints :: PropTree (Field, [BT.Bit])
+                         }
+
+
+leafGetEncoding :: InstructionLeaf -> [Field] -> String -> XML Encoding
+leafGetEncoding ileaf fields encName = do
+  let iclass = ileafiClass ileaf
+  let allencodings = X.filterChildrenName ((==) $ qname "encoding") iclass
+
+  encoding <- case find (\e -> X.findAttr (qname "name") e == Just encName) allencodings of
+    Just encoding -> return encoding
+    Nothing -> E.throw $ MissingEncoding encName iclass
+
+  case X.findAttr (qname "bitdiffs") encoding of
+    Nothing -> return $ Encoding encName (PropList [])
+    Just bitdiffs ->
+      case P.runParser fieldConstraintsParser "" bitdiffs of
+        Left err -> E.throw $ BitdiffsParseError (ileafSource ileaf) bitdiffs (show err)
+        Right parsedConstraints -> do
+          constraints <- forM parsedConstraints $ \(nm, mask) -> do
+            field <- lookupField (ileafSource ileaf) fields (NameExpString nm)
+            return $ (field, mask)
+          return $ Encoding encName constraints
+
+-- | Build operand descriptors out of the given fields
+leafGetOperands :: InstructionLeaf -> Encoding -> [Field] -> XML [DT.OperandDescriptor]
+leafGetOperands ileaf encoding allfields = do
+  let iclass = ileafiClass ileaf
 
   explanations <- getChild "explanations" (ileafFull ileaf)
   subPath <- MS.gets xmlSubPath
   rawRegisters <- catMaybes <$> (forChildren "explanation" explanations $ \explanation -> do
     encs <- parseEncList <$> getAttr "enclist" explanation
-    if | not $ null $ intersect encs targetEncodings
+    if | encName encoding `elem` encs
        , Just account <- X.findChild (qname "account") explanation -> do
          para <- getChild "intro" account >>= getChild "para"
          parseElement registerInfoParser para >>= \case
@@ -447,13 +587,20 @@ leafGetOperands ileaf allfields = do
   let unusedFields = allfields \\ usedFields
 
   registerOps <- forM rinfos $ \(name, rinfo, fields) -> do
+    let totalBits = sum $ map (\(Field _ _ width) -> width) fields
     chunks <- forM fields $ \(Field name hibit width) -> do
       return (DT.IBit (hibit - width + 1), PT.OBit 0, fromIntegral width)
-    opTypeBase <- case regKind rinfo of
-      GPR -> return "GPR"
-      SIMDandFP -> return "SIMDandFP"
-
-    let opType =  DT.OperandType opTypeBase
+    opType <- DT.OperandType <$> case (regKind rinfo, regIndexMode rinfo) of
+      (GPR, IndexBasic) | totalBits == 4 -> return "GPR4"
+      (GPR, IndexBasic) | totalBits == 3 -> return "GPR3"
+      (GPR, IndexRegisterOffset _) | totalBits == 4 -> return "GPR4_1"
+      (SIMDandFP, IndexBasic) | totalBits == 5 -> return "SIMD5"
+      (SIMDandFP, IndexBasic) | totalBits == 4 -> return "SIMD4"
+      (SIMDandFP, IndexBasic) | totalBits == 3 -> return "SIMD3"
+      (SIMDandFP, IndexBasic) | totalBits == 2 -> return "SIMD2"
+      (SIMDandFP, IndexRegisterOffset _) | totalBits == 5 -> return "SIMD5_1"
+      (SIMDandFP, IndexVector _) | totalBits == 7 -> return "SIMD7"
+      _ -> E.throw $ InvalidRegisterInfo rinfo fields
 
     return $ DT.OperandDescriptor { DT.opName = name
                                   , DT.opChunks = chunks
@@ -470,7 +617,7 @@ leafGetOperands ileaf allfields = do
   return $ registerOps ++ immediates
 
 -- | Given a leaf, get the entire referenced file
-load_leaf :: X.Element -> XML InstructionLeaf
+load_leaf :: X.Element -> XML ([String],  InstructionLeaf)
 load_leaf leaf = do
   dirPath <- do
     mXmlDir <- MS.gets xmlPath
@@ -486,31 +633,63 @@ load_leaf leaf = do
   xmlElement <- case X.parseXMLDoc fileStr of
     Just c -> return c
     Nothing -> E.throw $ InvalidXmlFile fullFilePath
-  encName <- case X.findAttr (qname "encname") leaf of
-    Just encName -> return encName
-    Nothing -> do
-      iformname <- case X.filterChild (\c -> X.findAttr (qname "class") c == Just "iformname") leaf of
-        Nothing -> E.throw $ MnemonicError "no iformname" leaf
-        Just iformnameElt -> case X.findAttr (qname "iformid") iformnameElt of
-          Nothing -> E.throw $ MnemonicError "no iformid" leaf
-          Just iformname -> return iformname
-      label <- case X.findAttr (qname "label") leaf of
-        Nothing -> E.throw $ MnemonicError "no label" leaf
-        Just label -> return label
-      return $ iformname ++ "_" ++ label
   let iclasses = X.findElements (qname "iclass") xmlElement
-      matchingIclass iclass = let encodingElts = X.findChildren (qname "encoding") iclass
-                                  correctEncoding encElt =
-                                    X.findAttr (qname "name") encElt == Just encName
-                                  matchingLabel = X.findAttr (qname "name") iclass ==
-                                                  X.findAttr (qname "label") leaf
-                              in any correctEncoding encodingElts || matchingLabel
-  iclass <- case filter matchingIclass iclasses of
-    [iclass] -> return iclass
-    [] -> E.throw $ MnemonicError "no matching iclass" leaf
-    _  -> E.throw $ MnemonicError "multiple matching iclasses" leaf
-  return $ InstructionLeaf xmlElement iclass leaf filePath
+  (encodings, iclass) <- case X.findAttr (qname "encname") leaf of
+    Just encName -> do
+      let matchingIclass iclass = let encodingElts = X.findChildren (qname "encoding") iclass
+                                      correctEncoding encElt =
+                                         X.findAttr (qname "name") encElt == Just encName
+                                  in any correctEncoding encodingElts
+      case filter matchingIclass iclasses of
+        [iclass] -> return ([encName], iclass)
+        _ -> E.throw $ MnemonicError "non-unique matching iclass" leaf
+    Nothing -> do
+      encId <- getAttr "encoding" leaf
+      case filter (\iclass -> X.findAttr (qname "id") iclass == Just encId) iclasses of
+        [iclass] -> do
+          encodings <- forChildren "encoding" iclass $ getAttr "name"
+          when (null encodings) $ do
+            E.throw $ MnemonicError "empty encodings for iclass" leaf
+          return (encodings, iclass)
+        _ -> E.throw $ MnemonicError "non-unique matching iclass" leaf
 
+
+
+    -- Nothing -> do
+    --   iformname <- case X.filterChild (\c -> X.findAttr (qname "class") c == Just "iformname") leaf of
+    --     Nothing -> E.throw $ MnemonicError "no iformname" leaf
+    --     Just iformnameElt -> case X.findAttr (qname "iformid") iformnameElt of
+    --       Nothing -> E.throw $ MnemonicError "no iformid" leaf
+    --       Just iformname -> return iformname
+    --   label <- case X.findAttr (qname "label") leaf of
+    --     Nothing -> E.throw $ MnemonicError "no label" leaf
+    --     Just label -> return label
+    --   return $ iformname ++ "_" ++ label
+
+  -- let matchingIclass iclass = let encodingElts = X.findChildren (qname "encoding") iclass
+  --                                 correctEncoding encElt =
+  --                                   X.findAttr (qname "name") encElt == Just encName
+  --                                 matchingLabel = X.findAttr (qname "name") iclass ==
+  --                                                 X.findAttr (qname "label") leaf
+  --                             in any correctEncoding encodingElts -- || matchingLabel
+  -- iclass <- case filter matchingIclass iclasses of
+  --   [iclass] -> return iclass
+  --   [] -> E.throw $ MnemonicError "no matching iclass" leaf
+  --   _  -> E.throw $ MnemonicError "multiple matching iclasses" leaf
+
+  return $ (encodings, InstructionLeaf xmlElement iclass leaf filePath)
+
+
+leafMnemonic' :: InstructionLeaf -> XML String
+leafMnemonic' ileaf = do
+  let iclass = ileafiClass ileaf
+  let leaf = ileafSource ileaf
+  psname <- case X.findAttr (qname "psname") =<< X.findChild (qname "regdiagram") iclass of
+    Just psname -> return psname
+    Nothing -> E.throw $ MnemonicError "no psname" leaf
+  case P.runParser nameParser "" psname of
+    Left _ -> E.throw $ MnemonicError "psname parse error" leaf
+    Right nm -> return nm
 
 -- | Given a leaf element, open up the referenced file to discover the correct
 -- mnemonic.
@@ -546,6 +725,23 @@ leafMnemonic matchPat ileaf = do
                   MS.modify' $ \s -> s { usedNames = M.insert nm nameUsage' (usedNames s) }
                   return $ Just newName
 
+boxField :: X.Element -> XML Field
+boxField box = do
+  name <- case X.findAttr (qname "name") box of
+    Nothing -> E.throw $ MissingAttr "name" box
+    Just name -> return name
+  hibit <- case X.findAttr (qname "hibit") box of
+    Nothing -> E.throw $ MissingAttr "hibit" box
+    Just s -> return $ read s
+  let boxWidth = read $ fromMaybe "1" (X.findAttr (qname "width") box)
+
+      fld = Field { fieldName = name
+                  , fieldHibit = hibit
+                  , fieldWidth = boxWidth
+                  }
+  return $ fld
+
+
 leafFields :: InstructionLeaf -> XML [Field]
 leafFields ileaf = do
   let iclass = ileafiClass ileaf
@@ -554,20 +750,7 @@ leafFields ileaf = do
     Just regdiagram -> return regdiagram
   let boxes = X.findElements (qname "box") rd
   fmap catMaybes $ forM boxes $ \box -> case X.findAttr (qname "usename") box of
-    Just "1" -> do
-      name <- case X.findAttr (qname "name") box of
-        Nothing -> E.throw $ MissingAttr "name"box
-        Just name -> return name
-      hibit <- case X.findAttr (qname "hibit") box of
-        Nothing -> E.throw $ MissingAttr "hibit" box
-        Just s -> return $ read s
-      let boxWidth = read $ fromMaybe "1" (X.findAttr (qname "width") box)
-
-          fld = Field { fieldName = name
-                      , fieldHibit = hibit
-                      , fieldWidth = boxWidth
-                      }
-      return $ Just fld
+    Just "1" -> Just <$> boxField box
     Nothing -> return Nothing
 
 forChildrenWithAttr :: String -> X.Element -> (X.Element -> String -> XML a) -> XML [a]
@@ -753,13 +936,24 @@ registerInfoParser = do
             , oneOffsetIndexModeParser
             , return IndexBasic
             ]
-        indexModeParser _ = return IndexBasic
+        indexModeParser _ = do
+          P.takeWhileP Nothing (/= '.')
+          P.choice
+            [ oneOffsetIndexModeParser
+            , return IndexBasic
+            ]
 
         oneOffsetIndexModeParser :: Parser RegisterIndexMode
         oneOffsetIndexModeParser = do
           P.chunk ". This is the next SIMD&FP register after <"
           nm <- P.takeWhile1P Nothing (/= '>')
           return $ IndexRegisterOffset nm
+          <|> do
+          P.choice
+            [ P.chunk ". <Rt2> must be <R(t+1)>."
+            , P.chunk ". This register must be <R(t+1)>."
+            ]
+          return $ IndexRegisterOffset "Rt"
 
         vectorIndexModeParser :: Parser RegisterIndexMode
         vectorIndexModeParser = do

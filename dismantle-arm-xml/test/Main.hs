@@ -35,8 +35,8 @@ import qualified Data.Word.Indexed as WI
 import qualified Test.Tasty as T
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
-import qualified Dismantle.XML.AArch32 as ARM
-import qualified Dismantle.XML.AArch32.ISA as ARM
+import qualified Dismantle.ARM.A32 as ARM
+import qualified Dismantle.ARM.ISA as ARM
 import           Dismantle.Testing
 import           Dismantle.Testing.ParserTests ( parserTests )
 import qualified Dismantle.Testing.Regex as RE
@@ -140,7 +140,7 @@ ignored =
     ]
 
 arm :: ArchTestConfig
-arm = ATC { testingISA = ARM.isa
+arm = ATC { testingISA = ARM.isa "A32"
           , disassemble = ARM.disassembleInstruction
           , assemble = ARM.assembleInstruction
           , prettyPrint = ARM.ppInstruction
