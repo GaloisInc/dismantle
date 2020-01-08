@@ -2,6 +2,8 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 -- | Provide some tools for testing disassemblers
 module Dismantle.Testing (
   ArchTestConfig(..),
@@ -11,6 +13,9 @@ module Dismantle.Testing (
   withDisassembledFile
   ) where
 
+import Control.Exception ( try )
+import Control.Monad ( void )
+import Control.Applicative ( liftA2 )
 import Data.Char ( intToDigit )
 import Data.Maybe ( fromMaybe )
 import Data.Word ( Word8, Word64 )
@@ -23,10 +28,10 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.IO as TL
 import Numeric ( showIntAtBase )
 import System.FilePath.Glob ( namesMatching )
-import System.FilePath ( (</>) )
+import System.FilePath ( (</>), (<.>) )
 import qualified System.Process as Proc
 import qualified Text.Megaparsec as P
-import System.IO (hClose)
+import System.IO ( hClose , Handle, IOMode(..), openFile )
 import qualified Dismantle.Testing.Regex as RE
 import qualified Text.PrettyPrint.HughesPJClass as PP
 import Text.Printf ( printf )
@@ -100,7 +105,7 @@ addressIsIgnored atc file addr =
 -- matches the instruction under test.
 binaryTestSuite :: ArchTestConfig -> FilePath -> IO T.TestTree
 binaryTestSuite atc dir = do
-  binaries <- namesMatching (dir </> "*")
+  binaries <- liftA2 (L.\\) (namesMatching (dir </> "*")) (namesMatching (dir </> "*" <.> "dump"))
   tests <- mapM (mkDisassembledBinaryTest atc) binaries
   return (T.testGroup (isaName (testingISA atc)) tests)
 
@@ -234,14 +239,13 @@ formatTestFailure ta = show doc
                 | i <- testSuccesses ta
                 ]
 
-withDisassembledFile :: Endianness -> Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
-withDisassembledFile endianness parser customArgs f k = do
-  (_, Just hout, _, ph) <- Proc.createProcess p1
+withObjDump :: Endianness -> Parser Disassembly -> FilePath -> Handle -> IO () -> (Disassembly -> IO a) -> IO a
+withObjDump endianness parser f hout finalize k = do
   t <- TL.hGetContents hout
   case P.runParser parser f t of
     Left err -> do
       hClose hout
-      _ <- Proc.waitForProcess ph
+      finalize
       error $ P.errorBundlePretty err
     Right d -> do
       let rewriteDisassembly = case endianness of
@@ -252,14 +256,26 @@ withDisassembledFile endianness parser customArgs f k = do
           d' = Disassembly { sections = rewriteDisassembly (sections d) }
       res <- k d'
       hClose hout
-      _ <- Proc.waitForProcess ph
-      return res
+      finalize
+      return res  
+
+withDisassembledFile' :: Endianness -> Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
+withDisassembledFile' endianness parser customArgs f k =
+  do
+  (_, Just hout, _, ph) <- Proc.createProcess p1
+  withObjDump endianness parser f hout (void $ Proc.waitForProcess ph) k
   where
     p0 = Proc.proc "objdump" args
     args = (fromMaybe defaultArgs customArgs) <> [f]
     defaultArgs = ["-d"]
     p1 = p0 { Proc.std_out = Proc.CreatePipe
             }
+
+withDisassembledFile :: Endianness -> Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
+withDisassembledFile endianness parser customArgs f k = do
+  try (openFile (f <.> "dump") ReadMode) >>= \case
+    Right hout -> withObjDump endianness parser (f ++ ".dump") hout (return ()) k
+    Left (_ :: IOError) -> withDisassembledFile' endianness parser customArgs f k
 
 showByte :: Word8 -> String
 showByte b =
