@@ -6,4 +6,4 @@
     url = git@github.com:GaloisInc/arm-asl-parser.git
 [submodule "deps/crucible"]
 	path = deps/crucible
-	url = git@github.com:danmatichuk/crucible.git
+	url = https://github.com/danmatichuk/crucible.git
