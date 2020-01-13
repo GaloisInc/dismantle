@@ -46,6 +46,34 @@ library
   hs-source-dirs:      src
   default-language:    Haskell2010
 
+executable dismantle-asl-exec
+  main-is:             Main.hs
+  build-depends:       base >=4.10.0.0 && < 5,
+                       binary,
+                       directory, 
+                       filepath,
+                       containers,
+                       dismantle-asl,
+                       dismantle-tablegen,
+                       bytestring,
+                       zlib,
+                       parameterized-utils,
+                       panic >= 0.3,
+                       megaparsec,
+                       mtl,
+                       pretty,
+                       split,
+                       strict,
+                       text,
+                       template-haskell,
+                       transformers,
+                       what4-serialize,
+                       what4,
+                       xml
+  default-language:    Haskell2010                       
+  hs-source-dirs:      tools
+  ghc-options:         -Wcompat -Wall
+
 test-suite dismantle-arm-xml-tests
   default-language: Haskell2010
   type: exitcode-stdio-1.0
