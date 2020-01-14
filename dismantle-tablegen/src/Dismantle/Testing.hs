@@ -31,6 +31,7 @@ import System.FilePath.Glob ( namesMatching )
 import System.FilePath ( (</>), (<.>) )
 import qualified System.Process as Proc
 import qualified Text.Megaparsec as P
+import System.Exit (die)
 import System.IO ( hClose , Handle, IOMode(..), openFile )
 import qualified Dismantle.Testing.Regex as RE
 import qualified Text.PrettyPrint.HughesPJClass as PP
@@ -259,9 +260,23 @@ withObjDump endianness parser f hout finalize k = do
       finalize
       return res  
 
-withDisassembledFile' :: Endianness -> Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
-withDisassembledFile' endianness parser customArgs f k =
+checkObjDumpGNU :: IO ()
+checkObjDumpGNU =
   do
+  (_, Just hout, _, ph) <- Proc.createProcess p1
+  t <- TL.hGetContents hout
+  check <- return $ TL.isPrefixOf "GNU objdump" t
+  hClose hout
+  void $ Proc.waitForProcess ph
+  if check then return () else die $ "Error: objdump in PATH is not GNU."
+  where
+    p0 = Proc.proc "objdump" ["-v"]
+    p1 = p0 { Proc.std_out = Proc.CreatePipe
+            }
+
+withDisassembledFile' :: Endianness -> Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
+withDisassembledFile' endianness parser customArgs f k = do
+  checkObjDumpGNU
   (_, Just hout, _, ph) <- Proc.createProcess p1
   withObjDump endianness parser f hout (void $ Proc.waitForProcess ph) k
   where
