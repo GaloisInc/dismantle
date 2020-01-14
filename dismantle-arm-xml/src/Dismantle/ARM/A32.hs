@@ -34,7 +34,7 @@ import Dismantle.ARM.TH ( genISA )
 import Dismantle.ARM.ISA ( isa, isARM )
 import Dismantle.Tablegen.TH ( genInstances )
 
-$(genISA isARM (isa "A32") ["a32_encindex.xml"] "data/ISA_v85A_AArch32_xml_00bet9")
+$(genISA (isa "A32") "data/ISA_v85A_AArch32_xml_00bet9")
 $(return [])
 
 -- We need a separate call to generate some instances, since the helper(s) that

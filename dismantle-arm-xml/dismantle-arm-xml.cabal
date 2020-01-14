@@ -20,7 +20,7 @@ extra-source-files:  CHANGELOG.md
 library
   exposed-modules:   Dismantle.ARM,
                      Dismantle.ARM.A32,
-                     Dismantle.ARM.T32,
+                     -- Dismantle.ARM.T32,
                      Dismantle.ARM.ISA,
                      Dismantle.ARM.TH
   -- other-modules:
@@ -33,6 +33,7 @@ library
                        directory,
                        dismantle-tablegen,
                        filepath,
+                       filemanip,
                        megaparsec,
                        mtl,
                        parameterized-utils,

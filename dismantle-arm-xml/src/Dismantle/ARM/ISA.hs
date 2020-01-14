@@ -20,6 +20,7 @@ import qualified Data.Word.Indexed as W
 import qualified Language.Haskell.TH as TH
 import qualified Text.XML.Light as X
 import qualified Text.PrettyPrint.HughesPJClass as PP
+import           Text.Printf (printf)
 
 import qualified Data.Word.Indexed as I
 import qualified Dismantle.ARM as DA
@@ -35,7 +36,7 @@ fromWord32 w = BP.runPut (BP.putWord32le w)
 isa :: String -> DA.ISA
 isa archName = DA.ISA { DA.isaName = archName
                       , DA.isaTgenBitPreprocess = id
-                      , DA.isaInputEndianness = DA.Little id id -- LBS.reverse (concat . reverse . L.chunksOf 8)
+                      , DA.isaInputEndianness = DA.Little LBS.reverse (concat . reverse . L.chunksOf 8)
                       , DA.isaUnusedBitsPolicy = Nothing
                       , DA.isaInstructionFilter = error "isaInstructionFilter is not used for XML"
                       , DA.isaPseudoInstruction = const False
@@ -60,22 +61,11 @@ isARM _ = True
 -- treated as signed)
 operandPayloadTypes :: [(String, DA.OperandPayload)]
 operandPayloadTypes =
-  [ ("Bv1", unsignedImmediate (Proxy @1))
-  , ("Bv2", unsignedImmediate (Proxy @2))
-  , ("Bv3", unsignedImmediate (Proxy @3))
-  , ("Bv4", unsignedImmediate (Proxy @4))
-  , ("Bv5", unsignedImmediate (Proxy @5))
-  , ("Bv6", unsignedImmediate (Proxy @6))
-  , ("Bv7", unsignedImmediate (Proxy @7))
-  , ("Bv8", unsignedImmediate (Proxy @8))
-  , ("Bv10", unsignedImmediate (Proxy @10))
-  , ("Bv11", unsignedImmediate (Proxy @11))
-  , ("Bv12", unsignedImmediate (Proxy @12))
-  , ("Bv14", unsignedImmediate (Proxy @14))
-  , ("Bv15", unsignedImmediate (Proxy @15))
-  , ("Bv16", unsignedImmediate (Proxy @16))
-  , ("Bv24", unsignedImmediate (Proxy @24))
-  , ("GPR3", gpRegister 3)
+  (map (\sz -> (printf "Bv%d" sz, unsignedImmediate sz)) [1..24])
+  ++
+  (map (\sz -> (printf "QuasiMask%d" sz, quasimaskop sz)) [1..16])
+  ++
+  [ ("GPR3", gpRegister 3)
   , ("GPR4", gpRegister 4)
   , ("GPR4_1", gpRegister1 4)
   , ("SIMD2", simdReg 2)
@@ -86,8 +76,8 @@ operandPayloadTypes =
   , ("SIMD5_1", simdReg1 5)
   ]
   where
-    unsignedImmediate :: forall (n :: Nat) . (KnownNat n) => Proxy n -> DA.OperandPayload
-    unsignedImmediate p = DA.OperandPayload { DA.opTypeT = [t| I.W $(return (TH.LitT (TH.NumTyLit (natVal p)))) |]
+    unsignedImmediate :: Integer -> DA.OperandPayload
+    unsignedImmediate sz = DA.OperandPayload { DA.opTypeT = [t| I.W $(return (TH.LitT (TH.NumTyLit sz))) |]
                                             , DA.opConE = Just [| I.w |]
                                             , DA.opWordE = Just [| fromIntegral . I.unW |]
                                             }
@@ -115,7 +105,11 @@ operandPayloadTypes =
                                     , DA.opWordE = Just [| fromIntegral . W.unW . unSIMD1 |]
                                     }
 
-
+    quasimaskop :: Integer -> DA.OperandPayload
+    quasimaskop sz = DA.OperandPayload { DA.opTypeT = [t| QuasiMask $(return (TH.LitT (TH.NumTyLit sz))) |]
+                                       , DA.opConE = Just (TH.varE 'quasimask)
+                                       , DA.opWordE = Just [| fromIntegral . W.unW . unQuasiMask |]
+                                       }
 
 -- | General-purpose register by number
 newtype GPR n = GPR { unGPR :: W.W n }
@@ -157,3 +151,14 @@ simd1 = SIMD1 . fromIntegral
 
 instance KnownNat n => PP.Pretty (SIMD1 n) where
   pPrint (SIMD1 w) = PP.text "SIMD1: " <> PP.pPrint w
+
+
+newtype QuasiMask n = QuasiMask { unQuasiMask :: W.W n }
+  deriving (Eq, Ord, Show)
+
+quasimask :: KnownNat n => Word32 -> QuasiMask n
+quasimask = QuasiMask . fromIntegral
+
+
+instance KnownNat n => PP.Pretty (QuasiMask n) where
+  pPrint (QuasiMask w) = PP.text "QuasiMask(" <> PP.pPrint (W.width w) <> PP.text "): " <> PP.pPrint w
