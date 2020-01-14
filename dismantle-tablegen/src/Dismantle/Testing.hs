@@ -160,9 +160,9 @@ testInstructionWith norm pCmp disasm asm pp skipPPRE i agg = do
                            , testCount = testCount agg + 1
                            })
     Just insn -> do
+      let !pretty = T.pack (show (pp insn))
       case bytes == asm insn of
         False -> do
-          let !pretty = T.pack (show (pp insn))
           let !actualRep = T.pack (binaryRep bytes)
           let !asmRep = T.pack (binaryRep (asm insn))
           let failure = (i, pretty, actualRep, asmRep)
@@ -178,20 +178,19 @@ testInstructionWith norm pCmp disasm asm pp skipPPRE i agg = do
                        Just cmpf -> cmpf want got
                  ) of
               True -> do
-                return (agg { testSuccesses = i : testSuccesses agg
+                return (agg { testSuccesses = (i, pretty) : testSuccesses agg
                             , testCount = testCount agg + 1 })
               False -> do
-                let !pretty = T.pack (show (pp insn))
                 let failure = (i, pretty)
                 return (agg { testPrettyFailures = failure : testPrettyFailures agg
                             , testCount = testCount agg + 1
                             })
           | otherwise -> do
-              return (agg { testSuccesses = i : testSuccesses agg
+              return (agg { testSuccesses = (i, pretty) : testSuccesses agg
                           , testCount = testCount agg + 1 })
 
 data TestAggregate =
-  TestAggregate { testSuccesses :: [Instruction]
+  TestAggregate { testSuccesses :: [(Instruction, T.Text)]
                 , testDisassemblyFailures :: [Instruction]
                 , testRoundtripFailures :: [(Instruction, T.Text, T.Text, T.Text)]
                 , testPrettyFailures :: [(Instruction, T.Text)]
@@ -236,8 +235,8 @@ formatTestFailure ta = show doc
     prettyFailures = [ PP.text (printf "Pretty printing comparison failed (bytes: %s)\n\tExpected: '%s'\n\tActual:   '%s' " (binaryRep (insnBytes i)) (insnText i) actual)
                      | (i, actual) <- testPrettyFailures ta
                      ]
-    successes = [ PP.text (printf "Successfully disassembled %s (%s)" (binaryRep (insnBytes i)) (TL.unpack (insnText i)))
-                | i <- testSuccesses ta
+    successes = [ PP.text (printf "Successfully disassembled %s (%s)\n %s" (binaryRep (insnBytes i)) (TL.unpack (insnText i)) (show parsedAs))
+                | (i, parsedAs) <- testSuccesses ta
                 ]
 
 withObjDump :: Endianness -> Parser Disassembly -> FilePath -> Handle -> IO () -> (Disassembly -> IO a) -> IO a
