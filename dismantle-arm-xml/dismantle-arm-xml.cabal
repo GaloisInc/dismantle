@@ -23,6 +23,8 @@ library
                      -- Dismantle.ARM.T32,
                      Dismantle.ARM.ISA,
                      Dismantle.ARM.TH
+                     Dismantle.ARM.RegisterInfo
+                     Data.PropTree
   -- other-modules:
   -- other-extensions:
   build-depends:       asl-parser,

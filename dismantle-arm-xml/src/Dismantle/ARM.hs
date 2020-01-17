@@ -42,6 +42,8 @@ import           Data.List (stripPrefix, find, nub, intersect, (\\), intercalate
 import           Data.List.Split as LS
 import qualified Data.Map as M
 import           Data.Maybe (catMaybes, fromMaybe, isJust, isNothing)
+import           Data.PropTree ( PropTree )
+import qualified Data.PropTree as PropTree
 import qualified Data.Set as S
 import           Data.Word ( Word8 )
 import           Data.Void (Void)
@@ -56,6 +58,7 @@ import qualified Text.XML.Light as X
 import           Text.PrettyPrint.HughesPJClass ( (<+>), ($$), ($+$) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
+import           Dismantle.ARM.RegisterInfo ( registerInfoParser, RegisterInfo(..), RegisterIndexMode(..), RegisterKind(..) )
 import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import qualified Dismantle.Tablegen.Parser.Types as PT
@@ -265,21 +268,21 @@ getDecodeConstraints fields dcs = do
     [name,"!=", val] <- getAttrs ["name", "op", "val"] dc
     flds <- nameExps name
     bits <- parseString (P.some bitParser) val
-    return $ mkPropNegate $ PropLeaf $ (flds, bits)
-  resolvePropTree fields (mkPropList rawConstraints)
+    return $ PropTree.negate $ PropTree.clause $ (flds, bits)
+  resolvePropTree fields (mconcat rawConstraints)
 
 instrTableConstraints :: [[Field]] -> X.Element -> XML (PropTree (BitSection BT.Bit))
 instrTableConstraints tablefieldss tr = do
   "instructiontable" <- getAttr "class" tr
   let tds = X.filterChildren (\e -> X.findAttr (qname "class") e == Just "bitfield") tr
-  fmap mkPropList $ forM (zip tds [0..]) $ \(td, i) -> do
+  fmap mconcat $ forM (zip tds [0..]) $ \(td, i) -> do
     let fields = tablefieldss !! i
     let width = sum $ map fieldWidth fields
     bitwidth <- read <$> getAttr "bitwidth" td
     -- soft-throw this error since the XML is occasionally wrong but this is recoverable
     unless (width == bitwidth) $
       warnError $ MismatchedWidth bitwidth fields
-    fmap concatPropTree $ parseConstraint width (X.strContent td) $ \bits -> do
+    fmap PropTree.collapse $ parseConstraint width (X.strContent td) $ \bits -> do
       unpackFieldConstraints (fields, bits)
 
 loadEncIndex :: X.Element -> XML ()
@@ -292,7 +295,7 @@ loadEncIndex encodingindex = do
     (fields, _, fieldConstraints) <- iclassFieldsAndProp iclass_sect
     decodeConstraints <- withChild "decode_constraints" iclass_sect $ \case
       Just dcs -> getDecodeConstraints fields dcs
-      Nothing -> return emptyPropTree
+      Nothing -> return mempty
     instructiontable <- getChild "instructiontable" iclass_sect
     bitfieldsElts <- resolvePath instructiontable $
       [ ("thead", Just ("class", "instructiontable"))
@@ -345,7 +348,7 @@ iclassFieldsAndProp iclass = do
 
   return $ ( M.fromListWith mergeFields $ namedFields
            , quasiMaskOperands fields
-           , mkPropList (map fieldConstraint fields))
+           , mconcat (map fieldConstraint fields))
   where
     mergeFields :: Field -> Field -> Field
     mergeFields field field' = if field == field' then field else
@@ -358,13 +361,13 @@ constraintParser = do
   return (bits, isPositive)
 
 parseConstraint :: Int -> String -> ([BT.Bit] -> XML a) -> XML (PropTree a)
-parseConstraint width "" m = PropLeaf <$> m (replicate width BT.Any)
+parseConstraint width "" m = PropTree.clause <$> m (replicate width BT.Any)
 parseConstraint width str m = do
   (bits, isPositive) <- parseString constraintParser str
   unless (length bits == width) $
     throwError $ MismatchedWidth width bits
-  let sign = if isPositive then id else mkPropNegate
-  sign . PropLeaf <$> m bits
+  let sign = if isPositive then id else PropTree.negate
+  sign . PropTree.clause <$> m bits
 
 getBoxField :: X.Element -> XML Field
 getBoxField box = do
@@ -388,7 +391,7 @@ getBoxField box = do
           _ -> throwError $ InvalidChildElement
       unless (length bits == width) $
         throwError $ MismatchedWidth width bits
-      return $ PropLeaf $ bitSectionHibit hibit bits
+      return $ PropTree.clause $ bitSectionHibit hibit bits
   let field = Field { fieldName = fromMaybe "" $ X.findAttr (qname "name") box
                     , fieldHibit = hibit
                     , fieldWidth = width
@@ -589,92 +592,15 @@ flatText e = concat $ map flatContent (X.elContent e)
     flatContent (X.Text str) = X.cdData $ str
     flatContent (X.Elem e) = flatText e
 
-parseElement :: Parser a -> X.Element -> XML a
-parseElement p e = parseString p (flatText e)
+parseElement :: Show e => P.Parsec e String a -> X.Element -> XML a
+parseElement p e = withElement e $ parseString p (flatText e)
 
-parseString :: Parser a -> String -> XML a
+parseString :: Show e => P.Parsec e String a -> String -> XML a
 parseString p txt = do
   currentFile <- (fromMaybe "") <$> R.asks xmlCurrentFile
   case P.runParser p currentFile txt of
     Left err -> throwError $ InnerParserFailure (show err) txt
     Right a -> return a
-
--- | Representation of a boolean formula with a 'PropList' as conjunction and 'PropNegate' as negation.
-data PropTree a = PropLeaf a | PropNegate (PropTree a) | PropList [PropTree a]
-  deriving (Functor, Foldable, Traversable, Show, Eq)
-
-concatPropTree :: PropTree [a] -> PropTree a
-concatPropTree tree = case tree of
-  PropLeaf as -> mkPropList (map PropLeaf as)
-  PropNegate tree' -> mkPropNegate (concatPropTree tree')
-  PropList trees -> mkPropList $ map concatPropTree trees
-
-emptyPropTree :: PropTree a
-emptyPropTree = PropList []
-
--- These should always be used instead of the constructors in order to keep
--- a 'PropTree' wellformed (where possible) with respect to 'splitClauses'
-
--- | Negation of a 'PropTree' while avoiding double-negation
-mkPropNegate :: PropTree a -> PropTree a
-mkPropNegate (PropList []) = PropList []
-mkPropNegate (PropNegate a) = a
-mkPropNegate a = PropNegate a
-
-
--- | Concat 'PropTrees' while avoiding redundant nodes
-mkPropList :: [PropTree a] -> PropTree a
-mkPropList [tree] = tree
-mkPropList trees = PropList (filter (not . null) trees)
-
-instance Semigroup (PropTree a) where
-  a <> b = mkPropList [a, b]
-
-splitPropTree :: PropTree (Either a b) -> (PropTree a, PropTree b)
-splitPropTree tree = case tree of
-  PropLeaf e -> case e of
-    Left a -> (PropLeaf a, emptyPropTree)
-    Right b -> (emptyPropTree, PropLeaf b)
-  PropList es ->
-    let (as, bs) = unzip $ map splitPropTree es
-    in (mkPropList as, mkPropList bs)
-  PropNegate p ->
-    let (a, b) = splitPropTree p
-    in (mkPropNegate a, mkPropNegate b)
-
-separateNegativePropTree :: PropTree a -> PropTree (Either a a)
-separateNegativePropTree tree = case tree of
-  PropLeaf a -> PropLeaf $ Left a
-  PropList as -> mkPropList $ map separateNegativePropTree as
-  PropNegate p -> mkPropNegate $ fmap Right p
-
--- | If a 'PropTree' contains no negations, it can be flattened into a list of clauses
-flatPropTree :: PropTree a -> Maybe [a]
-flatPropTree tree = case tree of
-  PropLeaf a -> return $ [a]
-  PropList as -> concat <$> mapM flatPropTree as
-  PropNegate _ -> Nothing
-
-
--- | Split a proptree into a list (conjunction) of positive clauses, and
--- a list (conjunction) of lists (disjunction) of negated clauses.
--- e.g.
---      (A & B) & !(A & C) & !(C & D) ==
---      (A & B) & (!A | !C) & (!C | !D) ==>
---      ([A,B], [[A, C], [C, D]])
--- Returns 'Nothing' if a tree contains double-negation (e.g. A & !(A & !C))
-splitClauses :: forall a. Show a => PropTree a -> Maybe ([a], [[a]])
-splitClauses tree = do
-  let (pos, rest) = splitPropTree $ separateNegativePropTree tree
-  flatpos <- flatPropTree pos
-  negpos <- collectNegatedClauses rest
-  return (flatpos, negpos)
-  where
-    collectNegatedClauses :: PropTree a -> Maybe [[a]]
-    collectNegatedClauses tree' = case tree' of
-      PropNegate a -> (:[]) <$> flatPropTree a
-      PropList as -> concat <$> mapM collectNegatedClauses as
-      PropLeaf _ -> Nothing
 
 
 explodeAny :: [BT.Bit] -> [[BT.Bit]]
@@ -709,7 +635,7 @@ deriveMasks' :: forall m
              . ME.MonadError String m
             => PropTree (BitSection QuasiBit)
             -> m ([QuasiBit], [[BT.Bit]])
-deriveMasks' constraints = case splitClauses constraints of
+deriveMasks' constraints = case PropTree.toConjunctsAndDisjuncts constraints of
   Just (positiveConstraints, negativeConstraints) -> do
     mask' <- fmap (take 32 . map (fromMaybe (Bit BT.Any))) $
       withMsg "invalid positive constraint"
@@ -737,7 +663,7 @@ fieldConstraintsParser = do
 
     outerParser :: Parser (PropTree ([NameExp], [BT.Bit]))
     outerParser = do
-      mkPropList <$> P.sepBy1 combinedParser ((void $ P.char ';') <|> (void $ P.chunk "&&"))
+      mconcat <$> P.sepBy1 combinedParser ((void $ P.char ';') <|> (void $ P.chunk "&&"))
 
     combinedParser :: Parser (PropTree ([NameExp], [BT.Bit]))
     combinedParser = do
@@ -752,7 +678,7 @@ fieldConstraintsParser = do
     negParser :: Parser (PropTree ([NameExp], [BT.Bit]))
     negParser = do
       P.char '!'
-      P.between (P.char '(') (P.char ')') (mkPropNegate <$> outerParser)
+      P.between (P.char '(') (P.char ')') (PropTree.negate <$> outerParser)
 
     atomParser :: Parser (PropTree ([NameExp], [BT.Bit]))
     atomParser = do
@@ -761,8 +687,8 @@ fieldConstraintsParser = do
       bits <- P.some bitParser
       P.takeWhileP Nothing (== ' ')
       if negate
-        then return $ mkPropNegate $ PropLeaf (name, bits)
-        else return $ PropLeaf (name, bits)
+        then return $ PropTree.negate $ PropTree.clause (name, bits)
+        else return $ PropTree.clause (name, bits)
 
 bitParser :: Parser BT.Bit
 bitParser = do
@@ -857,7 +783,7 @@ resolvePropTree :: forall a
                 -> PropTree ([NameExp], [a])
                 -> XML (PropTree (BitSection a))
 resolvePropTree fields tree =
-  fmap concatPropTree $ mapM go tree
+  fmap PropTree.collapse $ mapM go tree
   where
     go :: ([NameExp], [a]) -> XML [BitSection a]
     go (nmes, as) = do
@@ -872,11 +798,18 @@ leafGetEncodingConstraints ileaf fields = do
     name <- getAttr "name" encoding
     withEncodingName name $ do
       case X.findAttr (qname "bitdiffs") encoding of
-        Nothing -> return $ (name, emptyPropTree)
+        Nothing -> return $ (name, mempty)
         Just bitdiffs -> do
           parsedConstraints <- parseString fieldConstraintsParser bitdiffs
           constraints <- resolvePropTree fields parsedConstraints
           return $ (name, constraints)
+
+registerNameParser :: Parser String
+registerNameParser = do
+  P.char '<'
+  name <- P.takeWhile1P Nothing (/= '>')
+  P.char '>'
+  return name
 
 -- | Not all parsed explanations will be used (i.e. if they are only for encodings not for this architecture).
 -- So we leave the "encodedin" field as uninterpreted here, as it can only be resolved with respect to
@@ -902,44 +835,47 @@ processExplanations allfields explanations = mapM processExplanation explanation
   where
     processExplanation :: (String, (String, RegisterInfo)) -> XML (String, RegisterInfo, [Field])
     processExplanation (symbolName, (encodedin, rinfo)) = do
-      unless (regIndexMode rinfo == IndexBasic || null encodedin) $
-        throwError $ UnexpectedAttributeValue "encodedin" encodedin
+      let noEncodedInExpected = unless (null encodedin) $
+            throwError $ UnexpectedAttributeValue "encodedin" encodedin
       case regIndexMode rinfo of
         IndexVector fieldNames -> do
+          noEncodedInExpected
           fields <- forM fieldNames $ \fieldName -> do
             lookupField allfields (NameExpString fieldName)
           return $ (symbolName, rinfo, fields)
         IndexRegisterOffset baseregister -> do
+          noEncodedInExpected
           case lookup baseregister explanations of
             Just rawinfo -> do
               (_, _, fields) <- processExplanation (baseregister, rawinfo)
               return $ (symbolName, rinfo, fields)
             Nothing -> throwError $ MissingRegisterInfo baseregister (map fst explanations)
-        IndexBasic -> do
-          fieldDescription <- case regMode rinfo of
-            ImplicitEncoding mimplicitName -> do
-              let implicitName = fromMaybe symbolName mimplicitName
-              unless (null encodedin || encodedin == implicitName) $ do
-                throwError $ UnexpectedAttributeValue "encodedin" encodedin
-              return implicitName
-            _ -> return encodedin
+        _ -> do
+          fieldDescription <- case regIndexMode rinfo of
+            IndexFromXML -> return encodedin
+            IndexImplicit -> return symbolName
+            IndexExplicit given -> return given
+            _ -> error "Unreachable"
+          unless (encodedin == fieldDescription) $ do
+            noEncodedInExpected
           when (fieldDescription == "") $ do
             throwError $ InvalidRegisterInfo rinfo
           exps <- nameExps fieldDescription
           fields <- forM exps $ lookupField allfields
-          return $ (symbolName, rinfo, fields)
+          return $ (symbolName, rinfo { regIndexMode = IndexExplicit fieldDescription } , fields)
 
 getRegisterOperandType :: Int -> RegisterInfo -> XML DT.OperandType
 getRegisterOperandType totalBits rinfo = DT.OperandType <$> case (regKind rinfo, regIndexMode rinfo) of
-  (GPR, IndexBasic) | totalBits == 4 -> return "GPR4"
-  (GPR, IndexBasic) | totalBits == 3 -> return "GPR3"
   (GPR, IndexRegisterOffset _) | totalBits == 4 -> return "GPR4_1"
-  (SIMDandFP, IndexBasic) | totalBits == 5 -> return "SIMD5"
-  (SIMDandFP, IndexBasic) | totalBits == 4 -> return "SIMD4"
-  (SIMDandFP, IndexBasic) | totalBits == 3 -> return "SIMD3"
-  (SIMDandFP, IndexBasic) | totalBits == 2 -> return "SIMD2"
+  (GPR, IndexExplicit _) | totalBits == 4 -> return "GPR4"
+  (GPR, IndexExplicit _) | totalBits == 3 -> return "GPR3"
   (SIMDandFP, IndexRegisterOffset _) | totalBits == 5 -> return "SIMD5_1"
   (SIMDandFP, IndexVector _) | totalBits == 7 -> return "SIMD7"
+  (SIMDandFP, IndexExplicit _) | totalBits == 5 -> return "SIMD5"
+  (SIMDandFP, IndexExplicit _) | totalBits == 4 -> return "SIMD4"
+  (SIMDandFP, IndexExplicit _) | totalBits == 3 -> return "SIMD3"
+  (SIMDandFP, IndexExplicit _) | totalBits == 2 -> return "SIMD2"
+
   _ -> throwError $ InvalidRegisterInfo rinfo
 
 lookupEncIndexMask :: InstructionLeaf -> String -> XML (Maybe (([QuasiBit], [[BT.Bit]]), Bool))
@@ -1046,7 +982,7 @@ fieldOpTypeOverrides field =
   in case (name, width) of
     -- Used for register fields which must refer to the PC or they are unpredictable
     -- These do not appear in the register information sections, so we have to capture them ad-hoc
-       ('R' : _ : [], 4) | Just (pos, []) <- splitClauses constraint
+       ('R' : _ : [], 4) | (pos, []) <- PropTree.splitClauses constraint
                         , subConstraint 4 pos == Right (replicate 4 (QBit True)) ->
          field { fieldUseName = True, fieldTypeOverride = Just "GPR4" }
        _ -> field
@@ -1107,279 +1043,6 @@ forChildren :: String -> X.Element -> (X.Element -> XML a) -> XML [a]
 forChildren name elt m = mapM (\e -> withElement e $ m e) $ X.filterChildrenName ((==) $ qname name) elt
 
 type Parser = P.Parsec Void String
-
-data RegisterDirection = Input | Output | InputOutput
-  deriving (Ord, Eq, Show)
-
-data RegisterKind = GPR | SIMDandFP
-  deriving (Ord, Eq, Show)
-
-data RegisterMode = Data | Accumulator | Base | Index | ImplicitEncoding (Maybe String) | NoMode
-  deriving (Ord, Eq, Show)
-
-data RegisterIndexMode = IndexBasic | IndexRegisterOffset String | IndexVector [String]
-  deriving (Ord, Eq, Show)
-
-data RegisterInfo =
-  RegisterInfo { regKind :: RegisterKind
-               , regMode :: RegisterMode
-               , regDirection :: RegisterDirection
-               , regIndexMode :: RegisterIndexMode -- for a logical register, how is it computed
-                                                   -- from the operand fields
-               , regSourceText :: String
-               }
-  deriving (Ord, Eq, Show)
-
-
-registerNameParser :: Parser String
-registerNameParser = do
-  P.char '<'
-  name <- P.takeWhile1P Nothing (/= '>')
-  P.char '>'
-  return name
-
--- | Scrape the register tooltip to determine which operands are used
--- as registers. The parser fails gracefully (returning 'Nothing') if
--- the tooltip is recognized, but not specifying a register. The parser
--- fails if the tooltip is unrecognized.
-
-registerInfoParser :: Parser (Maybe RegisterInfo)
-registerInfoParser = do
-  P.optional $ encodingPreamble
-  ws
-  dropWords ["Is", "is", "An", "an", "The", "the", "optional", "a ", "Specifies", "If present,"]
-  ws
-  P.choice $
-    (map (\s -> P.chunk s >> return Nothing) knownPrefixes)
-    ++ [P.try knownLiteralPrefix >> return Nothing]
-    ++ [Just <$> realRegisterInfoParser]
-  where
-    bitSizeStrings :: [String]
-    bitSizeStrings =
-      [ "3-bit", "4-bit", "5-bit", "6-bit", "8-bit", "12-bit", "16-bit", "24-bit", "32-bit", "64-bit", "128-bit" ]
-
-    dropWords :: [String] -> Parser ()
-    dropWords words =
-      void $ P.optional $ P.many $
-        (P.choice $ map (\w -> P.chunk w >> return ()) words) <|> (P.char ' ' >> return ())
-
-
-    encodingPreamble :: Parser ()
-    encodingPreamble = do
-      P.chunk "For"
-      P.many $ P.choice $ map P.chunk
-        [ "half-precision"
-        , "single-precision"
-        , "double-precision"
-        , "64-bit SIMD"
-        , "128-bit SIMD"
-        , "offset"
-        , "or"
-        , "the"
-        , "vector"
-        , "scalar"
-        , "post-indexed"
-        , "pre-indexed"
-        , "encoding"
-        , "variant"
-        , "variants"
-        , " "
-        ]
-
-      P.takeWhileP Nothing (/= ':')
-      P.char ':'
-      return ()
-
-    bitSize :: Parser String
-    bitSize = P.choice (map P.chunk bitSizeStrings)
-
-    knownLiteralPrefix :: Parser ()
-    knownLiteralPrefix = do
-      P.optional $ englishNumber
-      ws
-      P.optional $ bitSize
-      ws
-      P.optional $ P.chunk "unsigned"
-      ws
-      void $ P.chunk "immediate"
-
-    ws :: Parser ()
-    ws = P.takeWhileP Nothing (== ' ') >> return ()
-
-    englishNumber :: Parser Integer
-    englishNumber =
-      P.choice
-        [ P.chunk "first" >> return 1
-        , P.chunk "second" >> return 2
-        , P.chunk "third" >> return 3
-        , P.chunk "fourth" >> return 4
-        , P.chunk "fifth" >> return 5
-        ]
-
-    realRegisterInfoParser :: Parser (RegisterInfo)
-    realRegisterInfoParser = do
-      sourceTxt <- P.stateInput <$> P.getParserState
-      P.optional $ englishNumber
-      ws
-      P.optional $ bitSize
-      ws
-      P.optional $ P.chunk "name of the"
-      ws
-      P.optional $ englishNumber
-      ws
-      (rkind, impliedDirection, impliedMode) <- kindParser
-      ws
-      rmode <- modeParser impliedMode
-      ws
-      (rdir, mrmode) <- directionParser impliedDirection
-      ws
-      indexMode <- indexModeParser rkind
-      return (RegisterInfo rkind (fromMaybe rmode mrmode) rdir indexMode sourceTxt)
-      where
-        kindParser :: Parser (RegisterKind, Maybe RegisterDirection, Maybe RegisterMode)
-        kindParser =
-          P.choice
-            [ P.chunk "general-purpose" >> return (GPR, Nothing, Nothing)
-            , P.chunk "Arm source" >> return (GPR, Just Input, Just $ ImplicitEncoding Nothing)
-            , P.chunk "source general-purpose" >> return (GPR, Just Input, Just $ ImplicitEncoding Nothing)
-            , P.chunk "destination general-purpose" >> return (GPR, Just Output, Just $ ImplicitEncoding Nothing)
-            , P.chunk "SIMD&FP" >> return (SIMDandFP, Nothing, Nothing)
-            ]
-
-        modeParser :: Maybe RegisterMode -> Parser RegisterMode
-        modeParser (Just impliedMode) = return impliedMode
-        modeParser Nothing =
-          P.choice
-            [ P.chunk "data" >> return Data
-            , P.chunk "accumulator" >> return Accumulator
-            , P.chunk "base" >> return Base
-            , P.chunk "index" >> return Index
-            , return NoMode
-            ]
-
-        directionParser' :: Parser RegisterDirection
-        directionParser' =
-          P.choice
-              [ P.chunk "destination register" >> return Output
-              , P.chunk "register to be transferred" >> return Input
-              , P.chunk "source register" >> return Input
-              , P.chunk "input register" >> return Input
-              , P.chunk "output register" >> return Output
-              , P.chunk "register holding address to be branched to" >> return Input
-              , P.chunk "register to be accessed" >> return Input
-              , P.chunk "register into which the status result of store exclusive is written" >> return Output
-              , P.chunk "destination and source register" >> return InputOutput
-              , P.chunk "destination and second source register" >> return InputOutput
-              , P.chunk "source and destination register" >> return InputOutput
-              , P.chunk "register" >> return InputOutput
-              ]
-        directionParser :: Maybe RegisterDirection -> Parser (RegisterDirection, Maybe RegisterMode)
-        directionParser (Just impliedDirection) = P.chunk "register" >> return (impliedDirection, Nothing)
-        directionParser Nothing =
-          (do
-              P.chunk "register <"
-              nm <- P.takeWhile1P Nothing (/= '>')
-              P.chunk "> to be "
-              direction <- P.choice [ P.chunk "loaded" >> return Input
-                                    , P.chunk "stored" >> return Output
-                                    ]
-              return (direction, Just (ImplicitEncoding (Just nm)))
-          )
-          <|>
-          (directionParser' >>= (\mode -> return (mode, Nothing)))
-
-
-        indexModeParser :: RegisterKind -> Parser RegisterIndexMode
-        indexModeParser SIMDandFP = do
-          P.takeWhileP Nothing (/= '.')
-          P.choice
-            [ vectorIndexModeParser
-            , oneOffsetIndexModeParser
-            , return IndexBasic
-            ]
-        indexModeParser _ = do
-          P.takeWhileP Nothing (/= '.')
-          P.choice
-            [ oneOffsetIndexModeParser
-            , return IndexBasic
-            ]
-
-        oneOffsetIndexModeParser :: Parser RegisterIndexMode
-        oneOffsetIndexModeParser = do
-          P.chunk ". This is the next SIMD&FP register after <"
-          nm <- P.takeWhile1P Nothing (/= '>')
-          return $ IndexRegisterOffset nm
-          <|> do
-          P.choice
-            [ P.chunk ". <Rt2> must be <R(t+1)>."
-            , P.chunk ". This register must be <R(t+1)>."
-            ]
-          return $ IndexRegisterOffset "Rt"
-
-        vectorIndexModeParser :: Parser RegisterIndexMode
-        vectorIndexModeParser = do
-          P.chunk ". If <dt> is "
-          P.takeWhileP Nothing (/= ',')
-          P.chunk ", Dm is restricted to D0-D7. Dm is encoded in \"Vm<2:0>\", and x is encoded in \"M:Vm<3>\". If <dt> is "
-          P.takeWhileP Nothing (/= ',')
-          P.chunk ", Dm is restricted to D0-D15. Dm is encoded in \"Vm\", and x is encoded in \"M\"."
-          return $ IndexVector ["size", "M", "Vm"]
-
-
-knownPrefixes :: [String]
-knownPrefixes =
-  [ "shift amount", "one of:", "label of", "bit number", "width of the"
-  , "shift to apply", "number of the", "destination vector for a doubleword operation"
-  , "sequence of one or more of the following", "When <size> ==", "data type"
-  , "constant of the specified type"
-  , "location of the extracted result in the concatenation of the operands"
-  , "alignment", "suffix"
-  , "See Standard assembler syntax fields"
-  , "see Standard assembler syntax fields"
-  , "base register writeback"
-  , "limitation on the barrier operation"
-  , "stack pointer"
-  , "index register is added to or subtracted from the base register"
-  , "index register is added to the base register"
-  , "offset is added to the base register"
-  , "positive unsigned immediate byte offset"
-  , "program label"
-  , "condition"
-  , "size of the"
-  ]
-  ++
-  [ "least significant", "number of bits", "rotate amount", "bit position"
-  , "optional shift amount", "address adjusted", "optional suffix"
-  , "mode whose banked sp", "rotation applied to elements"
-  , "element index"
-  , "immediate offset", "number of fraction bits in"
-  , "signed floating-point constant", "data size", "scalar"
-  , "endianness to be selected", "number of mode to change to"
-  , "sequence of one or more of following, specifying which interrupt mask bits are affected"
-  , "unsigned immediate"
-  -- fixme: these seem unused in arch32?
-  , "system register encoding space"
-  , "opc1 parameter within the System register encoding space"
-  , "opc2 parameter within the System register encoding space"
-  , "CRm parameter within the System register encoding space"
-  , "CRn parameter within the System register encoding space"
-  -- fixme: vector instructions
-  , "vectors containing the table"
-  , "destination vector for a quadword operation"
-  , "list of one or more registers"
-  , "list of consecutively numbered 32-bit SIMD&FP registers to be transferred"
-  , "list of consecutively numbered 64-bit SIMD&FP registers to be transferred"
-  , "list of two or more registers to be loaded"
-  , "list of two or more registers to be stored"
-  , "list containing the 64-bit names of the SIMD&FP registers"
-  , "list containing the 64-bit names of two SIMD&FP registers"
-  , "list containing the 64-bit names of three SIMD&FP registers"
-  , "list containing the 64-bit names of four SIMD&FP registers"
-  , "list containing the single 64-bit name of the SIMD&FP register holding the element"
-  , "list containing the 64-bit names of the two SIMD&FP registers holding the element"
-  , "list containing the 64-bit names of the three SIMD&FP registers holding the element"
-  , "list containing the 64-bit names of the four SIMD&FP registers holding the element"
-  ]
 
 nameParser :: Parser String
 nameParser = do
