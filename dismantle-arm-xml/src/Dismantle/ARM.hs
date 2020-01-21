@@ -41,7 +41,7 @@ import           Data.Either ( partitionEithers )
 import           Data.List (stripPrefix, find, nub, intersect, (\\), intercalate, partition, isPrefixOf, sort )
 import           Data.List.Split as LS
 import qualified Data.Map as M
-import           Data.Maybe (catMaybes, fromMaybe, isJust, isNothing)
+import           Data.Maybe (catMaybes, fromMaybe, isJust, isNothing, listToMaybe)
 import           Data.PropTree ( PropTree )
 import qualified Data.PropTree as PropTree
 import qualified Data.Set as S
@@ -58,7 +58,7 @@ import qualified Text.XML.Light as X
 import           Text.PrettyPrint.HughesPJClass ( (<+>), ($$), ($+$) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
-import           Dismantle.ARM.RegisterInfo ( registerInfoParser, RegisterInfo(..), RegisterIndexMode(..), RegisterKind(..) )
+import           Dismantle.ARM.RegisterInfo ( registerInfoParser, RegisterInfo(..), RegisterIndexMode(..), RegisterKind(..), RegisterUsage(..) )
 import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import qualified Dismantle.Tablegen.Parser.Types as PT
@@ -70,18 +70,18 @@ data XMLException = MissingChildElement String
                        | MissingAttr String
                        | MissingField String Fields
                        | MissingEncoding String
-                       | MissingFieldForRegister RegisterInfo String
+                       | MissingFieldForRegister (RegisterInfo String) String
                        | InvalidChildElement
                        | MnemonicError String
                        | InvalidPattern String
                        | MismatchedFieldWidth Field Int
                        | forall a. Show a => MismatchedFieldsForBits [Field] [a]
-                       | MissingRegisterInfo String [String]
+                       | MissingRegisterInfo String [RegisterInfo String]
                        | forall a. Show a => MismatchedWidth Int [a]
                        | InvalidXmlFile String
-                       | InnerParserFailure String String
+                       | forall e. (Show e, P.ShowErrorComponent e) => InnerParserFailure (P.ParseErrorBundle String e)
                        | UnexpectedAttributeValue String String
-                       | InvalidRegisterInfo RegisterInfo
+                       | forall a. Show a => InvalidRegisterInfo (RegisterInfo a)
                        | InvalidField Field
                        | BitdiffsParseError String String
                        | UnexpectedBitfieldLength [BT.Bit]
@@ -94,6 +94,7 @@ data XMLException = MissingChildElement String
                        | MissingEncodingTableEntry String
                        | MismatchedMasks [QuasiBit] [QuasiBit]
                        | MismatchedNegativeMasks [[BT.Bit]] [[BT.Bit]]
+                       | MismatchedRegisterInfos (RegisterInfo String) (RegisterInfo String)
 
 
 deriving instance Show XMLException
@@ -148,6 +149,8 @@ instance PP.Pretty XMLException where
       $$ PP.nest 1 (PP.vcat (map (prettyMask . map Bit) masks))
       $$ PP.text "vs."
       $$ PP.nest 1 (PP.vcat (map (prettyMask . map Bit) masks'))
+    InnerParserFailure e -> PP.text "InnerParserFailure"
+      $$ PP.nest 1 (PP.vcat $ (map PP.text $ lines (P.errorBundlePretty e)))
     _ -> PP.text $ show e
 
 instance PP.Pretty OuterXMLException where
@@ -163,10 +166,14 @@ instance PP.Pretty OuterXMLException where
     $$ PP.nest 1 (prettyElemPath $ xmlCurrentPath env)
     $$ PP.nest 1 (PP.pPrint e)
 
+
 prettyElemPath :: [X.Element] -> PP.Doc
 prettyElemPath es = go (reverse es)
   where
     go :: [X.Element] -> PP.Doc
+    go [e] = simplePrettyElem e <+> (case X.elLine e of
+      Just l -> PP.text "| line:" <+> PP.int (fromIntegral l)
+      Nothing -> PP.empty)
     go (e : es) = simplePrettyElem e $$ (PP.nest 1 $ go es)
     go [] = PP.empty
 
@@ -592,16 +599,29 @@ flatText e = concat $ map flatContent (X.elContent e)
     flatContent (X.Text str) = X.cdData $ str
     flatContent (X.Elem e) = flatText e
 
-parseElement :: Show e => P.Parsec e String a -> X.Element -> XML a
+parseElement :: Show e => P.ShowErrorComponent e => P.Parsec e String a -> X.Element -> XML a
 parseElement p e = withElement e $ parseString p (flatText e)
 
-parseString :: Show e => P.Parsec e String a -> String -> XML a
+parseString :: Show e => P.ShowErrorComponent e => P.Parsec e String a -> String -> XML a
 parseString p txt = do
   currentFile <- (fromMaybe "") <$> R.asks xmlCurrentFile
+  line <- (fromMaybe 1 . (listToMaybe >=> X.elLine)) <$> R.asks xmlCurrentPath
   case P.runParser p currentFile txt of
-    Left err -> throwError $ InnerParserFailure (show err) txt
+    Left err -> throwError $ InnerParserFailure $
+      err { P.bundlePosState = setLine line (P.bundlePosState err) }
     Right a -> return a
 
+
+-- | Absorb parser errors for 'Maybe' types
+parseStringCatch :: Show e => P.ShowErrorComponent e => P.Parsec e String (Maybe a) -> String -> XML (Maybe a)
+parseStringCatch p txt = parseString p txt `ME.catchError` \err -> warnError err >> return Nothing
+
+-- | Absorb parser errors for 'Maybe' types
+parseElementCatch :: Show e => P.ShowErrorComponent e => P.Parsec e String (Maybe a) -> X.Element -> XML (Maybe a)
+parseElementCatch p e = withElement e $ parseStringCatch p (flatText e)
+
+setLine :: Integer -> P.PosState s -> P.PosState s
+setLine line ps = ps { P.pstateSourcePos  = (P.pstateSourcePos ps) { P.sourceLine = P.mkPos (fromIntegral line) } }
 
 explodeAny :: [BT.Bit] -> [[BT.Bit]]
 explodeAny (b : bits) = do
@@ -791,91 +811,133 @@ resolvePropTree fields tree =
       unpackFieldConstraints (fields', as)
 
 
-leafGetEncodingConstraints :: InstructionLeaf -> Fields -> XML [(String, PropTree (BitSection BT.Bit))]
+leafGetEncodingConstraints :: InstructionLeaf
+                           -> Fields
+                           -> XML [(String, PropTree (BitSection BT.Bit), [RegisterInfo String])]
 leafGetEncodingConstraints ileaf fields = do
   let iclass = ileafiClass ileaf
   forChildren "encoding" iclass $ \encoding -> do
     name <- getAttr "name" encoding
     withEncodingName name $ do
-      case X.findAttr (qname "bitdiffs") encoding of
-        Nothing -> return $ (name, mempty)
+      reginfos <- reginfoFromAsmTemplate encoding
+      constraints <-  case X.findAttr (qname "bitdiffs") encoding of
+        Nothing -> return mempty
         Just bitdiffs -> do
           parsedConstraints <- parseString fieldConstraintsParser bitdiffs
-          constraints <- resolvePropTree fields parsedConstraints
-          return $ (name, constraints)
+          resolvePropTree fields parsedConstraints
+      return (name, constraints, reginfos)
+
+-- | Parse the register info from the asmtemplate
+reginfoFromAsmTemplate :: X.Element -> XML [RegisterInfo String]
+reginfoFromAsmTemplate encoding = do
+  asmtemplate <- getChild "asmtemplate" encoding
+  fmap catMaybes $ forChildren "a" asmtemplate $ \a -> do
+    case X.findAttr (qname "hover") a of
+      Just explanation -> do
+        symbolName <- parseElement registerNameParser a
+        parseStringCatch (registerInfoParser symbolName Nothing) explanation
+      Nothing -> return Nothing
+
 
 registerNameParser :: Parser String
-registerNameParser = do
-  P.char '<'
-  name <- P.takeWhile1P Nothing (/= '>')
-  P.char '>'
-  return name
+registerNameParser = braks <|> P.takeWhile1P Nothing (const True)
+  where
+    braks = do
+      P.char '<'
+      name <- P.takeWhile1P Nothing (/= '>')
+      P.char '>'
+      return name
 
 -- | Not all parsed explanations will be used (i.e. if they are only for encodings not for this architecture).
 -- So we leave the "encodedin" field as uninterpreted here, as it can only be resolved with respect to
 -- an architecture.
-parseExplanation :: X.Element -> XML (Maybe ([String], (String, (String, RegisterInfo))))
+parseExplanation :: X.Element -> XML (Maybe ([String], RegisterInfo String))
 parseExplanation explanation = do
     encs <- parseEncList <$> getAttr "enclist" explanation
-    withChild "account" explanation $ \case
+
+    mbody <- withChild "account" explanation $ \case
       Just account -> do
-          -- FIXME: "table" operands are not stored under an "account" element
         para <- getChild "intro" account >>= getChild "para"
-        parseElement registerInfoParser para >>= \case
-          Just rinfo -> do
-            encodedin <- getAttr "encodedin" account
-            symbol <- getChild "symbol" explanation
-            symbolName <- parseElement registerNameParser symbol
-            return $ Just (encs, (symbolName, (encodedin, rinfo)))
+        return $ Just (account, para)
+      Nothing -> withChild "definition" explanation $ \case
+        Just definition -> do
+          intro <- getChild "intro" definition
+          return $ Just (definition, intro)
+        Nothing -> return Nothing
+
+    case mbody of
+      Just (body, content) -> withElement body $ do
+        encodedin <- getAttr "encodedin" body
+        symbol <- getChild "symbol" explanation
+        symbolName <- parseElement registerNameParser symbol
+        let encodedin' = if null encodedin then Nothing else Just encodedin
+        parseElementCatch (registerInfoParser symbolName encodedin') content >>= \case
+          Just rinfo -> return $ Just (encs, rinfo)
           _ -> return Nothing
       Nothing -> return Nothing
 
-processExplanations :: Fields -> [(String, (String, RegisterInfo))] -> XML [(String, RegisterInfo, [Field])]
-processExplanations allfields explanations = mapM processExplanation explanations
+
+-- | Assign fields to the "encodedin" section of the register.
+-- Currently some registers might drop off due to lookup failures. This is (usually) due
+-- the register index mode not correctly being interpreted as an 'IndexRegisterOffset' and therefore
+-- referring to a field that is actually a logical operand (i.e. Sm1 == Sm + 1)
+lookupRegisterInfoFields :: Fields
+                         -> [RegisterInfo String]
+                         -> XML [RegisterInfo [Field]]
+lookupRegisterInfoFields allfields rinfos = catMaybes <$> mapM go rinfos
   where
-    processExplanation :: (String, (String, RegisterInfo)) -> XML (String, RegisterInfo, [Field])
-    processExplanation (symbolName, (encodedin, rinfo)) = do
-      let noEncodedInExpected = unless (null encodedin) $
-            throwError $ UnexpectedAttributeValue "encodedin" encodedin
+    go ::  RegisterInfo String -> XML (Maybe (RegisterInfo [Field]))
+    go rinfo = (Just <$> go' rinfo) `ME.catchError` \err -> do
+      warnError err
+      return Nothing
+
+    go' :: RegisterInfo String -> XML (RegisterInfo [Field])
+    go' rinfo = do
       case regIndexMode rinfo of
-        IndexVector fieldNames -> do
-          noEncodedInExpected
-          fields <- forM fieldNames $ \fieldName -> do
-            lookupField allfields (NameExpString fieldName)
-          return $ (symbolName, rinfo, fields)
         IndexRegisterOffset baseregister -> do
-          noEncodedInExpected
-          case lookup baseregister explanations of
+          case find (\ri -> regSymbolName ri == baseregister) rinfos of
             Just rawinfo -> do
-              (_, _, fields) <- processExplanation (baseregister, rawinfo)
-              return $ (symbolName, rinfo, fields)
-            Nothing -> throwError $ MissingRegisterInfo baseregister (map fst explanations)
+              rinfo' <- go' rawinfo
+              return $ rinfo {regEncodedIn = (regEncodedIn rinfo')}
+            Nothing -> throwError $ MissingRegisterInfo baseregister rinfos
         _ -> do
-          fieldDescription <- case regIndexMode rinfo of
-            IndexFromXML -> return encodedin
-            IndexImplicit -> return symbolName
-            IndexExplicit given -> return given
-            _ -> error "Unreachable"
-          unless (encodedin == fieldDescription) $ do
-            noEncodedInExpected
-          when (fieldDescription == "") $ do
+          when (null (regEncodedIn rinfo)) $
             throwError $ InvalidRegisterInfo rinfo
-          exps <- nameExps fieldDescription
+          exps <- nameExps (regEncodedIn rinfo)
           fields <- forM exps $ lookupField allfields
-          return $ (symbolName, rinfo { regIndexMode = IndexExplicit fieldDescription } , fields)
+          return $ rinfo { regEncodedIn = fields }
 
-getRegisterOperandType :: Int -> RegisterInfo -> XML DT.OperandType
-getRegisterOperandType totalBits rinfo = DT.OperandType <$> case (regKind rinfo, regIndexMode rinfo) of
+mergeRegisterInfos :: [RegisterInfo String]
+                   -> [RegisterInfo String]
+                   -> XML [RegisterInfo String]
+mergeRegisterInfos rinfos rinfos' = do
+  let matched = M.assocs $ M.fromListWith (++) $ map (\rinfo -> (regSymbolName rinfo, [rinfo])) (rinfos ++ rinfos')
+  forM matched $ \(_, (rinfo : rinfos)) -> do
+    rinfo' <- foldM go rinfo rinfos
+    return rinfo'
+  where
+    go :: RegisterInfo String -> RegisterInfo String -> XML (RegisterInfo String)
+    go rinfo rinfo' = do
+      unless (rinfo { regSourceText = "" }  == rinfo' { regSourceText = "" }) $
+        warnError $ MismatchedRegisterInfos rinfo rinfo'
+      return rinfo
+
+getRegisterOperandType :: RegisterInfo [Field] -> XML DT.OperandType
+getRegisterOperandType rinfo =
+  let totalBits = sum $ map fieldWidth (regEncodedIn rinfo)
+  in
+  DT.OperandType <$> case (regKind rinfo, regIndexMode rinfo) of
   (GPR, IndexRegisterOffset _) | totalBits == 4 -> return "GPR4_1"
-  (GPR, IndexExplicit _) | totalBits == 4 -> return "GPR4"
-  (GPR, IndexExplicit _) | totalBits == 3 -> return "GPR3"
+  (GPR, IndexSimple) | totalBits == 4 -> return "GPR4"
+  (GPR, IndexSimple) | totalBits == 3 -> return "GPR3"
+  (GPR, IndexSimple) | (regUsage rinfo) == Banked, totalBits == 6 -> return "GPR_banked"
   (SIMDandFP, IndexRegisterOffset _) | totalBits == 5 -> return "SIMD5_1"
-  (SIMDandFP, IndexVector _) | totalBits == 7 -> return "SIMD7"
-  (SIMDandFP, IndexExplicit _) | totalBits == 5 -> return "SIMD5"
-  (SIMDandFP, IndexExplicit _) | totalBits == 4 -> return "SIMD4"
-  (SIMDandFP, IndexExplicit _) | totalBits == 3 -> return "SIMD3"
-  (SIMDandFP, IndexExplicit _) | totalBits == 2 -> return "SIMD2"
-
+  (SIMDandFP, IndexVector) | totalBits == 7 -> return "SIMD7"
+  (SIMDandFP, IndexSimple) | totalBits == 5 -> return "SIMD5"
+  (SIMDandFP, IndexSimple) | totalBits == 4 -> return "SIMD4"
+  (SIMDandFP, IndexSimple) | totalBits == 3 -> return "SIMD3"
+  (SIMDandFP, IndexSimple) | totalBits == 2 -> return "SIMD2"
+  (SIMDandFP, IndexMul2) | totalBits == 5 -> return "SIMD5_Mul2"
   _ -> throwError $ InvalidRegisterInfo rinfo
 
 lookupEncIndexMask :: InstructionLeaf -> String -> XML (Maybe (([QuasiBit], [[BT.Bit]]), Bool))
@@ -921,14 +983,15 @@ leafGetEncodings ileaf allfields operands iconstraints = do
     forM parsedExplanations $ \(encs, v) -> do
       return $ [ (e, [v]) | e <- encs ]
 
-  forM encodingConstraints $ \(encName', constraints) -> withEncodingName encName' $ do
-      let rawRegisters = fromMaybe [] $ M.lookup encName' registerSources
-      rinfos <- processExplanations allfields rawRegisters
+  forM encodingConstraints $ \(encName', constraints, rinfos') -> withEncodingName encName' $ do
+      let rinfos'' = fromMaybe [] $ M.lookup encName' registerSources
+      rinfos <- mergeRegisterInfos rinfos' rinfos''
+      rinfoFields <- lookupRegisterInfoFields allfields rinfos
 
-      let usedFieldNames = concat $ map (\(_, _, fields) -> map fieldName fields) rinfos
+      let usedFieldNames = concat $ map (\rinfo -> map fieldName (regEncodedIn rinfo)) rinfoFields
       let unusedFields = M.elems $ M.withoutKeys allfields (S.fromList usedFieldNames)
 
-      registerOps <- mapM mkRegisterOp rinfos
+      registerOps <- mapM mkRegisterOp rinfoFields
       immediates <- mapM mkImmediateOp unusedFields
       (mask, negmasks) <- deriveMasks iconstraints constraints
 
@@ -946,14 +1009,13 @@ leafGetEncodings ileaf allfields operands iconstraints = do
       MS.modify' $ \st -> st { encodingMap = M.insert encName' encoding (encodingMap st) }
       return encoding
   where
-    mkRegisterOp :: (String, RegisterInfo, [Field]) -> XML DT.OperandDescriptor
-    mkRegisterOp (name, rinfo, fields) = do
-      let totalBits = sum $ map fieldWidth fields
-      chunks <- forM fields $ \(Field name hibit width _ _ _) -> do
+    mkRegisterOp :: RegisterInfo [Field] -> XML DT.OperandDescriptor
+    mkRegisterOp rinfo = do
+      chunks <- forM (regEncodedIn rinfo) $ \(Field name hibit width _ _ _) -> do
         return (DT.IBit (hibit - width + 1), PT.OBit 0, fromIntegral width)
-      opType <- getRegisterOperandType totalBits rinfo
+      opType <- getRegisterOperandType rinfo
 
-      return $ DT.OperandDescriptor { DT.opName = name
+      return $ DT.OperandDescriptor { DT.opName = regSymbolName rinfo
                                     , DT.opChunks = chunks
                                     , DT.opType = opType
                                     }
