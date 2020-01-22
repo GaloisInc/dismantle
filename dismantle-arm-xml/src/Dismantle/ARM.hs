@@ -221,22 +221,20 @@ qname str = X.QName str Nothing Nothing
 
 -- | Given a path to the directory containing all XML instruction files, build an ISA
 -- descriptor.
-loadXML ::  String -> [FilePath] -> FilePath -> FilePath -> IO DT.ISADescriptor
-loadXML arch xmlFiles xmlEncIndex logFile = do
- withFile logFile WriteMode $ \logfile -> do
-   let doLog msg = hPutStrLn logfile msg
-   result <- runXML arch xmlFiles doLog $ do
-     withParsedXMLFile xmlEncIndex loadEncIndex
-     instrs <- fmap concat $ forM xmlFiles $ (\f -> withParsedXMLFile f loadInstrs)
-     return $ DT.ISADescriptor { DT.isaInstructions = instrs
-                               , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
-                               , DT.isaErrors = []
-                               }
-   case result of
-     Left err -> do
-       doLog (show err)
-       E.throw err
-     Right desc -> return desc
+loadXML ::  String -> [FilePath] -> FilePath -> (String -> IO ()) -> IO DT.ISADescriptor
+loadXML arch xmlFiles xmlEncIndex logFn = do
+  result <- runXML arch xmlFiles logFn $ do
+    withParsedXMLFile xmlEncIndex loadEncIndex
+    instrs <- fmap concat $ forM xmlFiles $ (\f -> withParsedXMLFile f loadInstrs)
+    return $ DT.ISADescriptor { DT.isaInstructions = instrs
+                              , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
+                              , DT.isaErrors = []
+                              }
+  case result of
+    Left err -> do
+      logFn (show err)
+      E.throw err
+    Right desc -> return desc
 
 logXML :: String -> XML ()
 logXML msg = do

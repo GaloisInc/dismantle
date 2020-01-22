@@ -24,6 +24,7 @@ library
                      Dismantle.ARM.ISA,
                      Dismantle.ARM.TH
                      Dismantle.ARM.RegisterInfo
+                     Dismantle.ASL.Decode
                      Data.PropTree
   -- other-modules:
   -- other-extensions:
