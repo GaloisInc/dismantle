@@ -206,11 +206,11 @@ instance Eq a => Eq (BitSection n a) where
       = vect == vect'
     | otherwise = False
 
-instance IsMaskBit a => Show (BitSection n a) where
-  show bitsect = showBitSection bitsect
+instance (KnownNat n, IsMaskBit a) => Show (BitSection n a) where
+  show bitsect = showBitSection NR.knownNat bitsect
 
 instance (KnownNat n, PP.Pretty a) => PP.Pretty (BitSection n a) where
-  pPrint bitsect = prettyBitSectionHiBit NR.knownNat PP.pPrint bitsect
+  pPrint bitsect = prettyBitSection NR.knownNat PP.pPrint bitsect
 
 mkBitSection :: IsMaskBit a => Int -> [a] -> NatRepr n -> Maybe (BitSection n a)
 mkBitSection posInt bits nr
@@ -236,29 +236,29 @@ sectBits (BitSection _ mask) = V.toList mask
 sectWidth :: BitSection n a -> Int
 sectWidth (BitSection _ mask) = V.lengthInt mask
 
-prettyBitSectionHiBit :: NatRepr n -> (a -> PP.Doc) -> BitSection n a -> PP.Doc
-prettyBitSectionHiBit nr prettyBit bitsect =
+prettyBitSection :: NatRepr n -> (a -> PP.Doc) -> BitSection n a -> PP.Doc
+prettyBitSection nr prettyBit bitsect =
   let hiBit = sectHiBitPos bitsect nr in
   (PP.hcat $ map prettyBit (sectBits bitsect))
   PP.<> PP.text "<"
   PP.<> case sectWidth bitsect of
     1 -> PP.int hiBit
     x | x > 1 -> PP.int hiBit PP.<> PP.text ":" PP.<> PP.int (hiBit - x + 1)
-    _ -> PP.text "?"
+    _ -> error "Unreachable"
   PP.<> PP.text ">"
 
-prettyBitSection :: (a -> PP.Doc) -> BitSection n a -> PP.Doc
-prettyBitSection prettyBit bitsect =
+prettyBitSectionUnknownWidth :: (a -> PP.Doc) -> BitSection n a -> PP.Doc
+prettyBitSectionUnknownWidth prettyBit bitsect =
   (PP.hcat $ map prettyBit (sectBits bitsect))
   PP.<> PP.text "<"
   PP.<> case sectWidth bitsect of
     1 -> PP.int (sectBitPos bitsect)
     x | x > 1 -> PP.int ((x - 1) + (sectBitPos bitsect)) PP.<> PP.text "+:" PP.<> PP.int (sectBitPos bitsect)
-    _ -> PP.text "?"
+    _ -> error "Unreachable"
   PP.<> PP.text ">"
 
-showBitSection :: IsMaskBit a => BitSection n a -> String
-showBitSection bitsect = PP.render $ prettyBitSection (PP.text . showBit) bitsect
+showBitSection :: IsMaskBit a => NatRepr n -> BitSection n a -> String
+showBitSection nr bitsect = PP.render $ prettyBitSection nr (PP.text . showBit) bitsect
 
 mergeBitErr :: ME.MonadError String m => IsMaskBit a => a -> a -> m a
 mergeBitErr a1 a2 = case mergeBits a1 a2 of
@@ -284,14 +284,14 @@ computePattern' :: forall a m n
 computePattern' nr bitsects =
   go bitsects (defaultBitMask nr)
     `ME.catchError`
-     (prependErr $ "computePattern: " ++ intercalate "," (map showBitSection bitsects))
+     (prependErr $ "computePattern: " ++ intercalate "," (map (showBitSection nr) bitsects))
   where
     go :: [BitSection n a] -> BitMask n (Maybe a) -> m (BitMask n (Maybe a))
     go [] mask = return $ mask
     go (bitsect : rst) mask = do
       resultMask <- addSectionToMask (fmap Just bitsect) mask
         `ME.catchError`
-        (prependErr $ "computePattern: for BitSection: " ++ showBitSection bitsect)
+        (prependErr $ "computePattern: for BitSection: " ++ showBitSection nr bitsect)
       go rst resultMask
 
 -- | Flattens a 'BitSection' list into a single list of elements. Overlapping sections are
@@ -345,4 +345,4 @@ deriveMasks nr constraints = case PropTree.toConjunctsAndDisjuncts constraints o
     return (mask', negMasks)
   Nothing -> ME.throwError $
     "Malformed PropTree for mask derivation: \n"
-    ++ PP.render (PropTree.prettyPropTree (PP.text . showBitSection) constraints)
+    ++ PP.render (PropTree.prettyPropTree (PP.text . showBitSection nr) constraints)

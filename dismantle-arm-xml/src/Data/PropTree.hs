@@ -19,7 +19,6 @@ module Data.PropTree
 
 import Prelude hiding (negate)
 
-import           Text.PrettyPrint.HughesPJClass ( (<+>), ($$), ($+$) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 -- | Representation of a propositional formula with a 'PropList' as conjunction and 'PropNegate' as negation.
@@ -112,14 +111,13 @@ toConjunctsAndDisjuncts tree = do
   negativess <- mapM flatten negativeTrees
   return (positive, negativess)
 
-
 prettyPropTree :: forall a. (a -> PP.Doc) -> PropTree a -> PP.Doc
 prettyPropTree f tree = go tree
   where
     go :: PropTree a -> PP.Doc
-    go (PropLeaf a) = PP.text "|" <+> f a
-    go (PropList as) = PP.text "PropList:" $$ (PP.nest 1 $ PP.vcat (map go as))
-    go (PropNegate p) = PP.text "PropNegate:" $$ (PP.nest 1 $ go p)
+    go (PropLeaf a) = f a
+    go (PropList as) = PP.parens (PP.hcat (PP.punctuate (PP.text " && ") (map go as)))
+    go (PropNegate p) = PP.text "!" PP.<> (go p)
 
 instance PP.Pretty a => PP.Pretty (PropTree a) where
   pPrint tree = prettyPropTree PP.pPrint tree
