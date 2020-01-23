@@ -34,6 +34,7 @@ module Data.BitMask
   )
   where
 
+import           GHC.TypeNats
 import qualified Control.Monad.Except as ME
 import           Control.Monad ( unless, zipWithM )
 import           Data.Maybe ( fromMaybe )
@@ -129,6 +130,9 @@ instance IsMaskBit QuasiBit where
     (Bit b1, Bit b2) -> Bit <$> mergeBits b1 b2
     _ -> fail "Incompatible qbits"
 
+instance PP.Pretty QuasiBit where
+  pPrint qbit = PP.text (showBit qbit)
+
 readQuasiBit :: String -> Maybe QuasiBit
 readQuasiBit s = case s of
   "1" -> Just $ Bit $ BitSet
@@ -205,6 +209,9 @@ instance Eq a => Eq (BitSection n a) where
 instance IsMaskBit a => Show (BitSection n a) where
   show bitsect = showBitSection bitsect
 
+instance (KnownNat n, PP.Pretty a) => PP.Pretty (BitSection n a) where
+  pPrint bitsect = prettyBitSectionHiBit NR.knownNat PP.pPrint bitsect
+
 mkBitSection :: IsMaskBit a => Int -> [a] -> NatRepr n -> Maybe (BitSection n a)
 mkBitSection posInt bits nr
   | Just (Some bitLen) <- NR.someNat (length bits)
@@ -220,19 +227,38 @@ mkBitSection posInt bits nr
 sectBitPos :: BitSection n a -> Int
 sectBitPos (BitSection posAt _)  = fromIntegral $ NR.intValue posAt
 
+sectHiBitPos :: BitSection n a -> NatRepr n -> Int
+sectHiBitPos (BitSection posAt _) nr = fromIntegral $ (NR.intValue nr - NR.intValue posAt - 1)
+
 sectBits :: BitSection n a -> [a]
 sectBits (BitSection _ mask) = V.toList mask
 
 sectWidth :: BitSection n a -> Int
 sectWidth (BitSection _ mask) = V.lengthInt mask
 
-showBitSection :: IsMaskBit a => BitSection n a -> String
-showBitSection bitsect =
-  (concat $ map showBit (sectBits bitsect))
-  ++ "<" ++ show (sectBitPos bitsect)
-  ++ ":" ++ show ((sectBitPos bitsect) + (sectWidth bitsect))
-  ++ ">"
+prettyBitSectionHiBit :: NatRepr n -> (a -> PP.Doc) -> BitSection n a -> PP.Doc
+prettyBitSectionHiBit nr prettyBit bitsect =
+  let hiBit = sectHiBitPos bitsect nr in
+  (PP.hcat $ map prettyBit (sectBits bitsect))
+  PP.<> PP.text "<"
+  PP.<> case sectWidth bitsect of
+    1 -> PP.int hiBit
+    x | x > 1 -> PP.int hiBit PP.<> PP.text ":" PP.<> PP.int (hiBit - x + 1)
+    _ -> PP.text "?"
+  PP.<> PP.text ">"
 
+prettyBitSection :: (a -> PP.Doc) -> BitSection n a -> PP.Doc
+prettyBitSection prettyBit bitsect =
+  (PP.hcat $ map prettyBit (sectBits bitsect))
+  PP.<> PP.text "<"
+  PP.<> case sectWidth bitsect of
+    1 -> PP.int (sectBitPos bitsect)
+    x | x > 1 -> PP.int ((x - 1) + (sectBitPos bitsect)) PP.<> PP.text "+:" PP.<> PP.int (sectBitPos bitsect)
+    _ -> PP.text "?"
+  PP.<> PP.text ">"
+
+showBitSection :: IsMaskBit a => BitSection n a -> String
+showBitSection bitsect = PP.render $ prettyBitSection (PP.text . showBit) bitsect
 
 mergeBitErr :: ME.MonadError String m => IsMaskBit a => a -> a -> m a
 mergeBitErr a1 a2 = case mergeBits a1 a2 of
@@ -260,12 +286,6 @@ computePattern' nr bitsects =
     `ME.catchError`
      (prependErr $ "computePattern: " ++ intercalate "," (map showBitSection bitsects))
   where
-    mergeMaybes :: a -> Maybe a -> m (Maybe a)
-    mergeMaybes a (Just a') = case mergeBits a a' of
-      Just a'' -> return $ Just a''
-      Nothing -> ME.throwError $ "Incompatible bits: " ++ showBit a ++ " and " ++ showBit a'
-    mergeMaybes a _ = Just <$> return a
-
     go :: [BitSection n a] -> BitMask n (Maybe a) -> m (BitMask n (Maybe a))
     go [] mask = return $ mask
     go (bitsect : rst) mask = do
@@ -280,35 +300,37 @@ computePattern' nr bitsects =
 computePattern :: (IsMaskBit a, ME.MonadError String m, 1 <= n) => NatRepr n -> [BitSection n a] -> m (BitMask n a)
 computePattern nr bitsects = fmap (fromMaybe anyMaskBit) <$> computePattern' nr bitsects
 
-explodeAny :: forall a n. IsMaskBit a => 1 <= n => BitMask n a -> [BitMask n BT.Bit]
-explodeAny mask = case V.uncons mask of
-  (b, Left NR.Refl) -> do
-    b' <- explodeBit b
-    return $ V.singleton b'
-  (b, Right rst) -> do
-    b' <- explodeBit b
-    NR.LeqProof <- return $ V.nonEmpty rst
-    mask' <- explodeAny rst
-    NR.Refl <- return $ NR.minusPlusCancel (V.length mask) (NR.knownNat @1)
-    return $ V.cons b' mask'
-  where
-    explodeBit :: a -> [BT.Bit]
-    explodeBit b = case asBit b of
-      BT.Any -> [BT.ExpectedBit True, BT.ExpectedBit False]
-      b' -> [b']
+-- This bit explosion is actually redundant
 
-explodeBitSection :: forall a n. IsMaskBit a => 1 <= n => BitSection n a -> [BitSection n BT.Bit]
-explodeBitSection (BitSection posAt mask) = [ (BitSection posAt mask') | mask' <- explodeAny mask ]
+-- explodeAny :: forall a n. IsMaskBit a => 1 <= n => BitMask n a -> [BitMask n BT.Bit]
+-- explodeAny mask = case V.uncons mask of
+--   (b, Left NR.Refl) -> do
+--     b' <- explodeBit b
+--     return $ V.singleton b'
+--   (b, Right rst) -> do
+--     b' <- explodeBit b
+--     NR.LeqProof <- return $ V.nonEmpty rst
+--     mask' <- explodeAny rst
+--     NR.Refl <- return $ NR.minusPlusCancel (V.length mask) (NR.knownNat @1)
+--     return $ V.cons b' mask'
+--   where
+--     explodeBit :: a -> [BT.Bit]
+--     explodeBit b = case asBit b of
+--       BT.Any -> [BT.ExpectedBit True, BT.ExpectedBit False]
+--       b' -> [b']
+
+-- explodeBitSection :: forall a n. IsMaskBit a => 1 <= n => BitSection n a -> [BitSection n BT.Bit]
+-- explodeBitSection (BitSection posAt mask) = [ (BitSection posAt mask') | mask' <- explodeAny mask ]
 
 
 -- | Derive a set of positive and negative masks from a given 'PropTree' of 'BitSection'.
 -- e.g. turn ( x1x<0:2> && 11 <2:4> && !(010<0:2>) && !(11x<0:2>) into
---           ([x1x11], [ [010xx], [111xx], [110xx] ])
+--           ([x1x11], [ [010xx], [11xxx] ])
 deriveMasks :: forall a m n
              . (IsMaskBit a, ME.MonadError String m, 1 <= n)
             => NatRepr n
             -> PropTree (BitSection n a)
-            -> m (BitMask n a, [BitMask n BT.Bit])
+            -> m (BitMask n a, [BitMask n a])
 deriveMasks nr constraints = case PropTree.toConjunctsAndDisjuncts constraints of
   Just (positiveConstraints, negativeConstraints) -> do
     mask' <- computePattern nr positiveConstraints
@@ -317,11 +339,10 @@ deriveMasks nr constraints = case PropTree.toConjunctsAndDisjuncts constraints o
 
     negMasks <- sequence $ do
       negConstraintBase <- negativeConstraints
-      negConstraint <- map explodeBitSection negConstraintBase
-      return $ computePattern nr negConstraint
+      return $ computePattern nr negConstraintBase
          `ME.catchError`
          (prependErr $ "deriveMasks: invalid negative constraint")
-    return (mask', nub negMasks)
+    return (mask', negMasks)
   Nothing -> ME.throwError $
     "Malformed PropTree for mask derivation: \n"
     ++ PP.render (PropTree.prettyPropTree (PP.text . showBitSection) constraints)
