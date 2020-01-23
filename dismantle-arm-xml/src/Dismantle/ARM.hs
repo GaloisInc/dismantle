@@ -598,7 +598,6 @@ deriveMasks :: PropTree (ARMBitSection QuasiBit)
             -> XML (ARMBitMask QuasiBit, [ARMBitMask BT.Bit])
 deriveMasks qbits bits = do
   let constraints = (fmap (fmap Bit) bits <> qbits)
-  traceM (PP.render $ PP.pPrint constraints)
   case BM.deriveMasks NR.knownNat constraints of
     Left err -> throwError $ InvalidConstraints constraints err
     Right (posmask, negmasks) -> return (posmask, map (fmap BM.asBit) negmasks)
