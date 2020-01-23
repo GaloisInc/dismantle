@@ -25,6 +25,7 @@ library
                      Dismantle.ARM.TH
                      Dismantle.ARM.RegisterInfo
                      Dismantle.ASL.Decode
+                     Data.BitMask
                      Data.PropTree
   -- other-modules:
   -- other-extensions:

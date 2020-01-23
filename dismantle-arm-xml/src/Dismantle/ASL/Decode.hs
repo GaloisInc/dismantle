@@ -5,6 +5,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Dismantle.ASL.Decode
   where
@@ -41,6 +42,7 @@ import           Language.ASL.Parser as ASL
 import           Language.ASL.Syntax as ASL
 
 import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Data.BitMask as BM
 
 data DecodeEnv = DecodeEnv { envLogFn :: String -> IO ()
                            , envContext :: DecodeContext
@@ -59,7 +61,8 @@ type DecodeOut = ()
 
 data DecodeException =
     DecodeMFail String
-  | MissingExpectedMaskTreeEntry ASL.Instruction ASL.InstructionEncoding
+  | MissingExpectedMaskTreeEntry
+  | BadMaskTreeLookup String
   | MultipleMaskTreeEntries [(ASL.Instruction, ASL.InstructionEncoding)]
   | NotImplementedYet String
   | ASLParserError String
@@ -109,6 +112,9 @@ instance PP.Pretty OuterDecodeException where
     <+> case ctxSourceLoc ctx of
           Just loc -> PP.text "at" <+> PP.text (prettySrcLoc loc)
           Nothing -> PP.empty
+    <+> case (ctxInstruction ctx, ctxEncoding ctx) of
+          (Just instr, Just enc) -> PP.text "for instruction:" <+> prettyInstructionEncoding instr enc
+          _ -> PP.empty
     $$ (PP.nest 1 $ PP.pPrint e)
 
 instance Show OuterDecodeException where
@@ -119,8 +125,6 @@ instance PP.Pretty DecodeException where
     MultipleMaskTreeEntries tes ->
       PP.text "MultipleMaskTreeEntries:"
       $$ PP.nest 1 (PP.vcat (map (uncurry prettyInstructionEncoding) tes))
-    MissingExpectedMaskTreeEntry instr enc ->
-      PP.text "MissingExpectedMaskTreeEntry" <+> prettyInstructionEncoding instr enc
     _ -> PP.text (show e)
 
 prettyInstructionEncoding :: ASL.Instruction -> ASL.InstructionEncoding -> PP.Doc
@@ -170,8 +174,8 @@ loadASL aslFile logFn = do
     instrs <- parseInstsFile aslFile
     forM_ instrs $ \instr -> do
       forEncodings instr loadEncoding
-    forM_ instrs $ \instr -> do
-      forEncodings instr checkEncoding
+    --forM_ instrs $ \instr -> do
+    --  forEncodings instr checkEncoding
   case result of
     Left err -> do
       logFn (show err)
@@ -208,9 +212,9 @@ checkEncoding :: ASL.Instruction -> ASL.InstructionEncoding -> DecodeM ()
 checkEncoding instr enc = do
   let mask = maskToBits $ encOpcodeMask enc
   tree <- MS.gets stMaskTree
-  return ()
   case lookupMaskFromTree mask tree of
-    [] -> throwErrorHere $ MissingExpectedMaskTreeEntry instr enc
+    Left err -> throwErrorHere $ BadMaskTreeLookup err
+    Right [] -> throwErrorHere $ MissingExpectedMaskTreeEntry
     _ -> return ()
 
 data MaskTree a = MaskLeaf [a] | MaskNode !(MaskTree a) !(MaskTree a) !(MaskTree a) | MaskNil
@@ -233,21 +237,56 @@ addMaskToTree bits e tree = case (bits, tree) of
   ([], MaskLeaf es) -> MaskLeaf (e : es)
   (bits, MaskNil) -> addMaskToTree bits e freshNode
   (bit : rst, MaskNode unset set either) -> case bit of
-    BT.Any -> MaskNode unset set (go rst either)
-    BT.ExpectedBit True -> MaskNode unset (go rst set) either
     BT.ExpectedBit False -> MaskNode (go rst unset) set either
+    BT.ExpectedBit True -> MaskNode unset (go rst set) either
+    BT.Any -> MaskNode unset set (go rst either)
   where
     go :: [BT.Bit] -> MaskTree a -> MaskTree a
     go rst tree' = addMaskToTree rst e tree'
 
-lookupMaskFromTree :: forall a. [BT.Bit]-> MaskTree a -> [a]
-lookupMaskFromTree bits tree = case (bits, tree) of
-  (_, MaskNil) -> []
-  (_, MaskLeaf es) -> es
-  (bit : rst, MaskNode unset set either) -> case bit of
-    BT.Any -> go rst unset ++ go rst set ++ go rst either
-    BT.ExpectedBit True -> go rst set ++ go rst either
-    BT.ExpectedBit False -> go rst unset ++ go rst either
+-- | Retrieve a mask from the tree, along with its bitpattern
+lookupMaskFromTree :: forall a m. ME.MonadError String m => [BT.Bit] -> MaskTree a -> m [(a, [BT.Bit])]
+lookupMaskFromTree bits = dolookup bits []
   where
-    go :: [BT.Bit] -> MaskTree a -> [a]
-    go rst tree' = lookupMaskFromTree rst tree'
+    dolookup :: [BT.Bit] -> [BT.Bit] -> MaskTree a -> m [(a, [BT.Bit])]
+    dolookup bitsleft bitsused tree = case (bits, tree) of
+      ([], MaskNil) -> return $ []
+      ([], MaskLeaf es) -> return $ map (\e -> (e, reverse bitsused)) es
+      (bit : rst, MaskNode unset set either) -> case bit of
+         BT.ExpectedBit False -> do
+           unset' <- go bit unset
+           either' <- go BT.Any either
+           return $ unset' ++ either'
+         BT.ExpectedBit True -> do
+           set' <- go bit set
+           either' <- go BT.Any either
+           return $ set' ++ either'
+         BT.Any -> do
+           unset' <- go (BT.ExpectedBit False) unset
+           set' <- go (BT.ExpectedBit True) set
+           either' <- go bit either
+           return $ unset' ++ set' ++ either'
+         where
+          go :: BT.Bit -> MaskTree a -> m [(a, [BT.Bit])]
+          go bit' = dolookup rst (bit' : bitsused)
+      (bits, tree) -> ME.throwError $ "Malformed tree lookup:" ++ (concat $ map BM.showBit bits)
+
+-- lookupMatchingMasks :: forall a. [BT.Bit] -> [[BT.Bit]] -> MaskTree a -> [a]
+-- lookupMatchingMasks mask negmasks tree =
+--   let
+--     matches = lookupMaskFromTree mask tree
+--   where
+--     filterNegMask :: [BT.Bit] -> (a, [BT.Bit]) -> Maybe a
+--     filterNegMask negmask (a, mask) =
+
+--   case (bits, tree) of
+--   ([], MaskNil) -> return []
+--   ([], MaskLeaf es) -> return es
+--   (bit : rst, MaskNode unset set either) -> case bit of
+--     BT.Any -> go unset ++ go set ++ go either
+--     BT.ExpectedBit True -> go set ++ go either
+--     BT.ExpectedBit False -> go unset ++ go either
+--     where
+--       go :: MaskTree a -> [a]
+--       go tree' = lookupMaskFromTree rst tree'
+--   _ ->

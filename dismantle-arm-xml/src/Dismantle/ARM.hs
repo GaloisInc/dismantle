@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs, DataKinds #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
@@ -11,6 +11,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 module Dismantle.ARM
   ( loadXML
@@ -38,10 +39,11 @@ import qualified Control.Monad.Reader as R
 import           Control.Monad.Trans.RWS.Strict ( RWST )
 import qualified Control.Monad.Trans.RWS.Strict as RWS
 import           Data.Either ( partitionEithers )
-import           Data.List (stripPrefix, find, nub, intersect, (\\), intercalate, partition, isPrefixOf, sort )
+import           Data.List (stripPrefix, find, nub, intersect, (\\), intercalate, partition, isPrefixOf, sort, intersect )
 import           Data.List.Split as LS
 import qualified Data.Map as M
 import           Data.Maybe (catMaybes, fromMaybe, isJust, isNothing, listToMaybe)
+import qualified Data.Parameterized.NatRepr as NR
 import           Data.PropTree ( PropTree )
 import qualified Data.PropTree as PropTree
 import qualified Data.Set as S
@@ -63,7 +65,12 @@ import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import qualified Dismantle.Tablegen.Parser.Types as PT
 
+import           Data.BitMask (BitSection, QuasiBit(..), BitMask, mkBitSection )
+import qualified Data.BitMask as BM
+
 import Debug.Trace
+
+type IsMaskBit a = (BM.IsMaskBit a, Show a)
 
 data XMLException = MissingChildElement String
                        | NoMatchingChildElement
@@ -75,7 +82,7 @@ data XMLException = MissingChildElement String
                        | MnemonicError String
                        | InvalidPattern String
                        | MismatchedFieldWidth Field Int
-                       | forall a. Show a => MismatchedFieldsForBits [Field] [a]
+                       | forall a. IsMaskBit a => MismatchedFieldsForBits [Field] [a]
                        | MissingRegisterInfo String [RegisterInfo String]
                        | forall a. Show a => MismatchedWidth Int [a]
                        | InvalidXmlFile String
@@ -87,23 +94,27 @@ data XMLException = MissingChildElement String
                        | UnexpectedBitfieldLength [BT.Bit]
                        | NoUniqueiClass String
                        | MissingXMLFile String
-                       | InvalidConstraints (PropTree (BitSection QuasiBit)) String
+                       | InvalidConstraints (PropTree (BitSection ARMRegWidth QuasiBit)) String
                        | XMLMonadFail String
-                       | forall a b. (Show a, Show b) => MismatchedListLengths [a] [b]
+                       | forall a b. (IsMaskBit a, IsMaskBit b) => MismatchedListLengths [a] [b]
                        | UnexpectedElements [X.Element]
                        | MissingEncodingTableEntry String
-                       | MismatchedMasks [QuasiBit] [QuasiBit]
-                       | MismatchedNegativeMasks [[BT.Bit]] [[BT.Bit]]
+                       | MismatchedMasks (ARMBitMask QuasiBit) (ARMBitMask QuasiBit)
+                       | MismatchedNegativeMasks [ARMBitMask BT.Bit] [ARMBitMask BT.Bit]
                        | MismatchedRegisterInfos (RegisterInfo String) (RegisterInfo String)
+                       | forall a. IsMaskBit a => InvalidBitsForBitsection Int [a]
 
 
 deriving instance Show XMLException
-
 
 instance E.Exception OuterXMLException
 
 data OuterXMLException = OuterXMLException XMLEnv XMLException
 
+type ARMRegWidth = 32
+
+type ARMBitSection n = BitSection ARMRegWidth n
+type ARMBitMask n = BitMask ARMRegWidth n
 
 newtype XML a = XML (RWST XMLEnv () XMLState (ME.ExceptT OuterXMLException IO) a)
   deriving ( Functor
@@ -144,11 +155,11 @@ instance PP.Pretty XMLException where
       PP.text "UnexpectedElements"
       <+> PP.brackets (PP.hsep (PP.punctuate (PP.text ",") (map simplePrettyElem elems)))
     MismatchedMasks mask mask' -> PP.text "MismatchedMasks"
-      $$ PP.nest 1 (prettyMask mask $$ prettyMask mask')
+      $$ PP.nest 1 (BM.prettyMask mask $$ BM.prettyMask mask')
     MismatchedNegativeMasks masks masks' -> PP.text "MismatchedNegativeMasks"
-      $$ PP.nest 1 (PP.vcat (map (prettyMask . map Bit) masks))
+      $$ PP.nest 1 (PP.vcat (map BM.prettyMask masks))
       $$ PP.text "vs."
-      $$ PP.nest 1 (PP.vcat (map (prettyMask . map Bit) masks'))
+      $$ PP.nest 1 (PP.vcat (map BM.prettyMask masks'))
     InnerParserFailure e -> PP.text "InnerParserFailure"
       $$ PP.nest 1 (PP.vcat $ (map PP.text $ lines (P.errorBundlePretty e)))
     _ -> PP.text $ show e
@@ -199,7 +210,7 @@ data InstructionLeaf = InstructionLeaf { ileafFull :: X.Element -- entire leaf
 
 
 data XMLState = XMLState { encodingMap :: M.Map String Encoding
-                         , encodingTableMap :: M.Map EncIndexIdent ([QuasiBit], [[BT.Bit]])
+                         , encodingTableMap :: M.Map EncIndexIdent (ARMBitMask QuasiBit, [ARMBitMask BT.Bit])
                          }
   deriving Show
 
@@ -267,7 +278,7 @@ getEncIndexIdent elt = case X.findAttr (qname "encname") elt of
     iformfile <- getAttr "iformfile" elt
     return $ IdentFileClassName encoding iformfile
 
-getDecodeConstraints :: Fields -> X.Element -> XML (PropTree (BitSection BT.Bit))
+getDecodeConstraints :: Fields -> X.Element -> XML (PropTree (ARMBitSection BT.Bit))
 getDecodeConstraints fields dcs = do
   rawConstraints <- forChildren "decode_constraint" dcs $ \dc -> do
     [name,"!=", val] <- getAttrs ["name", "op", "val"] dc
@@ -276,7 +287,7 @@ getDecodeConstraints fields dcs = do
     return $ PropTree.negate $ PropTree.clause $ (flds, bits)
   resolvePropTree fields (mconcat rawConstraints)
 
-instrTableConstraints :: [[Field]] -> X.Element -> XML (PropTree (BitSection BT.Bit))
+instrTableConstraints :: [[Field]] -> X.Element -> XML (PropTree (ARMBitSection BT.Bit))
 instrTableConstraints tablefieldss tr = do
   "instructiontable" <- getAttr "class" tr
   let tds = X.filterChildren (\e -> X.findAttr (qname "class") e == Just "bitfield") tr
@@ -341,7 +352,7 @@ instrOperandTypes :: DT.InstructionDescriptor -> [DT.OperandType]
 instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutputOperands idesc)
 
 
-iclassFieldsAndProp :: X.Element -> XML (Fields, [Operand], PropTree (BitSection QuasiBit))
+iclassFieldsAndProp :: X.Element -> XML (Fields, [Operand], PropTree (ARMBitSection QuasiBit))
 iclassFieldsAndProp iclass = do
   rd <- getChild "regdiagram" iclass
   fields <- forChildren "box" rd getBoxField
@@ -349,7 +360,7 @@ iclassFieldsAndProp iclass = do
     case (fieldName field, fieldUseName field) of
       (_ : _, True) -> return $ Just (fieldName field, field)
       (_, False) -> return Nothing
-      _ -> ME.throwError $ InvalidField field
+      _ -> throwError $ InvalidField field
 
   return $ ( M.fromListWith mergeFields $ namedFields
            , quasiMaskOperands fields
@@ -382,7 +393,7 @@ getBoxField box = do
   constraint <- case X.findAttr (qname "constraint") box of
     Just constraint -> do
       parseConstraint width constraint $ \bits -> do
-        return $ bitSectionHibit hibit (map Bit bits)
+        bitSectionHibit hibit (map Bit bits)
     Nothing -> do
       bits <- fmap concat $ forChildren "c" box $ \c -> do
         let content = X.strContent c
@@ -391,12 +402,13 @@ getBoxField box = do
             unless (null content) $
               throwError $ InvalidChildElement
             return $ replicate (read colspan) (Bit $ BT.Any)
-          Nothing | Just qbit <- quasiMaskBit content ->
+          Nothing | Just qbit <- BM.readQuasiBit content ->
            return [qbit]
           _ -> throwError $ InvalidChildElement
       unless (length bits == width) $
         throwError $ MismatchedWidth width bits
-      return $ PropTree.clause $ bitSectionHibit hibit bits
+      bitsect <- bitSectionHibit hibit bits
+      return $ PropTree.clause $ bitsect
   let field = Field { fieldName = fromMaybe "" $ X.findAttr (qname "name") box
                     , fieldHibit = hibit
                     , fieldWidth = width
@@ -406,35 +418,6 @@ getBoxField box = do
                     }
   return $ fieldOpTypeOverrides field
 
-data QuasiBit =
-    Bit BT.Bit
-    -- ^ a normal bittrie specifying a bitmask bit
-  | QBit Bool
-    -- ^ a qbit (quasi-bit) specifies that a given bitpattern is "required" to have defined
-    -- behavior, but not to disambiguate instructions.
-  deriving (Eq, Ord, Show)
-
-
--- | Does the first bit match against the second bit.
--- i.e. is the first bit at least as general as the second
-matchesBit :: BT.Bit -> BT.Bit -> Bool
-matchesBit bit bit' = case (bit, bit') of
-  (_, BT.Any) -> True
-  _ -> bit == bit'
-
-matchesMask :: [BT.Bit] -> [BT.Bit] -> Bool
-matchesMask mask mask' = length mask == length mask'
-  && all (uncurry matchesBit) (zip mask mask')
-
-quasiMaskBit :: String -> Maybe QuasiBit
-quasiMaskBit s = case s of
-  "1" -> Just $ Bit $ BT.ExpectedBit True
-  "0" -> Just $ Bit $ BT.ExpectedBit False
-  "x" -> Just $ Bit $ BT.Any
-  "" -> Just $ Bit $ BT.Any
-  "(1)" -> Just $ QBit True
-  "(0)" -> Just $ QBit $ False
-  _ -> Nothing
 
 quasiToBit :: QuasiBit -> Maybe BT.Bit
 quasiToBit (Bit b) = Just b
@@ -522,7 +505,7 @@ data Constraint = Constraint { constraintName :: String
 data Field = Field { fieldName :: String
                    , fieldHibit :: Int
                    , fieldWidth :: Int
-                   , fieldConstraint :: PropTree (BitSection QuasiBit)
+                   , fieldConstraint :: PropTree (ARMBitSection QuasiBit)
                    , fieldUseName :: Bool
                    , fieldTypeOverride :: Maybe String
                    }
@@ -537,15 +520,15 @@ getDescriptor encoding = do
 
   logXML (PP.render $ PP.pPrint encoding)
   let desc = DT.InstructionDescriptor
-        { DT.idMask = map flattenQuasiBit (endianness $ encMask encoding)
-        , DT.idNegMasks = map endianness $ encNegMasks encoding
+        { DT.idMask = map flattenQuasiBit (endianness $ BM.toList $ encMask encoding)
+        , DT.idNegMasks = map (endianness . BM.toList) $ encNegMasks encoding
         , DT.idMnemonic = encName encoding
         , DT.idInputOperands = operandDescs
         , DT.idOutputOperands = []
         , DT.idNamespace = encMnemonic encoding
         , DT.idDecoderNamespace = ""
         , DT.idAsmString = encName encoding
-          ++ "(" ++ PP.render (prettyMask (endianness $ encMask encoding)) ++ ") "
+          ++ "(" ++ PP.render (BM.prettyMask' endianness (encMask encoding)) ++ ") "
           ++ simpleOperandFormat (encOperands encoding)
         , DT.idPseudo = False
         , DT.idDefaultPrettyVariableValues = []
@@ -559,21 +542,11 @@ instance PP.Pretty Encoding where
     $$ PP.text "Endian Swapped" $$ mkBody endianness
     $$ PP.text "Original" $$ mkBody id
     where
+      mkBody :: (forall a. [a] -> [a]) -> PP.Doc
       mkBody endianswap = PP.nest 1 $
-           prettyMask (endianswap $ encMask encoding)
+           BM.prettyMask' endianswap (encMask encoding)
            $$ PP.text "Negative Masks:"
-           $$ PP.nest 1 (PP.vcat (map (prettyMask . endianswap . map Bit) (encNegMasks encoding)))
-
-prettyMask :: [QuasiBit] -> PP.Doc
-prettyMask qbits = PP.text $ concat $ intercalate ["."] $ map (map go) (LS.chunksOf 8 qbits)
-  where
-    go :: QuasiBit -> String
-    go (Bit BT.Any) = "x"
-    go (Bit (BT.ExpectedBit True)) = "1"
-    go (Bit (BT.ExpectedBit False)) = "0"
-    go (QBit True) = "I"
-    go (QBit False) = "O"
-
+           $$ PP.nest 1 (PP.vcat (map (BM.prettyMask' endianswap) (encNegMasks encoding)))
 
 simpleOperandFormat :: [Operand] -> String
 simpleOperandFormat descs = intercalate ", " $ catMaybes $ map go descs
@@ -587,8 +560,6 @@ simpleOperandFormat descs = intercalate ", " $ catMaybes $ map go descs
 
 parseEncList :: String -> [String]
 parseEncList = LS.splitOn ", "
-
-
 
 flatText :: X.Element -> String
 flatText e = concat $ map flatContent (X.elContent e)
@@ -608,7 +579,10 @@ parseString p txt = do
     Left err -> throwError $ InnerParserFailure $
       err { P.bundlePosState = setLine line (P.bundlePosState err) }
     Right a -> return a
-
+  where
+    setLine :: Integer -> P.PosState s -> P.PosState s
+    setLine line ps =
+      ps { P.pstateSourcePos  = (P.pstateSourcePos ps) { P.sourceLine = P.mkPos (fromIntegral line) } }
 
 -- | Absorb parser errors for 'Maybe' types
 parseStringCatch :: Show e => P.ShowErrorComponent e => P.Parsec e String (Maybe a) -> String -> XML (Maybe a)
@@ -618,59 +592,15 @@ parseStringCatch p txt = parseString p txt `ME.catchError` \err -> warnError err
 parseElementCatch :: Show e => P.ShowErrorComponent e => P.Parsec e String (Maybe a) -> X.Element -> XML (Maybe a)
 parseElementCatch p e = withElement e $ parseStringCatch p (flatText e)
 
-setLine :: Integer -> P.PosState s -> P.PosState s
-setLine line ps = ps { P.pstateSourcePos  = (P.pstateSourcePos ps) { P.sourceLine = P.mkPos (fromIntegral line) } }
 
-explodeAny :: [BT.Bit] -> [[BT.Bit]]
-explodeAny (b : bits) = do
-  b' <- go b
-  bits' <- explodeAny bits
-  return $ b' : bits'
-  where
-    go :: BT.Bit -> [BT.Bit]
-    go b'@(BT.ExpectedBit _) = [b']
-    go BT.Any = [BT.ExpectedBit True, BT.ExpectedBit False]
-explodeAny [] = return []
-
-explodeBitSections :: [BitSection BT.Bit] -> [[BitSection BT.Bit]]
-explodeBitSections (bs : rest) = do
-  bits <- explodeAny (sectBits bs)
-  let bs' = bs { sectBits = bits }
-  rest' <- explodeBitSections rest
-  return $ bs' : rest'
-explodeBitSections [] = return []
-
-deriveMasks :: PropTree (BitSection QuasiBit)
-            -> PropTree (BitSection BT.Bit)
-            -> XML ([QuasiBit], [[BT.Bit]])
+deriveMasks :: PropTree (ARMBitSection QuasiBit)
+            -> PropTree (ARMBitSection BT.Bit)
+            -> XML (ARMBitMask QuasiBit, [ARMBitMask BT.Bit])
 deriveMasks qbits bits = do
   let constraints = (fmap (fmap Bit) bits <> qbits)
-  case deriveMasks' constraints of
+  case BM.deriveMasks NR.knownNat constraints of
     Left err -> throwError $ InvalidConstraints constraints err
     Right a -> return a
-
-deriveMasks' :: forall m
-             . ME.MonadError String m
-            => PropTree (BitSection QuasiBit)
-            -> m ([QuasiBit], [[BT.Bit]])
-deriveMasks' constraints = case PropTree.toConjunctsAndDisjuncts constraints of
-  Just (positiveConstraints, negativeConstraints) -> do
-    mask' <- fmap (take 32 . map (fromMaybe (Bit BT.Any))) $
-      withMsg "invalid positive constraint"
-        (computePattern mergeQBits) positiveConstraints
-
-    negMasks <- sequence $ do
-      negConstraintBase <- negativeConstraints
-      negConstraint <- explodeBitSections (map (fmap flattenQuasiBit) negConstraintBase)
-      return $ withMsg "invalid negative constraint"
-        (computeBitPattern 32) negConstraint
-    return (mask', nub negMasks)
-  Nothing -> throwError $ "Malformed bitsection for constrained mask derivation: " ++ show constraints
-  where
-    withMsg :: forall a b. Show b => String -> (b -> Either String a) -> b -> m a
-    withMsg msg f b = case f b of
-      Left err -> throwError $ msg ++ ": " ++ show b ++ ": " ++ err
-      Right a -> return a
 
 fieldConstraintsParser :: Parser (PropTree ([NameExp], [BT.Bit]))
 fieldConstraintsParser = do
@@ -740,7 +670,7 @@ data Encoding = Encoding { encName :: String
                          , encMnemonic :: String
                          -- ^ the mnemonic of the instruction class that this encoding belongs to (e.g. aarch32_ADD_i_A )
                          -- shared between multiple encodings
-                         , encConstraints :: PropTree (BitSection BT.Bit)
+                         , encConstraints :: PropTree (ARMBitSection BT.Bit)
                          -- ^ the bitfield constraints that identify this specific encoding
                          , encOperands :: [Operand]
                          -- ^ the operand descriptors for this encoding
@@ -748,62 +678,56 @@ data Encoding = Encoding { encName :: String
                          -- some operands are psuedo-operands derived from quasimask field bits
                          , encFields :: Fields
                          -- ^ the named bitfields of the instruction
-                         , encIConstraints :: PropTree (BitSection QuasiBit)
+                         , encIConstraints :: PropTree (ARMBitSection QuasiBit)
                          -- ^ the constraints of this encoding that are common to all
                          -- the encodings of the instruction class it belongs to
-                         , encMask :: [QuasiBit]
+                         , encMask :: ARMBitMask QuasiBit
                          -- ^ the complete positive mask of this encoding (derived from the constraints)
-                         , encNegMasks :: [[BT.Bit]]
+                         , encNegMasks :: [ARMBitMask BT.Bit]
                          -- ^ the complete negative masks of this encoding (derived from the constraints)
                          }
   deriving (Show)
 
-encFullConstraints :: Encoding -> PropTree (BitSection QuasiBit)
+encFullConstraints :: Encoding -> PropTree (ARMBitSection QuasiBit)
 encFullConstraints enc = (fmap (fmap Bit) $ encConstraints enc) <> encIConstraints enc
 
--- | Notably, the sectBitPos field starts from the most significant bit (i.e. bit 31 in aarch32)
-data BitSection a = BitSection { sectBitPos :: Int
-                               , sectBits :: [a]
-                               }
-  deriving (Show, Eq, Functor, Foldable)
-
-sectWidth :: BitSection a -> Int
-sectWidth bsect = length (sectBits bsect)
-
 -- | Make a bitsection from a hibit of 32 bits
-bitSectionHibit :: Int -> [a] -> BitSection a
-bitSectionHibit hibit bits = BitSection (31 - hibit) bits
+bitSectionHibit :: IsMaskBit a => Int -> [a] -> XML (ARMBitSection a)
+bitSectionHibit hibit bits = case mkBitSection (31 - hibit) bits NR.knownNat of
+  Just bitsect -> return bitsect
+  Nothing -> throwError $ InvalidBitsForBitsection hibit bits
 
-unpackFieldConstraints :: Show a => ([Field], [a]) -> XML [BitSection a]
+unpackFieldConstraints :: forall a. IsMaskBit a => ([Field], [a]) -> XML [ARMBitSection a]
 unpackFieldConstraints (flds, bits) = do
   (rest, result) <- foldM go' (bits, []) flds
   case rest of
     [] -> return result
     _ -> throwError $ MismatchedFieldsForBits flds bits
   where
-    go' :: ([a], [BitSection a]) -> Field -> XML ([a], [BitSection a])
+    go' :: ([a], [ARMBitSection a]) -> Field -> XML ([a], [ARMBitSection a])
     go' (as, results) nme = do
       (as', result) <- go nme as
       return (as', result : results)
 
-    go :: Field -> [a] -> XML ([a], BitSection a)
+    go :: Field -> [a] -> XML ([a], ARMBitSection a)
     go field as = do
       let width = fieldWidth field
       let hibit = fieldHibit field
       let (chunk, rest) = splitAt width as
       unless (length chunk == width) $ do
         throwError $ MismatchedFieldsForBits flds bits
-      return (rest, bitSectionHibit hibit chunk)
+      bitsect <- bitSectionHibit hibit chunk
+      return (rest, bitsect)
 
 resolvePropTree :: forall a
-                 . Show a
+                 . IsMaskBit a
                 => Fields
                 -> PropTree ([NameExp], [a])
-                -> XML (PropTree (BitSection a))
+                -> XML (PropTree (ARMBitSection a))
 resolvePropTree fields tree =
   fmap PropTree.collapse $ mapM go tree
   where
-    go :: ([NameExp], [a]) -> XML [BitSection a]
+    go :: ([NameExp], [a]) -> XML [ARMBitSection a]
     go (nmes, as) = do
       fields' <- mapM (lookupField fields) nmes
       unpackFieldConstraints (fields', as)
@@ -811,7 +735,7 @@ resolvePropTree fields tree =
 
 leafGetEncodingConstraints :: InstructionLeaf
                            -> Fields
-                           -> XML [(String, PropTree (BitSection BT.Bit), [RegisterInfo String])]
+                           -> XML [(String, PropTree (ARMBitSection BT.Bit), [RegisterInfo String])]
 leafGetEncodingConstraints ileaf fields = do
   let iclass = ileafiClass ileaf
   forChildren "encoding" iclass $ \encoding -> do
@@ -938,7 +862,7 @@ getRegisterOperandType rinfo =
   (SIMDandFP, IndexMul2) | totalBits == 5 -> return "SIMD5_Mul2"
   _ -> throwError $ InvalidRegisterInfo rinfo
 
-lookupEncIndexMask :: InstructionLeaf -> String -> XML (Maybe (([QuasiBit], [[BT.Bit]]), Bool))
+lookupEncIndexMask :: InstructionLeaf -> String -> XML (Maybe ((ARMBitMask QuasiBit, [ARMBitMask BT.Bit]), Bool))
 lookupEncIndexMask leaf encname = do
   tbl <- MS.gets encodingTableMap
   case M.lookup (IdentEncodingName encname) tbl of
@@ -950,16 +874,26 @@ lookupEncIndexMask leaf encname = do
         Just masks -> return $ Just (masks, False)
         Nothing -> return Nothing
 
+
+equivBy :: forall a. (a -> a -> Bool) -> [a] -> [a] -> Bool
+equivBy f as as' = go as as' && go as' as
+  where
+    go :: [a] -> [a] -> Bool
+    go [] as' = True
+    go (a : as) as' = isJust (find (f a) as') && go as as'
+
 validateEncoding :: InstructionLeaf -> Encoding -> XML ()
 validateEncoding leaf encoding = do
   lookupEncIndexMask leaf (encName encoding) >>= \case
     Just ((mask', negmasks'), exact) -> do
       let mask = encMask encoding
       let negmasks = encNegMasks encoding
-      let check = if exact then (==) else matchesMask
-      unless (check (flattenMask mask) (flattenMask mask')) $
+      let
+        check :: forall a. BM.IsMaskBit a => ARMBitMask a -> ARMBitMask a -> Bool
+        check = if exact then BM.equivMasks else BM.matchesMask
+      unless (check mask mask') $
         throwError $ MismatchedMasks mask mask'
-      unless (length negmasks == length negmasks' && all (uncurry check) (zip (sort negmasks) (sort negmasks'))) $
+      unless (length negmasks == length negmasks' && equivBy check negmasks negmasks') $
         throwError $ MismatchedNegativeMasks negmasks negmasks'
     Nothing -> throwError $ MissingEncodingTableEntry (encName encoding)
 
@@ -967,7 +901,7 @@ validateEncoding leaf encoding = do
 leafGetEncodings :: InstructionLeaf
                  -> Fields
                  -> [Operand]
-                 -> PropTree (BitSection QuasiBit)
+                 -> PropTree (ARMBitSection QuasiBit)
                  -> XML [Encoding]
 leafGetEncodings ileaf allfields operands iconstraints = do
   let iclass = ileafiClass ileaf
@@ -1048,9 +982,8 @@ fieldOpTypeOverrides field =
        _ -> field
   where
     subConstraint len bitsects = do
-      pat <- computePattern mergeQBits bitsects
-      return $ take len $ catMaybes pat
-
+      pat <- BM.computePattern' (NR.knownNat @32) bitsects
+      return $ take len $ catMaybes $ BM.toList $ pat
 
 findiClassByName :: X.Element -> String -> XML X.Element
 findiClassByName e name = do
@@ -1112,79 +1045,6 @@ nameParser = do
   encName <- P.takeWhileP Nothing (/= '.')
   _ <- P.chunk ".txt"
   return $ instrName <> "_" <> encName
-
-placeAt :: Int -> [a] -> [a] -> [a]
-placeAt ix subList l =
-  let (prefix, rst) = splitAt ix l
-      suffix = drop (length subList) rst
-  in prefix ++ subList ++ suffix
-
-getSublist :: Int -> Int -> [a] -> [a]
-getSublist ix len l =
-  let (_, rst) = splitAt ix l
-  in take len rst
-
-mergeBits :: ME.MonadError String m => BT.Bit -> BT.Bit -> m BT.Bit
-mergeBits b1 b2 = case (b1, b2) of
-  (BT.ExpectedBit x, BT.ExpectedBit y) | x == y -> return $ BT.ExpectedBit y
-  (BT.Any, x) -> return x
-  (x, BT.Any) -> return x
-  _ -> throwError $ "Incompatible bits: " ++ show b1 ++ " " ++ show b2
-
-mergeQBits :: ME.MonadError String m => QuasiBit -> QuasiBit -> m QuasiBit
-mergeQBits qb1 qb2 = case (qb1, qb2) of
-  (QBit x, QBit y) | x == y -> return $ QBit y
-  (QBit x, Bit (BT.ExpectedBit y)) | x == y -> return $ Bit $ BT.ExpectedBit y
-  (Bit (BT.ExpectedBit y), QBit x) | x == y -> return $ Bit $ BT.ExpectedBit y
-  (x, Bit BT.Any) -> return x
-  (Bit BT.Any, x) -> return x
-  (Bit b1, Bit b2) -> Bit <$> mergeBits b1 b2
-  _ -> throwError $ "Incompatible qbits: " ++ show qb1 ++ " " ++ show qb2
-
-zipWithSafe :: forall m a b c. (Show a, Show b) => ME.MonadError String m => (a -> b -> m c) -> [a] -> [b] -> m [c]
-zipWithSafe f a b = do
-  unless (length a == length b) $
-    throwError "zipWithSafe: length mismatch"
-  zipWithM f' (zip a [0..]) b
-  where
-    f' :: (a, Int) -> b -> m c
-    f' (a, i) b = f a b
-      `ME.catchError`
-      (\err -> throwError $ "zipWithSafe: " ++ show a ++ " and " ++ show b ++ " at " ++ show i ++ " " ++ err)
-
-prependErr :: ME.MonadError String m => String -> String -> m a
-prependErr msg err = throwError $ msg ++ " " ++ err
-
--- | Given a list of fields, and a bit pattern whose length is the same as the sum of
--- all the field lengths, return a "full" bit pattern reflecting the effect of
--- combining all those patterns together.
-computePattern' :: (Show a, Show b) => ME.MonadError String m => (a -> b -> m b) -> [BitSection a] -> [b] -> m [b]
-computePattern' f [] fullPat = return $ fullPat
-computePattern' f (fld : rstFlds) fullPat = do
-  let
-    top = sectBitPos fld
-    existing = getSublist top (length $ sectBits fld) fullPat
-  resultMask <- zipWithSafe f (sectBits fld) existing
-    `ME.catchError`
-    (prependErr $ "computePattern': at position: " ++ show top)
-  let fullPat' = placeAt (sectBitPos fld) resultMask fullPat
-  computePattern' f rstFlds fullPat'
-
-computePattern :: forall m a. Show a => ME.MonadError String m => (a -> a -> m a) -> [BitSection a] -> m [Maybe a]
-computePattern merge bitsects =
-  computePattern' go bitsects (repeat Nothing)
-    `ME.catchError`
-    (prependErr $ "computePattern: " ++ show bitsects)
-  where
-    go :: a -> Maybe a -> m (Maybe a)
-    go a (Just a') = Just <$> merge a a'
-    go a _ = Just <$> return a
-
-computeBitPattern :: ME.MonadError String m => Int -> [BitSection BT.Bit] -> m [BT.Bit]
-computeBitPattern len bitsects = do
-  result <- computePattern mergeBits bitsects
-  return $ take len (map (fromMaybe BT.Any) result)
-
 
 getChildWith :: (X.Element -> Bool) -> X.Element -> XML X.Element
 getChildWith f elt = case X.filterChild f elt of
