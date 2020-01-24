@@ -1,9 +1,9 @@
 [submodule "deps/parameterized-utils"]
 	path = deps/parameterized-utils
-	url = git@github.com:GaloisInc/parameterized-utils.git
+	url = https://github.com/danmatichuk/parameterized-utils.git
 [submodule "deps/arm-asl-parser"]
 	path = deps/arm-asl-parser
     url = git@github.com:GaloisInc/arm-asl-parser.git
 [submodule "deps/crucible"]
 	path = deps/crucible
-	url = https://github.com/danmatichuk/crucible.git
+	url = git@github.com:GaloisInc/crucible.git
