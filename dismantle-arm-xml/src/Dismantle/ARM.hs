@@ -528,7 +528,7 @@ getDescriptor encoding = do
         , DT.idNamespace = encMnemonic encoding
         , DT.idDecoderNamespace = ""
         , DT.idAsmString = encName encoding
-          ++ "(" ++ PP.render (BM.prettyMask' endianness (encMask encoding)) ++ ") "
+          ++ "(" ++ PP.render (BM.prettySegmentedMask endianness (encMask encoding)) ++ ") "
           ++ simpleOperandFormat (encOperands encoding)
         , DT.idPseudo = False
         , DT.idDefaultPrettyVariableValues = []
@@ -544,9 +544,9 @@ instance PP.Pretty Encoding where
     where
       mkBody :: (forall a. [a] -> [a]) -> PP.Doc
       mkBody endianswap = PP.nest 1 $
-           BM.prettyMask' endianswap (encMask encoding)
+           BM.prettySegmentedMask endianswap (encMask encoding)
            $$ PP.text "Negative Masks:"
-           $$ PP.nest 1 (PP.vcat (map (BM.prettyMask' endianswap) (encNegMasks encoding)))
+           $$ PP.nest 1 (PP.vcat (map (BM.prettySegmentedMask endianswap) (encNegMasks encoding)))
 
 simpleOperandFormat :: [Operand] -> String
 simpleOperandFormat descs = intercalate ", " $ catMaybes $ map go descs
@@ -890,7 +890,7 @@ validateEncoding leaf encoding = do
       let negmasks = encNegMasks encoding
       let
         check :: forall a. BM.IsMaskBit a => ARMBitMask a -> ARMBitMask a -> Bool
-        check = if exact then BM.equivMasks else BM.matchesMask
+        check = if exact then BM.equivBitMasks else BM.matchingBitMasks
       unless (check mask mask') $
         throwError $ MismatchedMasks mask mask'
       unless (length negmasks == length negmasks' && equivBy check negmasks negmasks') $
@@ -982,7 +982,7 @@ fieldOpTypeOverrides field =
        _ -> field
   where
     subConstraint len bitsects = do
-      pat <- BM.computePattern' (NR.knownNat @32) bitsects
+      pat <- BM.computePattern (NR.knownNat @32) (map (fmap Just) bitsects)
       return $ take len $ catMaybes $ BM.toList $ pat
 
 findiClassByName :: X.Element -> String -> XML X.Element

@@ -53,7 +53,6 @@ import qualified Data.List as List
 import           Data.List.Split as LS
 import           Data.Type.Equality
 import           Data.Void
-import qualified Data.BitVector.Sized as BVS
 import           Data.Parameterized.TraversableFC
 import           Data.Parameterized.Some ( Some(..) )
 import qualified Data.Parameterized.Vector as V
