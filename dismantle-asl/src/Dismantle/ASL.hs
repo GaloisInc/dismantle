@@ -112,19 +112,19 @@ genSimulation symCfg crucFunc extractResult =
       let globalState = initGlobals symCfg globals globalReads
       (s0, _) <- initialSimulatorState symCfg globalState econt retRepr
       ft <- executionFeatures (AS.funcName $ AC.funcSig crucFunc) (simSym symCfg)
-      p <- CBO.getSolverProcess sym
-      let argBVs = FC.fmapFC freshArgBoundVar initArgs
-      let allBVs = getBVs initArgs ++ [Some gbv]
-      eres <- WPO.inNewFrameWithVars p allBVs $ do
-        CS.executeCrucible ft s0
-      case eres of
-        CS.TimeoutResult {} -> X.throwIO (SimulationTimeout (Some (AC.SomeFunctionSignature sig)))
-        CS.AbortedResult _ ab -> X.throwIO $ SimulationAbort (Some (AC.SomeFunctionSignature sig)) (showAbortedResult ab)
-        CS.FinishedResult _ pres -> do
-          gp <- case pres of
-            CS.TotalRes gp -> return gp
-            CS.PartialRes _ _ gp _ -> return gp
-          extractResult (gp ^. CS.gpValue) argBVs gbv
+      CBO.withSolverProcess sym $ \p -> do
+        let argBVs = FC.fmapFC freshArgBoundVar initArgs
+        let allBVs = getBVs initArgs ++ [Some gbv]
+        eres <- WPO.inNewFrameWithVars p allBVs $ do
+          CS.executeCrucible ft s0
+        case eres of
+          CS.TimeoutResult {} -> X.throwIO (SimulationTimeout (Some (AC.SomeFunctionSignature sig)))
+          CS.AbortedResult _ ab -> X.throwIO $ SimulationAbort (Some (AC.SomeFunctionSignature sig)) (showAbortedResult ab)
+          CS.FinishedResult _ pres -> do
+            gp <- case pres of
+              CS.TotalRes gp -> return gp
+              CS.PartialRes _ _ gp _ -> return gp
+            extractResult (gp ^. CS.gpValue) argBVs gbv
   where
     getBVs ctx = FC.toListFC (\(FreshArg _ bv) -> Some bv) ctx
 
