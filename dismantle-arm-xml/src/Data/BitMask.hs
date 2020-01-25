@@ -9,38 +9,52 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE QuantifiedConstraints #-}
 
 -- | An abstraction of 'ByteTrie' bits that allows abstract types to be considered "bit-like", with
 -- corresponding container datatypes for constructing masks out of them.
 module Data.BitMask
   ( IsMaskBit(..)
-  , asBits
-  , equivBit
-  , equivMasks
-  , matchesBit
-  , matchesMask
+  , AsBit(..)
+  , equivBitMasks
+  , matchingBitMasks
   , BitSection(..)
   , mkBitSection
   , QuasiBit(..)
   , BitMask
-  , computePattern'
   , computePattern
   , readBit
   , readQuasiBit
   , deriveMasks
   , prettyMask
-  , prettyMask'
+  , prettySegmentedMask
   , V.toList
+  , V.fromList
+  , MaskTrie
+  , emptyMaskTree
+  , addMaskToTree
+  , updateMaskInTree
+  , lookupMaskFromTree
+  , matchMaskFromTree
   )
   where
 
+import           Prelude hiding ( zipWith, length )
+
 import           GHC.TypeNats
+import           Control.Monad.Identity ( runIdentity )
 import qualified Control.Monad.Except as ME
-import           Control.Monad ( unless, zipWithM )
-import           Data.Maybe ( fromMaybe )
+import           Control.Monad ( unless )
+import           Data.Maybe ( fromMaybe, catMaybes, isJust )
 import           Data.List ( intercalate, nub )
+import qualified Data.List as List
 import           Data.List.Split as LS
 import           Data.Type.Equality
+import           Data.Void
+import qualified Data.BitVector.Sized as BVS
+import           Data.Parameterized.TraversableFC
 import           Data.Parameterized.Some ( Some(..) )
 import qualified Data.Parameterized.Vector as V
 import           Data.Parameterized.NatRepr ( type (<=), type (+), NatRepr )
@@ -58,26 +72,49 @@ pattern BitUnset = BT.ExpectedBit False
 pattern BitAny = BT.Any
 
 class IsMaskBit a where
-  asBit :: a -> BT.Bit
-  -- | asBit (anyMaskBit a) == BT.Any
-  anyMaskBit :: a
+  defaultBit :: a
 
   showBit :: a -> String
-  showBit a = case asBit a of
+  mergeBit :: a -> a -> Maybe a
+  equivBit :: a -> a -> Bool
+
+  matchingBit :: a -> a -> Bool
+  matchingBit a1 a2 = isJust (mergeBit a1 a2)
+
+instance IsMaskBit BT.Bit where
+  defaultBit = BT.Any
+
+  showBit a = case a of
     BitSet -> "1"
     BitUnset -> "0"
     BitAny -> "x"
 
-  mergeBits :: a -> a -> Maybe a
-  mergeBits a1 a2 = case (asBit a1, asBit a2) of
-    (BT.ExpectedBit x, BT.ExpectedBit y) | x == y -> return a1
-    (BT.Any, _) -> return a2
-    (_, BT.Any) -> return a1
-    _ -> fail "Incompatible bits"
+  equivBit a1 a2 = a1 == a2
 
-instance IsMaskBit BT.Bit where
-  asBit bit = bit
-  anyMaskBit = BT.Any
+  mergeBit a1 a2 = case (asBit a1, asBit a2) of
+     (BT.ExpectedBit x, BT.ExpectedBit y) | x == y -> return a1
+     (BT.Any, _) -> return a2
+     (_, BT.Any) -> return a1
+     _ -> fail "Incompatible bits"
+
+instance IsMaskBit Bool where
+  defaultBit = False
+
+  showBit b = showBit (asBit b)
+  mergeBit b1 b2 = if b1 == b2 then Just b1 else Nothing
+  equivBit b1 b2 = b1 == b2
+  matchingBit b1 b2 = b1 == b2
+
+
+instance AsBit Bool where
+  asBit True = BT.ExpectedBit True
+  asBit False = BT.ExpectedBit False
+
+class AsBit a where
+  asBit :: a -> BT.Bit
+
+instance AsBit BT.Bit where
+  asBit = id
 
 readBit :: String -> Maybe BT.Bit
 readBit s = case s of
@@ -88,17 +125,21 @@ readBit s = case s of
   _ -> Nothing
 
 instance IsMaskBit a => IsMaskBit (Maybe a) where
-  asBit mbit = case mbit of
-    Nothing -> BT.Any
-    Just bit -> asBit bit
-  anyMaskBit = Nothing
+  defaultBit = Nothing
   showBit mbit = case mbit of
     Nothing -> "?"
     Just bit -> showBit bit
-  mergeBits mb1 mb2 = case (mb1, mb2) of
-    (Just b1, Just b2) -> Just $ mergeBits b1 b2
+
+  equivBit mb1 mb2 = case (mb1, mb2) of
+    (Just b1, Just b2) -> equivBit b1 b2
+    (Nothing, Nothing) -> True
+    _ -> False
+
+  mergeBit mb1 mb2 = case (mb1, mb2) of
+    (Just b1, Just b2) -> Just $ mergeBit b1 b2
     (_, Nothing) -> Just $ mb1
     (Nothing, _) -> Just $ mb2
+
 
 -- | A mask bit with two additional states, representing a relaxed constraint.
 data QuasiBit =
@@ -110,25 +151,28 @@ data QuasiBit =
   deriving (Eq, Ord, Show)
 
 instance IsMaskBit QuasiBit where
-  asBit qbit = case qbit of
-    Bit bit -> bit
-    QBit _ -> BT.Any
-
   showBit qb = case qb of
     Bit b -> showBit b
     QBit True -> "I"
     QBit False -> "O"
 
-  anyMaskBit = Bit BT.Any
+  defaultBit = Bit BT.Any
 
-  mergeBits qb1 qb2 = case (qb1, qb2) of
+  equivBit qb1 qb2 = equivBit (asBit qb1) (asBit qb2)
+
+  mergeBit qb1 qb2 = case (qb1, qb2) of
     (QBit x, QBit y) | x == y -> return $ QBit y
     (QBit x, Bit (BT.ExpectedBit y)) | x == y -> return $ Bit $ BT.ExpectedBit y
     (Bit (BT.ExpectedBit y), QBit x) | x == y -> return $ Bit $ BT.ExpectedBit y
     (_, Bit BT.Any) -> return qb1
     (Bit BT.Any, _) -> return qb2
-    (Bit b1, Bit b2) -> Bit <$> mergeBits b1 b2
+    (Bit b1, Bit b2) -> Bit <$> mergeBit b1 b2
     _ -> fail "Incompatible qbits"
+
+instance AsBit QuasiBit where
+  asBit qb = case qb of
+    Bit b -> b
+    QBit _ -> BitAny
 
 instance PP.Pretty QuasiBit where
   pPrint qbit = PP.text (showBit qbit)
@@ -143,46 +187,47 @@ readQuasiBit s = case s of
   "(0)" -> Just $ QBit $ False
   _ -> Nothing
 
-asBits :: IsMaskBit a => [a] -> [BT.Bit]
-asBits = map asBit
+type BitMask n bit = V.Vector n bit
 
-equivBit :: IsMaskBit a => a -> a -> Bool
-equivBit bit bit' = case (asBit bit, asBit bit') of
-  (BitSet, BitSet) -> True
-  (BitUnset, BitUnset) -> True
-  (BitAny, BitAny) -> True
-  _ -> False
-
--- | Does the first bit match against the second bit.
--- i.e. is the first bit at least as general as the second
-matchesBit :: IsMaskBit a => a -> a -> Bool
-matchesBit bit bit' = case asBit bit' of
-  BitAny -> True
-  _ -> equivBit bit bit'
-
-type BitMask n a = V.Vector n a
-
-defaultBitMask :: IsMaskBit a => (1 <= n) => NatRepr n -> BitMask n a
+defaultBitMask :: forall bitmask n bit. 1 <= n => IsMaskBit bit => NR.NatRepr n -> BitMask n bit
 defaultBitMask nr
   | NR.Refl <- NR.minusPlusCancel nr (NR.knownNat @1)
-  = V.generate (NR.decNat nr) (\_ -> anyMaskBit)
+  = V.generate (NR.decNat nr) (\_ -> defaultBit)
 
-prettyMask :: forall a n. IsMaskBit a => BitMask n a -> PP.Doc
-prettyMask = prettyMask' id
+equivBitMasks :: forall bitmask n bit
+               . IsMaskBit bit
+              => BitMask n bit
+              -> BitMask n bit
+              -> Bool
+equivBitMasks m1 m2 = all id (V.zipWith equivBit m1 m2)
 
-prettyMask' :: forall a n. IsMaskBit a => ([a] -> [a]) -> BitMask n a -> PP.Doc
-prettyMask' endianness mask = PP.hcat $ PP.punctuate (PP.text ".") $ (map PP.hcat $ LS.chunksOf 8 (map go bits))
+matchingBitMasks :: forall bitmask n bit
+                  . IsMaskBit bit
+                 => BitMask n bit
+                 -> BitMask n bit
+                 -> Bool
+matchingBitMasks m1 m2 = all id (V.zipWith matchingBit m1 m2)
+
+
+prettyMask :: forall bitmask bit n
+            . IsMaskBit bit
+           => BitMask n bit
+           -> PP.Doc
+prettyMask mask = PP.hcat $ map (PP.text . showBit) (V.toList mask)
+
+
+prettySegmentedMask :: forall bitmask bit n
+                     . IsMaskBit bit
+                    => ([bit] -> [bit])
+                    -> BitMask n bit
+                    -> PP.Doc
+prettySegmentedMask endianness mask =
+  PP.hcat $ PP.punctuate (PP.text ".") $ (map PP.hcat $ LS.chunksOf 8 (map go bits))
   where
     bits = endianness $ V.toList mask
 
-    go :: a -> PP.Doc
-    go a = PP.text (showBit a)
-
-equivMasks :: IsMaskBit a => BitMask n a -> BitMask n a -> Bool
-equivMasks v v' = all id (V.zipWith equivBit v v')
-
-matchesMask :: IsMaskBit a => BitMask n a -> BitMask n a -> Bool
-matchesMask v v' = all id (V.zipWith matchesBit v v')
+    go :: bit -> PP.Doc
+    go bit = PP.text (showBit bit)
 
 
 -- | A slice of bits at a given bit position (0-indexed starting at the head of a list of bits).
@@ -190,7 +235,7 @@ matchesMask v v' = all id (V.zipWith matchesBit v v')
 -- e.g. all 'BitSection's for a 32-bit architecture will be a 'BitSection a 32' regardless of their actual
 -- widths, which are constrained to fit in the given bitwidth.
 data BitSection n a where
-  BitSection :: forall a n posAt sectWidth
+  BitSection :: forall f a n posAt sectWidth
               . (posAt + 1 <= n, 1 <= sectWidth, sectWidth <= n, posAt + sectWidth <= n)
              => NatRepr posAt
              -> BitMask sectWidth a
@@ -206,15 +251,20 @@ instance Eq a => Eq (BitSection n a) where
       = vect == vect'
     | otherwise = False
 
-instance (KnownNat n, IsMaskBit a) => Show (BitSection n a) where
+instance (KnownNat n, IsMaskBit bit) => Show (BitSection n bit) where
   show bitsect = showBitSection NR.knownNat bitsect
 
-instance (KnownNat n, PP.Pretty a) => PP.Pretty (BitSection n a) where
+instance (KnownNat n, PP.Pretty bit) => PP.Pretty (BitSection n bit) where
   pPrint bitsect = prettyBitSection NR.knownNat PP.pPrint bitsect
 
-mkBitSection :: IsMaskBit a => Int -> [a] -> NatRepr n -> Maybe (BitSection n a)
+mkBitSection :: forall bitmask n bit
+              . IsMaskBit bit
+             => Int
+             -> [bit]
+             -> NatRepr n
+             -> Maybe (BitSection n bit)
 mkBitSection posInt bits nr
-  | Just (Some bitLen) <- NR.someNat (length bits)
+  | Just (Some bitLen) <- NR.someNat (List.length bits)
   , Just NR.LeqProof <- NR.testLeq (NR.knownNat @1) bitLen
   , Just (Some posRepr) <- NR.someNat posInt
   , Just mask <- V.fromList bitLen bits
@@ -237,7 +287,7 @@ sectWidth :: BitSection n a -> Int
 sectWidth (BitSection _ mask) = V.lengthInt mask
 
 prettyBitSection :: NatRepr n -> (a -> PP.Doc) -> BitSection n a -> PP.Doc
-prettyBitSection nr prettyBit bitsect =
+prettyBitSection nr prettyBit bitsect@(BitSection posAt mask) =
   let hiBit = sectHiBitPos bitsect nr in
   (PP.hcat $ map prettyBit (sectBits bitsect))
   PP.<> PP.text "<"
@@ -247,87 +297,64 @@ prettyBitSection nr prettyBit bitsect =
     _ -> error "Unreachable"
   PP.<> PP.text ">"
 
-prettyBitSectionUnknownWidth :: (a -> PP.Doc) -> BitSection n a -> PP.Doc
-prettyBitSectionUnknownWidth prettyBit bitsect =
-  (PP.hcat $ map prettyBit (sectBits bitsect))
-  PP.<> PP.text "<"
-  PP.<> case sectWidth bitsect of
-    1 -> PP.int (sectBitPos bitsect)
-    x | x > 1 -> PP.int ((x - 1) + (sectBitPos bitsect)) PP.<> PP.text "+:" PP.<> PP.int (sectBitPos bitsect)
-    _ -> error "Unreachable"
-  PP.<> PP.text ">"
 
 showBitSection :: IsMaskBit a => NatRepr n -> BitSection n a -> String
 showBitSection nr bitsect = PP.render $ prettyBitSection nr (PP.text . showBit) bitsect
 
 mergeBitErr :: ME.MonadError String m => IsMaskBit a => a -> a -> m a
-mergeBitErr a1 a2 = case mergeBits a1 a2 of
+mergeBitErr a1 a2 = case mergeBit a1 a2 of
   Just a -> return a
-  Nothing -> ME.throwError $ "incompatible bits: " ++ showBit a1 ++ " vs. " ++ showBit a2
+  Nothing -> ME.throwError $ "incompatible bits: " ++ showBit a1 ++ " " ++ showBit a2
 
-addSectionToMask :: ME.MonadError String m => IsMaskBit a => BitSection n a -> BitMask n a -> m (BitMask n a)
-addSectionToMask (BitSection posAt src) dest = do
-  let destSlice = V.slice posAt (V.length src) dest
-  merged <- V.zipWithM mergeBitErr src destSlice
-  return $ V.replace posAt merged dest
+mergeBitMasks :: ME.MonadError String m
+              => IsMaskBit bit
+              => BitMask n bit
+              -> BitMask n bit
+              -> m (BitMask n bit)
+mergeBitMasks mask1 mask2 =
+  V.zipWithM mergeBitErr mask1 mask2
+    `ME.catchError`
+    (prependErr $ PP.render $ PP.text "mergeBitMasks: for masks:" PP.<+> prettyMask mask1 PP.<+> prettyMask mask2)
+
+addSectionToMask :: ME.MonadError String m
+                 => IsMaskBit bit
+                 => BitSection n bit
+                 -> BitMask n bit
+                 -> m (BitMask n bit)
+addSectionToMask (BitSection posAt src) dest = V.mapAtM posAt (V.length src) (mergeBitMasks src) dest
 
 prependErr :: ME.MonadError String m => String -> String -> m a
 prependErr msg err = ME.throwError $ msg ++ " " ++ err
 
--- | Same as 'computePattern', however bits not set in any given 'BitSection' are left as 'Nothing'
-computePattern' :: forall a m n
+-- | Flattens a 'BitSection' list into a single list of elements. Overlapping sections are
+-- merged according to 'mergeBits' from 'IsMaskBit', with merge failure (due to incompatible bits)
+-- throwing an exception in the given error monad. Uset bits are left as the default bit value.
+computePattern :: forall bit m n
                  . (ME.MonadError String m, 1 <= n)
-                => IsMaskBit a
+                => IsMaskBit bit
                 => NatRepr n
-                -> [BitSection n a]
-                -> m (BitMask n (Maybe a))
-computePattern' nr bitsects =
+                -> [BitSection n bit]
+                -> m (BitMask n bit)
+computePattern nr bitsects =
   go bitsects (defaultBitMask nr)
     `ME.catchError`
      (prependErr $ "computePattern: " ++ intercalate "," (map (showBitSection nr) bitsects))
   where
-    go :: [BitSection n a] -> BitMask n (Maybe a) -> m (BitMask n (Maybe a))
+    go :: [BitSection n bit] -> BitMask n bit -> m (BitMask n bit)
     go [] mask = return $ mask
     go (bitsect : rst) mask = do
-      resultMask <- addSectionToMask (fmap Just bitsect) mask
+      resultMask <- addSectionToMask bitsect mask
         `ME.catchError`
         (prependErr $ "computePattern: for BitSection: " ++ showBitSection nr bitsect)
       go rst resultMask
-
--- | Flattens a 'BitSection' list into a single list of elements. Overlapping sections are
--- merged according to 'mergeBits' from 'IsMaskBit', with merge failure (due to incompatible bits)
--- throwing an exception in the given error monad.
-computePattern :: (IsMaskBit a, ME.MonadError String m, 1 <= n) => NatRepr n -> [BitSection n a] -> m (BitMask n a)
-computePattern nr bitsects = fmap (fromMaybe anyMaskBit) <$> computePattern' nr bitsects
-
--- This bit explosion is actually redundant
-
--- explodeAny :: forall a n. IsMaskBit a => 1 <= n => BitMask n a -> [BitMask n BT.Bit]
--- explodeAny mask = case V.uncons mask of
---   (b, Left NR.Refl) -> do
---     b' <- explodeBit b
---     return $ V.singleton b'
---   (b, Right rst) -> do
---     b' <- explodeBit b
---     NR.LeqProof <- return $ V.nonEmpty rst
---     mask' <- explodeAny rst
---     NR.Refl <- return $ NR.minusPlusCancel (V.length mask) (NR.knownNat @1)
---     return $ V.cons b' mask'
---   where
---     explodeBit :: a -> [BT.Bit]
---     explodeBit b = case asBit b of
---       BT.Any -> [BT.ExpectedBit True, BT.ExpectedBit False]
---       b' -> [b']
-
--- explodeBitSection :: forall a n. IsMaskBit a => 1 <= n => BitSection n a -> [BitSection n BT.Bit]
--- explodeBitSection (BitSection posAt mask) = [ (BitSection posAt mask') | mask' <- explodeAny mask ]
-
 
 -- | Derive a set of positive and negative masks from a given 'PropTree' of 'BitSection'.
 -- e.g. turn ( x1x<0:2> && 11 <2:4> && !(010<0:2>) && !(11x<0:2>) into
 --           ([x1x11], [ [010xx], [11xxx] ])
 deriveMasks :: forall a m n
-             . (IsMaskBit a, ME.MonadError String m, 1 <= n)
+             . IsMaskBit a
+            => ME.MonadError String m
+            => 1 <= n
             => NatRepr n
             -> PropTree (BitSection n a)
             -> m (BitMask n a, [BitMask n a])
@@ -346,3 +373,83 @@ deriveMasks nr constraints = case PropTree.toConjunctsAndDisjuncts constraints o
   Nothing -> ME.throwError $
     "Malformed PropTree for mask derivation: \n"
     ++ PP.render (PropTree.prettyPropTree (PP.text . showBitSection nr) constraints)
+
+
+-- | A specialization of a trie with fixed-length lookups and indexing with any
+-- appropriately-sized bitmask.
+data MaskTrie bit n a where
+  MaskLeaf :: a -> MaskTrie bit 0 a
+  MaskNil :: forall bit n a. MaskTrie bit n a
+  MaskNode :: forall bit n a. 1 <= n => (bit -> MaskTrie bit (n-1) a) -> MaskTrie bit n a
+
+
+emptyMaskTree :: MaskTrie bit n a
+emptyMaskTree = MaskNil
+
+chooseLeaf :: forall n bit a. (IsMaskBit bit, 1 <= n) => bit -> MaskTrie bit n a -> MaskTrie bit (n - 1) a
+chooseLeaf bit tree = case tree of
+  MaskNode node -> node bit
+  MaskNil -> MaskNil
+
+mapBranches :: forall n bit a c
+             . 1 <= n
+            => (bit -> MaskTrie bit (n - 1) a -> MaskTrie bit (n - 1) a)
+            -> MaskTrie bit n a
+            -> MaskTrie bit n a
+mapBranches f tree = case tree of
+  MaskNode node -> MaskNode (\bit -> f bit (node bit))
+  MaskNil -> MaskNode (\bit -> f bit MaskNil)
+
+updateMatching :: IsMaskBit b => b -> (a -> a) -> b -> a -> a
+updateMatching b f checkbit a = if b `matchingBit` checkbit then f a else a
+
+getMaskTreeLeaf :: MaskTrie bit 0 a -> Maybe a
+getMaskTreeLeaf tree = case tree of
+  MaskLeaf a -> Just a
+  MaskNil -> Nothing
+
+updateMaskInTree :: forall n bit bitmask a
+                  . IsMaskBit bit
+                 => BitMask n bit
+                 -> (Maybe a -> a)
+                 -> MaskTrie bit n a
+                 -> MaskTrie bit n a
+updateMaskInTree mask f tree = case V.uncons mask of
+  (b, Left NR.Refl) ->
+    mapBranches (updateMatching b (\leaf -> MaskLeaf (f $ getMaskTreeLeaf leaf))) tree
+  (b, Right mask') | NR.LeqProof <- V.nonEmpty mask ->
+    mapBranches (updateMatching b (updateMaskInTree mask' f)) tree
+
+addMaskToTree :: forall n bitmask bit a
+               . IsMaskBit bit
+              => BitMask n bit
+              -> a
+              -> MaskTrie bit n [a]
+              -> MaskTrie bit n [a]
+addMaskToTree mask a tree = updateMaskInTree mask go tree
+  where
+    go :: Maybe [a] -> [a]
+    go Nothing = [a]
+    go (Just as) = a : as
+
+lookupMaskFromTree :: forall a n bitmask bit m
+                    . IsMaskBit bit
+                   => BitMask n bit
+                   -> MaskTrie bit n a
+                   -> Maybe a
+lookupMaskFromTree mask tree = case V.uncons mask of
+  (b, Left NR.Refl) ->
+    getMaskTreeLeaf (chooseLeaf b tree)
+  (b, Right mask') | NR.LeqProof <- V.nonEmpty mask ->
+    lookupMaskFromTree mask' (chooseLeaf b tree)
+
+matchMaskFromTree :: forall a n b m
+                   . IsMaskBit b
+                  => BitMask n b
+                  -> [BitMask n b]
+                  -> MaskTrie b n [(a, BitMask n b)]
+                  -> [a]
+matchMaskFromTree mask negmasks tree = fromMaybe [] $ fmap (catMaybes . map go) $ lookupMaskFromTree mask tree
+  where
+    go :: (a, BitMask n b) -> Maybe a
+    go (a, mask') = if any (\negmask -> mask' `matchingBitMasks` negmask) negmasks then Nothing else Just a
