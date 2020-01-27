@@ -18,10 +18,11 @@
 module Data.BitMask
   ( IsMaskBit(..)
   , AsBit(..)
-  , equivBitMasks
-  , matchingBitMasks
+  , equivBitMask
+  , matchingBitMask
   , BitSection(..)
   , mkBitSection
+  , bitSectionFromList
   , QuasiBit(..)
   , BitMask
   , computePattern
@@ -47,7 +48,7 @@ import           GHC.TypeNats
 import           Control.Monad.Identity ( runIdentity )
 import qualified Control.Monad.Except as ME
 import           Control.Monad ( unless )
-import           Data.Maybe ( fromMaybe, catMaybes, isJust )
+import           Data.Maybe ( fromMaybe, catMaybes, isJust, fromJust )
 import           Data.List ( intercalate, nub )
 import qualified Data.List as List
 import           Data.List.Split as LS
@@ -79,6 +80,16 @@ class IsMaskBit a where
 
   matchingBit :: a -> a -> Bool
   matchingBit a1 a2 = isJust (mergeBit a1 a2)
+
+mergeBitM :: ME.MonadError (a, a) m => IsMaskBit a => a -> a -> m a
+mergeBitM a1 a2 = case mergeBit a1 a2 of
+  Just a -> return a
+  Nothing -> ME.throwError (a1, a2)
+
+mergeBitErr :: ME.MonadError String m => IsMaskBit bit => bit -> bit -> m bit
+mergeBitErr m1 m2 = case mergeBitM m1 m2 of
+  Left (a1, a2) -> ME.throwError $ "incompatible bits: " ++ showBit a1 ++ " " ++ showBit a2
+  Right a -> return a
 
 instance IsMaskBit BT.Bit where
   defaultBit = BT.Any
@@ -188,24 +199,37 @@ readQuasiBit s = case s of
 
 type BitMask n bit = V.Vector n bit
 
+instance (IsMaskBit bit, 1 <= n, KnownNat n) => IsMaskBit (BitMask n bit) where
+  defaultBit = defaultBitMask NR.knownNat
+  showBit m = PP.render (prettyMask m)
+  mergeBit m1 m2 = V.zipWithM mergeBit m1 m2
+  equivBit = equivBitMask
+  matchingBit = matchingBitMask
+
 defaultBitMask :: forall bitmask n bit. 1 <= n => IsMaskBit bit => NR.NatRepr n -> BitMask n bit
 defaultBitMask nr
   | NR.Refl <- NR.minusPlusCancel nr (NR.knownNat @1)
   = V.generate (NR.decNat nr) (\_ -> defaultBit)
 
-equivBitMasks :: forall bitmask n bit
-               . IsMaskBit bit
+mergeBitMasksM :: ME.MonadError (bit, bit) m => IsMaskBit bit => BitMask n bit -> BitMask n bit -> m (BitMask n bit)
+mergeBitMasksM m1 m2 = V.zipWithM mergeBitM m1 m2
+
+equivBitMask :: IsMaskBit bit => BitMask n bit -> BitMask n bit -> Bool
+equivBitMask m1 m2 = all id (V.zipWith equivBit m1 m2)
+
+matchingBitMask :: IsMaskBit bit => BitMask n bit -> BitMask n bit -> Bool
+matchingBitMask m1 m2 = all id (V.zipWith matchingBit m1 m2)
+
+
+mergeBitMasksErr :: ME.MonadError String m
+              => IsMaskBit bit
               => BitMask n bit
               -> BitMask n bit
-              -> Bool
-equivBitMasks m1 m2 = all id (V.zipWith equivBit m1 m2)
-
-matchingBitMasks :: forall bitmask n bit
-                  . IsMaskBit bit
-                 => BitMask n bit
-                 -> BitMask n bit
-                 -> Bool
-matchingBitMasks m1 m2 = all id (V.zipWith matchingBit m1 m2)
+              -> m (BitMask n bit)
+mergeBitMasksErr mask1 mask2 =
+  V.zipWithM mergeBitErr mask1 mask2
+    `ME.catchError`
+    (prependErr $ PP.render $ PP.text "mergeBitMasks: for masks:" PP.<+> prettyMask mask1 PP.<+> prettyMask mask2)
 
 
 prettyMask :: forall bitmask bit n
@@ -229,105 +253,117 @@ prettySegmentedMask endianness mask =
     go bit = PP.text (showBit bit)
 
 
--- | A slice of bits at a given bit position (0-indexed starting at the head of a list of bits).
--- The 'n' type parameter represents the size of bitmasks that this is compatible with.
--- e.g. all 'BitSection's for a 32-bit architecture will be a 'BitSection a 32' regardless of their actual
--- widths, which are constrained to fit in the given bitwidth.
+-- | A wrapper around a 'BitMask' representing a slice of bits.
 data BitSection n a where
-  BitSection :: forall f a n posAt sectWidth
-              . (posAt + 1 <= n, 1 <= sectWidth, sectWidth <= n, posAt + sectWidth <= n)
-             => NatRepr posAt
-             -> BitMask sectWidth a
-             -> BitSection n a
+  BitSection :: BitMask n (Maybe a) -> BitSection n a
+
 
 deriving instance Functor (BitSection n)
 deriving instance Foldable (BitSection n)
+deriving instance Eq a => Eq (BitSection n a)
 
-instance Eq a => Eq (BitSection n a) where
-  (BitSection posAt vect) == (BitSection posAt' vect')
-    | Just Refl <- testEquality posAt posAt'
-    , Just Refl <- testEquality (V.length vect) (V.length vect')
-      = vect == vect'
-    | otherwise = False
 
-instance (KnownNat n, IsMaskBit bit) => Show (BitSection n bit) where
-  show bitsect = showBitSection NR.knownNat bitsect
+instance (IsMaskBit bit) => Show (BitSection n bit) where
+  show bitsect = showBitSection bitsect
 
-instance (KnownNat n, PP.Pretty bit) => PP.Pretty (BitSection n bit) where
-  pPrint bitsect = prettyBitSection NR.knownNat PP.pPrint bitsect
+instance (PP.Pretty bit) => PP.Pretty (BitSection n bit) where
+  pPrint bitsect = prettyBitSection PP.pPrint bitsect
 
-mkBitSection :: forall bitmask n bit
+instance (IsMaskBit bit, KnownNat n, 1 <= n) => IsMaskBit (BitSection n bit) where
+  defaultBit = BitSection $ defaultBitMask NR.knownNat
+  showBit bs = showBitSection bs
+  mergeBit (BitSection bs1) (BitSection bs2) = BitSection <$> mergeBit bs1 bs2
+  equivBit (BitSection m1) (BitSection m2) = all id (V.zipWith equivBit m1 m2)
+
+-- | Construct a 'BitSection' out of a smaller mask at a given position.
+mkBitSection :: forall n posAt sectWidth a
+              . (posAt + sectWidth <= n)
+             => IsMaskBit a
+             => NatRepr n
+             -> NatRepr posAt
+             -> BitMask sectWidth a
+             -> BitSection n a
+mkBitSection n posAt mask
+  | sectWidth <- V.length mask
+  , NR.Refl <- NR.plusComm posAt sectWidth
+  , NR.LeqProof <- V.nonEmpty mask
+  , (prf1 :: NR.LeqProof (sectWidth + posAt) n) <- NR.leqProof (sectWidth `NR.addNat` posAt ) n
+  , (prf2 :: NR.LeqProof sectWidth n) <- NR.addIsLeqLeft1 prf1
+  , (prf3 :: NR.LeqProof 1 n) <- NR.leqTrans (NR.leqProof (NR.knownNat @1) sectWidth) prf2
+  = NR.withLeqProof prf3 $ BitSection $ V.replace posAt (fmap Just mask) (defaultBitMask n)
+
+bitSectionFromList :: forall bitmask n bit
               . IsMaskBit bit
              => Int
              -> [bit]
              -> NatRepr n
              -> Maybe (BitSection n bit)
-mkBitSection posInt bits nr
+bitSectionFromList posInt bits nr
   | Just (Some bitLen) <- NR.someNat (List.length bits)
   , Just NR.LeqProof <- NR.testLeq (NR.knownNat @1) bitLen
   , Just (Some posRepr) <- NR.someNat posInt
   , Just mask <- V.fromList bitLen bits
-  , Just NR.LeqProof <- NR.testLeq (NR.incNat posRepr) nr
-  , Just NR.LeqProof <- NR.testLeq (V.length mask) nr
   , Just NR.LeqProof <- NR.testLeq (posRepr `NR.addNat` (V.length mask)) nr
-    = Just $ BitSection posRepr mask
+    = Just $ mkBitSection nr posRepr mask
   | otherwise = Nothing
 
-sectBitPos :: BitSection n a -> Int
-sectBitPos (BitSection posAt _)  = fromIntegral $ NR.intValue posAt
+-- | Recover traditional bitsection form
+asContiguousSections :: BitSection n a -> [(Int, [a])]
+asContiguousSections (BitSection mask) =
+  catMaybes $ map extract $ List.groupBy grouping $ map addIdx $ zip [0..] (V.toList mask)
+  where
+    extract :: [Maybe (Int, a)] -> Maybe (Int, [a])
+    extract (Just (i, a) : rst) = Just (i, a : map (snd . fromJust) rst)
+    extract _ = Nothing
 
-sectHiBitPos :: BitSection n a -> NatRepr n -> Int
-sectHiBitPos (BitSection posAt _) nr = fromIntegral $ (NR.intValue nr - NR.intValue posAt - 1)
+    addIdx :: (Int, Maybe a) -> Maybe (Int, a)
+    addIdx (i, Just a) = Just (i, a)
+    addIdx _ = Nothing
 
-sectBits :: BitSection n a -> [a]
-sectBits (BitSection _ mask) = V.toList mask
+    grouping :: Maybe a -> Maybe a -> Bool
+    grouping (Just _) (Just _) = True
+    grouping Nothing Nothing = True
+    grouping _ _ = False
 
 sectWidth :: BitSection n a -> Int
-sectWidth (BitSection _ mask) = V.lengthInt mask
+sectWidth (BitSection mask) = V.lengthInt mask
 
-prettyBitSection :: NatRepr n -> (a -> PP.Doc) -> BitSection n a -> PP.Doc
-prettyBitSection nr prettyBit bitsect@(BitSection posAt mask) =
-  let hiBit = sectHiBitPos bitsect nr in
-  (PP.hcat $ map prettyBit (sectBits bitsect))
+prettyBitSection :: (a -> PP.Doc) -> BitSection n a -> PP.Doc
+prettyBitSection prettyBit bitsect =
+  let
+    chunks = asContiguousSections bitsect
+    pretty = map (\(bitPos, bits) -> prettyBitSectionChunk (sectWidth bitsect - bitPos, map prettyBit bits)) chunks
+  in PP.hcat pretty
+
+prettyBitSectionChunk :: (Int, [PP.Doc]) -> PP.Doc
+prettyBitSectionChunk (hiBit, bits) =
+  (PP.hcat $ bits)
   PP.<> PP.text "<"
-  PP.<> case sectWidth bitsect of
+  PP.<> case List.length bits of
     1 -> PP.int hiBit
     x | x > 1 -> PP.int hiBit PP.<> PP.text ":" PP.<> PP.int (hiBit - x + 1)
-    _ -> error "Unreachable"
+    _ -> PP.empty
   PP.<> PP.text ">"
 
+showBitSection :: IsMaskBit a => BitSection n a -> String
+showBitSection bitsect = PP.render $ prettyBitSection (PP.text . showBit) bitsect
 
-showBitSection :: IsMaskBit a => NatRepr n -> BitSection n a -> String
-showBitSection nr bitsect = PP.render $ prettyBitSection nr (PP.text . showBit) bitsect
-
-mergeBitErr :: ME.MonadError String m => IsMaskBit a => a -> a -> m a
-mergeBitErr a1 a2 = case mergeBit a1 a2 of
-  Just a -> return a
-  Nothing -> ME.throwError $ "incompatible bits: " ++ showBit a1 ++ " " ++ showBit a2
-
-mergeBitMasks :: ME.MonadError String m
-              => IsMaskBit bit
-              => BitMask n bit
-              -> BitMask n bit
-              -> m (BitMask n bit)
-mergeBitMasks mask1 mask2 =
-  V.zipWithM mergeBitErr mask1 mask2
-    `ME.catchError`
-    (prependErr $ PP.render $ PP.text "mergeBitMasks: for masks:" PP.<+> prettyMask mask1 PP.<+> prettyMask mask2)
 
 addSectionToMask :: ME.MonadError String m
                  => IsMaskBit bit
                  => BitSection n bit
                  -> BitMask n bit
                  -> m (BitMask n bit)
-addSectionToMask (BitSection posAt src) dest = V.mapAtM posAt (V.length src) (mergeBitMasks src) dest
+addSectionToMask (BitSection mask) dest = do
+  merged <- mergeBitMasksErr mask (fmap Just dest)
+  return $ fmap (fromMaybe defaultBit) merged
 
 prependErr :: ME.MonadError String m => String -> String -> m a
 prependErr msg err = ME.throwError $ msg ++ " " ++ err
 
--- | Flattens a 'BitSection' list into a single list of elements. Overlapping sections are
+-- | Flattens a 'BitSection' list into a single 'BitMask'. Overlapping sections are
 -- merged according to 'mergeBits' from 'IsMaskBit', with merge failure (due to incompatible bits)
--- throwing an exception in the given error monad. Uset bits are left as the default bit value.
+-- throwing an exception in the given error monad. Unset bits are left as the default bit value.
 computePattern :: forall bit m n
                  . (ME.MonadError String m, 1 <= n)
                 => IsMaskBit bit
@@ -337,14 +373,14 @@ computePattern :: forall bit m n
 computePattern nr bitsects =
   go bitsects (defaultBitMask nr)
     `ME.catchError`
-     (prependErr $ "computePattern: " ++ intercalate "," (map (showBitSection nr) bitsects))
+     (prependErr $ "computePattern: " ++ intercalate "," (map showBitSection bitsects))
   where
     go :: [BitSection n bit] -> BitMask n bit -> m (BitMask n bit)
     go [] mask = return $ mask
     go (bitsect : rst) mask = do
       resultMask <- addSectionToMask bitsect mask
         `ME.catchError`
-        (prependErr $ "computePattern: for BitSection: " ++ showBitSection nr bitsect)
+        (prependErr $ "computePattern: for BitSection: " ++ showBitSection bitsect)
       go rst resultMask
 
 -- | Derive a set of positive and negative masks from a given 'PropTree' of 'BitSection'.
@@ -371,7 +407,7 @@ deriveMasks nr constraints = case PropTree.toConjunctsAndDisjuncts constraints o
     return (mask', negMasks)
   Nothing -> ME.throwError $
     "Malformed PropTree for mask derivation: \n"
-    ++ PP.render (PropTree.prettyPropTree (PP.text . showBitSection nr) constraints)
+    ++ PP.render (PropTree.prettyPropTree (PP.text . showBitSection) constraints)
 
 
 -- | A specialization of a trie with fixed-length lookups and indexing with any
@@ -451,4 +487,4 @@ matchMaskFromTree :: forall a n b m
 matchMaskFromTree mask negmasks tree = fromMaybe [] $ fmap (catMaybes . map go) $ lookupMaskFromTree mask tree
   where
     go :: (a, BitMask n b) -> Maybe a
-    go (a, mask') = if any (\negmask -> mask' `matchingBitMasks` negmask) negmasks then Nothing else Just a
+    go (a, mask') = if any (\negmask -> mask' `matchingBitMask` negmask) negmasks then Nothing else Just a

@@ -113,8 +113,8 @@ data OuterXMLException = OuterXMLException XMLEnv XMLException
 
 type ARMRegWidth = 32
 
-type ARMBitSection n = BitSection ARMRegWidth n
-type ARMBitMask n = BitMask ARMRegWidth n
+type ARMBitSection bit = BitSection ARMRegWidth bit
+type ARMBitMask bit = BitMask ARMRegWidth bit
 
 newtype XML a = XML (RWST XMLEnv () XMLState (ME.ExceptT OuterXMLException IO) a)
   deriving ( Functor
@@ -149,17 +149,20 @@ warnError e = do
   let pretty = PP.nest 1 (PP.text "WARNING:" $$ (PP.pPrint $ OuterXMLException env e))
   logXML $ PP.render pretty
 
+prettyMask :: BM.IsMaskBit bit => ARMBitMask bit -> PP.Doc
+prettyMask mask = BM.prettySegmentedMask endianness mask
+
 instance PP.Pretty XMLException where
   pPrint e = case e of
     UnexpectedElements elems ->
       PP.text "UnexpectedElements"
       <+> PP.brackets (PP.hsep (PP.punctuate (PP.text ",") (map simplePrettyElem elems)))
     MismatchedMasks mask mask' -> PP.text "MismatchedMasks"
-      $$ PP.nest 1 (BM.prettyMask mask $$ BM.prettyMask mask')
+      $$ PP.nest 1 (prettyMask mask $$ prettyMask mask')
     MismatchedNegativeMasks masks masks' -> PP.text "MismatchedNegativeMasks"
-      $$ PP.nest 1 (PP.vcat (map BM.prettyMask masks))
+      $$ PP.nest 1 (PP.vcat (map prettyMask masks))
       $$ PP.text "vs."
-      $$ PP.nest 1 (PP.vcat (map BM.prettyMask masks'))
+      $$ PP.nest 1 (PP.vcat (map prettyMask masks'))
     InnerParserFailure e -> PP.text "InnerParserFailure"
       $$ PP.nest 1 (PP.vcat $ (map PP.text $ lines (P.errorBundlePretty e)))
     _ -> PP.text $ show e
@@ -598,6 +601,7 @@ deriveMasks :: PropTree (ARMBitSection QuasiBit)
             -> XML (ARMBitMask QuasiBit, [ARMBitMask BT.Bit])
 deriveMasks qbits bits = do
   let constraints = (fmap (fmap Bit) bits <> qbits)
+  logXML $ PP.render $ PP.pPrint constraints
   case BM.deriveMasks NR.knownNat constraints of
     Left err -> throwError $ InvalidConstraints constraints err
     Right (posmask, negmasks) -> return (posmask, map (fmap BM.asBit) negmasks)
@@ -693,7 +697,7 @@ encFullConstraints enc = (fmap (fmap Bit) $ encConstraints enc) <> encIConstrain
 
 -- | Make a bitsection from a hibit of 32 bits
 bitSectionHibit :: IsMaskBit a => Int -> [a] -> XML (ARMBitSection a)
-bitSectionHibit hibit bits = case mkBitSection (31 - hibit) bits NR.knownNat of
+bitSectionHibit hibit bits = case BM.bitSectionFromList (31 - hibit) bits NR.knownNat of
   Just bitsect -> return bitsect
   Nothing -> throwError $ InvalidBitsForBitsection hibit bits
 
@@ -890,7 +894,7 @@ validateEncoding leaf encoding = do
       let negmasks = encNegMasks encoding
       let
         check :: forall a. BM.IsMaskBit a => ARMBitMask a -> ARMBitMask a -> Bool
-        check = if exact then BM.equivBitMasks else BM.matchingBitMasks
+        check = if exact then BM.equivBitMask else BM.matchingBitMask
       unless (check mask mask') $
         throwError $ MismatchedMasks mask mask'
       unless (length negmasks == length negmasks' && equivBy check negmasks negmasks') $
