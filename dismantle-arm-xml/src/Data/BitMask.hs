@@ -22,7 +22,8 @@ module Data.BitMask
   , SemiMaskBit(..)
   , HasBottomMaskBit(..)
   , ShowableBit(..)
-  , BitSection(..)
+  , BitSection
+  , maskAsBitSection
   , AsBit(..)
   , asContiguousSections
   , mergeBitM
@@ -39,10 +40,10 @@ module Data.BitMask
   , computePattern
   , readBit
   , readQuasiBit
-  , dropQuasiBit
+  , flattenQuasiBit
   , isQBit
-  , asQuasiBit
-  , mkQuasiBit
+  , bitToQuasi
+  , bitAsQuasi
   , deriveMasks
   , prettyMask
   , prettySegmentedMask
@@ -52,8 +53,8 @@ module Data.BitMask
   , V.length
   , MaskTrie
   , emptyMaskTree
-  , addMaskToTree
-  , updateMaskInTree
+  , addToMaskTrie
+  , updateMaskTrie
   , lookupMaskFromTree
   )
   where
@@ -87,7 +88,7 @@ pattern BitSet = BT.ExpectedBit True
 pattern BitUnset = BT.ExpectedBit False
 pattern BitAny = BT.Any
 
--- | This class generalizes the notion of bit-like equivalence and matching. Algebraically, this
+-- | This class generalizes the notion of bit-like matching. Algebraically, this
 -- class defines a lattice, where 'Nothing' is the top element and merging of bits is join.
 class Eq a => SemiMaskBit a where
   -- | Bit merging is a commutative binary operation (lattice join),
@@ -102,23 +103,18 @@ class Eq a => SemiMaskBit a where
   -- | Bit merging induces the standard lattice partial ordering, i.e.:
   -- 'a1 `leqBit` a2' iff 'a1 `mergeBit` a2 = Just a2'
   --
-  -- For example: 'x <= 1', 'x <= 0', 'x <= x', '1 <= 1', '0 <= 0', but not '1 <= x', or '0 <= x'
+  -- For example: 'x <= 1', 'x <= 0', 'x <= x', '1 <= 1', '0 <= 0', but not: '1 <= x', nor '0 <= x', nor '0 <= 1'
   leqBit :: a -> a -> Bool
   a1 `leqBit` a2 = case mergeBit a1 a2 of
     Just a3 -> a2 == a3
     Nothing -> False
 
   -- | Bit merging induces an equivalence class of comparable bits, i.e.:
-  -- 'a1 `matchBit` a2; iff 'a1 `leqBit a1` || a2 `leqBit` a1'
+  -- 'a1 `matchBit` a2' iff 'a1 `leqBit a1` || a2 `leqBit` a1'
   -- or equivalently:
-  -- 'a1 `matchBit` a2' iff 'a1 `matchBit` a2 =
+  -- 'a1 `matchBit` a2' iff 'a1 `matchBit` a2 /= Nothing'
   --
-  -- In addition to the standard equality properties, this identity must hold:
-  -- 'a1 `matchBit` a2' iff there exists 'a3' such that 'a1 `matchBit` a2 = Just a3'
-  -- Equivalently, 'a1 `matchBit` a2' iff 'a1 `leqBit` a2 || a2 `leqBit` a1'
-  -- i.e. 'matchBit' induces an equivalence class of bits which can be merged.
-  --
-  -- For example: 'x =~ 1', '1 =~ x', '1 =~ 1', but not '1 =~ 0'
+  -- For example: 'x =~ 1', '1 =~ x', '1 =~ 1', but not: '1 =~ 0'
   matchBit :: a -> a -> Bool
   a1 `matchBit` a2 = isJust (a1 `mergeBit` a2)
 
@@ -127,8 +123,11 @@ class Eq a => SemiMaskBit a where
 class SemiMaskBit a => HasBottomMaskBit a where
   -- | The unit element for bit merging.
   --
-  -- The following identity must hold (assuming the identities of the other operations):
+  -- For any element 'a' the following identity must hold:
   -- 'bottomBit `mergeBit` a = Just a'
+  -- Which is equivalent to the following identities. For any 'a':
+  -- 'bottomBit `leqBit` a'
+  -- 'bottomBit `matchBit` a'
   --
   -- For example: 'bottomBit :: BT.Bit = BT.Any'
   bottomBit :: a
@@ -270,30 +269,37 @@ instance ShowableBit QuasiBit where
 instance PP.Pretty QuasiBit where
   pPrint bit = PP.text (showBit bit)
 
-mkQuasiBit :: Bool -> BT.Bit -> QuasiBit
-mkQuasiBit True bit = QuasiBit (bit, Just ())
-mkQuasiBit False bit = QuasiBit (bit, Nothing)
+-- | Make a 'QuasiBit' from a 'BT.Bit'. If the first argument is 'True' then the bit is marked
+-- as a soft requirement that can be flattened into a wildcard when constructing a mask.
+bitToQuasi :: Bool -> BT.Bit -> QuasiBit
+bitToQuasi isQuasi bit = QuasiBit (bit, if isQuasi then Just () else Nothing)
 
+-- | Lift a 'BT.Bit' to a 'QuasiBit', leaving it as a hard requirement.
+bitAsQuasi :: BT.Bit -> QuasiBit
+bitAsQuasi = bitToQuasi False
+
+-- | Retrieve the inner 'BT.Bit' from a 'QuasiBit', ignoring its status as either a hard or soft requirement.
+getBitFromQuasi :: QuasiBit -> BT.Bit
+getBitFromQuasi (QuasiBit (bit, _)) = bit
+
+-- | Return whether or not a 'QuasiBit' has been marked as a soft requirement
+-- i.e. (is a "QBit" rather than a true "Bit").
 isQBit :: QuasiBit -> Bool
 isQBit (QuasiBit (_, Just _)) = True
 isQBit _ = False
 
-asQuasiBit :: BT.Bit -> QuasiBit
-asQuasiBit bit = QuasiBit (bit, Nothing)
-
-dropQuasiBit :: QuasiBit -> BT.Bit
-dropQuasiBit (QuasiBit (_, Just _)) = BT.Any
-dropQuasiBit (QuasiBit (bit, Nothing)) = bit
-
+-- | Flatten a 'QuasiBit' to a 'BT.Bit' by dropping any soft requirements.
+flattenQuasiBit :: QuasiBit -> BT.Bit
+flattenQuasiBit qbit = if isQBit qbit then BT.Any else getBitFromQuasi qbit
 
 readQuasiBit :: String -> Maybe QuasiBit
 readQuasiBit s = case s of
-  "1" -> Just $ mkQuasiBit False BitSet
-  "0" -> Just $ mkQuasiBit False BitUnset
-  "x" -> Just $ mkQuasiBit False BitAny
-  "" -> Just $ mkQuasiBit False BitAny
-  "(1)" -> Just $ mkQuasiBit True BitSet
-  "(0)" -> Just $ mkQuasiBit True BitUnset
+  "1" -> Just $ bitToQuasi False BitSet
+  "0" -> Just $ bitToQuasi False BitUnset
+  "x" -> Just $ bitToQuasi False BitAny
+  "" -> Just $ bitToQuasi False BitAny
+  "(1)" -> Just $ bitToQuasi True BitSet
+  "(0)" -> Just $ bitToQuasi True BitUnset
   _ -> Nothing
 
 type BitMask n bit = V.Vector n bit
@@ -363,9 +369,13 @@ someBitMaskFromCons bit bits
   , Just mask <- V.fromList (NR.knownNat @1 `NR.addNat` nr) (bit : bits)
   = SomeBitMask mask
 
--- | A wrapper around a 'BitMask' representing a slice of bits.
+-- | A Represents a set of non-overlapping sub-masks of a given mask length.
+-- Its canonical construction with 'mkBitSection' or 'mkBitSectionHiBit' yields only a single sub-mask,
+-- however merging multiple 'BitSection's (through 'mergeBit') can result in multiple sub-masks being represented.
 newtype BitSection n a = BitSection (BitMask n (Maybe a))
   deriving (SemiMaskBit, Eq, Foldable, Functor)
+
+deriving instance (HasBottomMaskBit bit, KnownNat n, 1 <= n) => HasBottomMaskBit (BitSection n bit)
 
 instance MaskBit bit => Show (BitSection n bit) where
   show bitsect = showBitSection bitsect
@@ -376,9 +386,11 @@ instance PP.Pretty bit => PP.Pretty (BitSection n bit) where
 instance ShowableBit bit => ShowableBit (BitSection n bit) where
   showBit bs = showBitSection bs
 
-deriving instance (HasBottomMaskBit bit, KnownNat n, 1 <= n) => HasBottomMaskBit (BitSection n bit)
+-- | Low-level interface for constructing a 'BitSection' from a 'BitMask' of 'Maybe' bits.
+maskAsBitSection :: BitMask n (Maybe a) -> BitSection n a
+maskAsBitSection mask = BitSection mask
 
--- | Construct a 'BitSection' out of a smaller mask at a given position.
+-- | Construct a 'BitSection' out of a smaller sub-mask at a given position.
 mkBitSection :: forall n posAt sectWidth a
               . (posAt + sectWidth <= n)
              => MaskBit a
@@ -396,8 +408,8 @@ mkBitSection n posAt mask
   = NR.withLeqProof prf3 $ BitSection $ V.replace posAt (fmap Just mask) (bottomBitMask n)
 
 
--- | Construct a 'BitSection' out of a smaller mask at a given hibit position (i.e. considering
--- the first bit in the mask as index 'n').
+-- | Construct a 'BitSection' out of a smaller sub-mask at a given hibit position (i.e. considering
+-- the first bit in the mask as index 'n' and the last as '0').
 mkBitSectionHiBit :: forall n hiBit sectWidth a
                    . (hiBit + 1 <= n, sectWidth <= hiBit + 1)
                   => MaskBit a
@@ -422,6 +434,8 @@ mkBitSectionHiBit n hiBit mask
   , prf10 :: NR.LeqProof ((n - (hiBit + 1)) + sectWidth) n <- prf9
   = NR.withLeqProof prf10 $ mkBitSection n posAt mask
 
+-- | Construct a 'BitSection' from a given list of bits at a given position. Returns 'Nothing'
+-- if the sub-mask cannot fit into the given bitmask length.
 bitSectionFromList :: forall bitmask n bit
                     . MaskBit bit
                    => Int
@@ -437,6 +451,9 @@ bitSectionFromList posInt bits nr
     = Just $ mkBitSection nr posRepr mask
   | otherwise = Nothing
 
+-- | Construct a 'BitSection' from a given list of a bits at a given hibit position (i.e. considering
+-- the first bit in the mask as index 'n' and the last as '0'). Returns 'Nothing'
+-- if the sub-mask cannot fit into the given bitmask length.
 bitSectionFromListHiBit :: forall bitmask n bit
                          . MaskBit bit
                         => Int
@@ -453,7 +470,10 @@ bitSectionFromListHiBit hiBitInt bits nr
     = Just $ mkBitSectionHiBit nr hiBit mask
   | otherwise = Nothing
 
--- | Recover traditional bitsection form
+-- | Compute a list of contiguous sub-masks represented by a 'BitSection' along with their position.
+-- This is (morally) the reverse of 'bitSectionFromList', where
+-- 'bitSectionFromList i bits nr == Just bitsect' iff
+-- 'asContiguousSections bitsect == [(i, SomeBitMask mask)] && V.toList mask == bits'
 asContiguousSections :: BitSection n a -> [(Int, SomeBitMask a)]
 asContiguousSections (BitSection mask) =
   catMaybes $ map extract $ List.groupBy grouping $ map addIdx $ zip [0..] (V.toList mask)
@@ -471,15 +491,16 @@ asContiguousSections (BitSection mask) =
     grouping Nothing Nothing = True
     grouping _ _ = False
 
-sectWidth :: BitSection n a -> Int
-sectWidth (BitSection mask) = V.lengthInt mask
+sectTotalWidth :: BitSection n a -> Int
+sectTotalWidth (BitSection mask) = V.lengthInt mask
 
+-- | Print a 'BitSection' as a set of contiguous sub-masks, along with their hibit positions.
 prettyBitSection :: (a -> PP.Doc) -> BitSection n a -> PP.Doc
 prettyBitSection prettyBit bitsect =
   let
-    chunks = map (\(bitPos, SomeBitMask mask) -> (bitPos, V.toList mask)) $ asContiguousSections bitsect
-    pretty = map (\(bitPos, bits) -> prettyBitSectionChunk (sectWidth bitsect - bitPos, map prettyBit bits)) chunks
-  in PP.hcat pretty
+    chunks = map (\(bitPos, SomeBitMask mask) ->
+                    (sectTotalWidth bitsect - bitPos, map prettyBit $ V.toList mask)) $ asContiguousSections bitsect
+  in PP.hcat $ map prettyBitSectionChunk chunks
 
 prettyBitSectionChunk :: (Int, [PP.Doc]) -> PP.Doc
 prettyBitSectionChunk (hiBit, bits) =
@@ -494,14 +515,17 @@ prettyBitSectionChunk (hiBit, bits) =
 showBitSection :: ShowableBit a => BitSection n a -> String
 showBitSection bitsect = PP.render $ prettyBitSection (PP.text . showBit) bitsect
 
-
+-- | Merge the sub-masks of a 'BitSection' into the given 'BitMask' at their respective positions.
 addSectionToMask :: ME.MonadError String m
-                 => MaskBit bit
+                 => SemiMaskBit bit
+                 => ShowableBit bit
                  => BitSection n bit
                  -> BitMask n bit
                  -> m (BitMask n bit)
 addSectionToMask (BitSection mask) dest = do
   merged <- mergeBitMasksErr mask (fmap Just dest)
+  -- The semantics of 'mergeBit' for 'Maybe bit' guarantee that no 'Nothing' bits are leftover after
+  -- the merge.
   return $ fmap (fromMaybe (error "Merge error: unexpected empty bits")) merged
 
 prependErr :: ME.MonadError String m => String -> String -> m a
@@ -509,7 +533,7 @@ prependErr msg err = ME.throwError $ msg ++ " " ++ err
 
 -- | Flattens a 'BitSection' list into a single 'BitMask'. Overlapping sections are
 -- merged according to 'mergeBit' addording to 'MaskBit', with merge failure (due to incompatible bits)
--- throwing an exception in the given error monad. Unset bits are left as the default bit value.
+-- throwing an exception in the given error monad. Unset bits are left as 'bottomBit'.
 computePattern :: forall bit m n
                  . (ME.MonadError String m, 1 <= n)
                 => MaskBit bit
@@ -530,8 +554,8 @@ computePattern nr bitsects =
       go rst resultMask
 
 -- | Derive a set of positive and negative masks from a given 'PropTree' of 'BitSection'.
--- e.g. turn ( x1x<0:2> && 11 <2:4> && !(010<0:2>) && !(11x<0:2>) into
---           ([x1x11], [ [010xx], [11xxx] ])
+-- e.g. turn ( x1x<4:2> && x10 <2:0> && !(010<4:2>) && !(11x<4:2>) into
+--           ([x1x10], [ [010xx], [11xxx] ])
 deriveMasks :: forall a m n
              . MaskBit a
             => ME.MonadError String m
@@ -555,8 +579,8 @@ deriveMasks nr constraints = case PropTree.toConjunctsAndDisjuncts constraints o
     "Malformed PropTree for mask derivation: \n"
     ++ PP.render (PropTree.prettyPropTree (PP.text . showBitSection) constraints)
 
--- | A specialization of a trie with fixed-length lookups and indexing with any
--- appropriately-sized bitmask.
+-- | A trie with 'BitMask' keys for a fixed mask length. Keys are matched according to
+-- 'matchBit' of the 'bit' type.
 data MaskTrie bit n a where
   MaskLeaf :: a -> MaskTrie bit 0 a
   MaskNil :: forall bit n a. MaskTrie bit n a
@@ -587,29 +611,53 @@ getMaskTreeLeaf tree = case tree of
   MaskLeaf a -> Just a
   MaskNil -> Nothing
 
-updateMaskInTree :: forall n bit bitmask a
-                  . SemiMaskBit bit
-                 => BitMask n bit
-                 -> (Maybe a -> a)
-                 -> MaskTrie bit n a
-                 -> MaskTrie bit n a
-updateMaskInTree mask f tree = case V.uncons mask of
+-- | Update the entries matching the given 'BitMask' in a 'MaskTrie'
+updateMaskTrie :: forall n bit bitmask a
+                . SemiMaskBit bit
+               => BitMask n bit
+               -> (Maybe a -> Maybe a)
+               -> MaskTrie bit n a
+               -> MaskTrie bit n a
+updateMaskTrie mask f tree = case V.uncons mask of
   (b, Left NR.Refl) ->
-    mapBranches (updateMatching b (\leaf -> MaskLeaf (f $ getMaskTreeLeaf leaf))) tree
+    mapBranches (updateMatching b doUpdate) tree
   (b, Right mask') | NR.LeqProof <- V.nonEmpty mask ->
-    mapBranches (updateMatching b (updateMaskInTree mask' f)) tree
+    mapBranches (updateMatching b (updateMaskTrie mask' f)) tree
+  where
+    doUpdate :: MaskTrie bit 0 a -> MaskTrie bit 0 a
+    doUpdate leaf = case f $ getMaskTreeLeaf leaf of
+      Just bit -> MaskLeaf bit
+      Nothing -> MaskNil
 
-addMaskToTree :: forall n bitmask bit a
+-- | Add an element to entries matching the given 'BitMask' in a 'MaskTrie' of lists
+addToMaskTrie :: forall n bitmask bit a
                . SemiMaskBit bit
               => BitMask n bit
               -> a
               -> MaskTrie bit n [a]
               -> MaskTrie bit n [a]
-addMaskToTree mask a tree = updateMaskInTree mask go tree
+addToMaskTrie mask a tree = updateMaskTrie mask go tree
   where
-    go :: Maybe [a] -> [a]
-    go Nothing = [a]
-    go (Just as) = a : as
+    go :: Maybe [a] -> Maybe [a]
+    go Nothing = Just [a]
+    go (Just as) = Just $ a : as
+
+-- | Filter elements according to the given predicate
+-- from entries matching the given 'BitMask' in a 'MaskTrie' of lists
+filterMaskTrie :: forall n bitmask bit a
+                . SemiMaskBit bit
+               => BitMask n bit
+               -> (a -> Bool)
+               -> MaskTrie bit n [a]
+               -> MaskTrie bit n [a]
+filterMaskTrie mask f tree = updateMaskTrie mask go tree
+  where
+    go :: Maybe [a] -> Maybe [a]
+    go Nothing = Nothing
+    go (Just as) = case filter f as of
+      [] -> Nothing
+      as' -> Just as'
+
 
 lookupMaskFromTree :: forall a n bitmask bit m
                     . SemiMaskBit bit

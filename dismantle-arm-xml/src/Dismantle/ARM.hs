@@ -396,7 +396,7 @@ mergeFields' field1 field2 =
 
   let constraint = fieldConstraint field1 <> fieldConstraint field2
   (mask, _) <- BM.deriveMasks armRegWidthRepr (fmap (fmap Just) constraint)
-  (hiBit, width) <- case BM.asContiguousSections (BM.BitSection mask) of
+  (hiBit, width) <- case BM.asContiguousSections (BM.maskAsBitSection mask) of
     [(posBit, BM.SomeBitMask mask)] -> return $ (31 - posBit, BM.lengthInt mask)
     _ -> ME.throwError $ "not contiguous"
   return $ Field { fieldName = fieldName field1
@@ -429,7 +429,7 @@ getBoxField box = do
   constraint <- case X.findAttr (qname "constraint") box of
     Just constraint -> do
       parseConstraint width constraint $ \bits -> do
-        bitSectionHibit hibit (map BM.asQuasiBit bits)
+        bitSectionHibit hibit (map BM.bitAsQuasi bits)
     Nothing -> do
       bits <- fmap concat $ forChildren "c" box $ \c -> do
         let content = X.strContent c
@@ -437,7 +437,7 @@ getBoxField box = do
           Just colspan -> do
             unless (null content) $
               throwError $ InvalidChildElement
-            return $ replicate (read colspan) (BM.asQuasiBit $ BT.Any)
+            return $ replicate (read colspan) (BM.bitAsQuasi $ BT.Any)
           Nothing | Just qbit <- BM.readQuasiBit content ->
            return [qbit]
           _ -> throwError $ InvalidChildElement
@@ -618,10 +618,10 @@ deriveMasks :: PropTree (ARMBitSection QuasiBit)
             -> PropTree (ARMBitSection BT.Bit)
             -> XML (ARMBitMask QuasiBit, [ARMBitMask BT.Bit])
 deriveMasks qbits bits = do
-  let constraints = (fmap (fmap BM.asQuasiBit) bits <> qbits)
+  let constraints = (fmap (fmap BM.bitAsQuasi) bits <> qbits)
   case BM.deriveMasks NR.knownNat constraints of
     Left err -> throwError $ InvalidConstraints constraints err
-    Right (posmask, negmasks) -> return (posmask, map (fmap BM.dropQuasiBit) negmasks)
+    Right (posmask, negmasks) -> return (posmask, map (fmap BM.flattenQuasiBit) negmasks)
 
 fieldConstraintsParser :: Parser (PropTree ([NameExp String], [BT.Bit]))
 fieldConstraintsParser = do
@@ -710,7 +710,7 @@ data Encoding = Encoding { encName :: String
   deriving (Show)
 
 encFullConstraints :: Encoding -> PropTree (ARMBitSection QuasiBit)
-encFullConstraints enc = (fmap (fmap BM.asQuasiBit) $ encConstraints enc) <> encIConstraints enc
+encFullConstraints enc = (fmap (fmap BM.bitAsQuasi) $ encConstraints enc) <> encIConstraints enc
 
 bitSectionHibit :: IsMaskBit a => Int -> [a] -> XML (ARMBitSection a)
 bitSectionHibit hibit bits = case BM.bitSectionFromListHiBit hibit bits NR.knownNat of

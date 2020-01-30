@@ -548,7 +548,7 @@ loadEncoding instr enc = do
   mask <- maskFromEncoding enc
   let ident = encodingIdentifier instr enc
   tree <- MS.gets stMaskTree
-  MS.modify' $ \st -> st { stMaskTree = BM.addMaskToTree mask (ident, mask) tree }
+  MS.modify' $ \st -> st { stMaskTree = BM.addToMaskTrie mask (ident, mask) tree }
   encMap <- MS.gets stEncodingMap
 
   let (existing, encMap') = Map.insertLookupWithKey (\_ a _ -> a) ident (instr, enc) encMap
