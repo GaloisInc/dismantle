@@ -1,32 +1,39 @@
 module Dismantle.ARM.TH where
 
+
+import           Control.Monad ( mapM_ )
 import qualified Data.Foldable as F
 import           Data.List (sort)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Traversable as T
 import qualified Language.Haskell.TH as TH
+import qualified Language.Haskell.TH.Syntax as TH
 
 import           System.IO ( withFile, IOMode(..), hPutStrLn )
 import           System.Directory (withCurrentDirectory, listDirectory, makeAbsolute)
 import           System.FilePath.Posix (isExtensionOf)
+import           System.FilePath.Glob ( namesMatching )
+import           System.FilePath ( (</>), (<.>) )
 
 import qualified Text.XML.Light as X
 
-import qualified Dismantle.ARM as DA
+import qualified Dismantle.Tablegen as DT
+import qualified Dismantle.ARM as XML
 import qualified Dismantle.ASL.Decode as ASL
+import qualified Dismantle.ASL.Decode as ARM ( encodingOpToInstDescriptor, instDescriptorsToISA )
 import qualified Dismantle.Tablegen.TH as DTH
 
-genISA ::  DA.ISA -> FilePath -> FilePath -> FilePath -> FilePath -> TH.DecsQ
+genISA ::  DT.ISA -> FilePath -> FilePath -> FilePath -> FilePath -> TH.DecsQ
 genISA isa xmldirPath encIndexFile aslInstrs logFile = do
-  (desc, xmlFiles) <- TH.runIO $ withFile logFile WriteMode $ \handle -> do
+  xmlFiles <- TH.runIO $ withCurrentDirectory xmldirPath $ namesMatching ("*" <.> "xml")
+  desc <- TH.runIO $ withFile logFile WriteMode $ \handle -> do
     let doLog msg = hPutStrLn handle msg
     putStrLn $ "Dismantle.ARM.TH log: " ++ logFile
-    ASL.loadASL aslInstrs doLog
-    withCurrentDirectory xmldirPath $ do
-      files <- sort <$> listDirectory "."
-      let xmlFiles = filter ("xml" `isExtensionOf`) files
-      desc <- DA.loadXML (DA.isaName isa) xmlFiles encIndexFile doLog
-      return (desc, xmlFiles)
+    encodings <- withCurrentDirectory xmldirPath $ do
+      XML.loadEncodings (DT.isaName isa) xmlFiles encIndexFile doLog
+    encodingops <- ASL.loadASL (DT.isaName isa) aslInstrs encodings doLog
+    return $ ARM.instDescriptorsToISA $ map ARM.encodingOpToInstDescriptor encodingops
   TH.runIO $ putStrLn "Successfully generated ISA description."
-  DTH.genISADesc isa desc (((xmldirPath ++ "/") ++) <$> xmlFiles)
+  let files = aslInstrs : map ((</>) xmldirPath) xmlFiles
+  DTH.genISADesc isa desc files

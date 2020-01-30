@@ -14,7 +14,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 
 module Dismantle.ARM
-  ( loadXML
+  ( loadEncodings
   , XMLException(..)
   , DT.ISA(..)
   , DT.Endianness(..)
@@ -22,6 +22,11 @@ module Dismantle.ARM
   , DT.FormOverride(..)
   , DT.InstFieldDescriptor(..)
   , DT.UnusedBitsPolicy(..)
+  , Encoding(..)
+  , Field(..)
+  , Operand(..)
+  -- FIXME: likely implemented elsewhere
+  , fromListWithM
   ) where
 
 import           Prelude hiding (fail)
@@ -30,7 +35,7 @@ import           Control.Applicative ( (<|>) )
 import qualified Control.Exception as E
 import           Control.Monad.Except ( throwError )
 import qualified Control.Monad.Except as ME
-import           Control.Monad ( forM, void, when, unless, foldM, (>=>), zipWithM )
+import           Control.Monad ( forM, forM_, void, when, unless, foldM, (>=>), zipWithM )
 import           Control.Monad.Fail ( fail )
 import qualified Control.Monad.Fail as MF
 import           Control.Monad.Trans ( lift, liftIO )
@@ -70,7 +75,7 @@ import qualified Data.BitMask as BM
 
 import Debug.Trace
 
-type IsMaskBit a = (BM.IsMaskBit a, Show a)
+type IsMaskBit a = (BM.MaskBit a, Show a)
 
 data XMLException = MissingChildElement String
                        | NoMatchingChildElement
@@ -82,7 +87,7 @@ data XMLException = MissingChildElement String
                        | MnemonicError String
                        | InvalidPattern String
                        | MismatchedFieldWidth Field Int
-                       | forall a. IsMaskBit a => MismatchedFieldsForBits [Field] [a]
+                       | forall a. IsMaskBit a => MismatchedFieldsForBits [NameExp Field] [a]
                        | MissingRegisterInfo String [RegisterInfo String]
                        | forall a. Show a => MismatchedWidth Int [a]
                        | InvalidXmlFile String
@@ -90,6 +95,7 @@ data XMLException = MissingChildElement String
                        | UnexpectedAttributeValue String String
                        | forall a. Show a => InvalidRegisterInfo (RegisterInfo a)
                        | InvalidField Field
+                       | FieldMergeError Field Field String
                        | BitdiffsParseError String String
                        | UnexpectedBitfieldLength [BT.Bit]
                        | NoUniqueiClass String
@@ -115,6 +121,9 @@ type ARMRegWidth = 32
 
 type ARMBitSection bit = BitSection ARMRegWidth bit
 type ARMBitMask bit = BitMask ARMRegWidth bit
+
+armRegWidthRepr :: NR.NatRepr ARMRegWidth
+armRegWidthRepr = NR.knownNat
 
 newtype XML a = XML (RWST XMLEnv () XMLState (ME.ExceptT OuterXMLException IO) a)
   deriving ( Functor
@@ -149,7 +158,7 @@ warnError e = do
   let pretty = PP.nest 1 (PP.text "WARNING:" $$ (PP.pPrint $ OuterXMLException env e))
   logXML $ PP.render pretty
 
-prettyMask :: BM.IsMaskBit bit => ARMBitMask bit -> PP.Doc
+prettyMask :: BM.MaskBit bit => ARMBitMask bit -> PP.Doc
 prettyMask mask = BM.prettySegmentedMask endianness mask
 
 instance PP.Pretty XMLException where
@@ -233,17 +242,15 @@ runXML archName allFiles logf (XML a) = ME.runExceptT $
 qname :: String -> X.QName
 qname str = X.QName str Nothing Nothing
 
--- | Given a path to the directory containing all XML instruction files, build an ISA
--- descriptor.
-loadXML ::  String -> [FilePath] -> FilePath -> (String -> IO ()) -> IO DT.ISADescriptor
-loadXML arch xmlFiles xmlEncIndex logFn = do
+-- | Build a list of 'Encoding's from the XML specification
+loadEncodings ::  String -> [FilePath] -> FilePath -> (String -> IO ()) -> IO [Encoding]
+loadEncodings arch xmlFiles xmlEncIndex logFn = do
   result <- runXML arch xmlFiles logFn $ do
     withParsedXMLFile xmlEncIndex loadEncIndex
-    instrs <- fmap concat $ forM xmlFiles $ (\f -> withParsedXMLFile f loadInstrs)
-    return $ DT.ISADescriptor { DT.isaInstructions = instrs
-                              , DT.isaOperands = S.toList (S.fromList (concatMap instrOperandTypes instrs))
-                              , DT.isaErrors = []
-                              }
+    encodings <- fmap concat $ forM xmlFiles $ (\f -> withParsedXMLFile f loadInstrs)
+    forM_ encodings $ \encoding ->
+      logXML $ PP.render $ PP.pPrint encoding
+    return encodings
   case result of
     Left err -> do
       logFn (show err)
@@ -290,13 +297,13 @@ getDecodeConstraints fields dcs = do
     return $ PropTree.negate $ PropTree.clause $ (flds, bits)
   resolvePropTree fields (mconcat rawConstraints)
 
-instrTableConstraints :: [[Field]] -> X.Element -> XML (PropTree (ARMBitSection BT.Bit))
+instrTableConstraints :: [[NameExp Field]] -> X.Element -> XML (PropTree (ARMBitSection BT.Bit))
 instrTableConstraints tablefieldss tr = do
   "instructiontable" <- getAttr "class" tr
   let tds = X.filterChildren (\e -> X.findAttr (qname "class") e == Just "bitfield") tr
   fmap mconcat $ forM (zip tds [0..]) $ \(td, i) -> do
     let fields = tablefieldss !! i
-    let width = sum $ map fieldWidth fields
+    let width = sum $ map slicedFieldWidth fields
     bitwidth <- read <$> getAttr "bitwidth" td
     -- soft-throw this error since the XML is occasionally wrong but this is recoverable
     unless (width == bitwidth) $
@@ -333,7 +340,7 @@ loadEncIndex encodingindex = do
       (mask, negMasks) <- deriveMasks fieldConstraints (decodeConstraints <> constraints)
       MS.modify' $ \st -> st { encodingTableMap = M.insert encident (mask, negMasks) (encodingTableMap st) }
 
-loadInstrs :: X.Element -> XML [DT.InstructionDescriptor]
+loadInstrs :: X.Element -> XML [Encoding]
 loadInstrs xmlElement = do
   -- format as instructions
   arch <- R.asks xmlArchName
@@ -344,15 +351,22 @@ loadInstrs xmlElement = do
         isa <- getAttr "isa" iclass
         if isa == arch && not (isAliasedInstruction leaf) then do
           (fields, qmasks, iconstraints) <- iclassFieldsAndProp iclass
-          encodings <- leafGetEncodings leaf fields qmasks iconstraints
-          forM encodings $ \encoding -> do
-            withEncodingName (encName encoding) $ do
-              getDescriptor encoding
+          leafGetEncodings leaf fields qmasks iconstraints
         else return []
     _ -> return []
 
 instrOperandTypes :: DT.InstructionDescriptor -> [DT.OperandType]
 instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutputOperands idesc)
+
+-- FIXME: does not belong here.
+fromListWithM :: forall m k a. Ord k => Monad m => (a -> a -> m a) -> [(k, a)] -> m (M.Map k a)
+fromListWithM f l = sequence $ M.fromListWith doMerge $ map (\(k, a) -> (k, return a)) l
+  where
+    doMerge :: m a -> m a -> m a
+    doMerge m1 m2 = do
+      a1 <- m1
+      a2 <- m2
+      f a1 a2
 
 
 iclassFieldsAndProp :: X.Element -> XML (Fields, [Operand], PropTree (ARMBitSection QuasiBit))
@@ -364,14 +378,33 @@ iclassFieldsAndProp iclass = do
       (_ : _, True) -> return $ Just (fieldName field, field)
       (_, False) -> return Nothing
       _ -> throwError $ InvalidField field
-
-  return $ ( M.fromListWith mergeFields $ namedFields
+  namedMap <- fromListWithM mergeFields namedFields
+  return $ ( namedMap
            , quasiMaskOperands fields
            , mconcat (map fieldConstraint fields))
-  where
-    mergeFields :: Field -> Field -> Field
-    mergeFields field field' = if field == field' then field else
-      error $ "Unexpected duplicate field: " ++ (show field)
+
+mergeFields :: Field -> Field -> XML Field
+mergeFields field1 field2 = case mergeFields' field1 field2 of
+  Left msg -> throwError $ FieldMergeError field1 field2 msg
+  Right result -> return result
+
+mergeFields' :: ME.MonadError String m => Field -> Field -> m Field
+mergeFields' field1 field2 =
+  if field1 == field2 then return field1 else do
+  unless (fieldName field1 == fieldName field2) $
+    ME.throwError $ "different field names"
+
+  let constraint = fieldConstraint field1 <> fieldConstraint field2
+  (mask, _) <- BM.deriveMasks armRegWidthRepr (fmap (fmap Just) constraint)
+  (hiBit, width) <- case BM.asContiguousSections (BM.BitSection mask) of
+    [(posBit, BM.SomeBitMask mask)] -> return $ (31 - posBit, BM.lengthInt mask)
+    _ -> ME.throwError $ "not contiguous"
+  return $ Field { fieldName = fieldName field1
+                 , fieldHibit = hiBit
+                 , fieldWidth = width
+                 , fieldConstraint = constraint
+                 , fieldUseName = fieldUseName field1 || fieldUseName field2
+                 }
 
 constraintParser :: Parser ([BT.Bit], Bool)
 constraintParser = do
@@ -396,7 +429,7 @@ getBoxField box = do
   constraint <- case X.findAttr (qname "constraint") box of
     Just constraint -> do
       parseConstraint width constraint $ \bits -> do
-        bitSectionHibit hibit (map Bit bits)
+        bitSectionHibit hibit (map BM.asQuasiBit bits)
     Nothing -> do
       bits <- fmap concat $ forChildren "c" box $ \c -> do
         let content = X.strContent c
@@ -404,7 +437,7 @@ getBoxField box = do
           Just colspan -> do
             unless (null content) $
               throwError $ InvalidChildElement
-            return $ replicate (read colspan) (Bit $ BT.Any)
+            return $ replicate (read colspan) (BM.asQuasiBit $ BT.Any)
           Nothing | Just qbit <- BM.readQuasiBit content ->
            return [qbit]
           _ -> throwError $ InvalidChildElement
@@ -412,35 +445,23 @@ getBoxField box = do
         throwError $ MismatchedWidth width bits
       bitsect <- bitSectionHibit hibit bits
       return $ PropTree.clause $ bitsect
-  let field = Field { fieldName = fromMaybe "" $ X.findAttr (qname "name") box
-                    , fieldHibit = hibit
-                    , fieldWidth = width
-                    , fieldConstraint = constraint
-                    , fieldUseName = X.findAttr (qname "usename") box == Just "1"
-                    , fieldTypeOverride = Nothing
-                    }
-  return $ fieldOpTypeOverrides field
+  name <- case X.findAttr (qname "name") box of
+    Just name -> valOfNameExp <$> parseString nameExpParser name
+    Nothing -> return ""
+  return $ Field { fieldName = name
+                 , fieldHibit = hibit
+                 , fieldWidth = width
+                 , fieldConstraint = constraint
+                 , fieldUseName = X.findAttr (qname "usename") box == Just "1"
+                 }
 
-
-quasiToBit :: QuasiBit -> Maybe BT.Bit
-quasiToBit (Bit b) = Just b
-quasiToBit _ = Nothing
-
-isQBit :: QuasiBit -> Bool
-isQBit = isNothing . quasiToBit
-
-flattenQuasiBit :: QuasiBit -> BT.Bit
-flattenQuasiBit qb = fromMaybe BT.Any (quasiToBit qb)
-
-flattenMask :: [QuasiBit] -> [BT.Bit]
-flattenMask mask = map flattenQuasiBit mask
 
 quasiMaskOperands :: [Field] -> [Operand]
 quasiMaskOperands fields = catMaybes $ map go (zip fields [0..])
   where
     go :: (Field, Int) -> Maybe Operand
-    go (Field name hibit width constraint useName _, i)
-     | (not useName) && any (any isQBit) constraint
+    go (Field name hibit width constraint useName, i)
+     | (not useName) && any (any BM.isQBit) constraint
      , name' <- if name == "" then printf "QuasiMask%d" i else name
      = Just $ PsuedoOperand $
          DT.OperandDescriptor { DT.opName = printf "QuasiMask%d" i
@@ -453,91 +474,86 @@ quasiMaskOperands fields = catMaybes $ map go (zip fields [0..])
 
 type Fields = M.Map String Field
 
-lookupField :: Fields -> NameExp -> XML Field
-lookupField flds nexp =
-  case nexp of
-    NameExpString name ->
-      case M.lookup name flds of
-        Nothing -> throwError $ MissingField name flds
-        Just fld -> return fld
+lookupField' :: Fields -> String -> XML Field
+lookupField' flds name =
+  case M.lookup name flds of
+    Nothing -> throwError $ MissingField name flds
+    Just fld -> return fld
 
-    NameExpSlice subF hi lo -> do
-      fld <- lookupField flds subF
-      pure $ fld { fieldHibit = fieldHibit fld + hi
-                 , fieldWidth = hi - lo
-                 }
+lookupField :: Fields -> NameExp String -> XML (NameExp Field)
+lookupField flds nme = mapM (lookupField' flds) nme
 
-nameExps :: String -> XML [NameExp]
+slicedFieldName :: NameExp Field -> String
+slicedFieldName = fieldName . valOfNameExp
+
+slicedFieldWidth :: NameExp Field -> Int
+slicedFieldWidth ne = case ne of
+  NameExpString field -> fieldWidth field
+  NameExpSlice _ hi lo -> hi - lo + 1
+
+slicedFieldHibit :: NameExp Field -> Int
+slicedFieldHibit ne = case ne of
+  NameExpString field -> fieldHibit field
+  NameExpSlice field hi lo ->
+    let
+      lobit = (fieldHibit field - fieldWidth field) + 1
+    in lobit + hi
+
+
+valOfNameExp :: NameExp a -> a
+valOfNameExp nexp = case nexp of
+  NameExpString name -> name
+  NameExpSlice name _ _ -> name
+
+nameExps :: String -> XML [NameExp String]
 nameExps ns = parseString nameExpsParser ns
 
-nameExpsParser :: P.Parsec Void String [NameExp]
+nameExpsParser :: Parser [NameExp String]
 nameExpsParser = P.sepBy1 nameExpParser (P.single ':')
 
-nameExpParser :: P.Parsec Void String NameExp
+nameExpParser :: Parser (NameExp String)
 nameExpParser = do
-    name   <- NameExpString <$> parseName
+    name   <- parseName
     slices <- P.many $ parseSlice
-    pure $ case slices of
-      [] -> name
-      [(hi, lo)] -> NameExpSlice name hi lo
-      _ -> name  -- FIXME: this compensates for the errors in the XML
-                 --        ex. cond<3:1><3:1>
+    case slices of
+      [] -> return $ NameExpString name
+      [(hi, lo)] -> return $ NameExpSlice name hi lo
+      (hi, lo) : rst | all ((==) (hi, lo)) rst -> return $ NameExpSlice name hi lo
+      _ -> P.customFailure $ XMLInnerParserError $ "inconsistent slices: " ++ show slices
 
   where
     -- TODO: whitespace?
     parseSlice = do
-      P.single '<'
-      hi <- parseInt
-      P.single ':'
-      lo <- parseInt
-      P.single '>'
-      pure (hi, lo)
+        P.single '<'
+        hi <- parseInt
+        (do
+          P.single ':'
+          lo <- parseInt
+          P.single '>'
+          pure (hi, lo)
+          <|> do
+          P.single '>'
+          pure (hi, hi))
 
     parseName = P.some (P.alphaNumChar P.<|> P.single '_')
     parseInt = read <$> P.some P.digitChar
 
-data NameExp =
-    NameExpString String
-  | NameExpSlice  NameExp Int Int
-  deriving(Show)
+data NameExp a =
+    NameExpString a
+  | NameExpSlice a Int Int
+  deriving(Show, Functor, Foldable, Traversable)
 
-data Constraint = Constraint { constraintName :: String
-                             , constraintPattern :: [BT.Bit]
-                             }
 
 data Field = Field { fieldName :: String
                    , fieldHibit :: Int
                    , fieldWidth :: Int
                    , fieldConstraint :: PropTree (ARMBitSection QuasiBit)
                    , fieldUseName :: Bool
-                   , fieldTypeOverride :: Maybe String
                    }
   deriving (Show, Eq)
 
 endianness :: [a] -> [a]
 endianness bits = concat (reverse (LS.chunksOf 8 bits))
-
-getDescriptor :: Encoding -> XML DT.InstructionDescriptor
-getDescriptor encoding = do
-  let operandDescs = map operandDescOfOperand (encOperands encoding)
-
-  logXML (PP.render $ PP.pPrint encoding)
-  let desc = DT.InstructionDescriptor
-        { DT.idMask = map flattenQuasiBit (endianness $ BM.toList $ encMask encoding)
-        , DT.idNegMasks = map (endianness . BM.toList) $ encNegMasks encoding
-        , DT.idMnemonic = encName encoding
-        , DT.idInputOperands = operandDescs
-        , DT.idOutputOperands = []
-        , DT.idNamespace = encMnemonic encoding
-        , DT.idDecoderNamespace = ""
-        , DT.idAsmString = encName encoding
-          ++ "(" ++ PP.render (BM.prettySegmentedMask endianness (encMask encoding)) ++ ") "
-          ++ simpleOperandFormat (encOperands encoding)
-        , DT.idPseudo = False
-        , DT.idDefaultPrettyVariableValues = []
-        , DT.idPrettyVariableOverrides = []
-        }
-  return $ desc
 
 instance PP.Pretty Encoding where
   pPrint encoding =
@@ -550,6 +566,8 @@ instance PP.Pretty Encoding where
            BM.prettySegmentedMask endianswap (encMask encoding)
            $$ PP.text "Negative Masks:"
            $$ PP.nest 1 (PP.vcat (map (BM.prettySegmentedMask endianswap) (encNegMasks encoding)))
+
+
 
 simpleOperandFormat :: [Operand] -> String
 simpleOperandFormat descs = intercalate ", " $ catMaybes $ map go descs
@@ -600,24 +618,23 @@ deriveMasks :: PropTree (ARMBitSection QuasiBit)
             -> PropTree (ARMBitSection BT.Bit)
             -> XML (ARMBitMask QuasiBit, [ARMBitMask BT.Bit])
 deriveMasks qbits bits = do
-  let constraints = (fmap (fmap Bit) bits <> qbits)
-  logXML $ PP.render $ PP.pPrint constraints
+  let constraints = (fmap (fmap BM.asQuasiBit) bits <> qbits)
   case BM.deriveMasks NR.knownNat constraints of
     Left err -> throwError $ InvalidConstraints constraints err
-    Right (posmask, negmasks) -> return (posmask, map (fmap BM.asBit) negmasks)
+    Right (posmask, negmasks) -> return (posmask, map (fmap BM.dropQuasiBit) negmasks)
 
-fieldConstraintsParser :: Parser (PropTree ([NameExp], [BT.Bit]))
+fieldConstraintsParser :: Parser (PropTree ([NameExp String], [BT.Bit]))
 fieldConstraintsParser = do
   props <- outerParser
   P.eof
   return props
   where
 
-    outerParser :: Parser (PropTree ([NameExp], [BT.Bit]))
+    outerParser :: Parser (PropTree ([NameExp String], [BT.Bit]))
     outerParser = do
       mconcat <$> P.sepBy1 combinedParser ((void $ P.char ';') <|> (void $ P.chunk "&&"))
 
-    combinedParser :: Parser (PropTree ([NameExp], [BT.Bit]))
+    combinedParser :: Parser (PropTree ([NameExp String], [BT.Bit]))
     combinedParser = do
       P.takeWhileP Nothing (== ' ')
       props <- P.choice [ negParser
@@ -627,12 +644,12 @@ fieldConstraintsParser = do
       P.takeWhileP Nothing (== ' ')
       return props
 
-    negParser :: Parser (PropTree ([NameExp], [BT.Bit]))
+    negParser :: Parser (PropTree ([NameExp String], [BT.Bit]))
     negParser = do
       P.char '!'
       P.between (P.char '(') (P.char ')') (PropTree.negate <$> outerParser)
 
-    atomParser :: Parser (PropTree ([NameExp], [BT.Bit]))
+    atomParser :: Parser (PropTree ([NameExp String], [BT.Bit]))
     atomParser = do
       name <- nameExpsParser
       negate <- (P.chunk " == " >> return False) <|> (P.chunk " != " >> return True)
@@ -693,30 +710,29 @@ data Encoding = Encoding { encName :: String
   deriving (Show)
 
 encFullConstraints :: Encoding -> PropTree (ARMBitSection QuasiBit)
-encFullConstraints enc = (fmap (fmap Bit) $ encConstraints enc) <> encIConstraints enc
+encFullConstraints enc = (fmap (fmap BM.asQuasiBit) $ encConstraints enc) <> encIConstraints enc
 
--- | Make a bitsection from a hibit of 32 bits
 bitSectionHibit :: IsMaskBit a => Int -> [a] -> XML (ARMBitSection a)
-bitSectionHibit hibit bits = case BM.bitSectionFromList (31 - hibit) bits NR.knownNat of
+bitSectionHibit hibit bits = case BM.bitSectionFromListHiBit hibit bits NR.knownNat of
   Just bitsect -> return bitsect
   Nothing -> throwError $ InvalidBitsForBitsection hibit bits
 
-unpackFieldConstraints :: forall a. IsMaskBit a => ([Field], [a]) -> XML [ARMBitSection a]
+unpackFieldConstraints :: forall a. IsMaskBit a => ([NameExp Field], [a]) -> XML [ARMBitSection a]
 unpackFieldConstraints (flds, bits) = do
   (rest, result) <- foldM go' (bits, []) flds
   case rest of
     [] -> return result
     _ -> throwError $ MismatchedFieldsForBits flds bits
   where
-    go' :: ([a], [ARMBitSection a]) -> Field -> XML ([a], [ARMBitSection a])
+    go' :: ([a], [ARMBitSection a]) -> NameExp Field -> XML ([a], [ARMBitSection a])
     go' (as, results) nme = do
       (as', result) <- go nme as
       return (as', result : results)
 
-    go :: Field -> [a] -> XML ([a], ARMBitSection a)
-    go field as = do
-      let width = fieldWidth field
-      let hibit = fieldHibit field
+    go :: NameExp Field -> [a] -> XML ([a], ARMBitSection a)
+    go sField as = do
+      let width = slicedFieldWidth sField
+      let hibit = slicedFieldHibit sField
       let (chunk, rest) = splitAt width as
       unless (length chunk == width) $ do
         throwError $ MismatchedFieldsForBits flds bits
@@ -726,14 +742,14 @@ unpackFieldConstraints (flds, bits) = do
 resolvePropTree :: forall a
                  . IsMaskBit a
                 => Fields
-                -> PropTree ([NameExp], [a])
+                -> PropTree ([NameExp String], [a])
                 -> XML (PropTree (ARMBitSection a))
 resolvePropTree fields tree =
   fmap PropTree.collapse $ mapM go tree
   where
-    go :: ([NameExp], [a]) -> XML [ARMBitSection a]
+    go :: ([NameExp String], [a]) -> XML [ARMBitSection a]
     go (nmes, as) = do
-      fields' <- mapM (lookupField fields) nmes
+      fields' <- forM nmes $ lookupField fields
       unpackFieldConstraints (fields', as)
 
 
@@ -809,15 +825,15 @@ parseExplanation explanation = do
 -- referring to a field that is actually a logical operand (i.e. Sm1 == Sm + 1)
 lookupRegisterInfoFields :: Fields
                          -> [RegisterInfo String]
-                         -> XML [RegisterInfo [Field]]
+                         -> XML [RegisterInfo [NameExp Field]]
 lookupRegisterInfoFields allfields rinfos = catMaybes <$> mapM go rinfos
   where
-    go ::  RegisterInfo String -> XML (Maybe (RegisterInfo [Field]))
+    go ::  RegisterInfo String -> XML (Maybe (RegisterInfo [NameExp Field]))
     go rinfo = (Just <$> go' rinfo) `ME.catchError` \err -> do
       warnError err
       return Nothing
 
-    go' :: RegisterInfo String -> XML (RegisterInfo [Field])
+    go' :: RegisterInfo String -> XML (RegisterInfo [NameExp Field])
     go' rinfo = do
       case regIndexMode rinfo of
         IndexRegisterOffset baseregister -> do
@@ -848,9 +864,9 @@ mergeRegisterInfos rinfos rinfos' = do
         warnError $ MismatchedRegisterInfos rinfo rinfo'
       return rinfo
 
-getRegisterOperandType :: RegisterInfo [Field] -> XML DT.OperandType
+getRegisterOperandType :: RegisterInfo [NameExp Field] -> XML DT.OperandType
 getRegisterOperandType rinfo =
-  let totalBits = sum $ map fieldWidth (regEncodedIn rinfo)
+  let totalBits = sum $ map slicedFieldWidth (regEncodedIn rinfo)
   in
   DT.OperandType <$> case (regKind rinfo, regIndexMode rinfo) of
   (GPR, IndexRegisterOffset _) | totalBits == 4 -> return "GPR4_1"
@@ -893,8 +909,8 @@ validateEncoding leaf encoding = do
       let mask = encMask encoding
       let negmasks = encNegMasks encoding
       let
-        check :: forall a. BM.IsMaskBit a => ARMBitMask a -> ARMBitMask a -> Bool
-        check = if exact then BM.equivBitMask else BM.matchingBitMask
+        check :: forall a. BM.MaskBit a => ARMBitMask a -> ARMBitMask a -> Bool
+        check = if exact then (==) else BM.matchBit
       unless (check mask mask') $
         throwError $ MismatchedMasks mask mask'
       unless (length negmasks == length negmasks' && equivBy check negmasks negmasks') $
@@ -924,7 +940,7 @@ leafGetEncodings ileaf allfields operands iconstraints = do
       rinfos <- mergeRegisterInfos rinfos' rinfos''
       rinfoFields <- lookupRegisterInfoFields allfields rinfos
 
-      let usedFieldNames = concat $ map (\rinfo -> map fieldName (regEncodedIn rinfo)) rinfoFields
+      let usedFieldNames = concat $ map (\rinfo -> map (fieldName . valOfNameExp) (regEncodedIn rinfo)) rinfoFields
       let unusedFields = M.elems $ M.withoutKeys allfields (S.fromList usedFieldNames)
 
       registerOps <- mapM mkRegisterOp rinfoFields
@@ -945,9 +961,11 @@ leafGetEncodings ileaf allfields operands iconstraints = do
       MS.modify' $ \st -> st { encodingMap = M.insert encName' encoding (encodingMap st) }
       return encoding
   where
-    mkRegisterOp :: RegisterInfo [Field] -> XML DT.OperandDescriptor
+    mkRegisterOp :: RegisterInfo [NameExp Field] -> XML DT.OperandDescriptor
     mkRegisterOp rinfo = do
-      chunks <- forM (regEncodedIn rinfo) $ \(Field name hibit width _ _ _) -> do
+      chunks <- forM (regEncodedIn rinfo) $ \sField -> do
+        let hibit = slicedFieldHibit sField
+        let width = slicedFieldWidth sField
         return (DT.IBit (hibit - width + 1), PT.OBit 0, fromIntegral width)
       opType <- getRegisterOperandType rinfo
 
@@ -957,7 +975,7 @@ leafGetEncodings ileaf allfields operands iconstraints = do
                                     }
 
     mkImmediateOp :: Field -> XML DT.OperandDescriptor
-    mkImmediateOp field@(Field name hibit width _ _ _) = do
+    mkImmediateOp field@(Field name hibit width _ _) = do
       let opType = getFieldOpType field
       return $ DT.OperandDescriptor { DT.opName = name
                                     , DT.opChunks = [( DT.IBit (hibit - width + 1)
@@ -967,27 +985,25 @@ leafGetEncodings ileaf allfields operands iconstraints = do
                                     }
 
 getFieldOpType :: Field -> String
-getFieldOpType field = case fieldTypeOverride field of
-  Just opType -> opType
-  _ ->  printf "Bv%d" (fieldWidth field)
+getFieldOpType field = printf "Bv%d" (fieldWidth field)
 
-fieldOpTypeOverrides :: Field -> Field
-fieldOpTypeOverrides field =
-  let
-    name = fieldName field
-    width = fieldWidth field
-    constraint = fieldConstraint field
-  in case (name, width) of
-    -- Used for register fields which must refer to the PC or they are unpredictable
-    -- These do not appear in the register information sections, so we have to capture them ad-hoc
-       ('R' : _ : [], 4) | (pos, []) <- PropTree.splitClauses constraint
-                        , subConstraint 4 pos == Right (replicate 4 (QBit True)) ->
-         field { fieldUseName = True, fieldTypeOverride = Just "GPR4" }
-       _ -> field
-  where
-    subConstraint len bitsects = do
-      pat <- BM.computePattern (NR.knownNat @32) (map (fmap Just) bitsects)
-      return $ take len $ catMaybes $ BM.toList $ pat
+-- fieldOpTypeOverrides :: Field -> Field
+-- fieldOpTypeOverrides field =
+--   let
+--     name = fieldName field
+--     width = fieldWidth field
+--     constraint = fieldConstraint field
+--   in case (name, width) of
+--     -- Used for register fields which must refer to the PC or they are unpredictable
+--     -- These do not appear in the register information sections, so we have to capture them ad-hoc
+--        ('R' : _ : [], 4) | (pos, []) <- PropTree.splitClauses constraint
+--                         , subConstraint 4 pos == Right (replicate 4 (BM.mkQuasiBit True (BT.ExpectedBit True))) ->
+--          field { fieldUseName = True, fieldTypeOverride = Just "GPR4" }
+--        _ -> field
+--   where
+--     subConstraint len bitsects = do
+--       pat <- BM.computePattern (NR.knownNat @32) (map (fmap Just) bitsects)
+--       return $ take len $ catMaybes $ BM.toList $ pat
 
 findiClassByName :: X.Element -> String -> XML X.Element
 findiClassByName e name = do
@@ -1039,7 +1055,14 @@ forChildrenWithAttr aname elt m = catMaybes <$> (forM (X.elChildren elt) $ \chil
 forChildren :: String -> X.Element -> (X.Element -> XML a) -> XML [a]
 forChildren name elt m = mapM (\e -> withElement e $ m e) $ X.filterChildrenName ((==) $ qname name) elt
 
-type Parser = P.Parsec Void String
+data XMLInnerParserError = XMLInnerParserError String
+  deriving (Show, Eq, Ord)
+
+instance P.ShowErrorComponent XMLInnerParserError where
+  showErrorComponent e = case e of
+    XMLInnerParserError msg -> msg
+
+type Parser = P.Parsec XMLInnerParserError String
 
 nameParser :: Parser String
 nameParser = do
