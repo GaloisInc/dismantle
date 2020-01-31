@@ -395,7 +395,7 @@ mergeFields' field1 field2 =
     ME.throwError $ "different field names"
 
   let constraint = fieldConstraint field1 <> fieldConstraint field2
-  (mask, _) <- BM.deriveMasks armRegWidthRepr (fmap (fmap Just) constraint)
+  (mask, _) <- BM.deriveMasks armRegWidthRepr (fmap (fmap BM.JustBit) constraint)
   (hiBit, width) <- case BM.asContiguousSections (BM.maskAsBitSection mask) of
     [(posBit, BM.SomeBitMask mask)] -> return $ (31 - posBit, BM.lengthInt mask)
     _ -> ME.throwError $ "not contiguous"

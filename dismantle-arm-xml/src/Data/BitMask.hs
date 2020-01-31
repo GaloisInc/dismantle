@@ -21,6 +21,7 @@ module Data.BitMask
   ( MaskBit(..)
   , SemiMaskBit(..)
   , HasBottomMaskBit(..)
+  , WithBottom(..)
   , ShowableBit(..)
   , BitSection
   , maskAsBitSection
@@ -189,24 +190,29 @@ readBit s = case s of
   "" -> Just $ BitAny
   _ -> Nothing
 
-instance SemiMaskBit a => SemiMaskBit (Maybe a) where
+-- | Add a distinguished bottom bit to any 'SemiMaskBit' (i.e. the least specific/most general bit).
+-- Structurally equivalent to 'Maybe' but with explicit bit-semantics.
+data WithBottom a = BottomBit | JustBit a
+  deriving (Eq, Show, Ord, Foldable, Functor, Traversable)
+
+instance SemiMaskBit a => SemiMaskBit (WithBottom a) where
   mb1 `mergeBit` mb2 = case (mb1, mb2) of
-    (Just b1, Just b2) -> Just $ mergeBit b1 b2
-    (_, Nothing) -> Just $ mb1
-    (Nothing, _) -> Just $ mb2
+    (JustBit b1, JustBit b2) -> JustBit <$> mergeBit b1 b2
+    (_, BottomBit) -> Just $ mb1
+    (BottomBit, _) -> Just $ mb2
 
   mb1 `leqBit` mb2 = case (mb1, mb2) of
-    (Just b1, Just b2) -> b1 `leqBit` b2
-    (Nothing, _) -> True
+    (JustBit b1, JustBit b2) -> b1 `leqBit` b2
+    (BottomBit, _) -> True
     _ -> False
 
-instance ShowableBit a => ShowableBit (Maybe a) where
+instance ShowableBit a => ShowableBit (WithBottom a) where
   showBit mb = case mb of
-    Nothing -> "?"
-    Just b -> showBit b
+    BottomBit -> "?"
+    JustBit b -> showBit b
 
-instance SemiMaskBit a => HasBottomMaskBit (Maybe a) where
-  bottomBit = Nothing
+instance SemiMaskBit a => HasBottomMaskBit (WithBottom a) where
+  bottomBit = BottomBit
 
 instance (SemiMaskBit a, SemiMaskBit b) => SemiMaskBit (Either a b) where
   ab1 `mergeBit` ab2 = case (ab1, ab2) of
@@ -252,11 +258,11 @@ instance Eq a => SemiMaskBit (AsBit a) where
 
 -- | A quasi-bit is a tagged bit indicating that a mask element is a "soft" requirement.
 -- Dropping a 'QuasiBit' to a 'BT.Bit' will convert any tagged bits into wildcards.
-newtype QuasiBit = QuasiBit (BT.Bit, Maybe ())
+newtype QuasiBit = QuasiBit (BT.Bit, WithBottom ())
   deriving (Eq, Ord, Show, SemiMaskBit, HasBottomMaskBit)
 
 instance ShowableBit QuasiBit where
-  showBit (QuasiBit (bit, mquasi)) = case (bit, mquasi == Just ()) of
+  showBit (QuasiBit (bit, mquasi)) = case (bit, mquasi == JustBit ()) of
     (BT.ExpectedBit True, True) -> "I"
     (BT.ExpectedBit False, True) -> "O"
     (BT.ExpectedBit True, False) -> "1"
@@ -271,7 +277,7 @@ instance PP.Pretty QuasiBit where
 -- | Make a 'QuasiBit' from a 'BT.Bit'. If the first argument is 'True' then the bit is marked
 -- as a soft requirement that can be flattened into a wildcard when constructing a mask.
 bitToQuasi :: Bool -> BT.Bit -> QuasiBit
-bitToQuasi isQuasi bit = QuasiBit (bit, if isQuasi then Just () else Nothing)
+bitToQuasi isQuasi bit = QuasiBit (bit, if isQuasi then JustBit () else BottomBit)
 
 -- | Lift a 'BT.Bit' to a 'QuasiBit', leaving it as a hard requirement.
 bitAsQuasi :: BT.Bit -> QuasiBit
@@ -284,7 +290,7 @@ getBitFromQuasi (QuasiBit (bit, _)) = bit
 -- | Return whether or not a 'QuasiBit' has been marked as a soft requirement
 -- i.e. (is a "QBit" rather than a true "Bit").
 isQBit :: QuasiBit -> Bool
-isQBit (QuasiBit (_, Just _)) = True
+isQBit (QuasiBit (_, JustBit _)) = True
 isQBit _ = False
 
 -- | Flatten a 'QuasiBit' to a 'BT.Bit' by dropping any soft requirements.
@@ -361,6 +367,11 @@ data SomeBitMask bit where
 deriving instance Functor SomeBitMask
 deriving instance Show bit => Show (SomeBitMask bit)
 
+instance Eq bit => Eq (SomeBitMask bit) where
+  (SomeBitMask mask1) == (SomeBitMask mask2) = case testEquality (V.length mask1) (V.length mask2) of
+    Just NR.Refl -> mask1 == mask2
+    Nothing -> False
+
 someBitMaskFromCons :: bit -> [bit] -> SomeBitMask bit
 someBitMaskFromCons bit bits
   | Just (Some nr) <- NR.someNat (List.length bits)
@@ -371,7 +382,7 @@ someBitMaskFromCons bit bits
 -- | A Represents a set of non-overlapping sub-masks of a given mask length.
 -- Its canonical construction with 'mkBitSection' or 'mkBitSectionHiBit' yields only a single sub-mask,
 -- however merging multiple 'BitSection's (through 'mergeBit') can result in multiple sub-masks being represented.
-newtype BitSection n a = BitSection (BitMask n (Maybe a))
+newtype BitSection n a = BitSection (BitMask n (WithBottom a))
   deriving (SemiMaskBit, Eq, Foldable, Functor)
 
 deriving instance (HasBottomMaskBit bit, KnownNat n, 1 <= n) => HasBottomMaskBit (BitSection n bit)
@@ -386,7 +397,7 @@ instance ShowableBit bit => ShowableBit (BitSection n bit) where
   showBit bs = showBitSection bs
 
 -- | Low-level interface for constructing a 'BitSection' from a 'BitMask' of 'Maybe' bits.
-maskAsBitSection :: BitMask n (Maybe a) -> BitSection n a
+maskAsBitSection :: BitMask n (WithBottom a) -> BitSection n a
 maskAsBitSection mask = BitSection mask
 
 -- | Construct a 'BitSection' out of a smaller sub-mask at a given position.
@@ -404,7 +415,7 @@ mkBitSection n posAt mask
   , prf1 :: NR.LeqProof (sectWidth + posAt) n <- NR.leqProof (sectWidth `NR.addNat` posAt ) n
   , prf2 :: NR.LeqProof sectWidth n <- NR.addIsLeqLeft1 prf1
   , prf3 :: NR.LeqProof 1 n <- NR.leqTrans (NR.leqProof (NR.knownNat @1) sectWidth) prf2
-  = NR.withLeqProof prf3 $ BitSection $ V.replace posAt (fmap Just mask) (bottomBitMask n)
+  = NR.withLeqProof prf3 $ BitSection $ V.replace posAt (fmap JustBit mask) (bottomBitMask n)
 
 
 -- | Construct a 'BitSection' out of a smaller sub-mask at a given hibit position (i.e. considering
@@ -481,8 +492,8 @@ asContiguousSections (BitSection mask) =
     extract (Just (i, a) : rst) = Just (i, someBitMaskFromCons a (map (snd . fromJust) rst))
     extract _ = Nothing
 
-    addIdx :: (Int, Maybe a) -> Maybe (Int, a)
-    addIdx (i, Just a) = Just (i, a)
+    addIdx :: (Int, WithBottom a) -> Maybe (Int, a)
+    addIdx (i, JustBit a) = Just (i, a)
     addIdx _ = Nothing
 
     grouping :: Maybe a -> Maybe a -> Bool
@@ -522,10 +533,10 @@ addSectionToMask :: ME.MonadError String m
                  -> BitMask n bit
                  -> m (BitMask n bit)
 addSectionToMask (BitSection mask) dest = do
-  merged <- mergeBitMasksErr mask (fmap Just dest)
-  -- The semantics of 'mergeBit' for 'Maybe bit' guarantee that no 'Nothing' bits are leftover after
+  merged <- mergeBitMasksErr mask (fmap JustBit dest)
+  -- The semantics of 'mergeBit' for 'WithBottom bit' guarantee that no 'BottomBit' bits are leftover after
   -- the merge.
-  return $ fmap (fromMaybe (error "Merge error: unexpected empty bits")) merged
+  return $ fmap (\(JustBit bit) -> bit) merged
 
 prependErr :: ME.MonadError String m => String -> String -> m a
 prependErr msg err = ME.throwError $ msg ++ " " ++ err
