@@ -52,10 +52,9 @@ module Data.BitMask
   , V.lengthInt
   , V.length
   , MaskTrie
-  , emptyMaskTree
+  , emptyMaskTrie
   , addToMaskTrie
-  , updateMaskTrie
-  , lookupMaskFromTree
+  , lookupMaskTrie
   )
   where
 
@@ -579,15 +578,18 @@ deriveMasks nr constraints = case PropTree.toConjunctsAndDisjuncts constraints o
     "Malformed PropTree for mask derivation: \n"
     ++ PP.render (PropTree.prettyPropTree (PP.text . showBitSection) constraints)
 
--- | A trie with 'BitMask' keys for a fixed mask length. Keys are matched according to
--- 'matchBit' of the 'bit' type.
+type BitRange bit = (Maybe bit, Maybe bit)
+
+-- | A trie with 'BitMask' keys for a fixed mask length. BitMasks are matched according to
+-- 'matchBit' of the 'bit' type: a lookup for a given mask will return all entries that would
+-- match with the given one.
 data MaskTrie bit n a where
   MaskLeaf :: a -> MaskTrie bit 0 a
   MaskNil :: forall bit n a. MaskTrie bit n a
   MaskNode :: forall bit n a. 1 <= n => (bit -> MaskTrie bit (n-1) a) -> MaskTrie bit n a
 
-emptyMaskTree :: MaskTrie bit n a
-emptyMaskTree = MaskNil
+emptyMaskTrie :: MaskTrie bit n a
+emptyMaskTrie = MaskNil
 
 chooseLeaf :: forall n bit a. (SemiMaskBit bit, 1 <= n) => bit -> MaskTrie bit n a -> MaskTrie bit (n - 1) a
 chooseLeaf bit tree = case tree of
@@ -604,14 +606,15 @@ mapBranches f tree = case tree of
   MaskNil -> MaskNode (\bit -> f bit MaskNil)
 
 updateMatching :: SemiMaskBit b => b -> (a -> a) -> b -> a -> a
-updateMatching b f checkbit a = if b `matchBit` checkbit then f a else a
+updateMatching b f checkBit a = if checkBit `matchBit` b then f a else a
 
 getMaskTreeLeaf :: MaskTrie bit 0 a -> Maybe a
 getMaskTreeLeaf tree = case tree of
   MaskLeaf a -> Just a
   MaskNil -> Nothing
 
--- | Update the entries matching the given 'BitMask' in a 'MaskTrie'
+-- | Update the entries matching the given 'BitMask' in a 'MaskTrie'. This is an internal
+-- interface as it can introduce inconsistencies in the trie.
 updateMaskTrie :: forall n bit bitmask a
                 . SemiMaskBit bit
                => BitMask n bit
@@ -629,43 +632,29 @@ updateMaskTrie mask f tree = case V.uncons mask of
       Just bit -> MaskLeaf bit
       Nothing -> MaskNil
 
--- | Add an element to entries matching the given 'BitMask' in a 'MaskTrie' of lists
+-- | Add an element to a 'MaskTrie' with using a given 'BitMask' as its key.
 addToMaskTrie :: forall n bitmask bit a
                . SemiMaskBit bit
+              => Semigroup a
               => BitMask n bit
               -> a
-              -> MaskTrie bit n [a]
-              -> MaskTrie bit n [a]
+              -> MaskTrie bit n a
+              -> MaskTrie bit n a
 addToMaskTrie mask a tree = updateMaskTrie mask go tree
   where
-    go :: Maybe [a] -> Maybe [a]
-    go Nothing = Just [a]
-    go (Just as) = Just $ a : as
+    go :: Maybe a -> Maybe a
+    go Nothing = Just a
+    go (Just a') = Just $ a <> a'
 
--- | Filter elements according to the given predicate
--- from entries matching the given 'BitMask' in a 'MaskTrie' of lists
-filterMaskTrie :: forall n bitmask bit a
+-- | Retrieve the entries from the trie with keys that match (according to 'matchBit') the given mask.
+lookupMaskTrie :: forall a n bitmask bit m
                 . SemiMaskBit bit
+               => Monoid a
                => BitMask n bit
-               -> (a -> Bool)
-               -> MaskTrie bit n [a]
-               -> MaskTrie bit n [a]
-filterMaskTrie mask f tree = updateMaskTrie mask go tree
-  where
-    go :: Maybe [a] -> Maybe [a]
-    go Nothing = Nothing
-    go (Just as) = case filter f as of
-      [] -> Nothing
-      as' -> Just as'
-
-
-lookupMaskFromTree :: forall a n bitmask bit m
-                    . SemiMaskBit bit
-                   => BitMask n bit
-                   -> MaskTrie bit n a
-                   -> Maybe a
-lookupMaskFromTree mask tree = case V.uncons mask of
+               -> MaskTrie bit n a
+               -> a
+lookupMaskTrie mask tree = case V.uncons mask of
   (b, Left NR.Refl) ->
-    getMaskTreeLeaf (chooseLeaf b tree)
+    fromMaybe mempty $ getMaskTreeLeaf (chooseLeaf b tree)
   (b, Right mask') | NR.LeqProof <- V.nonEmpty mask ->
-    lookupMaskFromTree mask' (chooseLeaf b tree)
+    lookupMaskTrie mask' (chooseLeaf b tree)
