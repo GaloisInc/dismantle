@@ -55,8 +55,6 @@ import           Lang.Crucible.Panic ( Crucible )
 import qualified Dismantle.ASL.SyntaxTraverse as AS  ( pattern VarName )
 import qualified Dismantle.ASL.SyntaxTraverse as TR
 
-
-
 import qualified Dismantle.ASL as ASL
 
 import qualified Dismantle.ASL.Crucible as AC
@@ -78,6 +76,9 @@ import qualified What4.Serialize.Parser as WP
 import qualified What4.Serialize.Normalize as WN
 import qualified What4.Utils.Log as U
 import qualified What4.Utils.Util as U
+
+import qualified Text.PrettyPrint.HughesPJClass as PP
+import qualified Text.PrettyPrint.ANSI.Leijen as LPP
 
 data TranslatorOptions = TranslatorOptions
   { optVerbosity :: Integer
@@ -483,22 +484,37 @@ addFormula key symFn = MSS.modify $ \s -> s { sFormulas = (T.pack $ "uf." ++ pre
 
 data SimulationException where
   SimulationDeserializationFailure :: String -> T.Text -> SimulationException
-  SimulationDeserializationMismatch :: forall t args args' ret ret'. T.Text -> (B.ExprSymFn t args ret) -> (B.ExprSymFn t args' ret') -> SimulationException
+  SimulationDeserializationMismatch :: forall t ret ret'
+                                     . T.Text
+                                    -> (B.Expr t ret)
+                                    -> (B.Expr t ret')
+                                    -> [(Some (B.Expr t), Some (B.Expr t))]
+                                    -> SimulationException
   SimulationFailure :: SimulationException
 
 instance Show SimulationException where
   show se = case se of
     SimulationDeserializationFailure err formula ->
       "SimulationDeserializationFailure:\n" ++ err ++ "\n" ++ T.unpack formula
-    SimulationDeserializationMismatch sexpr formula1 formula2 ->
-      "SimulationDeserializationMismatch:\n S-Expression:\n" ++ (T.unpack sexpr) ++ "\nOriginal Formula:\n" ++ (showSymFn formula1) ++ "\nDeserialized:\n" ++ (showSymFn formula2)
+    SimulationDeserializationMismatch _sexpr expr1 expr2 env ->
+     PP.render $ PP.vcat $
+      [ PP.text "SimulationDeserializationMismatch" ]
+      ++ showExprPair (Some expr1, Some expr2)
+      ++ showExprContext 3 env
     SimulationFailure -> "SimulationFailure"
 instance X.Exception SimulationException
 
-showSymFn :: B.ExprSymFn t args ret -> String
-showSymFn fn = case B.symFnInfo fn of
-  B.DefinedFnInfo _ expr _ -> (show $ WI.printSymExpr expr)
-  _ -> ""
+showExprPair :: (Some (B.Expr t), Some (B.Expr t)) -> [PP.Doc]
+showExprPair (Some expr1, Some expr2) =
+  [PP.text "Original Expression:", showExpr expr1, PP.text "Deserialized Expression:", showExpr expr2]
+
+showExprContext :: Int -> [(Some (B.Expr t), Some (B.Expr t))] -> [PP.Doc]
+showExprContext _ [] = []
+showExprContext count env = [PP.text "With context:"] ++ concat (map showExprPair (take count env))
+
+showExpr :: B.Expr t ret -> PP.Doc
+showExpr e = PP.text (LPP.displayS (LPP.renderPretty 0.4 80 (WI.printSymExpr e)) "")
+
 
 mkParserConfig :: forall sym scope
                 . sym ~ CBO.YicesOnlineBackend scope (B.Flags B.FloatReal)
@@ -543,9 +559,9 @@ simulateFunction key p = do
         Right (U.SomeSome symFn') -> do
           logMsgIO opts 1 $ "Serialization/Deserialization succeeded."
           WN.testEquivSymFn backend symFn symFn' >>= \case
-            WN.ExprUnequal -> do
+            WN.ExprUnequal e1 e2 env -> do
               logMsgIO opts 1 $ "Mismatch in deserialized function."
-              return $ Just $ SimulationDeserializationMismatch serializedSymFn symFn symFn'
+              return $ Just $ SimulationDeserializationMismatch serializedSymFn e1 e2 env
             _ -> do
               logMsgIO opts 1 $ "Deserialized function matches."
               return Nothing

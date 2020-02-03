@@ -28,6 +28,7 @@ common shared-properties
                        lens,
                        ansi-wl-pprint,
                        parameterized-utils,
+                       pretty,
                        crucible,
                        what4,
                        asl-parser,
