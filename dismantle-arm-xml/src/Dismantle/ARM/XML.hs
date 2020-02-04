@@ -25,6 +25,10 @@ module Dismantle.ARM.XML
   , Encoding(..)
   , Field(..)
   , Operand(..)
+  , ARMRegWidth
+  , ARMBitSection
+  , ARMBitMask
+  , armRegWidthRepr
   -- FIXME: likely implemented elsewhere
   , fromListWithM
   ) where
@@ -113,7 +117,6 @@ instance E.Exception OuterXMLException
 data OuterXMLException = OuterXMLException XMLEnv XMLException
 
 type ARMRegWidth = 32
-
 type ARMBitSection bit = BitSection ARMRegWidth bit
 type ARMBitMask bit = BitMask ARMRegWidth bit
 

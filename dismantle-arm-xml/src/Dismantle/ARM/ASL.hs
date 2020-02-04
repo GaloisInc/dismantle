@@ -61,7 +61,9 @@ import qualified Language.ASL.Parser as ASL
 import qualified Language.ASL.Syntax as ASL
 
 import qualified Dismantle.ARM.XML as XML
-import           Dismantle.ARM.XML ( Encoding(..), Field(..), Operand(..) )
+import           Dismantle.ARM.XML ( ARMRegWidth, ARMBitSection
+                                   , ARMBitMask, armRegWidthRepr
+                                   , Encoding(..), Field(..), Operand(..) )
 import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import qualified Data.BitMask as BM
@@ -69,13 +71,7 @@ import qualified Data.BitMask as BM
 import           Data.PropTree ( PropTree )
 import qualified Data.PropTree as PropTree
 
-type ARMRegWidth = 32
-type ARMBitSection a = BM.BitSection ARMRegWidth a
-type ARMBitMask a = BM.BitMask ARMRegWidth a
 type ARMMaskTrie a = BM.MaskTrie BM.QuasiBit ARMRegWidth a
-
-armRegWidthRepr :: NR.NatRepr ARMRegWidth
-armRegWidthRepr = NR.knownNat
 
 data ASLEnv = ASLEnv { envLogFn :: String -> IO ()
                      , envArchName :: String
