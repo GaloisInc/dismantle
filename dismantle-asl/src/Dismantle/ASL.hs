@@ -1,3 +1,4 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs #-}
@@ -26,6 +27,14 @@ import qualified Control.Exception as X
 import           Control.Lens ( (^.) )
 -- import           Control.Applicative ( (<|>) )
 
+import           Control.Monad ( liftM, unless )
+import           Control.Monad.Reader ( ReaderT, MonadReader )
+import qualified Control.Monad.Reader as MR
+import           Control.Monad.Except ( throwError, ExceptT, MonadError )
+import qualified Control.Monad.Except as ME
+import qualified Control.Monad.ST as ST
+import qualified Data.HashTable.Class as H
+
 import qualified Data.Map as Map
 import           Data.Time.Clock
 -- import           Data.Parameterized.Pair ( Pair(..) )
@@ -36,6 +45,9 @@ import qualified Data.Parameterized.Context as Ctx
 import           Data.Parameterized.Some ( Some(..) )
 import qualified Data.Parameterized.TraversableFC as FC
 import qualified Data.Text as T
+import           Data.Set ( Set )
+import qualified Data.Set as Set
+import qualified Data.Vector as V
 -- import           Data.Maybe ( fromMaybe )
 -- import qualified Dismantle.XML.AArch32 as DA
 import qualified Lang.Crucible.Backend as CB
@@ -62,6 +74,11 @@ import qualified Dismantle.ASL.Crucible as AC
 import qualified Dismantle.ASL.Signature as AS
 import qualified Dismantle.ASL.Types as AT
 import qualified Dismantle.ASL.Extension as AE
+
+import qualified Text.PrettyPrint.HughesPJClass as PP
+import qualified Text.PrettyPrint.ANSI.Leijen as LPP
+
+import Debug.Trace
 
 -- import           Dismantle.Architecture.ARM.Location ( A32 )
 -- import qualified Dismantle.Architecture.ARM.Location as AL
@@ -163,8 +180,31 @@ simulateFunction symCfg crucFunc = genSimulation symCfg crucFunc extractResult
                 allArgBvs
                 (CS.regValue re)
                 (const False )
+              bvs <- liftM (Set.unions . map snd) $ ST.stToIO $ H.toList =<< S.boundVars (CS.regValue re)
+              let allbvs = Set.fromList $ V.toList $ Ctx.toVector allArgBvs Some
+              unless (bvs `Set.isSubsetOf` allbvs) $
+                X.throwIO $ UnexpectedBoundVars @scope allbvs bvs (CS.regValue re)
+              
               return $ fn
           | otherwise -> X.throwIO (UnexpectedReturnType btr)
+
+
+
+data WFException sym where
+  DanglingBoundVar :: forall sym ret. WI.BoundVar sym ret -> WFException sym
+
+data WFBoundVarEnv sym = WFBoundVarEnv [Some (WI.BoundVar sym)]
+
+newtype WFCheckM sym a = WFCheckM (ReaderT (WFBoundVarEnv sym) (ExceptT (WFException sym) IO) a)
+  deriving ( Functor
+           , Applicative
+           , Monad
+           , MonadReader (WFBoundVarEnv sym)
+           , MonadError (WFException sym)
+           )
+
+
+  
 
 -- simulateInstruction :: forall sym init globalReads globalWrites tps scope
 --                      . (CB.IsSymInterface sym, OnlineSolver scope sym)
@@ -578,15 +618,43 @@ data SimulationException = SimulationTimeout (Some AC.SomeFunctionSignature)
                          | forall btp . UnexpectedReturnType (WT.BaseTypeRepr btp)
                          | forall tp . MissingGlobalDefinition (CS.GlobalVar tp)
                          | forall tp . CannotAllocateFresh T.Text (CT.BaseTypeRepr tp)
+                         | forall sym ret. UnexpectedBoundVars (Set (Some (S.ExprBoundVar sym))) (Set (Some (S.ExprBoundVar sym))) (S.Expr sym ret)
                          | InvalidSymbolName String
 
 
+instance PP.Pretty SimulationException where
+  pPrint e = case e of
+    
+    SimulationTimeout (Some fs) -> PP.text "SimulationTimeout:" PP.<+> PP.text (show fs)
+    SimulationAbort (Some fs) msg ->
+      PP.text "SimulationAbort:" PP.<+> PP.text (T.unpack msg) PP.<+> PP.text (show fs)
+    NonBaseTypeReturn tr ->
+      PP.text "NonBaseTypeReturn:" PP.<+> PP.text (show tr)
+    UnexpectedReturnType btr ->
+      PP.text "UnexpectedReturnType:" PP.<+> PP.text (show btr)
+    MissingGlobalDefinition gv ->
+      PP.text "MissingGlobalDefinition:" PP.<+> PP.text (show gv)
+    CannotAllocateFresh nm btr ->
+      PP.text "CannotAllocateFresh: " PP.<+> PP.text (T.unpack nm) PP.<+> PP.text (show btr)
+    UnexpectedBoundVars bvs1 bvs2 expr ->
+      PP.text "UnexpectedBoundVars:"
+      PP.$$ (PP.text "Expected:" PP.<+> PP.text (show bvs1) PP.<+> PP.text "Got: " PP.<+> PP.text (show bvs2)
+      PP.<+> PP.text "In:")
+      PP.$$ showExpr expr
+    InvalidSymbolName nm ->
+      PP.text "InvalidSymbolName:" PP.<+> PP.text nm
+
+instance Show SimulationException where
+  show e = PP.render (PP.pPrint e)
+
+showExpr :: S.Expr t ret -> PP.Doc
+showExpr e = PP.text (LPP.displayS (LPP.renderPretty 0.4 80 (WI.printSymExpr e)) "")
+      
 showAbortedResult :: CS.AbortedResult c d -> T.Text
 showAbortedResult ar = case ar of
   CS.AbortedExec reason _ -> T.pack $ show reason
   CS.AbortedExit code -> T.pack $ show code
   CS.AbortedBranch _ _ res' res'' -> "BRANCH: " <> showAbortedResult res' <> "\n" <> showAbortedResult res''
 
-deriving instance Show SimulationException
 
 instance X.Exception SimulationException
