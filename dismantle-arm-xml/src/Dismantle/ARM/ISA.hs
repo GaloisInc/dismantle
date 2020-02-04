@@ -64,131 +64,18 @@ operandPayloadTypes =
   (map (\sz -> (printf "Bv%d" sz, unsignedImmediate sz)) [1..24])
   ++
   (map (\sz -> (printf "QuasiMask%d" sz, quasimaskop sz)) [1..16])
-  ++
-  [ ("GPR3", gpRegister 3)
-  , ("GPR4", gpRegister 4)
-  , ("GPR4_1", gpRegister1 4)
-  , ("GPR_banked", gpBanked)
-  , ("SIMD2", simdReg 2)
-  , ("SIMD3", simdReg 3)
-  , ("SIMD4", simdReg 4)
-  , ("SIMD5", simdReg 5)
-  , ("SIMD7", simdReg 7)
-  , ("SIMD5_1", simdReg1 5)
-  , ("SIMD5_Mul2", simdMul2Reg 5)
-  ]
   where
     unsignedImmediate :: Integer -> DA.OperandPayload
     unsignedImmediate sz = DA.OperandPayload { DA.opTypeT = [t| I.W $(return (TH.LitT (TH.NumTyLit sz))) |]
                                             , DA.opConE = Just [| I.w |]
                                             , DA.opWordE = Just [| fromIntegral . I.unW |]
                                             }
-    gpRegister :: Integer -> DA.OperandPayload
-    gpRegister sz = DA.OperandPayload { DA.opTypeT = [t| GPR $(return (TH.LitT (TH.NumTyLit sz))) |]
-                                      , DA.opConE = Just (TH.varE 'gpr)
-                                      , DA.opWordE = Just [| fromIntegral . W.unW . unGPR |]
-                                      }
-
-    gpBanked :: DA.OperandPayload
-    gpBanked = DA.OperandPayload { DA.opTypeT = [t| GPRBanked |]
-                                 , DA.opConE = Just (TH.varE 'gprBanked)
-                                 , DA.opWordE = Just [| fromIntegral . W.unW . unGPRBanked |]
-                                 }
-
-    gpRegister1 :: Integer -> DA.OperandPayload
-    gpRegister1 sz = DA.OperandPayload { DA.opTypeT = [t| GPR1 $(return (TH.LitT (TH.NumTyLit sz))) |]
-                                       , DA.opConE = Just (TH.varE 'gpr1)
-                                       , DA.opWordE = Just [| fromIntegral . W.unW . unGPR1 |]
-                                       }
-
-    simdReg :: Integer -> DA.OperandPayload
-    simdReg sz = DA.OperandPayload { DA.opTypeT = [t| SIMD $(return (TH.LitT (TH.NumTyLit sz))) |]
-                                   , DA.opConE = Just (TH.varE 'simd)
-                                   , DA.opWordE = Just [| fromIntegral . W.unW . unSIMD |]
-                                   }
-
-    simdMul2Reg :: Integer -> DA.OperandPayload
-    simdMul2Reg sz = DA.OperandPayload { DA.opTypeT = [t| SIMDMul2 $(return (TH.LitT (TH.NumTyLit sz))) |]
-                                       , DA.opConE = Just (TH.varE 'simdmul2)
-                                       , DA.opWordE = Just [| fromIntegral . W.unW . unSIMDMul2 |]
-                                       }
-
-    simdReg1 :: Integer -> DA.OperandPayload
-    simdReg1 sz = DA.OperandPayload { DA.opTypeT = [t| SIMD1 $(return (TH.LitT (TH.NumTyLit sz))) |]
-                                    , DA.opConE = Just (TH.varE 'simd1)
-                                    , DA.opWordE = Just [| fromIntegral . W.unW . unSIMD1 |]
-                                    }
 
     quasimaskop :: Integer -> DA.OperandPayload
     quasimaskop sz = DA.OperandPayload { DA.opTypeT = [t| QuasiMask $(return (TH.LitT (TH.NumTyLit sz))) |]
                                        , DA.opConE = Just (TH.varE 'quasimask)
                                        , DA.opWordE = Just [| fromIntegral . W.unW . unQuasiMask |]
                                        }
-
--- | General-purpose register by number
-newtype GPR n = GPR { unGPR :: W.W n }
-  deriving (Eq, Ord, Show)
-
-gpr :: KnownNat n => Word32 -> GPR n
-gpr = GPR . fromIntegral
-
-instance KnownNat n => PP.Pretty (GPR n) where
-  pPrint (GPR w) = PP.text "GPR" <> PP.pPrint "(" <> PP.pPrint (W.width w) <> PP.text "): " <> PP.pPrint w
-
--- | General-purpose register by number - representing the given register offset by one
-newtype GPR1 n = GPR1 { unGPR1 :: W.W n }
-  deriving (Eq, Ord, Show)
-
-gpr1 :: KnownNat n => Word32 -> GPR1 n
-gpr1 = GPR1 . fromIntegral
-
-instance KnownNat n => PP.Pretty (GPR1 n) where
-  pPrint (GPR1 w) = PP.text "GPR1" <> PP.pPrint "(" <> PP.pPrint (W.width w) <> PP.text "): " <> PP.pPrint w
-
-
-newtype GPRBanked = GPRBanked { unGPRBanked :: W.W 6 }
-  deriving (Eq, Ord, Show)
-
-gprBanked :: Word32 -> GPRBanked
-gprBanked = GPRBanked . fromIntegral
-
-
-instance PP.Pretty GPRBanked where
-  pPrint w = PP.text "GPR Banked "<> PP.pPrint w
-
--- | SIMD/FP register by number
-
-newtype SIMD n = SIMD { unSIMD :: W.W n }
-  deriving (Eq, Ord, Show)
-
-simd :: KnownNat n => Word32 -> SIMD n
-simd = SIMD . fromIntegral
-
-instance KnownNat n => PP.Pretty (SIMD n) where
-  pPrint (SIMD w) = PP.text "SIMD" <> PP.pPrint "(" <> PP.pPrint (W.width w) <> PP.text "): " <> PP.pPrint w
-
-newtype SIMD1 n = SIMD1 { unSIMD1 :: W.W n }
-  deriving (Eq, Ord, Show)
-
-simd1 :: KnownNat n => Word32 -> SIMD1 n
-simd1 = SIMD1 . fromIntegral
-
-
-instance KnownNat n => PP.Pretty (SIMD1 n) where
-  pPrint (SIMD1 w) = PP.text "SIMD1" <> PP.pPrint "(" <> PP.pPrint (W.width w) <> PP.text "): " <> PP.pPrint w
-
--- | SIMD/FP register -- index mulitplied by 2
-
-newtype SIMDMul2 n = SIMDMul2 { unSIMDMul2 :: W.W n }
-  deriving (Eq, Ord, Show)
-
-simdmul2 :: KnownNat n => Word32 -> SIMDMul2 n
-simdmul2 = SIMDMul2 . fromIntegral
-
-instance KnownNat n => PP.Pretty (SIMDMul2 n) where
-  pPrint (SIMDMul2 w) = PP.text "SIMDMul2" <> PP.pPrint "(" <> PP.pPrint (W.width w) <> PP.text "): " <> PP.pPrint w
-
-
 -- | QuasiMask / Psuedo-operand
 
 newtype QuasiMask n = QuasiMask { unQuasiMask :: W.W n }

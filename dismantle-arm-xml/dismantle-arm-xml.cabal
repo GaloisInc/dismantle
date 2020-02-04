@@ -24,7 +24,6 @@ library
                      -- Dismantle.ARM.T32,
                      Dismantle.ARM.ISA,
                      Dismantle.ARM.TH
-                     Dismantle.ARM.RegisterInfo
                      Data.BitMask
                      Data.PropTree
   -- other-modules:
