@@ -19,9 +19,9 @@ import           System.FilePath ( (</>), (<.>) )
 import qualified Text.XML.Light as X
 
 import qualified Dismantle.Tablegen as DT
-import qualified Dismantle.ARM as XML
-import qualified Dismantle.ASL.Decode as ASL
-import qualified Dismantle.ASL.Decode as ARM ( encodingOpToInstDescriptor, instDescriptorsToISA )
+import qualified Dismantle.ARM.XML as XML
+import qualified Dismantle.ARM.ASL as ASL
+import qualified Dismantle.ARM.ASL as ARM ( encodingOpToInstDescriptor, instDescriptorsToISA )
 import qualified Dismantle.Tablegen.TH as DTH
 
 genISA ::  DT.ISA -> FilePath -> FilePath -> FilePath -> FilePath -> TH.DecsQ

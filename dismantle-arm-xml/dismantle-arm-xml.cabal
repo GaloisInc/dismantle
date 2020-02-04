@@ -18,13 +18,13 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 library
-  exposed-modules:   Dismantle.ARM,
+  exposed-modules:   Dismantle.ARM.XML,
+                     Dismantle.ARM.ASL,
                      Dismantle.ARM.A32,
                      -- Dismantle.ARM.T32,
                      Dismantle.ARM.ISA,
                      Dismantle.ARM.TH
                      Dismantle.ARM.RegisterInfo
-                     Dismantle.ASL.Decode
                      Data.BitMask
                      Data.PropTree
   -- other-modules:

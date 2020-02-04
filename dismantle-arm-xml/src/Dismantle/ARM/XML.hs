@@ -13,7 +13,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE ConstraintKinds #-}
 
-module Dismantle.ARM
+module Dismantle.ARM.XML
   ( loadEncodings
   , XMLException(..)
   , DT.ISA(..)

@@ -23,7 +23,7 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 import           Text.Printf (printf)
 
 import qualified Data.Word.Indexed as I
-import qualified Dismantle.ARM as DA
+import qualified Dismantle.Tablegen as DA
 
 import Numeric (showHex)
 

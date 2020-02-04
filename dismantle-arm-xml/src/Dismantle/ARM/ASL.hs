@@ -11,7 +11,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Dismantle.ASL.Decode
+module Dismantle.ARM.ASL
+  ( loadASL
+  , encodingOpToInstDescriptor
+  , instDescriptorsToISA
+  )
   where
 
 import           Debug.Trace
@@ -43,7 +47,7 @@ import           Data.List ( intercalate, groupBy )
 import           Data.Map ( Map )
 import qualified Data.Map as Map
 -- FIXME: move or use library version of this
-import qualified Dismantle.ARM as Map ( fromListWithM )
+import qualified Dismantle.ARM.XML as Map ( fromListWithM )
 import qualified Data.List.Split as LS
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -56,8 +60,8 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 import qualified Language.ASL.Parser as ASL
 import qualified Language.ASL.Syntax as ASL
 
-import qualified Dismantle.ARM as XML
-import           Dismantle.ARM ( Encoding(..), Field(..), Operand(..) )
+import qualified Dismantle.ARM.XML as XML
+import           Dismantle.ARM.XML ( Encoding(..), Field(..), Operand(..) )
 import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import qualified Data.BitMask as BM
@@ -73,27 +77,27 @@ type ARMMaskTrie a = BM.MaskTrie BM.QuasiBit ARMRegWidth a
 armRegWidthRepr :: NR.NatRepr ARMRegWidth
 armRegWidthRepr = NR.knownNat
 
-data DecodeEnv = DecodeEnv { envLogFn :: String -> IO ()
-                           , envArchName :: String
-                           , envContext :: DecodeContext
-                           -- ^ the current context for error reporting
-                           }
+data ASLEnv = ASLEnv { envLogFn :: String -> IO ()
+                     , envArchName :: String
+                     , envContext :: ASLContext
+                     -- ^ the current context for error reporting
+                     }
 
-data DecodeContext = DecodeContext { ctxASLEncoding :: Maybe (ASL.Instruction, ASL.InstructionEncoding)
-                                   , ctxXMLEncoding :: Maybe Encoding
-                                   , ctxStmt :: Maybe ASL.Stmt
-                                   , ctxFileName :: String
-                                   , ctxSourceLoc :: Maybe SrcLoc
-                                   }
+data ASLContext = ASLContext { ctxASLEncoding :: Maybe (ASL.Instruction, ASL.InstructionEncoding)
+                             , ctxXMLEncoding :: Maybe Encoding
+                             , ctxStmt :: Maybe ASL.Stmt
+                             , ctxFileName :: String
+                             , ctxSourceLoc :: Maybe SrcLoc
+                             }
 
-data DecodeState = DecodeState { stMaskTrie :: ARMMaskTrie [(String, ARMBitMask BM.QuasiBit)]
-                               , stEncodingMap :: Map String (ASL.Instruction, ASL.InstructionEncoding)
-                               }
+data ASLState = ASLState { stMaskTrie :: ARMMaskTrie [(String, ARMBitMask BM.QuasiBit)]
+                         , stEncodingMap :: Map String (ASL.Instruction, ASL.InstructionEncoding)
+                         }
 
-type DecodeOut = ()
+type ASLOut = ()
 
-data DecodeException =
-    DecodeMFail String
+data ASLException =
+    ASLFail String
   | UnsupportedArch String
   | MissingExpectedMaskTreeEntry
   | BadMaskTreeLookup String
@@ -111,52 +115,52 @@ data DecodeException =
   | ASLParserError String
   | UnexpectedFieldWidth String Int Int
   | MissingConstraintForField Encoding String [String]
-  | MultipleExceptions [DecodeException]
+  | MultipleExceptions [ASLException]
 
-deriving instance Show DecodeException
+deriving instance Show ASLException
 
-data OuterDecodeException = OuterDecodeException DecodeContext DecodeException
+data OuterASLException = OuterASLException ASLContext ASLException
 
-instance E.Exception OuterDecodeException
+instance E.Exception OuterASLException
 
-newtype DecodeM a = DecodeM (RWST DecodeEnv DecodeOut DecodeState (ExceptT OuterDecodeException IO) a)
+newtype ASL a = ASL (RWST ASLEnv ASLOut ASLState (ExceptT OuterASLException IO) a)
   deriving ( Functor
            , Applicative
            , Monad
-           , MS.MonadState DecodeState
-           , MR.MonadReader DecodeEnv
-           , MW.MonadWriter DecodeOut
+           , MS.MonadState ASLState
+           , MR.MonadReader ASLEnv
+           , MW.MonadWriter ASLOut
            , MonadIO
            )
 
-instance MonadFail DecodeM where
-  fail msg = throwError $ DecodeMFail msg
+instance MonadFail ASL where
+  fail msg = throwError $ ASLFail msg
 
-instance MonadError DecodeException DecodeM where
+instance MonadError ASLException ASL where
   throwError e = do
     ctx <- MR.asks envContext
-    DecodeM (lift $ throwError $ OuterDecodeException ctx e)
+    ASL (lift $ throwError $ OuterASLException ctx e)
 
-  catchError (DecodeM m) handler = do
+  catchError (ASL m) handler = do
     st <- MS.get
     env <- MR.ask
     (liftIO $ ME.runExceptT $ RWS.runRWST m env st) >>= \case
-      Left (OuterDecodeException _ e) -> handler e
+      Left (OuterASLException _ e) -> handler e
       Right (a, st', out) -> do
         MS.put st'
         MW.tell out
         return a
 
-throwErrorHere :: HasCallStack => DecodeException -> DecodeM a
+throwErrorHere :: HasCallStack => ASLException -> ASL a
 throwErrorHere e = do
   let (_, src): _ = getCallStack callStack
   ctx <- MR.asks envContext
-  DecodeM (lift $ throwError $ OuterDecodeException (ctx { ctxSourceLoc = Just src }) e)
+  ASL (lift $ throwError $ OuterASLException (ctx { ctxSourceLoc = Just src }) e)
 
-instance PP.Pretty OuterDecodeException where
-  pPrint (OuterDecodeException ctx e) =
+instance PP.Pretty OuterASLException where
+  pPrint (OuterASLException ctx e) =
     let errPretty = PP.nest 1 $ PP.pPrint e in
-    PP.text "Dismantle.ASL.Decode: Error encountered while processing:" <+> PP.text (ctxFileName ctx)
+    PP.text "Dismantle.ARM.ASL: Error encountered while processing:" <+> PP.text (ctxFileName ctx)
     <+> case ctxSourceLoc ctx of
           Just loc -> PP.text "at" <+> PP.text (prettySrcLoc loc)
           Nothing -> PP.empty
@@ -170,10 +174,10 @@ instance PP.Pretty OuterDecodeException where
           Just stmt -> PP.text "at statement:" $$ (PP.text $ show stmt) $$ errPretty
           _ -> errPretty
 
-instance Show OuterDecodeException where
+instance Show OuterASLException where
   show e = PP.render (PP.pPrint e)
 
-instance PP.Pretty DecodeException where
+instance PP.Pretty ASLException where
   pPrint e = case e of
     UnexpectedMatchingEntries mask [] ->
       PP.text "Missing entry for:"
@@ -207,47 +211,47 @@ prettyInstructionEncoding instr enc = PP.hcat $ PP.punctuate (PP.text "/") $
    , PP.text (show $ ASL.encInstrSet enc)
    ]
 
-logMsg :: String -> DecodeM ()
+logMsg :: String -> ASL ()
 logMsg msg = do
   logFn <- MR.asks envLogFn
   liftIO $ logFn msg
 
-warnError :: DecodeException -> DecodeM ()
+warnError :: ASLException -> ASL ()
 warnError e = do
   ctx <- MR.asks envContext
-  let pretty = PP.nest 1 (PP.text "WARNING:" $$ (PP.pPrint $ OuterDecodeException ctx e))
+  let pretty = PP.nest 1 (PP.text "WARNING:" $$ (PP.pPrint $ OuterASLException ctx e))
   logMsg $ PP.render pretty
 
-runDecodeM :: String
+runASL :: String
            -> FilePath
            -> (String -> IO ())
-           -> DecodeM a
-           -> IO (Either OuterDecodeException (a, DecodeState, DecodeOut))
-runDecodeM archName aslfile logFn (DecodeM m) =
+           -> ASL a
+           -> IO (Either OuterASLException (a, ASLState, ASLOut))
+runASL archName aslfile logFn (ASL m) =
   let
-    initCtx = DecodeContext { ctxFileName = aslfile
+    initCtx = ASLContext { ctxFileName = aslfile
                             , ctxXMLEncoding = Nothing
                             , ctxSourceLoc = Nothing
                             , ctxASLEncoding = Nothing
                             , ctxStmt = Nothing
                             }
-    initEnv = DecodeEnv { envLogFn = logFn
+    initEnv = ASLEnv { envLogFn = logFn
                         , envContext = initCtx
                         , envArchName = archName
                         }
-    initState = DecodeState { stMaskTrie = BM.emptyMaskTrie
+    initState = ASLState { stMaskTrie = BM.emptyMaskTrie
                             , stEncodingMap = Map.empty
                             }
 
   in ME.runExceptT $ RWS.runRWST m initEnv initState
 
-execDecodeM :: String
+execASL :: String
             -> FilePath
             -> (String -> IO ())
-            -> DecodeM a
-            -> IO (Either OuterDecodeException a)
-execDecodeM archName aslfile logFn m = do
-  eresult <- runDecodeM archName aslfile logFn m
+            -> ASL a
+            -> IO (Either OuterASLException a)
+execASL archName aslfile logFn m = do
+  eresult <- runASL archName aslfile logFn m
   return $ do
     (a, _, _) <- eresult
     return a
@@ -273,8 +277,8 @@ data EncodingOp = EncodingOp { encASLIdent :: String
 -- The 'EncodingOp' list here represents the bijective mapping: XML encoding <-> ASL encoding + constraints.
 loadASL :: String -> FilePath -> [Encoding] -> (String -> IO ()) -> IO [EncodingOp]
 loadASL archName aslFile xmlEncodings logFn = do
-  logFn "Dismantle.ASL.Decode: loadASL"
-  result <- runDecodeM archName aslFile logFn $ do
+  logFn "Dismantle.ASL.ASL: loadASL"
+  result <- runASL archName aslFile logFn $ do
     instrs <- parseInstsFile aslFile >>= deduplicateEncodings
     forM instrs $ \(instr, enc) -> do
       let ident = encodingIdentifier instr enc
@@ -299,7 +303,7 @@ loadASL archName aslFile xmlEncodings logFn = do
       E.throw err
     Right (a, _st, _out) -> return a
 
-getTargetInstrSet :: DecodeM ASL.InstructionSet
+getTargetInstrSet :: ASL ASL.InstructionSet
 getTargetInstrSet = do
   MR.asks envArchName >>= \case
     "A32" -> return ASL.A32
@@ -357,7 +361,7 @@ mkFieldBit Nothing bit = FieldBit (bit, BM.BottomBit)
 equivFields :: FixedFieldBit -> FixedFieldBit -> Bool
 equivFields fieldBit1 fieldBit2 = nameOfFixedFieldBit fieldBit1 == nameOfFixedFieldBit fieldBit2
 
-computeMask :: [BM.BitSection ARMRegWidth FieldBit] -> DecodeM (BM.BitMask ARMRegWidth FieldBit)
+computeMask :: [BM.BitSection ARMRegWidth FieldBit] -> ASL (BM.BitMask ARMRegWidth FieldBit)
 computeMask fieldSects = case BM.computePattern armRegWidthRepr fieldSects of
   Left msg -> throwErrorHere $ IncompatibleFieldBits msg
   Right merged -> return $ merged
@@ -366,7 +370,7 @@ mergeBitMasks :: BM.SemiMaskBit bit
               => BM.ShowableBit bit
               => BM.BitMask n bit
               -> BM.BitMask n bit
-              -> DecodeM (BM.BitMask n bit)
+              -> ASL (BM.BitMask n bit)
 mergeBitMasks mask1 mask2 = case BM.mergeBitErr mask1 mask2 of
   Left msg -> throwErrorHere $ IncompatibleFieldBits msg
   Right merged -> return merged
@@ -394,7 +398,7 @@ prettyFieldConstraints constraints negconstraints =
          $$ PP.vcat (map (\negs -> PP.vcat (map PP.pPrint negs) $$ PP.space) negconstraints)
 
 -- | Separate a mask over 'FieldBit's into individual field constraints.
-splitFieldMask :: BM.BitMask ARMRegWidth FixedFieldBit -> DecodeM (Map String FieldConstraint)
+splitFieldMask :: BM.BitMask ARMRegWidth FixedFieldBit -> ASL (Map String FieldConstraint)
 splitFieldMask mask = do
   l <- liftM catMaybes $ forM (groupBy equivFields (BM.toList mask)) $ \(fieldBit : rst) ->
          case nameOfFixedFieldBit fieldBit of
@@ -409,7 +413,7 @@ xmlFieldNameToASL name = case name of
   "type" -> "type1"
   _ -> name
 
-aslFixedFieldMask :: ASL.InstructionEncoding -> DecodeM (ARMBitMask FixedFieldBit)
+aslFixedFieldMask :: ASL.InstructionEncoding -> ASL (ARMBitMask FixedFieldBit)
 aslFixedFieldMask aslEncoding = do
   aslBitsects <- forM (ASL.encFields aslEncoding) $ \field -> do
     let
@@ -426,7 +430,7 @@ aslFixedFieldMask aslEncoding = do
   aslTotalMask <- fmap (mkFieldBit Nothing) <$> maskFromEncoding aslEncoding
   fmap fixFieldBit <$> mergeBitMasks aslFieldMask aslTotalMask
 
-xmlFixedFieldMask :: Encoding -> DecodeM (ARMBitMask FixedFieldBit, [ARMBitMask FixedFieldBit])
+xmlFixedFieldMask :: Encoding -> ASL (ARMBitMask FixedFieldBit, [ARMBitMask FixedFieldBit])
 xmlFixedFieldMask xmlEncoding = do
   (xmlMasks, xmlNegMasks) <- liftM unzip $
     forM (filter XML.fieldUseName $ Map.elems $ XML.encFields xmlEncoding) $ \field -> do
@@ -454,7 +458,7 @@ xmlFixedFieldMask xmlEncoding = do
 --
 -- This serves as a final check that we have found the correct encoding, since
 -- every bit is checked that its tagged field name is the same in both masks.
-correlateEncodings :: String -> ASL.InstructionEncoding -> Encoding -> DecodeM EncodingOp
+correlateEncodings :: String -> ASL.InstructionEncoding -> Encoding -> ASL EncodingOp
 correlateEncodings aslIdent aslEncoding xmlEncoding = do
   aslFixedMask <- aslFixedFieldMask aslEncoding
   (xmlFixedMask, xmlNegMasks) <- xmlFixedFieldMask xmlEncoding
@@ -486,7 +490,7 @@ correlateEncodings aslIdent aslEncoding xmlEncoding = do
                       , encEncoding = xmlEncoding
                       }
 
-lookupMasks :: ARMBitMask BM.QuasiBit -> DecodeM String
+lookupMasks :: ARMBitMask BM.QuasiBit -> ASL String
 lookupMasks mask = do
   masktree <- MS.gets stMaskTrie
   case BM.lookupMaskTrie mask masktree of
@@ -501,7 +505,7 @@ lookupMasks mask = do
 -- Attempts a lookup with both the general instruction mask as well as the mask from this
 -- specific encoding. This ambiguity is resolved later by resolving the ASL bits against
 -- the constraints from the XML in 'correlateEncodings'.
-lookupEncoding :: Encoding -> DecodeM String
+lookupEncoding :: Encoding -> ASL String
 lookupEncoding encoding = do
   (imask, inegmasks) <- case BM.deriveMasks NR.knownNat (encIConstraints encoding) of
     Left msg -> throwErrorHere $ FailedToDeriveMask msg
@@ -571,7 +575,7 @@ simpleOperandFormat descs = intercalate ", " $ catMaybes $ map go descs
         name = DT.opName desc
       in Just $ name ++ " ${" ++ DT.opName desc ++ "}"
 
-parseInstsFile :: FilePath -> DecodeM [ASL.Instruction]
+parseInstsFile :: FilePath -> ASL [ASL.Instruction]
 parseInstsFile aslFile = do
   result <- liftIO $ do
     try (ASL.parseAslInstsFile aslFile) >>= \case
@@ -583,23 +587,23 @@ parseInstsFile aslFile = do
       throwErrorHere $ ASLParserError err
     Right insts -> return insts
 
-withContext :: (DecodeContext -> DecodeContext) -> DecodeM a -> DecodeM a
+withContext :: (ASLContext -> ASLContext) -> ASL a -> ASL a
 withContext f = MR.local (\env -> env { envContext = f (envContext env) })
 
-withASLEncoding :: (ASL.Instruction, ASL.InstructionEncoding) -> DecodeM a -> DecodeM a
+withASLEncoding :: (ASL.Instruction, ASL.InstructionEncoding) -> ASL a -> ASL a
 withASLEncoding aslEncoding = withContext (\ctx -> ctx { ctxASLEncoding = Just aslEncoding })
 
 
-withXMLEncoding :: Encoding -> DecodeM a -> DecodeM a
+withXMLEncoding :: Encoding -> ASL a -> ASL a
 withXMLEncoding xmlEncoding = withContext (\ctx -> ctx { ctxXMLEncoding = Just xmlEncoding })
 
 
-getEncodings :: ASL.Instruction -> DecodeM [ASL.InstructionEncoding]
+getEncodings :: ASL.Instruction -> ASL [ASL.InstructionEncoding]
 getEncodings instr = do
   targetInstrSet <- getTargetInstrSet
   return $ filter (\enc -> ASL.encInstrSet enc == targetInstrSet) (ASL.instEncodings instr)
 
-deduplicateEncodings :: [ASL.Instruction] -> DecodeM [(ASL.Instruction, ASL.InstructionEncoding)]
+deduplicateEncodings :: [ASL.Instruction] -> ASL [(ASL.Instruction, ASL.InstructionEncoding)]
 deduplicateEncodings instrs = do
   pairs <- liftM concat $ forM instrs $ \instr -> do
     encodings <- getEncodings instr
@@ -609,7 +613,7 @@ deduplicateEncodings instrs = do
   Map.elems <$> Map.fromListWithM assertEquivalentEncodings pairs
 
 
-maskFromEncoding :: ASL.InstructionEncoding -> DecodeM (ARMBitMask BM.QuasiBit)
+maskFromEncoding :: ASL.InstructionEncoding -> ASL (ARMBitMask BM.QuasiBit)
 maskFromEncoding enc = case BM.fromList NR.knownNat $ maskToBits $ ASL.encOpcodeMask enc of
   Just mask -> do
     bitsects <- forM (ASL.encUnpredictable enc) $ \(pos, isset) -> do
@@ -625,7 +629,7 @@ maskFromEncoding enc = case BM.fromList NR.knownNat $ maskToBits $ ASL.encOpcode
 
 assertEquivalentEncodings :: (ASL.Instruction, ASL.InstructionEncoding)
                           -> (ASL.Instruction, ASL.InstructionEncoding)
-                          -> DecodeM (ASL.Instruction, ASL.InstructionEncoding)
+                          -> ASL (ASL.Instruction, ASL.InstructionEncoding)
 assertEquivalentEncodings (instr1, enc1) (instr2, enc2) = withASLEncoding (instr1, enc1) $ do
   zipWithM (assertEqualBy id) (ASL.instPostDecode instr1) (ASL.instPostDecode instr2)
   zipWithM (assertEqualBy id) (ASL.instExecute instr1) (ASL.instExecute instr2)
@@ -639,7 +643,7 @@ assertEquivalentEncodings (instr1, enc1) (instr2, enc2) = withASLEncoding (instr
 
   return (instr1, enc1)
 
-assertEqualBy :: Show b => Eq b => (a -> b) -> a -> a -> DecodeM()
+assertEqualBy :: Show b => Eq b => (a -> b) -> a -> a -> ASL ()
 assertEqualBy f a a' = case (f a) == (f a') of
   False -> throwErrorHere $ InstructionIdentNameClash (f a) (f a')
   True -> return ()
