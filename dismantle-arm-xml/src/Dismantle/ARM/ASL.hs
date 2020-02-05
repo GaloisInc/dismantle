@@ -51,11 +51,13 @@ import qualified Dismantle.ARM.XML as Map ( fromListWithM )
 import qualified Data.List.Split as LS
 import qualified Data.Set as S
 import qualified Data.Text as T
+import           Data.Word ( Word8 )
 
 import           System.IO ( withFile, IOMode(..), hPutStrLn )
 
 import           Text.PrettyPrint.HughesPJClass ( (<+>), ($$), ($+$) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
+import           Text.Printf (printf)
 
 import qualified Language.ASL.Parser as ASL
 import qualified Language.ASL.Syntax as ASL
@@ -63,8 +65,9 @@ import qualified Language.ASL.Syntax as ASL
 import qualified Dismantle.ARM.XML as XML
 import           Dismantle.ARM.XML ( ARMRegWidth, ARMBitSection
                                    , ARMBitMask, armRegWidthRepr
-                                   , Encoding(..), Field(..), Operand(..) )
+                                   , Encoding(..), Field(..) )
 import qualified Dismantle.Tablegen as DT
+import qualified Dismantle.Tablegen.Parser.Types as PT
 import qualified Dismantle.Tablegen.ByteTrie as BT
 import qualified Data.BitMask as BM
 
@@ -535,16 +538,60 @@ instDescriptorsToISA instrs =
 instrOperandTypes :: DT.InstructionDescriptor -> [DT.OperandType]
 instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutputOperands idesc)
 
-operandDescOfOperand :: Operand -> DT.OperandDescriptor
-operandDescOfOperand oper = case oper of
-  RealOperand opd -> opd
-  PsuedoOperand opd -> opd
+sectionToChunks :: ARMBitSection a -> [(DT.IBit, PT.OBit, Word8)]
+sectionToChunks sect =
+  map getChunk (BM.asContiguousSections sect)
+  where
+    -- BitSection positions are indexed from the start of the bitmask vector, which is
+    -- the most significant bit for ARM (i.e. a big-endian index).
+    -- Dismantle wants the little-endian index of the least significant bit of the operand.
+    getChunk :: (Int, BM.SomeBitMask a) -> (DT.IBit, PT.OBit, Word8)
+    getChunk (pos, BM.SomeBitMask mask) =
+      let
+        width = BM.lengthInt mask
+        regwidth = fromIntegral $ NR.intValue armRegWidthRepr
+        hibit = regwidth - pos - 1
+        ibitpos = hibit - width + 1
+      in (DT.IBit ibitpos, PT.OBit 0, fromIntegral width)
+
+
+operandToDescriptor :: XML.Operand -> [DT.OperandDescriptor]
+operandToDescriptor (XML.Operand name sect isPseudo) = case isPseudo of
+  False -> [DT.OperandDescriptor { DT.opName = name
+                                 , DT.opChunks = sectionToChunks sect
+                                 , DT.opType = DT.OperandType $ printf "Bv%d" totalWidth
+                                 }]
+  True -> map mkPseudo $ zip [0..] (sectionToChunks sect)
+  where
+    totalWidth = BM.sectTotalSetWidth sect
+
+    mkPseudo :: (Int, (DT.IBit, PT.OBit, Word8)) -> DT.OperandDescriptor
+    mkPseudo (i, chunk@(_, _, width)) =
+      DT.OperandDescriptor { DT.opName = printf "QuasiMask%d" i
+                           , DT.opChunks = [chunk]
+                           , DT.opType = DT.OperandType $ printf "QuasiMask%d" width
+                           }
+
+
+-- | As 'operandToDescriptor' but creates a single, disjointed pseudo-operand instead of multiple.
+-- Currently using this will break instruction re-assembly for reasons that are not understood.
+operandToDescriptor' :: XML.Operand -> [DT.OperandDescriptor]
+operandToDescriptor' (XML.Operand name sect isPseudo) =
+  [DT.OperandDescriptor { DT.opName = name
+                        , DT.opChunks = sectionToChunks sect
+                        , DT.opType = DT.OperandType $ printf opTypeFormat totalWidth
+                        }]
+  where
+    totalWidth = BM.sectTotalSetWidth sect
+
+    opTypeFormat :: String
+    opTypeFormat = if isPseudo then "QuasiMask%d" else "Bv%d"
 
 encodingOpToInstDescriptor :: EncodingOp -> DT.InstructionDescriptor
 encodingOpToInstDescriptor encodingOp =
   let
     encoding = encEncoding encodingOp
-    operandDescs = map operandDescOfOperand (encOperands $ encEncoding encodingOp)
+    operandDescs = concat $ map operandToDescriptor $ encOperands $ encEncoding encodingOp
   in DT.InstructionDescriptor
        { DT.idMask = map BM.flattenQuasiBit (endianness $ BM.toList $ encMask encoding)
        , DT.idNegMasks = map (endianness . BM.toList) $ encNegMasks encoding
@@ -555,21 +602,17 @@ encodingOpToInstDescriptor encodingOp =
        , DT.idDecoderNamespace = ""
        , DT.idAsmString = encName encoding
          ++ "(" ++ PP.render (BM.prettySegmentedMask endianness (encMask encoding)) ++ ") "
-         ++ simpleOperandFormat (encOperands encoding)
+         ++ simpleOperandFormat operandDescs
        , DT.idPseudo = False
        , DT.idDefaultPrettyVariableValues = []
        , DT.idPrettyVariableOverrides = []
        }
 
-simpleOperandFormat :: [Operand] -> String
-simpleOperandFormat descs = intercalate ", " $ catMaybes $ map go descs
+simpleOperandFormat :: [DT.OperandDescriptor] -> String
+simpleOperandFormat descs = intercalate ", " $ map go descs
   where
-    go :: Operand -> Maybe String
-    go (PsuedoOperand _) = Nothing
-    go (RealOperand desc) =
-      let
-        name = DT.opName desc
-      in Just $ name ++ " ${" ++ DT.opName desc ++ "}"
+    go :: DT.OperandDescriptor -> String
+    go oper = DT.opName oper ++ " ${" ++ DT.opName oper ++ "}"
 
 parseInstsFile :: FilePath -> ASL [ASL.Instruction]
 parseInstsFile aslFile = do

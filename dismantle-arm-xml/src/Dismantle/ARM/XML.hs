@@ -16,6 +16,7 @@
 module Dismantle.ARM.XML
   ( loadEncodings
   , XMLException(..)
+  , Operand(..)
   , DT.ISA(..)
   , DT.Endianness(..)
   , DT.OperandPayload(..)
@@ -24,7 +25,6 @@ module Dismantle.ARM.XML
   , DT.UnusedBitsPolicy(..)
   , Encoding(..)
   , Field(..)
-  , Operand(..)
   , ARMRegWidth
   , ARMBitSection
   , ARMBitMask
@@ -48,10 +48,11 @@ import qualified Control.Monad.Reader as R
 import           Control.Monad.Trans.RWS.Strict ( RWST )
 import qualified Control.Monad.Trans.RWS.Strict as RWS
 import           Data.Either ( partitionEithers )
-import           Data.List (stripPrefix, find, nub, intersect, (\\), intercalate, partition, isPrefixOf, sort, intersect )
+import           Data.List (stripPrefix, find, nub, intersect, (\\)
+                           , intercalate, partition, isPrefixOf, sort, intersect)
 import           Data.List.Split as LS
 import qualified Data.Map as M
-import           Data.Maybe (catMaybes, fromMaybe, isJust, isNothing, listToMaybe)
+import           Data.Maybe (catMaybes, fromMaybe, isJust, isNothing, listToMaybe, maybeToList)
 import qualified Data.Parameterized.NatRepr as NR
 import           Data.PropTree ( PropTree )
 import qualified Data.PropTree as PropTree
@@ -367,7 +368,7 @@ fromListWithM f l = sequence $ M.fromListWith doMerge $ map (\(k, a) -> (k, retu
       f a1 a2
 
 
-iclassFieldsAndProp :: X.Element -> XML (Fields, [Operand], PropTree (ARMBitSection QuasiBit))
+iclassFieldsAndProp :: X.Element -> XML (Fields, ARMBitSection (), PropTree (ARMBitSection QuasiBit))
 iclassFieldsAndProp iclass = do
   rd <- getChild "regdiagram" iclass
   fields <- forChildren "box" rd getBoxField
@@ -378,7 +379,7 @@ iclassFieldsAndProp iclass = do
       _ -> throwError $ InvalidField field
   namedMap <- fromListWithM mergeFields namedFields
   return $ ( namedMap
-           , quasiMaskOperands fields
+           , quasiMaskOfFields fields
            , mconcat (map fieldConstraint fields))
 
 mergeFields :: Field -> Field -> XML Field
@@ -453,22 +454,23 @@ getBoxField box = do
                  , fieldUseName = X.findAttr (qname "usename") box == Just "1"
                  }
 
-
-quasiMaskOperands :: [Field] -> [Operand]
-quasiMaskOperands fields = catMaybes $ map go (zip fields [0..])
+quasiMaskOfMask :: ARMBitMask BM.QuasiBit -> ARMBitSection ()
+quasiMaskOfMask mask = BM.maskAsBitSection $ fmap getQuasi mask
   where
-    go :: (Field, Int) -> Maybe Operand
-    go (Field name hibit width constraint useName, i)
-     | (not useName) && any (any BM.isQBit) constraint
-     , name' <- if name == "" then printf "QuasiMask%d" i else name
-     = Just $ PsuedoOperand $
-         DT.OperandDescriptor { DT.opName = printf "QuasiMask%d" i
-                              , DT.opChunks = [( DT.IBit (hibit - width + 1)
-                                , PT.OBit 0
-                                , fromIntegral width)]
-                                , DT.opType = DT.OperandType (printf "QuasiMask%d" width)
-                              }
-    go _ = Nothing
+    getQuasi :: BM.QuasiBit -> BM.WithBottom ()
+    getQuasi qbit = if BM.isQBit qbit then BM.JustBit () else BM.BottomBit
+
+quasiMaskOfFields :: [Field] -> ARMBitSection ()
+quasiMaskOfFields fields = foldr doMerge BM.bottomBit (catMaybes $ map getSection fields)
+  where
+    getSection :: Field -> Maybe (ARMBitSection ())
+    getSection (Field name hibit width constraint useName)
+      | (not useName) && any (any BM.isQBit) constraint
+      = Just (BM.sectionOfConstraint armRegWidthRepr constraint)
+    getSection _ = Nothing
+
+    doMerge :: ARMBitSection () -> ARMBitSection () -> ARMBitSection ()
+    doMerge sect1 sect2 = fromMaybe (error "impossible") $ sect1 `BM.mergeBit` sect2
 
 type Fields = M.Map String Field
 
@@ -556,26 +558,23 @@ endianness bits = concat (reverse (LS.chunksOf 8 bits))
 instance PP.Pretty Encoding where
   pPrint encoding =
     PP.text "Encoding:" <+> PP.text (encName encoding)
-    $$ PP.text "Endian Swapped" $$ mkBody endianness
-    $$ PP.text "Original" $$ mkBody id
+    $$ PP.text "Endian Swapped"
+    $$ mkBody endianness
+    $$ PP.text "Original"
+    $$ mkBody id
+    $$ PP.text "Operands:"
+    $$ PP.vcat (map PP.pPrint (encOperands encoding))
     where
       mkBody :: (forall a. [a] -> [a]) -> PP.Doc
       mkBody endianswap = PP.nest 1 $
            BM.prettySegmentedMask endianswap (encMask encoding)
            $$ PP.text "Negative Masks:"
-           $$ PP.nest 1 (PP.vcat (map (BM.prettySegmentedMask endianswap) (encNegMasks encoding)))
+           $$ PP.vcat (map (BM.prettySegmentedMask endianswap) (encNegMasks encoding))
 
-
-
-simpleOperandFormat :: [Operand] -> String
-simpleOperandFormat descs = intercalate ", " $ catMaybes $ map go descs
-  where
-    go :: Operand -> Maybe String
-    go (PsuedoOperand _) = Nothing
-    go (RealOperand desc) =
-      let
-        name = DT.opName desc
-      in Just $ name ++ " ${" ++ DT.opName desc ++ "}"
+instance PP.Pretty Operand where
+  pPrint (Operand name sect _isPsuedo) =
+    PP.text name PP.<> PP.text ":" <+>
+      BM.prettyBitSection (PP.text . BM.showBit) sect
 
 parseEncList :: String -> [String]
 parseEncList = LS.splitOn ", "
@@ -665,23 +664,13 @@ bitParser = do
     , P.char 'x' >> return BT.Any
     ]
 
--- | A wrapper around 'DT.OperandDescriptor' to separate real and pseudo-operands
-data Operand =
-    RealOperand DT.OperandDescriptor
-    -- ^ a real operand that is used by the semantics
-  | PsuedoOperand DT.OperandDescriptor
-    -- ^ a psuedo-operand that only exists in order to avoid having unused bits that
-    -- would be otherwise zeroed-out on reassembly.
-    -- A psuedo-operand is created when a field is unnamed (i.e. not corresponding to an operand)
-    -- but has a quasimask - bits that are not present in the encoding mask but
-    -- are required to be a specific value in order to have a defined instruction semantics
-  deriving (Show)
+-- | A precursor to a 'DT.OperandDescriptor'
+data Operand = Operand { opName :: String
+                       , opSection :: ARMBitSection ()
+                       , opIsPsuedo :: Bool
+                       }
+  deriving Show
 
-operandDescOfOperand :: Operand -> DT.OperandDescriptor
-operandDescOfOperand = go
-  where
-    go (RealOperand op) = op
-    go (PsuedoOperand op) = op
 
 -- | A specialization of an instruction given a set of flags
 data Encoding = Encoding { encName :: String
@@ -692,9 +681,7 @@ data Encoding = Encoding { encName :: String
                          , encConstraints :: PropTree (ARMBitSection BT.Bit)
                          -- ^ the bitfield constraints that identify this specific encoding
                          , encOperands :: [Operand]
-                         -- ^ the operand descriptors for this encoding
-                         -- some operands comprise multiple fields (e.g. SIMD register Dm = Vm:M )
-                         -- some operands are psuedo-operands derived from quasimask field bits
+                         -- ^ the operands of this encoding
                          , encFields :: Fields
                          -- ^ the named bitfields of the instruction
                          , encIConstraints :: PropTree (ARMBitSection QuasiBit)
@@ -814,22 +801,22 @@ validateEncoding leaf encoding = do
 -- | Build operand descriptors out of the given fields
 leafGetEncodings :: InstructionLeaf
                  -> Fields
-                 -> [Operand]
+                 -> ARMBitSection ()
                  -> PropTree (ARMBitSection QuasiBit)
                  -> XML [Encoding]
-leafGetEncodings ileaf allfields operands iconstraints = do
+leafGetEncodings ileaf allfields quasimask iconstraints = do
   let iclass = ileafiClass ileaf
   mnemonic <- leafMnemonic' ileaf
   encodingConstraints <- leafGetEncodingConstraints ileaf allfields
 
   forM encodingConstraints $ \(encName', constraints) -> withEncodingName encName' $ do
-      immediates <- mapM mkImmediateOp (M.elems allfields)
+      let immediates = map mkImmediateOp (M.elems allfields)
       (mask, negmasks) <- deriveMasks iconstraints constraints
 
       let encoding = Encoding { encName = encName'
                               , encMnemonic = mnemonic
                               , encConstraints = constraints
-                              , encOperands = operands ++ map RealOperand immediates
+                              , encOperands = immediates ++ (maybeToList $ psuedoOp mask)
                               , encFields = allfields
                               , encIConstraints = iconstraints
                               , encMask = mask
@@ -840,15 +827,22 @@ leafGetEncodings ileaf allfields operands iconstraints = do
       MS.modify' $ \st -> st { encodingMap = M.insert encName' encoding (encodingMap st) }
       return encoding
   where
-    mkImmediateOp :: Field -> XML DT.OperandDescriptor
-    mkImmediateOp field@(Field name hibit width _ _) = do
-      let opType = getFieldOpType field
-      return $ DT.OperandDescriptor { DT.opName = name
-                                    , DT.opChunks = [( DT.IBit (hibit - width + 1)
-                                                     , PT.OBit 0
-                                                     , fromIntegral width)]
-                                    , DT.opType = DT.OperandType opType
-                                    }
+    psuedoOp :: ARMBitMask BM.QuasiBit -> Maybe (Operand)
+    psuedoOp mask =
+      let
+        qmask = quasiMaskOfMask mask
+        totalWidth = BM.sectTotalSetWidth qmask
+      in if totalWidth > 0
+      then Just $ Operand "QuasiMask" qmask True
+      else Nothing
+
+
+    mkImmediateOp :: Field -> Operand
+    mkImmediateOp field@(Field name _ _ constraint _) =
+      let
+        opType = getFieldOpType field
+        sect = BM.sectionOfConstraint armRegWidthRepr constraint
+      in Operand name sect False
 
 getFieldOpType :: Field -> String
 getFieldOpType field = printf "Bv%d" (fieldWidth field)

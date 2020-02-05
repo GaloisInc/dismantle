@@ -25,6 +25,9 @@ module Data.BitMask
   , ShowableBit(..)
   , BitSection
   , maskAsBitSection
+  , sectionOfConstraint
+  , sectTotalSetWidth
+  , prettyBitSection
   , AsBit(..)
   , asContiguousSections
   , mergeBitM
@@ -64,7 +67,7 @@ import           Prelude hiding ( zipWith, length )
 import           GHC.TypeNats
 import           Control.Monad.Identity ( runIdentity )
 import qualified Control.Monad.Except as ME
-import           Control.Monad ( unless )
+import           Control.Monad ( unless, foldM )
 import           Data.Maybe ( fromMaybe, catMaybes, isJust, fromJust )
 import           Data.List ( intercalate, nub )
 import qualified Data.List as List
@@ -181,6 +184,9 @@ instance SemiMaskBit () where
 
 instance HasBottomMaskBit () where
   bottomBit = ()
+
+instance ShowableBit () where
+  showBit _ = "_"
 
 readBit :: String -> Maybe BT.Bit
 readBit s = case s of
@@ -385,7 +391,8 @@ someBitMaskFromCons bit bits
 newtype BitSection n a = BitSection (BitMask n (WithBottom a))
   deriving (SemiMaskBit, Eq, Foldable, Functor)
 
-deriving instance (HasBottomMaskBit bit, KnownNat n, 1 <= n) => HasBottomMaskBit (BitSection n bit)
+instance (SemiMaskBit bit, KnownNat n, 1 <= n) => HasBottomMaskBit (BitSection n bit) where
+  bottomBit = BitSection $ bottomBitMask NR.knownNat
 
 instance MaskBit bit => Show (BitSection n bit) where
   show bitsect = showBitSection bitsect
@@ -504,12 +511,15 @@ asContiguousSections (BitSection mask) =
 sectTotalWidth :: BitSection n a -> Int
 sectTotalWidth (BitSection mask) = V.lengthInt mask
 
+sectTotalSetWidth :: BitSection n a -> Int
+sectTotalSetWidth sect = sum $ map (\(_, SomeBitMask mask) -> V.lengthInt mask) $ asContiguousSections sect
+
 -- | Print a 'BitSection' as a set of contiguous sub-masks, along with their hibit positions.
 prettyBitSection :: (a -> PP.Doc) -> BitSection n a -> PP.Doc
 prettyBitSection prettyBit bitsect =
   let
     chunks = map (\(bitPos, SomeBitMask mask) ->
-                    (sectTotalWidth bitsect - bitPos, map prettyBit $ V.toList mask)) $ asContiguousSections bitsect
+                    (sectTotalWidth bitsect - bitPos - 1, map prettyBit $ V.toList mask)) $ asContiguousSections bitsect
   in PP.hcat $ map prettyBitSectionChunk chunks
 
 prettyBitSectionChunk :: (Int, [PP.Doc]) -> PP.Doc
@@ -589,7 +599,11 @@ deriveMasks nr constraints = case PropTree.toConjunctsAndDisjuncts constraints o
     "Malformed PropTree for mask derivation: \n"
     ++ PP.render (PropTree.prettyPropTree (PP.text . showBitSection) constraints)
 
-type BitRange bit = (Maybe bit, Maybe bit)
+sectionOfConstraint :: 1 <= n => NatRepr n -> PropTree (BitSection n a) -> BitSection n ()
+sectionOfConstraint nr constraints = NR.withKnownNat nr $ foldr go bottomBit constraints
+  where
+    go :: BitSection n a -> BitSection n () -> BitSection n ()
+    go sect b = fromMaybe (error "impossible") $ fmap (const ()) sect `mergeBit` b
 
 -- | A trie with 'BitMask' keys for a fixed mask length. BitMasks are matched according to
 -- 'matchBit' of the 'bit' type: a lookup for a given mask will return all entries that would
