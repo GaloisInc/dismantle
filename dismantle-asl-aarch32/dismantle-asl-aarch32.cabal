@@ -28,7 +28,6 @@ library
                        template-haskell,
                        parameterized-utils,
                        asl-parser,
-                       dismantle-asl,
                        dismantle-tablegen,
                        split
   hs-source-dirs:      src

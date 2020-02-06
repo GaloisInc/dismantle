@@ -4,6 +4,3 @@
 [submodule "deps/arm-asl-parser"]
 	path = deps/arm-asl-parser
     url = git@github.com:GaloisInc/arm-asl-parser.git
-[submodule "deps/crucible"]
-	path = deps/crucible
-	url = git@github.com:GaloisInc/crucible.git
