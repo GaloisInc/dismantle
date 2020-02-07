@@ -24,6 +24,7 @@ module Dismantle.ARM.A32 (
   Opcode(..),
   disassembleInstruction,
   assembleInstruction,
+  aslEncodingMap,
   ppInstruction
   ) where
 

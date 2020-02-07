@@ -21,7 +21,7 @@ library
   exposed-modules:   Dismantle.ARM.XML,
                      Dismantle.ARM.ASL,
                      Dismantle.ARM.A32,
-                     -- Dismantle.ARM.T32,
+                     Dismantle.ARM.T32,
                      Dismantle.ARM.ISA,
                      Dismantle.ARM.TH
                      Data.BitMask

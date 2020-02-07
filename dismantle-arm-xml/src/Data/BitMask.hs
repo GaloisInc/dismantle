@@ -40,7 +40,9 @@ module Data.BitMask
   , mkQuasiBit
   , unQuasiBit
   , BitMask
+  , splitBitMask
   , bottomBitMask
+  , mergeBitMasksErr
   , SomeBitMask(..)
   , someBitMaskFromCons
   , computePattern
@@ -612,6 +614,17 @@ sectionOfConstraint nr constraints = NR.withKnownNat nr $ foldr go bottomBit con
   where
     go :: BitSection n a -> BitSection n () -> BitSection n ()
     go sect b = fromMaybe (error "impossible") $ fmap (const ()) sect `mergeBit` b
+
+splitBitMask :: BitMask n (Either bit1 bit2) -> (BitMask n (WithBottom bit1), BitMask n (WithBottom bit2))
+splitBitMask mask = (fmap doLeft mask, fmap doRight mask)
+  where
+    doLeft :: Either bit1 bit2 -> WithBottom bit1
+    doLeft (Left bit1) = JustBit bit1
+    doLeft _ = BottomBit
+
+    doRight :: Either bit1 bit2 -> WithBottom bit2
+    doRight (Right bit2) = JustBit bit2
+    doRight _ = BottomBit
 
 -- | A trie with 'BitMask' keys for a fixed mask length. BitMasks are matched according to
 -- 'matchBit' of the 'bit' type: a lookup for a given mask will return all entries that would

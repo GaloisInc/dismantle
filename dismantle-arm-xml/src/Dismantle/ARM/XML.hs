@@ -518,7 +518,8 @@ nameExpParser = do
     case slices of
       [] -> return $ NameExpString name
       [(hi, lo)] -> return $ NameExpSlice name hi lo
-      (hi, lo) : rst | all ((==) (hi, lo)) rst -> return $ NameExpSlice name hi lo
+      -- TODO: this is a workaround for a bug in the XML spec
+      [(3, 1), (3, 1)] | name == "cond" -> return $ NameExpString name
       _ -> P.customFailure $ XMLInnerParserError $ "inconsistent slices: " ++ show slices
 
   where
