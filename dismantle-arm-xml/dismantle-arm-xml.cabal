@@ -45,6 +45,7 @@ library
                        strict,
                        text,
                        transformers,
+                       th-lift,
                        template-haskell,
                        xml
   hs-source-dirs:      src

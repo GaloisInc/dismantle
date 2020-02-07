@@ -12,7 +12,9 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Dismantle.ARM.ASL
-  ( loadASL
+  ( Encoding(..)
+  , FieldConstraint(..)
+  , loadASL
   , encodingOpToInstDescriptor
   , instDescriptorsToISA
   )
@@ -65,7 +67,7 @@ import qualified Language.ASL.Syntax as ASL
 import qualified Dismantle.ARM.XML as XML
 import           Dismantle.ARM.XML ( ARMRegWidth, ARMBitSection
                                    , ARMBitMask, armRegWidthRepr
-                                   , Encoding(..), Field(..) )
+                                   , Field(..) )
 import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.Tablegen.Parser.Types as PT
 import qualified Dismantle.Tablegen.ByteTrie as BT
@@ -83,7 +85,7 @@ data ASLEnv = ASLEnv { envLogFn :: String -> IO ()
                      }
 
 data ASLContext = ASLContext { ctxASLEncoding :: Maybe (ASL.Instruction, ASL.InstructionEncoding)
-                             , ctxXMLEncoding :: Maybe Encoding
+                             , ctxXMLEncoding :: Maybe XML.Encoding
                              , ctxStmt :: Maybe ASL.Stmt
                              , ctxFileName :: String
                              , ctxSourceLoc :: Maybe SrcLoc
@@ -113,7 +115,7 @@ data ASLException =
   | UnexpectedSplitFields (ARMBitMask FixedFieldBit)
   | ASLParserError String
   | UnexpectedFieldWidth String Int Int
-  | MissingConstraintForField Encoding String [String]
+  | MissingConstraintForField XML.Encoding String [String]
   | MultipleExceptions [ASLException]
 
 deriving instance Show ASLException
@@ -167,7 +169,7 @@ instance PP.Pretty OuterASLException where
           Just (instr, enc) -> PP.text "for ASL encoding:" <+> PP.text (encodingIdentifier instr enc)
           _ -> PP.empty
     <+> case (ctxXMLEncoding ctx) of
-          Just enc -> PP.text "for XML encoding:" <+> PP.text (encName enc)
+          Just enc -> PP.text "for XML encoding:" <+> PP.text (XML.encName enc)
           _ -> PP.empty
     $$ case ctxStmt ctx of
           Just stmt -> PP.text "at statement:" $$ (PP.text $ show stmt) $$ errPretty
@@ -255,15 +257,14 @@ execASL archName aslfile logFn m = do
     (a, _, _) <- eresult
     return a
 
--- | Wrapper around an 'Encoding' that includes an identifier pointing to which ASL
--- instruction this 'Encoding' points to, as well as how to concretize the given ASL
--- instruction to the given encoding.
 
-data EncodingOp = EncodingOp { encASLIdent :: String
-                             , encASLConstraints :: [FieldConstraint]
-                             , encASLNegConstraints :: [[FieldConstraint]]
-                             , encEncoding :: Encoding
-                             }
+-- | An identifier pointing to which ASL instruction an 'XML.Encoding' points to, as
+-- well as how to concretize the given ASL instruction to an encoding.
+data Encoding = Encoding { encName :: String
+                         , encASLIdent :: String
+                         , encConstraint :: [FieldConstraint]
+                         , encNegConstraints :: [[FieldConstraint]]
+                         }
 
 -- | Annotate the 'Encoding's from the XML specification with an identifier for its correspoding
 -- ASL encoding. Identifiers are derived with 'encodingIdentifier' and are checked for uniqueness.
@@ -273,8 +274,8 @@ data EncodingOp = EncodingOp { encASLIdent :: String
 -- The masks for ASL encodings are more permissive than the XML encodings, thus each ASL encoding
 -- may correspond to multiple XML encodings. Each XML encoding is therefore annotated with any additional
 -- constraints (positive and negative) on the named fields of its corresponding ASL encoding.
--- The 'EncodingOp' list here represents the bijective mapping: XML encoding <-> ASL encoding + constraints.
-loadASL :: String -> FilePath -> [Encoding] -> (String -> IO ()) -> IO [EncodingOp]
+-- The list of pairs here represents the bijective mapping: XML encoding <-> ASL encoding + constraints.
+loadASL :: String -> FilePath -> [XML.Encoding] -> (String -> IO ()) -> IO [(XML.Encoding, Encoding)]
 loadASL archName aslFile xmlEncodings logFn = do
   logFn "Dismantle.ASL.ASL: loadASL"
   result <- runASL archName aslFile logFn $ do
@@ -287,14 +288,14 @@ loadASL archName aslFile xmlEncodings logFn = do
 
     forM xmlEncodings $ \xmlEncoding -> withXMLEncoding xmlEncoding $ do
       aslIdent <- lookupEncoding xmlEncoding
-      (instr, aslEncoding) <- lookupASLEncoding aslIdent
+      (instr, aslRawEncoding) <- lookupASLEncoding aslIdent
 
-      withASLEncoding (instr, aslEncoding) $ do
-        encodingop <- correlateEncodings aslIdent aslEncoding xmlEncoding
-        logMsg $ "Correlated XML encoding: " ++ (encName xmlEncoding) ++ " with ASL " ++ aslIdent
+      withASLEncoding (instr, aslRawEncoding) $ do
+        aslEncoding <- correlateEncodings aslIdent aslRawEncoding xmlEncoding
+        logMsg $ "Correlated XML encoding: " ++ (XML.encName xmlEncoding) ++ " with ASL " ++ aslIdent
         logMsg $ "with constraints:"
-        logMsg $ PP.render (prettyFieldConstraints (encASLConstraints encodingop) (encASLNegConstraints encodingop))
-        return encodingop
+        logMsg $ PP.render (prettyFieldConstraints (encConstraint aslEncoding) (encNegConstraints aslEncoding))
+        return (xmlEncoding, aslEncoding)
 
   case result of
     Left err -> do
@@ -429,7 +430,7 @@ aslFixedFieldMask aslEncoding = do
   aslTotalMask <- fmap (mkFieldBit Nothing) <$> maskFromEncoding aslEncoding
   fmap fixFieldBit <$> mergeBitMasks aslFieldMask aslTotalMask
 
-xmlFixedFieldMask :: Encoding -> ASL (ARMBitMask FixedFieldBit, [ARMBitMask FixedFieldBit])
+xmlFixedFieldMask :: XML.Encoding -> ASL (ARMBitMask FixedFieldBit, [ARMBitMask FixedFieldBit])
 xmlFixedFieldMask xmlEncoding = do
   (xmlMasks, xmlNegMasks) <- liftM unzip $
     forM (filter XML.fieldUseName $ Map.elems $ XML.encFields xmlEncoding) $ \field -> do
@@ -457,16 +458,16 @@ xmlFixedFieldMask xmlEncoding = do
 --
 -- This serves as a final check that we have found the correct encoding, since
 -- every bit is checked that its tagged field name is the same in both masks.
-correlateEncodings :: String -> ASL.InstructionEncoding -> Encoding -> ASL EncodingOp
-correlateEncodings aslIdent aslEncoding xmlEncoding = do
-  aslFixedMask <- aslFixedFieldMask aslEncoding
+correlateEncodings :: String -> ASL.InstructionEncoding -> XML.Encoding -> ASL Encoding
+correlateEncodings aslIdent aslRawEncoding xmlEncoding = do
+  aslFixedMask <- aslFixedFieldMask aslRawEncoding
   (xmlFixedMask, xmlNegMasks) <- xmlFixedFieldMask xmlEncoding
   fixedMask <- mergeBitMasks aslFixedMask xmlFixedMask
   constraintMap <- splitFieldMask xmlFixedMask
   negConstraintMap <-
     liftM (Map.unionsWith (++) . map (fmap (\x -> [x]))) $ mapM splitFieldMask xmlNegMasks
 
-  (posConstraints, negConstraints) <- liftM unzip $ forM (ASL.encFields aslEncoding) $ \field -> do
+  (posConstraints, negConstraints) <- liftM unzip $ forM (ASL.encFields aslRawEncoding) $ \field -> do
     let
       fieldName = T.unpack $ ASL.instFieldName field
     pos <- case Map.lookup fieldName constraintMap of
@@ -483,11 +484,11 @@ correlateEncodings aslIdent aslEncoding xmlEncoding = do
     let neg = fromMaybe [] $ Map.lookup fieldName negConstraintMap
     return (pos, neg)
 
-  return $ EncodingOp { encASLIdent = aslIdent
-                      , encASLConstraints = concat posConstraints
-                      , encASLNegConstraints = filter (not . null) negConstraints
-                      , encEncoding = xmlEncoding
-                      }
+  return $ Encoding { encName = XML.encName xmlEncoding
+                    , encASLIdent = aslIdent
+                    , encConstraint = concat posConstraints
+                    , encNegConstraints = filter (not . null) negConstraints
+                    }
 
 lookupMasks :: ARMBitMask BM.QuasiBit -> ASL String
 lookupMasks mask = do
@@ -504,13 +505,13 @@ lookupMasks mask = do
 -- Attempts a lookup with both the general instruction mask as well as the mask from this
 -- specific encoding. This ambiguity is resolved later by resolving the ASL bits against
 -- the constraints from the XML in 'correlateEncodings'.
-lookupEncoding :: Encoding -> ASL String
+lookupEncoding :: XML.Encoding -> ASL String
 lookupEncoding encoding = do
-  (imask, inegmasks) <- case BM.deriveMasks NR.knownNat (encIConstraints encoding) of
+  (imask, inegmasks) <- case BM.deriveMasks NR.knownNat (XML.encIConstraints encoding) of
     Left msg -> throwErrorHere $ FailedToDeriveMask msg
     Right (mask, negmasks) -> return $ (mask, negmasks)
-  let mask = encMask encoding
-  let negmasks = encNegMasks encoding
+  let mask = XML.encMask encoding
+  let negmasks = XML.encNegMasks encoding
 
   lookupMasks imask
     `ME.catchError`
@@ -587,21 +588,20 @@ operandToDescriptor' (XML.Operand name sect isPseudo) =
     opTypeFormat :: String
     opTypeFormat = if isPseudo then "QuasiMask%d" else "Bv%d"
 
-encodingOpToInstDescriptor :: EncodingOp -> DT.InstructionDescriptor
-encodingOpToInstDescriptor encodingOp =
+encodingOpToInstDescriptor :: XML.Encoding -> DT.InstructionDescriptor
+encodingOpToInstDescriptor encoding =
   let
-    encoding = encEncoding encodingOp
-    operandDescs = concat $ map operandToDescriptor $ encOperands $ encEncoding encodingOp
+    operandDescs = concat $ map operandToDescriptor $ XML.encOperands $ encoding
   in DT.InstructionDescriptor
-       { DT.idMask = map BM.flattenQuasiBit (endianness $ BM.toList $ encMask encoding)
-       , DT.idNegMasks = map (endianness . BM.toList) $ encNegMasks encoding
-       , DT.idMnemonic = encName encoding
+       { DT.idMask = map BM.flattenQuasiBit (endianness $ BM.toList $ XML.encMask encoding)
+       , DT.idNegMasks = map (endianness . BM.toList) $ XML.encNegMasks encoding
+       , DT.idMnemonic = XML.encName encoding
        , DT.idInputOperands = operandDescs
        , DT.idOutputOperands = []
-       , DT.idNamespace = encMnemonic encoding
+       , DT.idNamespace = XML.encMnemonic encoding
        , DT.idDecoderNamespace = ""
-       , DT.idAsmString = encName encoding
-         ++ "(" ++ PP.render (BM.prettySegmentedMask endianness (encMask encoding)) ++ ") "
+       , DT.idAsmString = XML.encName encoding
+         ++ "(" ++ PP.render (BM.prettySegmentedMask endianness (XML.encMask encoding)) ++ ") "
          ++ simpleOperandFormat operandDescs
        , DT.idPseudo = False
        , DT.idDefaultPrettyVariableValues = []
@@ -633,7 +633,7 @@ withASLEncoding :: (ASL.Instruction, ASL.InstructionEncoding) -> ASL a -> ASL a
 withASLEncoding aslEncoding = withContext (\ctx -> ctx { ctxASLEncoding = Just aslEncoding })
 
 
-withXMLEncoding :: Encoding -> ASL a -> ASL a
+withXMLEncoding :: XML.Encoding -> ASL a -> ASL a
 withXMLEncoding xmlEncoding = withContext (\ctx -> ctx { ctxXMLEncoding = Just xmlEncoding })
 
 

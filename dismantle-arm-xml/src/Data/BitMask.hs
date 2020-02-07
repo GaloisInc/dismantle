@@ -37,6 +37,8 @@ module Data.BitMask
   , bitSectionFromList
   , bitSectionFromListHiBit
   , QuasiBit
+  , mkQuasiBit
+  , unQuasiBit
   , BitMask
   , bottomBitMask
   , SomeBitMask(..)
@@ -279,6 +281,12 @@ instance ShowableBit QuasiBit where
 
 instance PP.Pretty QuasiBit where
   pPrint bit = PP.text (showBit bit)
+
+mkQuasiBit :: (BT.Bit, Bool) -> QuasiBit
+mkQuasiBit (bit, isQuasi) = QuasiBit (bit, if isQuasi then JustBit () else BottomBit)
+
+unQuasiBit :: QuasiBit -> (BT.Bit, Bool)
+unQuasiBit (QuasiBit (bit, qb)) = (bit, qb == JustBit ())
 
 -- | Make a 'QuasiBit' from a 'BT.Bit'. If the first argument is 'True' then the bit is marked
 -- as a soft requirement that can be flattened into a wildcard when constructing a mask.
