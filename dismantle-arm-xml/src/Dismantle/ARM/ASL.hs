@@ -46,7 +46,7 @@ import           Control.Monad.Except ( throwError, ExceptT, MonadError )
 import qualified Control.Monad.Except as ME
 
 import           Data.Maybe ( catMaybes, fromMaybe, isJust )
-import           Data.List ( intercalate, groupBy )
+import           Data.List ( intercalate, groupBy, partition )
 import           Data.Map ( Map )
 import qualified Data.Map as Map
 -- FIXME: move or use library version of this
@@ -263,6 +263,8 @@ execASL archName aslfile logFn m = do
 -- well as how to concretize the given ASL instruction to an encoding.
 data Encoding = Encoding { encName :: String
                          , encASLIdent :: String
+                         , encRealOperands :: [(String, Integer)]
+                         , encPseudoOperands :: [(String, Integer)]
                          , encConstraint :: [FieldConstraint]
                          , encNegConstraints :: [[FieldConstraint]]
                          }
@@ -488,12 +490,20 @@ correlateEncodings aslIdent aslMask aslRawEncoding xmlEncoding = do
       Nothing -> throwErrorHere $ MissingConstraintForField xmlEncoding fieldName (Map.keys constraintMap)
     let neg = fromMaybe [] $ Map.lookup fieldName negConstraintMap
     return (pos, neg)
-
+  let (realops, psuedoops) = getOperandDescriptors xmlEncoding
   return $ Encoding { encName = XML.encName xmlEncoding
                     , encASLIdent = aslIdent
+                    , encRealOperands = map getSimpleOp realops
+                    , encPseudoOperands = map getSimpleOp psuedoops
                     , encConstraint = concat posConstraints
                     , encNegConstraints = filter (not . null) negConstraints
                     }
+
+getSimpleOp :: DT.OperandDescriptor -> (String, Integer)
+getSimpleOp opd =
+  let
+    totalWidth = sum (map (\(_, _, w) -> w) (DT.opChunks opd))
+  in (DT.opName opd, fromIntegral totalWidth)
 
 lookupMasks :: ARMBitMask BM.QuasiBit -> ASL (String, ARMBitMask BM.QuasiBit)
 lookupMasks mask = do
@@ -564,7 +574,7 @@ sectionToChunks sect =
 
 operandToDescriptor :: XML.Operand -> [DT.OperandDescriptor]
 operandToDescriptor (XML.Operand name sect isPseudo) = case isPseudo of
-  False -> [DT.OperandDescriptor { DT.opName = name
+  False -> [DT.OperandDescriptor { DT.opName = xmlFieldNameToASL $ name
                                  , DT.opChunks = sectionToChunks sect
                                  , DT.opType = DT.OperandType $ printf "Bv%d" totalWidth
                                  }]
@@ -594,21 +604,27 @@ operandToDescriptor' (XML.Operand name sect isPseudo) =
     opTypeFormat :: String
     opTypeFormat = if isPseudo then "QuasiMask%d" else "Bv%d"
 
+getOperandDescriptors ::  XML.Encoding -> ([DT.OperandDescriptor], [DT.OperandDescriptor])
+getOperandDescriptors encoding =
+  let
+    (pseudo, real) = partition XML.opIsPsuedo (XML.encOperands encoding)
+  in (concat $ map operandToDescriptor real, concat $ map operandToDescriptor pseudo)
+
 encodingOpToInstDescriptor :: XML.Encoding -> DT.InstructionDescriptor
 encodingOpToInstDescriptor encoding =
   let
-    operandDescs = concat $ map operandToDescriptor $ XML.encOperands $ encoding
+    (realops, pseudoops) = getOperandDescriptors encoding
   in DT.InstructionDescriptor
        { DT.idMask = map BM.flattenQuasiBit (endianness $ BM.toList $ XML.encMask encoding)
        , DT.idNegMasks = map (endianness . BM.toList) $ XML.encNegMasks encoding
        , DT.idMnemonic = XML.encName encoding
-       , DT.idInputOperands = operandDescs
+       , DT.idInputOperands = realops ++ pseudoops
        , DT.idOutputOperands = []
        , DT.idNamespace = XML.encMnemonic encoding
        , DT.idDecoderNamespace = ""
        , DT.idAsmString = XML.encName encoding
          ++ "(" ++ PP.render (BM.prettySegmentedMask endianness (XML.encMask encoding)) ++ ") "
-         ++ simpleOperandFormat operandDescs
+         ++ simpleOperandFormat (realops ++ pseudoops)
        , DT.idPseudo = False
        , DT.idDefaultPrettyVariableValues = []
        , DT.idPrettyVariableOverrides = []
