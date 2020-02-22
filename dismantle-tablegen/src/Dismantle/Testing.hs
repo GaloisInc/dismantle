@@ -256,9 +256,10 @@ checkObjDumpGNU =
   check <- return $ TL.isPrefixOf "GNU objdump" t
   hClose hout
   void $ Proc.waitForProcess ph
-  if check then return () else die $ "Error: objdump in PATH is not GNU."
+  if check then return () else do
+    TL.putStrLn $ "WARNING: objdump in PATH is not GNU: " <> t
   where
-    p0 = Proc.proc "objdump" ["-v"]
+    p0 = Proc.proc "objdump" ["--version"]
     p1 = p0 { Proc.std_out = Proc.CreatePipe
             }
 
