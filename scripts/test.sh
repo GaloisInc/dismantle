@@ -18,6 +18,9 @@ case $ARCH in
     arm)
         cabal v2-test dismantle-arm
         ;;
+    arm-xml)
+        cabal v2-test dismantle-arm-xml
+        ;;
     thumb)
         cabal v2-test dismantle-thumb
         ;;
