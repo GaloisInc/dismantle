@@ -2,6 +2,7 @@
 .swp
 dist
 dist-newstyle
+cabal.project
 .cabal-sandbox
 .stack-work/
 TAGS
