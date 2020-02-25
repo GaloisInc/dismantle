@@ -31,7 +31,6 @@ import System.FilePath.Glob ( namesMatching )
 import System.FilePath ( (</>), (<.>) )
 import qualified System.Process as Proc
 import qualified Text.Megaparsec as P
-import System.Exit (die)
 import System.IO ( hClose , Handle, IOMode(..), openFile )
 import qualified Dismantle.Testing.Regex as RE
 import qualified Text.PrettyPrint.HughesPJClass as PP
@@ -160,9 +159,9 @@ testInstructionWith norm pCmp disasm asm pp skipPPRE i agg = do
                            , testCount = testCount agg + 1
                            })
     Just insn -> do
-      let !pretty = T.pack (show (pp insn))
       case bytes == asm insn of
         False -> do
+          let !pretty = T.pack (show (pp insn))
           let !actualRep = T.pack (binaryRep bytes)
           let !asmRep = T.pack (binaryRep (asm insn))
           let failure = (i, pretty, actualRep, asmRep)
@@ -179,6 +178,7 @@ testInstructionWith norm pCmp disasm asm pp skipPPRE i agg = do
                  ) of
               True -> return (agg { testCount = testCount agg + 1 })
               False -> do
+                let !pretty = T.pack (show (pp insn))
                 let failure = (i, pretty)
                 return (agg { testPrettyFailures = failure : testPrettyFailures agg
                             , testCount = testCount agg + 1
@@ -204,7 +204,7 @@ emptyTestAggregate = TestAggregate { testDisassemblyFailures = []
 formatTestFailure :: TestAggregate -> String
 formatTestFailure ta = show doc
   where
-    doc = PP.vcat ["Disassembly failures:"
+    doc = PP.vcat [ "Disassembly failures:"
                   , PP.nest 2 (PP.vcat disasmFailures)
                   , "Roundtrip failures:"
                   , PP.nest 2 (PP.vcat roundtripFailures)
@@ -260,8 +260,7 @@ checkObjDumpGNU =
     TL.putStrLn $ "WARNING: objdump in PATH is not GNU: " <> t
   where
     p0 = Proc.proc "objdump" ["--version"]
-    p1 = p0 { Proc.std_out = Proc.CreatePipe
-            }
+    p1 = p0 { Proc.std_out = Proc.CreatePipe }
 
 withDisassembledFile' :: Endianness -> Parser Disassembly -> Maybe [String] -> FilePath -> (Disassembly -> IO a) -> IO a
 withDisassembledFile' endianness parser customArgs f k = do
