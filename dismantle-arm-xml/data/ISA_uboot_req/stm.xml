@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="STM" title="STM, STMIA, STMEA -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="STM" />
+  </docvars>
+  <heading>STM, STMIA, STMEA</heading>
+  <desc>
+    <brief>
+      <para>Store Multiple (Increment After, Empty Ascending)</para>
+    </brief>
+    <authored>
+      <para>Store Multiple (Increment After, Empty Ascending) stores multiple registers to consecutive memory locations using an address from a base register. The consecutive memory locations start at this address, and the address just above the last of those locations can optionally be written back to the base register.</para>
+      <para>The lowest-numbered register is loaded from the lowest memory address, through to the highest-numbered register from the highest memory address. See also <xref linkend="CHDDBEDG">Encoding of lists of general-purpose registers and the PC</xref>.</para>
+      <para>Armv8.2 permits the deprecation of some Store Multiple ordering behaviors in AArch32 state, for more information see <xref linkend="v8.2.LSMAOC">ARMv8.2-LSMAOC</xref>. For details of related system instructions see <xref linkend="A32T32-base.instructions.STM_u">STM (User registers)</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, the timing of this instruction is insensitive to the value of the data being loaded or stored.</para>
+  </operationalnotes>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="3">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="3" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="STM" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/STM/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="23" name="U" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="op" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="16" name="register_list" usename="1">
+          <c colspan="16"></c>
+        </box>
+      </regdiagram>
+      <encoding name="STM_A1" oneofinclass="1" oneof="3" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="STM" />
+        </docvars>
+        <asmtemplate comment="Preferred syntax"><text>STM</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_2" hover="List of one or more registers to be stored">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Alternate syntax, Empty Ascending stack"><text>STMEA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_2" hover="List of one or more registers to be stored">&lt;registers&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/STM/A1_A.txt" mylink="aarch32.instrs.STM.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  registers = register_list;  wback = (W == '1');
+if n == 15 || <a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers) &lt; 1 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="A1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">BitCount(registers) &lt; 1</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction operates as an <instruction>STM</instruction> with the same addressing mode but targeting an unspecified set of registers. These registers might include R15. If the instruction specifies writeback, the modification to the base address on writeback might differ from the number of registers stored.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">n == 15 &amp;&amp; wback</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_WBSUPPRESS" />
+          <cu_type>
+            <cu_type_text>The instruction executes with writeback to the PC. The instruction is handled as described in <xref linkend="CEGHJGEF">Using R15</xref>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T1" oneof="3" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="STM" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/STM/T1_A.txt">
+        <box hibit="31" width="4" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="27" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="26" width="3" name="Rn" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="23" width="8" name="register_list" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="STM_T1" oneofinclass="1" oneof="3" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="STM" />
+        </docvars>
+        <asmtemplate comment="Preferred syntax"><text>STM</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>!, </text><a link="registers" hover="List of one or more registers to be stored (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Alternate syntax, Empty Ascending stack"><text>STMEA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><text>!, </text><a link="registers" hover="List of one or more registers to be stored (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/STM/T1_A.txt" mylink="aarch32.instrs.STM.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  registers = '00000000':register_list;  wback = TRUE;
+if <a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers) &lt; 1 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">BitCount(registers) &lt; 1</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction operates as an <instruction>STM</instruction> with the same addressing mode but targeting an unspecified set of registers. These registers might include R15. If the instruction specifies writeback, the modification to the base address on writeback might differ from the number of registers stored.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">n == 15 &amp;&amp; wback</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_WBSUPPRESS" />
+          <cu_type>
+            <cu_type_text>The instruction executes with writeback to the PC. The instruction is handled as described in <xref linkend="CEGHJGEF">Using R15</xref>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+    <iclass name="T2" oneof="3" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="STM" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/STM/T2_A.txt" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" width="2" name="opc" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1">
+          <c></c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" name="P" usename="1" settings="1">
+          <c>(0)</c>
+        </box>
+        <box hibit="14" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="13" width="14" name="register_list" usename="1">
+          <c colspan="14"></c>
+        </box>
+      </regdiagram>
+      <encoding name="STM_T2" oneofinclass="1" oneof="3" label="T2">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="STM" />
+        </docvars>
+        <asmtemplate comment="Preferred syntax, if &lt;Rn&gt;, '!' and &lt;registers&gt; can be represented in T1"><text>STM</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>.W </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_1" hover="List of one or more registers to be stored (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Alternate syntax, Empty Ascending stack, if &lt;Rn&gt;, '!' and &lt;registers&gt; can be represented in T1"><text>STMEA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>.W </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_1" hover="List of one or more registers to be stored (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Preferred syntax"><text>STM</text><a link="ia" hover="Optional suffix for Increment After form">{IA}</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_1" hover="List of one or more registers to be stored (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Alternate syntax, Empty Ascending stack"><text>STMEA</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rn" hover="General-purpose base register (field &quot;Rn&quot;)">&lt;Rn&gt;</a><a link="0d33" hover="The address adjusted by the size of data loaded is written back to the base register (field &quot;W&quot;)">{!}</a><text>, </text><a link="registers_1" hover="List of one or more registers to be stored (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/STM/T2_A.txt" mylink="aarch32.instrs.STM.T2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rn);  registers = P:M:register_list;  wback = (W == '1');
+if n == 15 || <a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers) &lt; 2 then UNPREDICTABLE;
+if wback &amp;&amp; registers&lt;n&gt; == '1' then UNPREDICTABLE;
+if registers&lt;13&gt; == '1' then UNPREDICTABLE;
+if registers&lt;15&gt; == '1' then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T2" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">BitCount(registers) &lt; 1</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction operates as an <instruction>STM</instruction> with the same addressing mode but targeting an unspecified set of registers. These registers might include R15. If the instruction specifies writeback, the modification to the base address on writeback might differ from the number of registers stored.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">BitCount(registers) == 1</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_NONE" />
+          <cu_type>
+            <cu_type_text>The instruction operates as an <instruction>STM</instruction> with the same addressing mode but targeting an unspecified set of registers. These registers might include R15.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">wback &amp;&amp; registers&lt;n&gt; == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_BASEUNKNOWN" />
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">registers&lt;13&gt; == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The store instruction performs all of the stores using the specified addressing mode but the value of R13 is <arm-defined-word>unknown</arm-defined-word>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">registers&lt;15&gt; == '1'</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The store instruction performs all of the stores using the specified addressing mode but the value of R15 is <arm-defined-word>unknown</arm-defined-word>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">n == 15 &amp;&amp; wback</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type constraint="Constraint_WBSUPPRESS" />
+          <cu_type>
+            <cu_type_text>The instruction executes with writeback to the PC. The instruction is handled as described in <xref linkend="CEGHJGEF">Using R15</xref>.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="STM_A1, STM_T1, STM_T2" symboldefcount="1">
+      <symbol link="ia">IA</symbol>
+      <account encodedin="">
+        <intro>
+          <para>Is an optional suffix for the Increment After form.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STM_A1, STM_T1, STM_T2" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STM_A1, STM_T1, STM_T2" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STM_A1, STM_T1, STM_T2" symboldefcount="1">
+      <symbol link="rn">&lt;Rn&gt;</symbol>
+      <account encodedin="Rn">
+        <intro>
+          <para>Is the general-purpose base register, encoded in the "Rn" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STM_A1, STM_T2" symboldefcount="1">
+      <symbol link="0d33">!</symbol>
+      <account encodedin="W">
+        <intro>
+          <para>The address adjusted by the size of the data loaded is written back to the base register. If specified, it is encoded in the "W" field as 1, otherwise this field defaults to 0.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STM_A1" symboldefcount="1">
+      <symbol link="registers_2">&lt;registers&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is a list of one or more registers to be stored, separated by commas and surrounded by { and }.</para>
+          <para>The PC can be in the list. However, Arm deprecates the use of instructions that include the PC in the list.</para>
+          <para>If base register writeback is specified, and the base register is not the lowest-numbered register in the list, such an instruction stores an <arm-defined-word>unknown</arm-defined-word> value for the base register.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STM_T1" symboldefcount="2">
+      <symbol link="registers">&lt;registers&gt;</symbol>
+      <account encodedin="register_list">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: is a list of one or more registers to be stored, separated by commas and surrounded by { and }. The registers in the list must be in the range R0-R7, encoded in the "register_list" field. If the base register is not the lowest-numbered register in the list, such an instruction stores an <arm-defined-word>unknown</arm-defined-word> value for the base register.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="STM_T2" symboldefcount="3">
+      <symbol link="registers_1">&lt;registers&gt;</symbol>
+      <account encodedin="register_list">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T2: is a list of one or more registers to be stored, separated by commas and surrounded by { and }.</para>
+          <para>The registers in the list must be in the range R0-R12, encoded in the "register_list" field, and can optionally contain the LR. If the LR is in the list, the "M" field is set to 1, otherwise it defaults to 0.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/STM/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    address = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n];
+    for i = 0 to 14
+        if registers&lt;i&gt; == '1' then
+            if i == n &amp;&amp; wback &amp;&amp; i != <a link="impl-shared.LowestSetBit.1" file="shared_pseudocode.xml" hover="function: integer LowestSetBit(bits(N) x)">LowestSetBit</a>(registers) then
+                <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4] = bits(32) UNKNOWN;  // Only possible for encodings T1 and A1
+            else
+                <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[i];
+            address = address + 4;
+    if registers&lt;15&gt; == '1' then  // Only possible for encoding A1
+        <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4] = <a link="impl-aarch32.PCStoreValue.0" file="shared_pseudocode.xml" hover="function: bits(32) PCStoreValue()">PCStoreValue</a>();
+    if wback then <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[n] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[n] + 4*<a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

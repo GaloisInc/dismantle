@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="B" title="B -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="B" />
+  </docvars>
+  <heading>B</heading>
+  <desc>
+    <brief>
+      <para>Branch</para>
+    </brief>
+    <authored>
+      <para>Branch causes a branch to a target address.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+      <para>Related encodings: <xref linkend="T32.encoding_index.bcrtrl">Branches and miscellaneous control</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="5">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>, </txt>
+      <a href="#t2">T2</a>
+      <txt>, </txt>
+      <a href="#t3">T3</a>
+      <txt> and </txt>
+      <a href="#t4">T4</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="5" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="B" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/B/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="24" name="H" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="23" width="24" name="imm24" usename="1">
+          <c colspan="24"></c>
+        </box>
+      </regdiagram>
+      <encoding name="B_A1" oneofinclass="1" oneof="5" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="B" />
+        </docvars>
+        <asmtemplate><text>B</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="label_4" hover="The label of instruction that is to be branched to">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/B/A1_A.txt" mylink="aarch32.instrs.B.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">imm32 = <a link="impl-shared.SignExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) SignExtend(bits(M) x, integer N)">SignExtend</a>(imm24:'00', 32);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="5" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="B" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/B/T1_A.txt" tworows="1">
+        <box hibit="31" width="4" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="27" width="4" name="cond" usename="1" settings="4" constraint="!= 111x">
+          <c colspan="4">!= 111x</c>
+        </box>
+        <box hibit="23" width="8" name="imm8" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="B_T1" oneofinclass="1" oneof="5" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="B" />
+        </docvars>
+        <asmtemplate comment="Not permitted in IT block"><text>B</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="label" hover="The label of instruction that is to be branched to">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/B/T1_A.txt" mylink="aarch32.instrs.B.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if cond == '1110' then SEE "UDF";
+if cond == '1111' then SEE "SVC";
+imm32 = <a link="impl-shared.SignExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) SignExtend(bits(M) x, integer N)">SignExtend</a>(imm8:'0', 32);
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T2" oneof="5" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="B" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/B/T2_A.txt">
+        <box hibit="31" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="26" width="11" name="imm11" usename="1">
+          <c colspan="11"></c>
+        </box>
+      </regdiagram>
+      <encoding name="B_T2" oneofinclass="1" oneof="5" label="T2">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="B" />
+        </docvars>
+        <asmtemplate comment="Outside or last in IT block"><text>B</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="label_1" hover="The label of instruction that is to be branched to">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/B/T2_A.txt" mylink="aarch32.instrs.B.T2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">imm32 = <a link="impl-shared.SignExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) SignExtend(bits(M) x, integer N)">SignExtend</a>(imm11:'0', 32);
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() &amp;&amp; !<a link="impl-aarch32.LastInITBlock.0" file="shared_pseudocode.xml" hover="function: boolean LastInITBlock()">LastInITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T3" oneof="5" id="t3" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T3" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="B" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/B/T3_A.txt" tworows="1">
+        <box hibit="31" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="26" name="S" usename="1">
+          <c></c>
+        </box>
+        <box hibit="25" width="4" name="cond" usename="1" settings="4" constraint="!= 111x">
+          <c colspan="4">!= 111x</c>
+        </box>
+        <box hibit="21" width="6" name="imm6" usename="1">
+          <c colspan="6"></c>
+        </box>
+        <box hibit="15" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="13" name="J1" usename="1">
+          <c></c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="11" name="J2" usename="1">
+          <c></c>
+        </box>
+        <box hibit="10" width="11" name="imm11" usename="1">
+          <c colspan="11"></c>
+        </box>
+      </regdiagram>
+      <encoding name="B_T3" oneofinclass="1" oneof="5" label="T3">
+        <docvars>
+          <docvar key="armarmheading" value="T3" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="B" />
+        </docvars>
+        <asmtemplate comment="Not permitted in IT block, and &lt;label&gt; can be represented in T1"><text>B</text><a link="c_2" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>.W </text><a link="label_2" hover="The label of instruction that is to be branched to">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate comment="Not permitted in IT block"><text>B</text><a link="c_2" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="label_2" hover="The label of instruction that is to be branched to">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/B/T3_A.txt" mylink="aarch32.instrs.B.T3_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if cond&lt;3:1&gt; == '111' then SEE "Related encodings";
+imm32 = <a link="impl-shared.SignExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) SignExtend(bits(M) x, integer N)">SignExtend</a>(S:J2:J1:imm6:imm11:'0', 32);
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T4" oneof="5" id="t4" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T4" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="B" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/B/T4_A.txt">
+        <box hibit="31" width="5" settings="5">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="26" name="S" usename="1">
+          <c></c>
+        </box>
+        <box hibit="25" width="10" name="imm10" usename="1">
+          <c colspan="10"></c>
+        </box>
+        <box hibit="15" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="13" name="J1" usename="1">
+          <c></c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="11" name="J2" usename="1">
+          <c></c>
+        </box>
+        <box hibit="10" width="11" name="imm11" usename="1">
+          <c colspan="11"></c>
+        </box>
+      </regdiagram>
+      <encoding name="B_T4" oneofinclass="1" oneof="5" label="T4">
+        <docvars>
+          <docvar key="armarmheading" value="T4" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="B" />
+        </docvars>
+        <asmtemplate comment="&lt;label&gt; can be represented in T2"><text>B</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>.W </text><a link="label_3" hover="The label of instruction that is to be branched to">&lt;label&gt;</a></asmtemplate>
+        <asmtemplate><text>B</text><text>{</text><a link="c_1" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="label_3" hover="The label of instruction that is to be branched to">&lt;label&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/B/T4_A.txt" mylink="aarch32.instrs.B.T4_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">I1 = NOT(J1 EOR S);  I2 = NOT(J2 EOR S);  imm32 = <a link="impl-shared.SignExtend.2" file="shared_pseudocode.xml" hover="function: bits(N) SignExtend(bits(M) x, integer N)">SignExtend</a>(S:I1:I2:imm10:imm11:'0', 32);
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() &amp;&amp; !<a link="impl-aarch32.LastInITBlock.0" file="shared_pseudocode.xml" hover="function: boolean LastInITBlock()">LastInITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="B_A1, B_T2, B_T4" symboldefcount="1">
+      <symbol link="c_1">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>For encoding A1, T2 and T4: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="B_T1" symboldefcount="2">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. Must not be <value>AL</value> or omitted.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="B_T3" symboldefcount="3">
+      <symbol link="c_2">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T3" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T3: see <xref linkend="Babbefhf">Standard assembler syntax fields</xref>. <syntax>&lt;c&gt;</syntax> must not be <value>AL</value> or omitted.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="B_A1, B_T1, B_T2, B_T3, B_T4" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="B_A1" symboldefcount="1">
+      <symbol link="label_4">&lt;label&gt;</symbol>
+      <account encodedin="imm24">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="isa" value="A32" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: the label of the instruction that is to be branched to. The assembler calculates the required value of the offset from the PC value of the <instruction>B</instruction> instruction to this label, then selects an encoding that sets <field>imm32</field> to that offset.</para>
+          <para>Permitted offsets are multiples of 4 in the range –33554432 to 33554428.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="B_T1" symboldefcount="2">
+      <symbol link="label">&lt;label&gt;</symbol>
+      <account encodedin="imm8">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T1: the label of the instruction that is to be branched to. The assembler calculates the required value of the offset from the PC value of the <instruction>B</instruction> instruction to this label, then selects an encoding that sets <field>imm32</field> to that offset. Permitted offsets are even numbers in the range –256 to 254.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="B_T2" symboldefcount="3">
+      <symbol link="label_1">&lt;label&gt;</symbol>
+      <account encodedin="imm11">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T2: the label of the instruction that is to be branched to. The assembler calculates the required value of the offset from the PC value of the <instruction>B</instruction> instruction to this label, then selects an encoding that sets <field>imm32</field> to that offset. Permitted offsets are even numbers in the range –2048 to 2046.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="B_T3" symboldefcount="4">
+      <symbol link="label_2">&lt;label&gt;</symbol>
+      <account encodedin="S:J2:J1:imm6:imm11">
+        <docvars>
+          <docvar key="armarmheading" value="T3" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T3: the label of the instruction that is to be branched to. The assembler calculates the required value of the offset from the PC value of the <instruction>B</instruction> instruction to this label, then selects an encoding that sets <field>imm32</field> to that offset.</para>
+          <para>Permitted offsets are even numbers in the range –1048576 to 1048574.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="B_T4" symboldefcount="5">
+      <symbol link="label_3">&lt;label&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="T4" />
+          <docvar key="isa" value="T32" />
+        </docvars>
+        <intro>
+          <para>For encoding T4: the label of the instruction that is to be branched to. The assembler calculates the required value of the offset from the PC value of the <instruction>B</instruction> instruction to this label, then selects an encoding that sets <field>imm32</field> to that offset.</para>
+          <para>Permitted offsets are even numbers in the range –16777216 to 16777214.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/B/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    <a link="impl-aarch32.BranchWritePC.2" file="shared_pseudocode.xml" hover="function: BranchWritePC(bits(32) address, BranchType branch_type)">BranchWritePC</a>(PC + imm32, <a link="BranchType_DIR" file="shared_pseudocode.xml" hover="enumeration BranchType {&#13; BranchType_DIRCALL, BranchType_INDCALL, BranchType_ERET, BranchType_DBGEXIT, BranchType_RET, BranchType_DIR, BranchType_INDIR, BranchType_EXCEPTION, BranchType_RESET, BranchType_UNKNOWN}">BranchType_DIR</a>);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

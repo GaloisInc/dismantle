@@ -6,7 +6,10 @@ ARCH=$1
 
 export STACK_YAML=stack-ghc-8.0.2.yaml
 export PATH=/opt/cabal/bin:$PATH
-cp ./cabal.project.newbuild ./cabal.project
+
+if [[ -f "./cabal.project.newbuild" && ! -f "./cabal.project" ]]; then
+    cp ./cabal.project.newbuild ./cabal.project
+fi
 cabal v2-update
 
 case $ARCH in
@@ -18,6 +21,11 @@ case $ARCH in
         ;;
     arm)
         cabal v2-test dismantle-arm
+        ;;
+   arm-xml-mini)
+        ./scripts/minify-asl.sh
+        cabal v2-test dismantle-arm-xml || ./scripts/deminify-asl.sh
+        ./scripts/deminify-asl.sh
         ;;
     arm-xml)
         cabal v2-test dismantle-arm-xml

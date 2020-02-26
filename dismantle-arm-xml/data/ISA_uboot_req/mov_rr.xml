@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="MOV_rr" title="MOV, MOVS (register-shifted register) -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+  </docvars>
+  <heading>MOV, MOVS (register-shifted register)</heading>
+  <desc>
+    <brief>
+      <para>Move (register-shifted register)</para>
+    </brief>
+    <authored>
+      <para>Move (register-shifted register) copies a register-shifted register value to the destination register. It can optionally update the condition flags based on the value.</para>
+    </authored>
+    <encodingnotes>
+      <para>Related encodings: In encoding T1, for an <field>op</field> field value that is not described above, see <xref linkend="T32.encoding_index.dpint16_2l">Data-processing (two low registers)</xref>.</para>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <operationalnotes>
+    <para>If CPSR.DIT is 1, this instruction has passed its condition execution check, and does not use R15 as either its source or destination:</para>
+    <list type="unordered">
+      <listitem><content>The execution time of this instruction is independent of:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+      <listitem><content>The response of this instruction to asynchronous exceptions does not vary based on:<list type="unordered"><listitem><content>The values of the data supplied in any of its registers.</content></listitem><listitem><content>The values of the NZCV flags.</content></listitem></list></content></listitem>
+    </list>
+  </operationalnotes>
+  <alias_list howmany="8">
+    <alias_list_intro>This instruction is used by the aliases </alias_list_intro>
+    <aliasref aliaspageid="ASRS_MOV_rr" aliasfile="asrs_mov_rr.xml" hover="Arithmetic Shift Right" punct=", ">
+      <text>ASRS (register)</text>
+      <aliaspref labels="A1 (flag setting)">S == '1' &amp;&amp; type == '10'</aliaspref>
+      <aliaspref labels="T1 (arithmetic shift right)">op == '0100' &amp;&amp; !<a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()</aliaspref>
+      <aliaspref labels="T2 (flag setting)">type == '10' &amp;&amp; S == '1'</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="ASR_MOV_rr" aliasfile="asr_mov_rr.xml" hover="Arithmetic Shift Right (register)" punct=", ">
+      <text>ASR (register)</text>
+      <aliaspref labels="A1 (not flag setting)">S == '0' &amp;&amp; type == '10'</aliaspref>
+      <aliaspref labels="T1 (arithmetic shift right)">op == '0100' &amp;&amp; <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()</aliaspref>
+      <aliaspref labels="T2 (not flag setting)">type == '10' &amp;&amp; S == '0'</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="LSLS_MOV_rr" aliasfile="lsls_mov_rr.xml" hover="Logical Shift Left" punct=", ">
+      <text>LSLS (register)</text>
+      <aliaspref labels="A1 (flag setting)">S == '1' &amp;&amp; type == '00'</aliaspref>
+      <aliaspref labels="T1 (logical shift left)">op == '0010' &amp;&amp; !<a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()</aliaspref>
+      <aliaspref labels="T2 (flag setting)">type == '00' &amp;&amp; S == '1'</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="LSL_MOV_rr" aliasfile="lsl_mov_rr.xml" hover="Logical Shift Left (register)" punct=", ">
+      <text>LSL (register)</text>
+      <aliaspref labels="A1 (not flag setting)">S == '0' &amp;&amp; type == '00'</aliaspref>
+      <aliaspref labels="T1 (logical shift left)">op == '0010' &amp;&amp; <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()</aliaspref>
+      <aliaspref labels="T2 (not flag setting)">type == '00' &amp;&amp; S == '0'</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="LSRS_MOV_rr" aliasfile="lsrs_mov_rr.xml" hover="Logical Shift Right" punct=", ">
+      <text>LSRS (register)</text>
+      <aliaspref labels="A1 (flag setting)">S == '1' &amp;&amp; type == '01'</aliaspref>
+      <aliaspref labels="T1 (logical shift right)">op == '0011' &amp;&amp; !<a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()</aliaspref>
+      <aliaspref labels="T2 (flag setting)">type == '01' &amp;&amp; S == '1'</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="LSR_MOV_rr" aliasfile="lsr_mov_rr.xml" hover="Logical Shift Right (register)" punct=", ">
+      <text>LSR (register)</text>
+      <aliaspref labels="A1 (not flag setting)">S == '0' &amp;&amp; type == '01'</aliaspref>
+      <aliaspref labels="T1 (logical shift right)">op == '0011' &amp;&amp; <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()</aliaspref>
+      <aliaspref labels="T2 (not flag setting)">type == '01' &amp;&amp; S == '0'</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="RORS_MOV_rr" aliasfile="rors_mov_rr.xml" hover="Rotate Right" punct=" and ">
+      <text>RORS (register)</text>
+      <aliaspref labels="A1 (flag setting)">S == '1' &amp;&amp; type == '11'</aliaspref>
+      <aliaspref labels="T1 (rotate right)">op == '0111' &amp;&amp; !<a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()</aliaspref>
+      <aliaspref labels="T2 (flag setting)">type == '11' &amp;&amp; S == '1'</aliaspref>
+    </aliasref>
+    <aliasref aliaspageid="ROR_MOV_rr" aliasfile="ror_mov_rr.xml" hover="Rotate Right (register)" punct=".">
+      <text>ROR (register)</text>
+      <aliaspref labels="A1 (not flag setting)">S == '0' &amp;&amp; type == '11'</aliaspref>
+      <aliaspref labels="T1 (rotate right)">op == '0111' &amp;&amp; <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>()</aliaspref>
+      <aliaspref labels="T2 (not flag setting)">type == '11' &amp;&amp; S == '0'</aliaspref>
+    </aliasref>
+    <alias_list_outro>
+      <text>  See </text>
+      <aliastablelink />
+      <text> below for details of when each alias is preferred.</text>
+    </alias_list_outro>
+  </alias_list>
+  <classes>
+    <classesintro count="3">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt> and </txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="3" id="a1" no_encodings="2" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/MOV_rr/A1_A.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" width="2" name="opc" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" name="S" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="Rn" settings="4">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+        <box hibit="15" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="11" width="4" name="Rs" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="6" width="2" name="type" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="4" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="MOVS_rr_A1" oneofinclass="2" oneof="8" label="Flag setting" bitdiffs="S == 1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="cond-setting" value="s" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="MOVS" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>1</c>
+        </box>
+        <asmtemplate><text>MOVS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="type" hover="Type of shift applied to second source register (field &quot;type&quot;) [ASR,LSL,LSR,ROR]">&lt;type&gt;</a><text> </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="MOV_rr_A1" oneofinclass="2" oneof="8" label="Not flag setting" bitdiffs="S == 0">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="cond-setting" value="no-s" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="MOV" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>0</c>
+        </box>
+        <asmtemplate><text>MOV</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="type" hover="Type of shift applied to second source register (field &quot;type&quot;) [ASR,LSL,LSR,ROR]">&lt;type&gt;</a><text> </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/MOV_rr/A1_A.txt" mylink="aarch32.instrs.MOV_rr.A1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  s = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rs);
+setflags = (S == '1');  shift_t = <a link="impl-aarch32.DecodeRegShift.1" file="shared_pseudocode.xml" hover="function: SRType DecodeRegShift(bits(2) type)">DecodeRegShift</a>(type);
+if d == 15 || m == 15 || s == 15 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="3" id="t1" no_encodings="4" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="MOV" />
+      </docvars>
+      <iclassintro count="4"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/MOV_rr/T1_A.txt" tworows="1">
+        <box hibit="31" width="6" settings="6">
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="25" width="4" name="op" usename="1" settings="1">
+          <c>0</c>
+          <c>x</c>
+          <c>x</c>
+          <c>x</c>
+        </box>
+        <box hibit="21" width="3" name="Rs" usename="1">
+          <c colspan="3"></c>
+        </box>
+        <box hibit="18" width="3" name="Rdm" usename="1">
+          <c colspan="3"></c>
+        </box>
+      </regdiagram>
+      <encoding name="MOV_rr_T1_ASR" oneofinclass="4" oneof="8" label="Arithmetic shift right" bitdiffs="op == 0100">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MOV" />
+          <docvar key="mnemonic-shift-type" value="MOV-asr" />
+          <docvar key="shift-type" value="asr" />
+        </docvars>
+        <box hibit="25" width="" name="op">
+          <c></c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <asmtemplate comment="Inside IT block"><text>MOV</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, ASR </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <asmtemplate comment="Outside IT block"><text>MOVS</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, ASR </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="MOV_rr_T1_LSL" oneofinclass="4" oneof="8" label="Logical shift left" bitdiffs="op == 0010">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MOV" />
+          <docvar key="mnemonic-shift-type" value="MOV-lsl" />
+          <docvar key="shift-type" value="lsl" />
+        </docvars>
+        <box hibit="25" width="" name="op">
+          <c></c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <asmtemplate comment="Inside IT block"><text>MOV</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, LSL </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <asmtemplate comment="Outside IT block"><text>MOVS</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, LSL </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="MOV_rr_T1_LSR" oneofinclass="4" oneof="8" label="Logical shift right" bitdiffs="op == 0011">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MOV" />
+          <docvar key="mnemonic-shift-type" value="MOV-lsr" />
+          <docvar key="shift-type" value="lsr" />
+        </docvars>
+        <box hibit="25" width="" name="op">
+          <c></c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate comment="Inside IT block"><text>MOV</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, LSR </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <asmtemplate comment="Outside IT block"><text>MOVS</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, LSR </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="MOV_rr_T1_ROR" oneofinclass="4" oneof="8" label="Rotate right" bitdiffs="op == 0111">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MOV" />
+          <docvar key="mnemonic-shift-type" value="MOV-ror" />
+          <docvar key="shift-type" value="ror" />
+        </docvars>
+        <box hibit="25" width="" name="op">
+          <c></c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <asmtemplate comment="Inside IT block"><text>MOV</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, ROR </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <asmtemplate comment="Outside IT block"><text>MOVS</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, </text><a link="rdm" hover="General-purpose source register and the destination register (field &quot;Rdm&quot;)">&lt;Rdm&gt;</a><text>, ROR </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/MOV_rr/T1_A.txt" mylink="aarch32.instrs.MOV_rr.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">if !(op IN {'0010', '0011', '0100', '0111'}) then SEE "Related encodings";
+d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rdm);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rdm);  s = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rs);
+setflags = !<a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>();  shift_t = <a link="impl-aarch32.DecodeRegShift.1" file="shared_pseudocode.xml" hover="function: SRType DecodeRegShift(bits(2) type)">DecodeRegShift</a>(op&lt;2&gt;:op&lt;0&gt;);</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T2" oneof="3" id="t2" no_encodings="2" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+      </docvars>
+      <iclassintro count="2"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/MOV_rr/T2_A.txt">
+        <box hibit="31" width="9" settings="9">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="2" name="type" usename="1">
+          <c colspan="2"></c>
+        </box>
+        <box hibit="20" name="S" usename="1">
+          <c></c>
+        </box>
+        <box hibit="19" width="4" name="Rm" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="4" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="11" width="4" name="Rd" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="7" width="4" settings="4">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="3" width="4" name="Rs" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="MOVS_rr_T2" oneofinclass="2" oneof="8" label="Flag setting" bitdiffs="S == 1">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="cond-setting" value="s" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MOVS" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>1</c>
+        </box>
+        <asmtemplate comment="Outside IT block, and &lt;Rd&gt;, &lt;Rm&gt;, &lt;type&gt;, &lt;Rs&gt; can be represented in T1"><text>MOVS.W </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="type" hover="Type of shift applied to second source register (field &quot;type&quot;) [ASR,LSL,LSR,ROR]">&lt;type&gt;</a><text> </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <asmtemplate><text>MOVS</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="type" hover="Type of shift applied to second source register (field &quot;type&quot;) [ASR,LSL,LSR,ROR]">&lt;type&gt;</a><text> </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+      </encoding>
+      <encoding name="MOV_rr_T2" oneofinclass="2" oneof="8" label="Not flag setting" bitdiffs="S == 0">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="cond-setting" value="no-s" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="MOV" />
+        </docvars>
+        <box hibit="20" width="1" name="S">
+          <c>0</c>
+        </box>
+        <asmtemplate comment="Inside IT block, and &lt;Rd&gt;, &lt;Rm&gt;, &lt;type&gt;, &lt;Rs&gt; can be represented in T1"><text>MOV</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>.W </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="type" hover="Type of shift applied to second source register (field &quot;type&quot;) [ASR,LSL,LSR,ROR]">&lt;type&gt;</a><text> </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+        <asmtemplate><text>MOV</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="rd" hover="General-purpose destination register (field &quot;Rd&quot;)">&lt;Rd&gt;</a><text>, </text><a link="rm" hover="General-purpose source register (field &quot;Rm&quot;)">&lt;Rm&gt;</a><text>, </text><a link="type" hover="Type of shift applied to second source register (field &quot;type&quot;) [ASR,LSL,LSR,ROR]">&lt;type&gt;</a><text> </text><a link="rs" hover="General-purpose source register holding a shift amount in its bottom 8 bits (field &quot;Rs&quot;)">&lt;Rs&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/MOV_rr/T2_A.txt" mylink="aarch32.instrs.MOV_rr.T2_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">d = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rd);  m = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rm);  s = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(Rs);
+setflags = (S == '1');  shift_t = <a link="impl-aarch32.DecodeRegShift.1" file="shared_pseudocode.xml" hover="function: SRType DecodeRegShift(bits(2) type)">DecodeRegShift</a>(type);
+if d == 15 || m == 15 || s == 15 then UNPREDICTABLE; // Armv8-A removes UNPREDICTABLE for R13</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="MOV_rr_A1, MOV_rr_T1_LSL, MOV_rr_T2" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MOV_rr_A1, MOV_rr_T1_LSL, MOV_rr_T2" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MOV_rr_T1_LSL" symboldefcount="1">
+      <symbol link="rdm">&lt;Rdm&gt;</symbol>
+      <account encodedin="Rdm">
+        <intro>
+          <para>Is the general-purpose source register and the destination register, encoded in the "Rdm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MOV_rr_A1, MOV_rr_T2" symboldefcount="1">
+      <symbol link="rd">&lt;Rd&gt;</symbol>
+      <account encodedin="Rd">
+        <intro>
+          <para>Is the general-purpose destination register, encoded in the "Rd" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MOV_rr_A1, MOV_rr_T2" symboldefcount="1">
+      <symbol link="rm">&lt;Rm&gt;</symbol>
+      <account encodedin="Rm">
+        <intro>
+          <para>Is the general-purpose source register, encoded in the "Rm" field.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="MOV_rr_A1, MOV_rr_T2" symboldefcount="1">
+      <symbol link="type">&lt;type&gt;</symbol>
+      <definition encodedin="type">
+        <intro>Is the type of shift to be applied to the second source register, </intro>
+        <table class="valuetable">
+          <tgroup cols="2">
+            <thead>
+              <row>
+                <entry class="bitfield">type</entry>
+                <entry class="symbol">&lt;type&gt;</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry class="bitfield">00</entry>
+                <entry class="symbol">LSL</entry>
+              </row>
+              <row>
+                <entry class="bitfield">01</entry>
+                <entry class="symbol">LSR</entry>
+              </row>
+              <row>
+                <entry class="bitfield">10</entry>
+                <entry class="symbol">ASR</entry>
+              </row>
+              <row>
+                <entry class="bitfield">11</entry>
+                <entry class="symbol">ROR</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </definition>
+    </explanation>
+    <explanation enclist="MOV_rr_A1, MOV_rr_T1_LSL, MOV_rr_T2" symboldefcount="1">
+      <symbol link="rs">&lt;Rs&gt;</symbol>
+      <account encodedin="Rs">
+        <intro>
+          <para>Is the general-purpose source register holding a shift amount in its bottom 8 bits, encoded in the "Rs" field.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <aliastablehook anchor="aliasconditions">Alias Conditions</aliastablehook>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/MOV_rr/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    shift_n = <a link="impl-shared.UInt.1" file="shared_pseudocode.xml" hover="function: integer UInt(bits(N) x)">UInt</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[s]&lt;7:0&gt;);
+    (result, carry) = <a link="impl-aarch32.Shift_C.4" file="shared_pseudocode.xml" hover="function: (bits(N), bit) Shift_C(bits(N) value, SRType type, integer amount, bit carry_in)">Shift_C</a>(<a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[m], shift_t, shift_n, PSTATE.C);
+    <a link="impl-aarch32.R.write.1" file="shared_pseudocode.xml" hover="accessor: R[integer n] = bits(32) value">R</a>[d] = result;
+    if setflags then
+        PSTATE.N = result&lt;31&gt;;
+        PSTATE.Z = <a link="impl-shared.IsZeroBit.1" file="shared_pseudocode.xml" hover="function: bit IsZeroBit(bits(N) x)">IsZeroBit</a>(result);
+        PSTATE.C = carry;
+        // PSTATE.V unchanged</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

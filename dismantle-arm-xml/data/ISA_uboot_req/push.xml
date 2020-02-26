@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="PUSH" title="PUSH -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="armarmheading" value="T1" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="isa" value="T32" />
+    <docvar key="mnemonic" value="PUSH" />
+  </docvars>
+  <heading>PUSH</heading>
+  <desc>
+    <brief>
+      <para>Push Multiple Registers to Stack</para>
+    </brief>
+    <authored>
+      <para>Push Multiple Registers to Stack stores multiple general-purpose registers to the stack, storing to consecutive memory locations ending just below the address in SP, and updates SP to point to the start of the stored data.</para>
+      <para>The lowest-numbered register is stored to the lowest memory address, through to the highest-numbered register to the highest memory address. See also <xref linkend="CHDDBEDG">Encoding of lists of general-purpose registers and the PC</xref>.</para>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <iclass name="T1" oneof="1" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="PUSH" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16" psname="aarch32/instrs/PUSH/T1_A.txt">
+        <box hibit="31" width="4" settings="4">
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="27" name="L" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="26" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="23" width="8" name="register_list" usename="1">
+          <c colspan="8"></c>
+        </box>
+      </regdiagram>
+      <encoding name="PUSH_T1" oneofinclass="1" oneof="1" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="PUSH" />
+        </docvars>
+        <asmtemplate comment="Preferred syntax"><text>PUSH</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="registers" hover="List of one or more registers to be stored (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate comment="Alternate syntax"><text>STMDB</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> SP!, </text><a link="registers" hover="List of one or more registers to be stored (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/PUSH/T1_A.txt" mylink="aarch32.instrs.PUSH.T1_A.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">registers = '0':M:'000000':register_list;  UnalignedAllowed = FALSE;
+if <a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers) &lt; 1 then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+      <constrained_unpredictables encoding="T1" ps_block="Decode">
+        <cu_case>
+          <cu_cause>
+            <pstext mayhavelinks="1">BitCount(registers) &lt; 1</pstext>
+          </cu_cause>
+          <cu_type constraint="Constraint_UNDEF" />
+          <cu_type constraint="Constraint_NOP" />
+          <cu_type>
+            <cu_type_text>The instruction targets an unspecified set of registers. These registers might include R15. If the instruction specifies writeback, the modification to the base address on writeback might differ from the number of registers loaded.</cu_type_text>
+          </cu_type>
+        </cu_case>
+      </constrained_unpredictables>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="PUSH_T1" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PUSH_T1" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="PUSH_T1" symboldefcount="1">
+      <symbol link="registers">&lt;registers&gt;</symbol>
+      <account encodedin="register_list">
+        <intro>
+          <para>Is a list of one or more registers to be stored, separated by commas and surrounded by { and }.</para>
+          <para>The registers in the list must be in the range R0-R7, encoded in the "register_list" field, and can optionally include the LR. If the LR is in the list, the "M" field is set to 1, otherwise this field defaults to 0.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/PUSH/Op_A.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+    address = SP - 4*<a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers);
+    for i = 0 to 14
+        if registers&lt;i&gt; == '1' then
+            if i == 13 &amp;&amp; i != <a link="impl-shared.LowestSetBit.1" file="shared_pseudocode.xml" hover="function: integer LowestSetBit(bits(N) x)">LowestSetBit</a>(registers) then  // Only possible for encoding A1
+                <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4] = bits(32) UNKNOWN;
+            else
+                if UnalignedAllowed then
+                    <a link="impl-aarch32.MemU.write.2" file="shared_pseudocode.xml" hover="accessor: MemU[bits(32) address, integer size] = bits(8*size) value">MemU</a>[address,4] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[i];
+                else
+                    <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4] = <a link="impl-aarch32.R.read.1" file="shared_pseudocode.xml" hover="accessor: bits(32) R[integer n]">R</a>[i];
+            address = address + 4;
+    if registers&lt;15&gt; == '1' then  // Only possible for encoding A1 or A2
+        if UnalignedAllowed then
+            <a link="impl-aarch32.MemU.write.2" file="shared_pseudocode.xml" hover="accessor: MemU[bits(32) address, integer size] = bits(8*size) value">MemU</a>[address,4] = <a link="impl-aarch32.PCStoreValue.0" file="shared_pseudocode.xml" hover="function: bits(32) PCStoreValue()">PCStoreValue</a>();
+        else
+            <a link="impl-aarch32.MemA.write.2" file="shared_pseudocode.xml" hover="accessor: MemA[bits(32) address, integer size] = bits(8*size) value">MemA</a>[address,4] = <a link="impl-aarch32.PCStoreValue.0" file="shared_pseudocode.xml" hover="function: bits(32) PCStoreValue()">PCStoreValue</a>();
+    <a link="impl-aarch32.SP.write.none" file="shared_pseudocode.xml" hover="accessor: SP = bits(32) value">SP</a> = SP - 4*<a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(registers);</pstext>
+    </ps>
+  </ps_section>
+</instructionsection>

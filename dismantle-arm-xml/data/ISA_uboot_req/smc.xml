@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="SMC" title="SMC -- AArch32" type="instruction">
+  <docvars>
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="SMC" />
+  </docvars>
+  <heading>SMC</heading>
+  <desc>
+    <brief>
+      <para>Secure Monitor Call</para>
+    </brief>
+    <authored>
+      <para>Secure Monitor Call causes a Secure Monitor Call exception.  For more information see <xref linkend="CIHEHJBH">Secure Monitor Call (SMC) exception</xref>.</para>
+      <para><instruction>SMC</instruction> is available only for software executing at EL1 or higher. It is <arm-defined-word>undefined</arm-defined-word> in User mode.</para>
+      <para>If the values of <xref linkend="CEGFDIFJ">HCR</xref>.TSC and <xref linkend="CEGCEECB">SCR</xref>.SCD are both 0, execution of an <instruction>SMC</instruction> instruction at EL1 or higher generates a Secure Monitor Call exception that is taken to EL3. When EL3 is using AArch32 this exception is taken to Monitor mode. When EL3 is using AArch64, it is the <xref linkend="AArch64.scr_el3">SCR_EL3</xref>.SMD bit, rather than the <xref linkend="CEGCEECB">SCR</xref>.SCD bit, that can change the effect of executing an SMC instruction.</para>
+      <para>If the value of <xref linkend="CEGFDIFJ">HCR</xref>.TSC is 1, execution of an <instruction>SMC</instruction> instruction in a Non-secure EL1 mode generates an exception that is taken to EL2, regardless of the value of <xref linkend="CEGCEECB">SCR</xref>.SCD. When EL2 is using AArch32, this is a Hyp Trap exception that is taken to Hyp mode. For more information see <xref linkend="CHDBHAEI">Traps to Hyp mode of Non-secure EL1 execution of SMC instructions</xref>.</para>
+      <para>If the value of <xref linkend="CEGFDIFJ">HCR</xref>.TSC is 0 and the value of <xref linkend="CEGCEECB">SCR</xref>.SCD is 1, the SMC instruction is:</para>
+      <list type="unordered">
+        <listitem><content><arm-defined-word>undefined</arm-defined-word> in Non-secure state.</content></listitem>
+        <listitem><content><arm-defined-word>constrained unpredictable</arm-defined-word> if executed in Secure state at EL1 or higher.</content></listitem>
+      </list>
+    </authored>
+    <encodingnotes>
+      <para>For more information about the <arm-defined-word>constrained unpredictable</arm-defined-word> behavior of this instruction, see <xref linkend="CJAEGDJC">Architectural Constraints on UNPREDICTABLE behaviors</xref>.</para>
+    </encodingnotes>
+  </desc>
+  <alias_list howmany="0"></alias_list>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t1">T1</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="SMC" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="aarch32/instrs/SMC/A1_AS.txt" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="5" settings="5">
+          <c>0</c>
+          <c>0</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="22" width="2" name="opc" settings="2">
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="19" width="12" name="imm12" settings="12">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+        <box hibit="7" width="4" settings="4">
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="3" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+      </regdiagram>
+      <encoding name="SMC_A1_AS" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="SMC" />
+        </docvars>
+        <asmtemplate><text>SMC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a>{#}</a><a link="imm4" hover="4-bit unsigned immediate value [0-15] (field &quot;imm4&quot;)">&lt;imm4&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SMC/A1_AS.txt" mylink="aarch32.instrs.SMC.A1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">// imm4 is for assembly/disassembly only and is ignored by hardware</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+    <iclass name="T1" oneof="2" id="t1" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="SMC" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="aarch32/instrs/SMC/T1_AS.txt">
+        <box hibit="31" width="11" settings="11">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+        </box>
+        <box hibit="20" name="o1" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="imm4" usename="1">
+          <c colspan="4"></c>
+        </box>
+        <box hibit="15" width="2" settings="2">
+          <c>1</c>
+          <c>0</c>
+        </box>
+        <box hibit="13" name="o2" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="12" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="11" width="12" name="imm12" settings="12">
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+          <c>(0)</c>
+        </box>
+      </regdiagram>
+      <encoding name="SMC_T1_AS" oneofinclass="1" oneof="2" label="T1">
+        <docvars>
+          <docvar key="armarmheading" value="T1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="SMC" />
+        </docvars>
+        <asmtemplate><text>SMC</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a>{#}</a><a link="imm4" hover="4-bit unsigned immediate value [0-15] (field &quot;imm4&quot;)">&lt;imm4&gt;</a></asmtemplate>
+      </encoding>
+      <ps_section howmany="1">
+        <ps name="aarch32/instrs/SMC/T1_AS.txt" mylink="aarch32.instrs.SMC.T1_AS.txt" enclabels="" sections="1" secttype="noheading">
+          <pstext mayhavelinks="1" section="Decode" rep_section="decode">// imm4 is for assembly/disassembly only and is ignored by hardware
+if <a link="impl-aarch32.InITBlock.0" file="shared_pseudocode.xml" hover="function: boolean InITBlock()">InITBlock</a>() &amp;&amp; !<a link="impl-aarch32.LastInITBlock.0" file="shared_pseudocode.xml" hover="function: boolean LastInITBlock()">LastInITBlock</a>() then UNPREDICTABLE;</pstext>
+        </ps>
+      </ps_section>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="SMC_A1_AS, SMC_T1_AS" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMC_A1_AS, SMC_T1_AS" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="SMC_A1_AS, SMC_T1_AS" symboldefcount="1">
+      <symbol link="imm4">&lt;imm4&gt;</symbol>
+      <account encodedin="imm4">
+        <intro>
+          <para>Is a 4-bit unsigned immediate value, in the range 0 to 15, encoded in the "imm4" field. This is ignored by the PE. The Secure Monitor Call exception handler (Secure Monitor code) can use this value to determine what service is being requested, but Arm does not recommend this.</para>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+  <ps_section howmany="1">
+    <ps name="aarch32/instrs/SMC/Op_AS.txt" mylink="commonps" enclabels="" sections="1" secttype="Operation">
+      <pstext mayhavelinks="1" section="Execute" rep_section="execute">if <a link="impl-aarch32.ConditionPassed.0" file="shared_pseudocode.xml" hover="function: boolean ConditionPassed()">ConditionPassed</a>() then
+    EncodingSpecificOperations();
+
+    <a link="AArch32.CheckForSMCUndefOrTrap.0" file="shared_pseudocode.xml" hover="function: AArch32.CheckForSMCUndefOrTrap()">AArch32.CheckForSMCUndefOrTrap</a>();
+
+    if !<a link="impl-shared.ELUsingAArch32.1" file="shared_pseudocode.xml" hover="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) then
+        if SCR_EL3.SMD == '1' then
+            // SMC disabled.
+            UNDEFINED;
+    else
+        if SCR.SCD == '1' then
+            // SMC disabled
+            if <a link="impl-shared.IsSecure.0" file="shared_pseudocode.xml" hover="function: boolean IsSecure()">IsSecure</a>() then
+                // Executes either as a NOP or UNALLOCATED.
+                c = <a link="impl-shared.ConstrainUnpredictable.1" file="shared_pseudocode.xml" hover="function: Constraint ConstrainUnpredictable(Unpredictable which)">ConstrainUnpredictable</a>(<a link="Unpredictable_SMD" file="shared_pseudocode.xml" hover="enumeration Unpredictable { Unpredictable_WBOVERLAPLD,&#13;  Unpredictable_WBOVERLAPST,&#13;  Unpredictable_LDPOVERLAP,&#13;  Unpredictable_BASEOVERLAP,&#13;  Unpredictable_DATAOVERLAP,&#13;  Unpredictable_DEVPAGE2,&#13;  Unpredictable_INSTRDEVICE,&#13;  Unpredictable_RESCPACR,&#13;  Unpredictable_RESMAIR,&#13;  Unpredictable_RESTEXCB,&#13;  Unpredictable_RESPRRR,&#13;  Unpredictable_RESDACR,&#13;  Unpredictable_RESVTCRS,&#13;  Unpredictable_RESTnSZ,&#13;  Unpredictable_OORTnSZ,&#13;  Unpredictable_LARGEIPA,&#13;  Unpredictable_ESRCONDPASS,&#13;  Unpredictable_ILZEROIT,&#13;  Unpredictable_ILZEROT,&#13;  Unpredictable_BPVECTORCATCHPRI,&#13;  Unpredictable_VCMATCHHALF,&#13;  Unpredictable_VCMATCHDAPA,&#13;  Unpredictable_WPMASKANDBAS,&#13;  Unpredictable_WPBASCONTIGUOUS,&#13;  Unpredictable_RESWPMASK,&#13;  Unpredictable_WPMASKEDBITS,&#13;  Unpredictable_RESBPWPCTRL,&#13;  Unpredictable_BPNOTIMPL,&#13;  Unpredictable_RESBPTYPE,&#13;  Unpredictable_BPNOTCTXCMP,&#13;  Unpredictable_BPMATCHHALF,&#13;  Unpredictable_BPMISMATCHHALF,&#13;  Unpredictable_RESTARTALIGNPC,&#13;  Unpredictable_RESTARTZEROUPPERPC,&#13;  Unpredictable_ZEROUPPER,&#13;  Unpredictable_ERETZEROUPPERPC,&#13;  Unpredictable_A32FORCEALIGNPC,&#13;  Unpredictable_SMD,&#13;  Unpredictable_NONFAULT,&#13;  Unpredictable_SVEZEROUPPER,&#13;  Unpredictable_SVELDNFDATA,&#13;  Unpredictable_SVELDNFZERO,&#13;  Unpredictable_AFUPDATE,&#13;  Unpredictable_IESBinDebug,&#13;  Unpredictable_ZEROPMSEVFR,&#13;  Unpredictable_NOOPTYPES,&#13;  Unpredictable_ZEROMINLATENCY,&#13;  Unpredictable_ZEROBTYPE,&#13;  Unpredictable_CLEARERRITEZERO}">Unpredictable_SMD</a>);
+                assert c IN {<a link="Constraint_NOP" file="shared_pseudocode.xml" hover="enumeration Constraint    { Constraint_NONE,  Constraint_UNKNOWN, Constraint_UNDEF, Constraint_UNDEFEL0, Constraint_NOP, Constraint_TRUE,&#13; Constraint_FALSE,&#13; Constraint_DISABLED,&#13; Constraint_UNCOND, Constraint_COND, Constraint_ADDITIONAL_DECODE,  Constraint_WBSUPPRESS, Constraint_FAULT,&#13;  Constraint_FORCE, Constraint_FORCENOSLCHECK}">Constraint_NOP</a>, <a link="Constraint_UNDEF" file="shared_pseudocode.xml" hover="enumeration Constraint    { Constraint_NONE,  Constraint_UNKNOWN, Constraint_UNDEF, Constraint_UNDEFEL0, Constraint_NOP, Constraint_TRUE,&#13; Constraint_FALSE,&#13; Constraint_DISABLED,&#13; Constraint_UNCOND, Constraint_COND, Constraint_ADDITIONAL_DECODE,  Constraint_WBSUPPRESS, Constraint_FAULT,&#13;  Constraint_FORCE, Constraint_FORCENOSLCHECK}">Constraint_UNDEF</a>};
+                if c == <a link="Constraint_NOP" file="shared_pseudocode.xml" hover="enumeration Constraint    { Constraint_NONE,  Constraint_UNKNOWN, Constraint_UNDEF, Constraint_UNDEFEL0, Constraint_NOP, Constraint_TRUE,&#13; Constraint_FALSE,&#13; Constraint_DISABLED,&#13; Constraint_UNCOND, Constraint_COND, Constraint_ADDITIONAL_DECODE,  Constraint_WBSUPPRESS, Constraint_FAULT,&#13;  Constraint_FORCE, Constraint_FORCENOSLCHECK}">Constraint_NOP</a> then <a link="impl-shared.EndOfInstruction.0" file="shared_pseudocode.xml" hover="function: EndOfInstruction()">EndOfInstruction</a>();
+            UNDEFINED;
+
+    if !<a link="impl-shared.ELUsingAArch32.1" file="shared_pseudocode.xml" hover="function: boolean ELUsingAArch32(bits(2) el)">ELUsingAArch32</a>(<a link="EL3" file="shared_pseudocode.xml" hover="constant bits(2) EL3 = '11'">EL3</a>) then
+        <a link="AArch64.CallSecureMonitor.1" file="shared_pseudocode.xml" hover="function: AArch64.CallSecureMonitor(bits(16) immediate)">AArch64.CallSecureMonitor</a>(<a link="impl-shared.Zeros.1" file="shared_pseudocode.xml" hover="function: bits(N) Zeros(integer N)">Zeros</a>(16));
+    else
+        <a link="AArch32.TakeSMCException.0" file="shared_pseudocode.xml" hover="function: AArch32.TakeSMCException()">AArch32.TakeSMCException</a>();</pstext>
+    </ps>
+  </ps_section>
+  <constrained_unpredictables ps_block="Operation">
+    <cu_case>
+      <cu_cause>
+        <pstext mayhavelinks="1">SCR.SCD == '1' &amp;&amp; IsSecure()</pstext>
+      </cu_cause>
+      <cu_type constraint="Constraint_UNDEF" />
+      <cu_type constraint="Constraint_NOP" />
+    </cu_case>
+  </constrained_unpredictables>
+</instructionsection>

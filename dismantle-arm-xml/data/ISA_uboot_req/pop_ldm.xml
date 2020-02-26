@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" encoding="UTF-8" href="iform.xsl" version="1.0"?>
+<!DOCTYPE instructionsection PUBLIC "-//ARM//DTD instructionsection //EN" "iform-p.dtd">
+<!-- Copyright (c) 2010-2018 Arm Limited or its affiliates. All rights reserved. -->
+<!-- This document is Non-Confidential. This document may only be used and distributed in accordance with the terms of the agreement entered into by Arm and the party that Arm delivered this document to. -->
+
+<instructionsection id="POP_LDM" title="POP (multiple registers) -- AArch32" type="alias">
+  <docvars>
+    <docvar key="alias_mnemonic" value="POP" />
+    <docvar key="instr-class" value="general" />
+    <docvar key="mnemonic" value="LDM" />
+  </docvars>
+  <heading>POP (multiple registers)</heading>
+  <desc>
+    <brief>Pop Multiple Registers from Stack</brief>
+    <longer> loads multiple general-purpose registers from the stack, loading from consecutive memory locations starting at the address in SP, and updates SP to point just above the loaded data</longer>
+  </desc>
+  <aliasto refiform="ldm.xml" iformid="LDM">LDM, LDMIA, LDMFD</aliasto>
+  <classes>
+    <classesintro count="2">
+      <txt>It has encodings from the following instruction sets:</txt>
+      <txt> A32 (</txt>
+      <a href="#a1">A1</a>
+      <txt>)</txt>
+      <txt> and </txt>
+      <txt> T32 (</txt>
+      <a href="#t2">T2</a>
+      <txt>)</txt>
+      <txt>.</txt>
+    </classesintro>
+    <iclass name="A1" oneof="2" id="a1" no_encodings="1" isa="A32">
+      <docvars>
+        <docvar key="armarmheading" value="A1" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="A32" />
+        <docvar key="mnemonic" value="LDM" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="32" psname="" tworows="1">
+        <box hibit="31" width="4" name="cond" usename="1" settings="4" constraint="!= 1111">
+          <c colspan="4">!= 1111</c>
+        </box>
+        <box hibit="27" width="3" settings="3">
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" name="P" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="23" name="U" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="22" name="op" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1" settings="1" psbits="1">
+          <c>1</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" width="16" name="register_list" usename="1">
+          <c colspan="16"></c>
+        </box>
+      </regdiagram>
+      <encoding name="POP_LDM_A1" oneofinclass="1" oneof="2" label="A1">
+        <docvars>
+          <docvar key="alias_mnemonic" value="POP" />
+          <docvar key="armarmheading" value="A1" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="A32" />
+          <docvar key="mnemonic" value="LDM" />
+        </docvars>
+        <asmtemplate><text>POP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="registers_4" hover="List of two or more registers to be loaded">&lt;registers&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="ldm.xml#LDM_A1">LDM</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> SP!, </text><a link="registers_4" hover="List of two or more registers to be loaded">&lt;registers&gt;</a></asmtemplate>
+          <aliascond><a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(register_list) &gt; 1</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+    <iclass name="T2" oneof="2" id="t2" no_encodings="1" isa="T32">
+      <docvars>
+        <docvar key="armarmheading" value="T2" />
+        <docvar key="instr-class" value="general" />
+        <docvar key="isa" value="T32" />
+        <docvar key="mnemonic" value="LDM" />
+      </docvars>
+      <iclassintro count="1"></iclassintro>
+      <regdiagram form="16x2" psname="" tworows="1">
+        <box hibit="31" width="7" settings="7">
+          <c>1</c>
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+          <c>0</c>
+          <c>0</c>
+        </box>
+        <box hibit="24" width="2" name="opc" settings="2">
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="22" settings="1">
+          <c>0</c>
+        </box>
+        <box hibit="21" name="W" usename="1" settings="1" psbits="1">
+          <c>1</c>
+        </box>
+        <box hibit="20" name="L" settings="1">
+          <c>1</c>
+        </box>
+        <box hibit="19" width="4" name="Rn" usename="1" settings="4">
+          <c>1</c>
+          <c>1</c>
+          <c>0</c>
+          <c>1</c>
+        </box>
+        <box hibit="15" name="P" usename="1">
+          <c></c>
+        </box>
+        <box hibit="14" name="M" usename="1">
+          <c></c>
+        </box>
+        <box hibit="13" width="14" name="register_list" usename="1">
+          <c colspan="14"></c>
+        </box>
+      </regdiagram>
+      <encoding name="POP_LDM_T2" oneofinclass="1" oneof="2" label="T2">
+        <docvars>
+          <docvar key="alias_mnemonic" value="POP" />
+          <docvar key="armarmheading" value="T2" />
+          <docvar key="instr-class" value="general" />
+          <docvar key="isa" value="T32" />
+          <docvar key="mnemonic" value="LDM" />
+        </docvars>
+        <asmtemplate comment="All registers in R0-R7, PC"><text>POP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>.W </text><a link="registers_3" hover="List of two or more registers to be loaded (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <asmtemplate><text>POP</text><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> </text><a link="registers_3" hover="List of two or more registers to be loaded (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+        <equivalent_to>
+          <asmtemplate><a href="ldm.xml#LDM_T2">LDM</a><text>{</text><a link="c" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;c&gt;</a><text>}</text><text>{</text><a link="q" hover="See {xref{ARMARM_Babbefhf}{Standard assembler syntax fields}}">&lt;q&gt;</a><text>}</text><text> SP!, </text><a link="registers_3" hover="List of two or more registers to be loaded (field &quot;register_list&quot;)">&lt;registers&gt;</a></asmtemplate>
+          <aliascond><a link="impl-shared.BitCount.1" file="shared_pseudocode.xml" hover="function: integer BitCount(bits(N) x)">BitCount</a>(P:M:register_list) &gt; 1</aliascond>
+        </equivalent_to>
+      </encoding>
+    </iclass>
+  </classes>
+  <explanations scope="all">
+    <explanation enclist="POP_LDM_A1, POP_LDM_T2" symboldefcount="1">
+      <symbol link="c">&lt;c&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="POP_LDM_A1, POP_LDM_T2" symboldefcount="1">
+      <symbol link="q">&lt;q&gt;</symbol>
+      <account encodedin="">
+        <intro>
+          <para>See <xref linkend="Babbefhf">Standard assembler syntax fields</xref>.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="POP_LDM_A1" symboldefcount="1">
+      <symbol link="registers_4">&lt;registers&gt;</symbol>
+      <account encodedin="">
+        <docvars>
+          <docvar key="armarmheading" value="A1" />
+        </docvars>
+        <intro>
+          <para>For encoding A1: is a list of two or more registers to be loaded, separated by commas and surrounded by { and }. The lowest-numbered register is loaded from the lowest memory address, through to the highest-numbered register from the highest memory address. See also <xref linkend="CHDDBEDG">Encoding of lists of general-purpose registers and the PC</xref>.</para>
+          <para>If the SP is in the list, the value of the SP after such an instruction is <arm-defined-word>unknown</arm-defined-word>.</para>
+          <para>The PC can be in the list. If it is, the instruction branches to the address loaded to the PC. This is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>.</para>
+          <para>Arm deprecates the use of this instruction with both the LR and the PC in the list.</para>
+        </intro>
+      </account>
+    </explanation>
+    <explanation enclist="POP_LDM_T2" symboldefcount="2">
+      <symbol link="registers_3">&lt;registers&gt;</symbol>
+      <account encodedin="register_list">
+        <docvars>
+          <docvar key="armarmheading" value="T2" />
+        </docvars>
+        <intro>
+          <para>For encoding T2: is a list of two or more registers to be loaded, separated by commas and surrounded by { and }. The lowest-numbered register is loaded from the lowest memory address, through to the highest-numbered register from the highest memory address. See also <xref linkend="CHDDBEDG">Encoding of lists of general-purpose registers and the PC</xref>.</para>
+          <para>The registers in the list must be in the range R0-R12, encoded in the "register_list" field, and can optionally contain one of  the LR or the PC. If the LR is in the list, the "M" field is set to 1, otherwise it defaults to 0. If the PC is in the list, the "P" field is set to 1, otherwise it defaults to 0.</para>
+          <para>The PC can be in the list. If it is, the instruction branches to the address loaded to the PC. This is an interworking branch, see <xref linkend="BEICJFEH">Pseudocode description of operations on the AArch32 general-purpose registers and the PC</xref>. If the PC is in the list:</para>
+          <list type="unordered">
+            <listitem><content>The LR must not be in the list.</content></listitem>
+            <listitem><content>The instruction must be either outside any IT block, or the last instruction in an IT block.</content></listitem>
+          </list>
+        </intro>
+      </account>
+    </explanation>
+  </explanations>
+</instructionsection>

@@ -8,16 +8,12 @@ cd `dirname "$BASH_SOURCE"`
 cd ..
 
 cd ./dismantle-arm-xml/data
+rm -rf $ISA-all
+rm -rf $ISA
+
 git checkout $ISA
 git checkout $ISA_mini
-
-rm -rf $ISA-all
-mv $ISA $ISA-all
-mv $ISA_mini $ISA
 
 cd ../test/
 git checkout ./bin
 rm -rf ./bin-all
-mv ./bin ./bin-all
-mkdir ./bin
-mv ./bin-all/u-boot* ./bin
