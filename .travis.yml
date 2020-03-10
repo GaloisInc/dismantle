@@ -37,7 +37,7 @@ matrix:
       # Broken due to changes in ByteTrie to support negative patterns (apparently)
    #- env: TEST_ARCH=thumb
       # Carve out a subset of the xml spec sufficient to test u-boot
-    - env: TEST_ARCH=arm-xml-mini
+    - env: TEST_ARCH=arm-xml-lite
       # The full spec requires 20 GB of memory, so we can't run it on a standard travis worker.
       #    - env: TEST_ARCH=arm-xml
 

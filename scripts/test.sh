@@ -22,13 +22,11 @@ case $ARCH in
     arm)
         cabal v2-test dismantle-arm
         ;;
-   arm-xml-mini)
-        ./scripts/minify-asl.sh
-        cabal v2-test dismantle-arm-xml || ./scripts/deminify-asl.sh
-        ./scripts/deminify-asl.sh
+    arm-xml-lite)
+        cabal v2-test dismantle-arm-xml -f asl-lite
         ;;
     arm-xml)
-        cabal v2-test dismantle-arm-xml
+        cabal v2-test dismantle-arm-xml -f -asl-lite
         ;;
     thumb)
         cabal v2-test dismantle-thumb

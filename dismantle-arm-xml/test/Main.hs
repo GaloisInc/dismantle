@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
 
 {-
   Note: when a binary representation of an ARM instruction is
@@ -471,9 +472,16 @@ arm = ATC { testingISA = ARM.isa "A32"
           , instructionFilter = ((== FullWord) . insnLayout)
           }
 
+testSuitePath :: FilePath
+#ifdef ASL_LITE
+testSuitePath = "test/bin"
+#else
+testSuitePath = "test/bin-uboot"
+#endif
+
 main :: IO ()
 main = do
-  tg <- binaryTestSuite arm "test/bin"
+  tg <- binaryTestSuite arm testSuitePath
   T.defaultMain $ T.testGroup "dismantle-arm-xml" [tg]
 
 normalize :: TL.Text -> TL.Text
