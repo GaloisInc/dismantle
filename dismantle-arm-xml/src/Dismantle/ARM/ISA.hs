@@ -1,31 +1,35 @@
+{-|
+Module           : Dismantle.ARM.ISA
+Copyright        : (c) Galois, Inc 2019-2020
+Maintainer       : Daniel Matichuk <dmatichuk@galois.com>
+
+Specification of the A32 and T32 ISAs.
+
+-}
+
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 module Dismantle.ARM.ISA (
-  isa,
-  isARM
+  isa
   ) where
 
-import           GHC.TypeLits ( KnownNat, Nat, natVal )
+import           GHC.TypeLits ( KnownNat )
 
 import qualified Data.Binary.Get as BG
 import qualified Data.Binary.Put as BP
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List.Split as L
-import           Data.Proxy ( Proxy(..) )
 import           Data.Word ( Word32 )
 import qualified Data.Word.Indexed as W
 import qualified Language.Haskell.TH as TH
-import qualified Text.XML.Light as X
 import qualified Text.PrettyPrint.HughesPJClass as PP
 import           Text.Printf (printf)
 
 import qualified Data.Word.Indexed as I
 import qualified Dismantle.Tablegen as DA
-
-import Numeric (showHex)
 
 asWord32 :: LBS.ByteString -> Word32
 asWord32 bs = BG.runGet BG.getWord32le bs
@@ -33,6 +37,7 @@ asWord32 bs = BG.runGet BG.getWord32le bs
 fromWord32 :: Word32 -> LBS.ByteString
 fromWord32 w = BP.runPut (BP.putWord32le w)
 
+-- | Create a 'DA.ISA' with the given name (either "A32" or "T32").
 isa :: String -> DA.ISA
 isa archName = DA.ISA { DA.isaName = archName
                       , DA.isaTgenBitPreprocess = id
@@ -50,12 +55,6 @@ isa archName = DA.ISA { DA.isaName = archName
                       , DA.isaMapOperandPayloadType = id
                       , DA.isaDefaultPrettyVariableValues = []
                       }
-
-isARM :: X.Element -> Bool
-isARM _ = True
--- isARM iclass = case X.findAttr (X.QName "isa" Nothing Nothing) iclass of
---   Nothing -> error $ "BUG: iclass missing \"isa\" attribute: \n" ++ show iclass
---   Just isaStr -> isaStr == "A32"
 
 -- | In the XML specs, all fields are unsigned bitvectors (which are sometimes
 -- treated as signed)

@@ -34,7 +34,7 @@ import Data.Parameterized.List ( List(..) )
 
 import Dismantle.Instruction
 import Dismantle.ARM.TH ( genISA )
-import Dismantle.ARM.ISA ( isa, isARM )
+import Dismantle.ARM.ISA ( isa )
 import Dismantle.Tablegen.TH ( genInstances )
 
 #ifdef ASL_LITE

@@ -1,10 +1,23 @@
+{-|
+Module           : Dismantle.ARM.TH
+Copyright        : (c) Galois, Inc 2019-2020
+Maintainer       : Daniel Matichuk <dmatichuk@galois.com>
+
+Backend for "Dismantle.ARM.A32" and "Dismantle.ARM.T32".
+Generates a disassembler from the ARM XML specification
+and emits a map from each generated opcode to a corresponding
+'ASL.Encoding'.
+
+-}
+
+
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DataKinds #-}
-
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Dismantle.ARM.TH
   ( parseMask
@@ -12,39 +25,39 @@ module Dismantle.ARM.TH
   )
   where
 
-import           Control.Monad ( mapM_ )
-import qualified Data.Foldable as F
-import           Data.List (sort)
 import           Data.Maybe ( fromJust )
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 import qualified Data.Map as M
-import qualified Data.Traversable as T
 import qualified Data.BitMask as BM
 import qualified Data.Parameterized.NatRepr as NR
 import           Data.Parameterized.Some ( Some(..) )
 
 import qualified Language.Haskell.TH as TH
 import qualified Language.Haskell.TH.Syntax as TH
-import qualified Language.Haskell.TH.Lift as TH
 
 import           System.IO ( withFile, IOMode(..), hPutStrLn )
-import           System.Directory (withCurrentDirectory, listDirectory, makeAbsolute)
-import           System.FilePath.Posix (isExtensionOf)
+import           System.Directory ( withCurrentDirectory )
 import           System.FilePath.Glob ( namesMatching )
 import           System.FilePath ( (</>), (<.>) )
-
-import qualified Text.XML.Light as X
-
 
 import qualified Dismantle.Tablegen as DT
 import qualified Dismantle.ARM.XML as XML
 import qualified Dismantle.ARM.ASL as ASL
-import qualified Dismantle.ARM.ASL as ARM ( encodingOpToInstDescriptor, instDescriptorsToISA )
+import qualified Dismantle.ARM.XML as ARM ( encodingOpToInstDescriptor, instDescriptorsToISA )
 import qualified Dismantle.Tablegen.TH as DTH
 import qualified Dismantle.Tablegen.ByteTrie as BT
 
-genISA ::  DT.ISA -> FilePath -> FilePath -> FilePath -> FilePath -> TH.DecsQ
+-- | Top-level function for generating the template haskell for a given ISA.
+genISA :: DT.ISA
+       -- ^ the ISA for this disassembler (either A32 or T32)
+       -> FilePath
+       -- ^ the directory containing all of the XML specification files
+       -> FilePath
+       -- ^ the "encindex" XML file (either "t32_encindex.xml" or "a32_encindex.xml")
+       -> FilePath
+       -- ^ the full (relative) path to the parsed arm s-expression file: "arm_instrs.sexpr"
+       -> FilePath
+       -- ^ file to write out logs to
+       -> TH.DecsQ
 genISA isa xmldirPath encIndexFile aslInstrs logFile = do
   xmlFiles <- TH.runIO $ withCurrentDirectory xmldirPath $ namesMatching ("*" <.> "xml")
   (desc, encodingops) <- TH.runIO $ withFile logFile WriteMode $ \handle -> do
@@ -110,6 +123,8 @@ parseMask maskStr |
       'x' -> (BT.Any, False)
       '1' -> (BT.ExpectedBit True, False)
       '0' -> (BT.ExpectedBit False, False)
+      _ -> error $ "parseMask: parseQBit: unexpected char: " ++ [c]
+parseMask str = error $ "parseMask: unexpected string: " ++ show str
 
 instance TH.Lift (BM.SomeBitMask BM.QuasiBit) where
   lift smask = do

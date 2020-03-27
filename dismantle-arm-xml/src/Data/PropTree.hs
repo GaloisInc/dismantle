@@ -1,36 +1,54 @@
+{-|
+Module           : Data.PropTree
+Copyright        : (c) Galois, Inc 2019-2020
+Maintainer       : Daniel Matichuk <dmatichuk@galois.com>
+
+A container for trees of proposition-like elements.
+
+-}
+
+{-# OPTIONS_HADDOCK prune #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.PropTree
-  ( concat
+  ( -- * Constructing PropTrees
+    PropTree
   , collapse
   , clause
   , negate
   , partition
+  
+  -- * Destructing PropTrees
   , flatten
   , splitClauses
   , negatedSubtrees
   , toConjunctsAndDisjuncts
+  
+  -- * Pretty-printing
   , prettyPropTree
-  , PropTree
+  
   ) where
 
 import Prelude hiding (negate)
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
--- | Representation of a propositional formula with a 'PropList' as conjunction and 'PropNegate' as negation.
+-- | Representation of a propositional formula. Trees are built as atoms (via 'clause'), by
+-- concatenating trees together (via 'mconcat'), or by negating a tree (via 'negate').
 data PropTree a =
     PropLeaf a
   | PropNegate (PropTree a)
   | PropList [PropTree a]
   deriving (Functor, Foldable, Traversable, Show, Eq)
 
+-- | Create an singleton 'PropTree' with a given element.
 clause :: a -> PropTree a
 clause a = PropLeaf a
 
+-- | Collapse a 'PropTree' over lists by considering each list as a conjunction of elements.
 collapse :: PropTree [a] -> PropTree a
 collapse tree = case tree of
   PropLeaf as -> mconcat (map clause as)
@@ -55,6 +73,7 @@ instance Monoid (PropTree a) where
   mempty = PropList []
   mconcat = concatTrees
 
+-- | Partition a 'PropTree' over an 'Either' into two trees.
 partition :: PropTree (Either a b) -> (PropTree a, PropTree b)
 partition tree = case tree of
   PropLeaf e -> case e of
@@ -101,16 +120,21 @@ splitClauses tree =
 -- | Split a 'PropTree' into a list (conjunction) of positive clauses, and
 -- a list (conjunction) of lists (disjunction) of negated clauses.
 -- e.g.
---      (A & B) & !(A & C) & !(C & D) ==
---      (A & B) & (!A | !C) & (!C | !D) ==>
---      ([A,B], [[A, C], [C, D]])
--- Returns 'Nothing' if a tree contains double-negation (e.g. A & !(A & !C))
+--
+-- @
+-- (A & B) & !(A & C) & !(C & D) ==
+-- (A & B) & (!A | !C) & (!C | !D) ==>
+-- ([A,B], [[A, C], [C, D]])
+-- @
+--
+-- Returns 'Nothing' if a tree contains double-negation (e.g. @A & !(A & !C)@)
 toConjunctsAndDisjuncts :: PropTree a -> Maybe ([a], [[a]])
 toConjunctsAndDisjuncts tree = do
   let (positive, negativeTrees) = splitClauses tree
   negativess <- mapM flatten negativeTrees
   return (positive, negativess)
 
+-- | Print a 'PropTree', using the given function for elements.
 prettyPropTree :: forall a. (a -> PP.Doc) -> PropTree a -> PP.Doc
 prettyPropTree f tree = go tree
   where
