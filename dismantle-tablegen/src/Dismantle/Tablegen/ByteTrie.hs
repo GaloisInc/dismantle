@@ -103,6 +103,7 @@ data Pattern = Pattern { requiredMask :: BS.ByteString
                        }
                deriving (Eq, Ord, Show)
 
+showPattern :: Pattern -> String
 showPattern Pattern{..} =
   "Pattern { requiredMask = " ++ show (BS.unpack requiredMask) ++
   ", trueMask = " ++ show (BS.unpack trueMask) ++
@@ -184,7 +185,7 @@ instance MonadFail (TrieM e) where
 -- | Construct a 'ByteTrie' from a list of mappings and a default element
 byteTrie :: e -> [(String, BS.ByteString, BS.ByteString, [(BS.ByteString, BS.ByteString)], e)] -> Either TrieError (ByteTrie e)
 byteTrie defElt mappings = mkTrie defElt (mapM_ (\(n, r, t, nps, e) -> assertMapping n r t nps e) mappings)
-  where showMapping (s, bs0, bs1, bs2, bs3, _) = show (s, BS.unpack bs0, BS.unpack bs1, BS.unpack bs2, BS.unpack bs3)
+  where _showMapping (s, bs0, bs1, bs2, bs3, _) = show (s, BS.unpack bs0, BS.unpack bs1, BS.unpack bs2, BS.unpack bs3)
 
 -- | Construct a 'ByteTrie' through a monadic assertion-oriented interface.
 --
@@ -373,10 +374,10 @@ patternMatches byteIndex byte p _ = -- (Pattern { requiredMask = req, trueMask =
 -- FIXME: We do not check that the bytestrings have the same length
 negativePatternMatches :: BS.ByteString -> Pattern -> e -> Bool
 negativePatternMatches bs p _ = all (uncurry (negativeMatch bs)) (negativePairs p)
-  where negativeMatch bs negMask negBits =
+  where negativeMatch bs' negMask negBits =
           case (all (==0) (BS.unpack negMask)) of
             True -> True
-            False -> not (and (zipWith3 negativeByteMatches (BS.unpack negMask) (BS.unpack negBits) (BS.unpack bs)))
+            False -> not (and (zipWith3 negativeByteMatches (BS.unpack negMask) (BS.unpack negBits) (BS.unpack bs')))
         negativeByteMatches :: Word8 -> Word8 -> Word8 -> Bool
         negativeByteMatches negByteMask negByteBits byte = (byte .&. negByteMask) == negByteBits
 
