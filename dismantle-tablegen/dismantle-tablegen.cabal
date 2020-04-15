@@ -37,7 +37,7 @@ library
                    Data.Parameterized.Lift
                    Data.Set.NonEmpty
                    Data.Word.Indexed
-  build-depends:       base >=4.12 && <5,
+  build-depends:       base >=4.10 && <5,
                        ghc-prim,
                        template-haskell,
                        th-abstraction >= 0.2 && < 0.4,

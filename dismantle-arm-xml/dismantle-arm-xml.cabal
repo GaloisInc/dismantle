@@ -29,7 +29,7 @@ library
   -- other-modules:
   -- other-extensions:
   build-depends:       asl-parser,
-                       base >=4.12 && < 5,
+                       base >=4.10 && < 5,
                        binary,
                        bytestring,
                        containers,
