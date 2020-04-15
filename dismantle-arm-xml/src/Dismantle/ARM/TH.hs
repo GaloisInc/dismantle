@@ -35,7 +35,6 @@ import qualified Language.Haskell.TH as TH
 import qualified Language.Haskell.TH.Syntax as TH
 
 import           System.IO ( withFile, IOMode(..), hPutStrLn )
-import           System.Directory ( withCurrentDirectory )
 import           System.FilePath.Glob ( namesMatching )
 import           System.FilePath ( (</>), (<.>) )
 
@@ -59,17 +58,16 @@ genISA :: DT.ISA
        -- ^ file to write out logs to
        -> TH.DecsQ
 genISA isa xmldirPath encIndexFile aslInstrs logFile = do
-  xmlFiles <- TH.runIO $ withCurrentDirectory xmldirPath $ namesMatching ("*" <.> "xml")
+  xmlFiles <- TH.runIO $ namesMatching (xmldirPath </> "*" <.> "xml")
   (desc, encodingops) <- TH.runIO $ withFile logFile WriteMode $ \handle -> do
     let doLog msg = hPutStrLn handle msg
     putStrLn $ "Dismantle.ARM.TH log: " ++ logFile
-    encodings <- withCurrentDirectory xmldirPath $ do
-      XML.loadEncodings (DT.isaName isa) xmlFiles encIndexFile doLog
+    encodings <- XML.loadEncodings (DT.isaName isa) xmlFiles (xmldirPath </> encIndexFile) doLog
     pairedEncodings <- ASL.loadASL (DT.isaName isa) aslInstrs encodings doLog
     let xmlEncodings = map fst pairedEncodings
     return $ (ARM.instDescriptorsToISA $ map ARM.encodingOpToInstDescriptor xmlEncodings, pairedEncodings)
   TH.runIO $ putStrLn "Successfully generated ISA description."
-  let files = aslInstrs : map ((</>) xmldirPath) xmlFiles
+  let files = aslInstrs : xmlFiles
   aslMapDesc <- mkASLMap encodingops
   isaDesc <- DTH.genISADesc isa desc files
   return $ isaDesc ++ aslMapDesc
