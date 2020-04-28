@@ -1,8 +1,10 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MagicHash #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Dismantle.Tablegen.ByteTrie (
   ByteTrie(..),
@@ -27,24 +29,29 @@ import qualified GHC.ForeignPtr as FP
 
 import Control.Applicative
 import Control.DeepSeq
-import qualified Control.Monad.State.Strict as St
-import Control.Monad.Fail
 import qualified Control.Monad.Except as E
-import qualified Data.Array as A
-import Data.Bits ( (.&.), popCount )
+import Control.Monad.Fail
+import qualified Control.Monad.State.Strict as St
 import qualified Data.Binary.Put as P
+import Data.Bits ( Bits, (.&.), (.|.), popCount, bit )
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
+import           Data.Coerce ( coerce )
 import qualified Data.Foldable as F
+import qualified Data.HashMap.Strict as HM
+import qualified Data.Hashable as DH
 import Data.Int ( Int32 )
 import qualified Data.List as L
 import qualified Data.Map.Strict as M
 import Data.Maybe (catMaybes)
-import qualified Data.Set as S
 import qualified Data.Traversable as T
-import Data.Word ( Word8 )
-import qualified Data.Vector.Storable as SV
 import qualified Data.Vector as V
+import qualified Data.Vector.Generic as VG
+import qualified Data.Vector.Generic.Mutable as VGM
+import qualified Data.Vector.Storable as SV
+import qualified Data.Vector.Unboxed as VU
+import qualified Data.Vector.Unboxed.Mutable as VUM
+import Data.Word ( Word8 )
 import qualified System.IO.Unsafe as IO
 
 import Prelude
@@ -103,6 +110,11 @@ data Pattern = Pattern { requiredMask :: BS.ByteString
                        }
                deriving (Eq, Ord, Show)
 
+instance DH.Hashable Pattern where
+  hashWithSalt slt p = slt `DH.hashWithSalt` requiredMask p
+                           `DH.hashWithSalt` trueMask p
+                           `DH.hashWithSalt` negativePairs p
+
 showPattern :: Pattern -> String
 showPattern Pattern{..} =
   "Pattern { requiredMask = " ++ show (BS.unpack requiredMask) ++
@@ -148,6 +160,9 @@ instance Show TrieError where
     where showPat (p, mnemonics, numBytes) = "(" ++ showPattern p ++ ", " ++ show mnemonics ++ ", " ++ show numBytes ++ ")"
           showPatList pats = "[" ++ L.intercalate "," (showPat <$> pats) ++ "]"
 
+newtype PatternSet = PatternSet { patternSetBits :: Integer }
+  deriving (Eq, Ord, Show, DH.Hashable, Bits)
+
 -- | The state of the 'TrieM' monad
 data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern (LinkedTableIndex, e))
                              -- ^ The 'Int' is the index of the element into the
@@ -157,11 +172,16 @@ data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern (LinkedTableIndex, 
                              -- an unfortunate 'Ord' constraint on e).
                              , tsPatternMnemonics :: !(M.Map Pattern String)
                              -- ^ A mapping of patterns to their menmonics
-                             , tsCache :: !(M.Map (Int, S.Set Pattern) LinkedTableIndex)
+                             , tsPatternSets :: !(HM.HashMap Pattern PatternSet)
+                             -- ^ Record the singleton 'PatternSet' for each
+                             -- pattern; when constructing the key for
+                             -- 'tsCache', all of these will be looked up and
+                             -- ORed together to construct the actual set.
+                             , tsCache :: !(HM.HashMap (Int, PatternSet) LinkedTableIndex)
                              -- ^ A map of trie levels to tries to allow for
                              -- sharing of common sub-trees.  The 'Int' is an
                              -- index into 'tsTables'
-                             , tsTables :: !(M.Map LinkedTableIndex (A.Array Word8 LinkedTableIndex))
+                             , tsTables :: !(M.Map LinkedTableIndex (VU.Vector LinkedTableIndex))
                              -- ^ The actual tables, which point to either other
                              -- tables or terminal elements in the 'tsPatterns'
                              -- table.
@@ -200,8 +220,9 @@ mkTrie defElt act =
   E.runExcept (St.evalStateT (unM (act >> trieFromState defElt)) s0)
   where
     s0 = TrieState { tsPatterns = M.empty
-                   , tsCache = M.empty
+                   , tsCache = HM.empty
                    , tsPatternMnemonics = M.empty
+                   , tsPatternSets = HM.empty
                    , tsTables = M.empty
                    , tsEltIdSrc = firstElementIndex
                    , tsTblIdSrc = firstTableIndex
@@ -235,7 +256,7 @@ flattenTables t0 defElt st =
     -- tables in relative order
     parseTables = [ unFTI (linkedToFlatIndex e)
                   | (_tblIx, tbl) <- L.sortOn fst (M.toList (tsTables st))
-                  , e <- A.elems tbl
+                  , e <- VU.toList tbl
                   ]
 
 -- | Builds a table for a given byte in the sequence (or looks up a matching
@@ -249,13 +270,19 @@ buildTableLevel :: M.Map Pattern (LinkedTableIndex, e)
                 -> TrieM e LinkedTableIndex
 buildTableLevel patterns byteIndex bytesSoFar = do
   cache <- St.gets tsCache
-  let key = (byteIndex, S.fromList (M.keys patterns))
-  case M.lookup key cache of
+  psets <- St.gets tsPatternSets
+  let addPatternToSet ps p =
+        case HM.lookup p psets of
+          Nothing -> error ("Missing pattern set for pattern: " ++ show p)
+          Just s -> s .|. ps
+  let pset = F.foldl' addPatternToSet (PatternSet 0) (M.keys patterns)
+  let key = (byteIndex, pset)
+  case HM.lookup key cache of
     Just tix -> return tix
     Nothing -> do
       payloads <- T.traverse (makePayload patterns byteIndex bytesSoFar) byteValues
       tix <- newTable payloads
-      St.modify' $ \s -> s { tsCache = M.insert key tix (tsCache s) }
+      St.modify' $ \s -> s { tsCache = HM.insert key tix (tsCache s) }
       return tix
   where
     maxWord :: Word8
@@ -268,14 +295,11 @@ buildTableLevel patterns byteIndex bytesSoFar = do
 newTable :: [(Word8, LinkedTableIndex)] -> TrieM e LinkedTableIndex
 newTable payloads = do
   tix <- St.gets tsTblIdSrc
-  let a = A.array (0, maxWord) payloads
+  let a = VU.fromList (fmap snd (L.sortOn fst payloads))
   St.modify' $ \s -> s { tsTables = M.insert tix a (tsTables s)
                        , tsTblIdSrc = nextTableIndex tix
                        }
   return tix
-  where
-    maxWord :: Word8
-    maxWord = maxBound
 
 makePayload :: M.Map Pattern (LinkedTableIndex, e)
             -- ^ Valid patterns at this point in the trie
@@ -401,7 +425,10 @@ assertMapping mnemonic patReq patTrue patNegPairs val
               Nothing -> E.throwError (OverlappingBitPattern [(pat, [mnemonic], patternBytes pat)])
         Nothing -> do
           eid <- St.gets tsEltIdSrc
+          patIdNum <- St.gets (M.size . tsPatterns)
+          let patSet = PatternSet { patternSetBits = bit patIdNum }
           St.modify' $ \s -> s { tsPatterns = M.insert pat (eid, val) (tsPatterns s)
+                               , tsPatternSets = HM.insert pat patSet (tsPatternSets s)
                                , tsPatternMnemonics = M.insert pat mnemonic (tsPatternMnemonics s)
                                , tsEltIdSrc = nextElementIndex eid
                                }
@@ -460,13 +487,40 @@ unsafeByteTriePayloads bt =
 
 -- Internal helper types
 
+newtype instance VU.Vector LinkedTableIndex = V_FTI (VU.Vector Int32)
+newtype instance VUM.MVector s LinkedTableIndex = MV_FTI (VUM.MVector s Int32)
+
+instance VGM.MVector VUM.MVector LinkedTableIndex where
+  basicLength (MV_FTI mv) = VGM.basicLength mv
+  basicUnsafeSlice i l (MV_FTI mv) = MV_FTI (VGM.basicUnsafeSlice i l mv)
+  basicOverlaps (MV_FTI mv) (MV_FTI mv') = VGM.basicOverlaps mv mv'
+  basicUnsafeNew l = MV_FTI <$> VGM.basicUnsafeNew l
+  basicInitialize (MV_FTI mv) = VGM.basicInitialize mv
+  basicUnsafeReplicate i x = MV_FTI <$> VGM.basicUnsafeReplicate i (coerce x)
+  basicUnsafeRead (MV_FTI mv) i = coerce <$> VGM.basicUnsafeRead mv i
+  basicUnsafeWrite (MV_FTI mv) i x = VGM.basicUnsafeWrite mv i (coerce x)
+  basicClear (MV_FTI mv) = VGM.basicClear mv
+  basicSet (MV_FTI mv) x = VGM.basicSet mv (coerce x)
+  basicUnsafeCopy (MV_FTI mv) (MV_FTI mv') = VGM.basicUnsafeCopy mv mv'
+  basicUnsafeMove (MV_FTI mv) (MV_FTI mv') = VGM.basicUnsafeMove mv mv'
+  basicUnsafeGrow (MV_FTI mv) n = MV_FTI <$> VGM.basicUnsafeGrow mv n
+
+instance VG.Vector VU.Vector LinkedTableIndex where
+  basicUnsafeFreeze (MV_FTI mv) = V_FTI <$> VG.basicUnsafeFreeze mv
+  basicUnsafeThaw (V_FTI v) = MV_FTI <$> VG.basicUnsafeThaw v
+  basicLength (V_FTI v) = VG.basicLength v
+  basicUnsafeSlice i l (V_FTI v) = V_FTI (VG.basicUnsafeSlice i l v)
+  basicUnsafeIndexM (V_FTI v) i = coerce <$> VG.basicUnsafeIndexM v i
+  basicUnsafeCopy (MV_FTI mv) (V_FTI v) = VG.basicUnsafeCopy mv v
+  elemseq (V_FTI v) x y = VG.elemseq v (coerce x) y
+
 -- | This type represents the payload of the initial linked parse tables (in the
 -- state of the monad).
 --
 -- In this representation, negative values name a payload in 'tsPatterns', while
 -- non-negative values are table identifiers in 'tsTables'.
 newtype LinkedTableIndex = LTI Int32
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, VU.Unbox)
 
 -- | This type represents payloads in the 'ByteTrie' type.
 --
@@ -474,6 +528,7 @@ newtype LinkedTableIndex = LTI Int32
 -- indices into 'btParseTables'.
 newtype FlatTableIndex = FTI { unFTI :: Int32 }
   deriving (Eq, Ord, Show)
+
 
 -- | Convert between table index types.
 --

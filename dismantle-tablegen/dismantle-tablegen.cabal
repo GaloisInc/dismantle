@@ -55,6 +55,8 @@ library
                        directory,
                        split >= 0.2 && < 0.3,
                        containers,
+                       hashable,
+                       unordered-containers,
                        zlib >= 0.6 && < 0.7,
                        text >= 1 && < 2,
                        vector,
