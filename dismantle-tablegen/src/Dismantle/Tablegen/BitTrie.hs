@@ -3,6 +3,7 @@ module Dismantle.Tablegen.BitTrie (
   lookupByte
   ) where
 
+import qualified Control.Exception as X
 import qualified Control.Monad.Except as ME
 import qualified Control.Monad.State.Strict as St
 import           Data.Bits ( (.|.), (.&.), popCount, testBit )
@@ -23,7 +24,7 @@ import qualified Dismantle.Tablegen.LinearizedTrie as LT
 import qualified Dismantle.Tablegen.Patterns as DTP
 
 lookupByte :: LT.LinearizedTrie a -> Word8 -> Either (LT.LinearizedTrie a) a
-lookupByte lt byte = lookupByteRec lt byte 7
+lookupByte lt byte = lookupByteRec lt byte 0
 
 lookupByteRec :: LT.LinearizedTrie a
               -> Word8
@@ -33,11 +34,11 @@ lookupByteRec lt byte n
   -- We found a terminal node in the trie, return the payload
   | tableVal < 0 = Right (LT.ltPayloads lt `V.unsafeIndex` fromIntegral (negate tableVal))
   -- We reached the end of the byte and the next node is another trie
-  | n == 0 = Left $ lt { LT.ltStartIndex = fromIntegral tableVal }
+  | n == 7 = Left $ lt { LT.ltStartIndex = fromIntegral tableVal }
   -- Otherwise, just keep traversing bits
   | otherwise =
     let lt' = lt { LT.ltStartIndex = fromIntegral tableVal }
-    in lookupByteRec lt' byte (n - 1)
+    in lookupByteRec lt' byte (n + 1)
   where
     tableVal = LT.ltParseTables lt `SV.unsafeIndex` (bitValue byte n + LT.ltStartIndex lt)
 
@@ -111,6 +112,9 @@ newTable payloads = do
                        }
   return tix
 
+patternBits :: DTP.Pattern -> Int
+patternBits = (8 *) . DTP.patternBytes
+
 makePayload :: M.Map DTP.Pattern (DTP.LinkedTableIndex, e)
             -> Int
             -- ^ The bit index
@@ -122,7 +126,7 @@ makePayload patterns bitIndex bitsSoFar bit =
   case M.toList matchingPatterns of
     [] -> return (bit, DTP.defaultElementIndex)
     [(_, (eltIdx, _elt))] -> return (bit, eltIdx)
-    _ | all ((> (bitIndex + 1)) . DTP.patternBytes) (M.keys matchingPatterns) -> do
+    _ | all ((> (bitIndex + 1)) . patternBits) (M.keys matchingPatterns) -> do
           -- This case makes sure that we have covered all of the patterns
           -- completely; we can't stop early, since there could be a required
           -- fixed bit in the last position that might make a pattern fail even
@@ -142,8 +146,8 @@ makePayload patterns bitIndex bitsSoFar bit =
   where
     bitsSoFar' = bitSnoc bitsSoFar bit
     matchingPatterns' = M.filterWithKey (patternMatches bitIndex bit) patterns
-    matchLength = minimum (DTP.patternBytes <$> M.keys matchingPatterns')
-    matchingPatterns = M.filterWithKey (\p _ -> DTP.patternBytes p == matchLength) matchingPatterns'
+    matchLength = minimum (patternBits <$> M.keys matchingPatterns')
+    matchingPatterns = M.filterWithKey (\p _ -> patternBits p == matchLength) matchingPatterns'
     -- Negative matching patterns are used to disambiguate when we are out of
     -- bits
     negativeMatchingPatterns = M.filterWithKey (negativePatternMatches bitsSoFar') matchingPatterns
@@ -177,7 +181,11 @@ negativePatternMatches bs p _ =
     negativeMatch negMask negBits =
       case all (==0) (BS.unpack negMask) of
         True -> True
-        False -> not (and (zipWith3 negativeBitMatches (asBitList negMask) (asBitList negBits) (asBitList bs)))
+        False ->
+          -- NOTE: the 'asBitList' function unrolls all of the bits in the
+          -- ByteString values; the zipWith just takes the necessary set given
+          -- the length of the bitstring.
+          not (and (zipWith3 negativeBitMatches (asBitList negMask) (asBitList negBits) (asBitList bs)))
     negativeBitMatches :: Bool -> Bool -> Bool -> Bool
     negativeBitMatches negBitMask negBitValue bit =
       (bit .&. negBitMask) == negBitValue
@@ -237,7 +245,8 @@ bitEmpty = BitString VU.empty
 -- number 7 in byte 0 is actually bit 0 for the purposes of indexing into the
 -- pattern.
 bitIndexBytestring :: BS.ByteString -> Int -> Bool
-bitIndexBytestring bs i = testBit byte (7 - bitIndex)
+bitIndexBytestring bs i =
+  X.assert (i >= 0) $ testBit byte bitIndex
   where
     (byteIndex, bitIndex) = i `divMod` 8
     byte = bs `BS.index` byteIndex
@@ -247,11 +256,15 @@ class AsBitList a where
   asBitList :: a -> [Bool]
 
 -- | This instance applies the same bit order swapping logic as 'bitIndexBytestring'
+--
+-- Note that it achieves the flipping by virtue of the order it constructs the
+-- list in: bit 0-7 (so the Bool corresponding to bit 0 is at idx 0 of the
+-- generated sub-lists).
 instance AsBitList BS.ByteString where
   asBitList = concatMap flipBits . BS.unpack
 
 flipBits :: Word8 -> [Bool]
-flipBits w = reverse [ testBit w i | i <- [0..7] ]
+flipBits w = [ testBit w i | i <- [0..7] ]
 
 instance AsBitList BitString where
   asBitList (BitString v) = VU.toList v
