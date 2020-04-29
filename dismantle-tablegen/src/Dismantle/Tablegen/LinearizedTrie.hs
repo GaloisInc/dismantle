@@ -10,9 +10,7 @@ module Dismantle.Tablegen.LinearizedTrie (
 import           Data.Word ( Word8 )
 import qualified Data.Binary.Put as BP
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.Foldable as F
 import           Data.Int ( Int32 )
-import qualified Data.Traversable as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Storable as SV
 import qualified GHC.ForeignPtr as GFP
@@ -40,16 +38,6 @@ data LinearizedTrie a =
                  , ltStartIndex :: {-# UNPACK #-} !Int
                  -- ^ The table index to start traversing from.
                  }
-
-instance Functor LinearizedTrie where
-  fmap f lt = lt { ltPayloads = fmap f (ltPayloads lt) }
-
-instance F.Foldable LinearizedTrie where
-  foldr f seed lt = foldr f seed (ltPayloads lt)
-
-instance T.Traversable LinearizedTrie where
-  traverse f lt = LinearizedTrie <$> traverse f (ltPayloads lt) <*> pure (ltParseTables lt) <*> pure (ltStartIndex lt)
-
 
 -- Unsafe things
 

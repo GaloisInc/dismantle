@@ -49,7 +49,7 @@ instance NFData Bit where
 
 -- | A wrapper around a sequence of 'Bit's
 data Pattern = Pattern { requiredMask :: BS.ByteString
-                       -- ^ The mask of bits that must be set in order for the
+                       -- ^ The mask of bits that are considered for the
                        -- pattern to match
                        , trueMask :: BS.ByteString
                        -- ^ The bits that must be set (or not) in the positions
@@ -59,7 +59,14 @@ data Pattern = Pattern { requiredMask :: BS.ByteString
                        -- each pair is the mask of bits that must /not/ match for
                        -- this pattern to apply, and the righthand side is the bits
                        -- that must be set (or not) in the positions selected by the
-                       -- lefthand side in order to reject the pattern
+                       -- lefthand side in order to reject the pattern.
+                       --
+                       -- NOTE that this is only used to resolve conflicts
+                       -- between multiple potential matches for a pattern.  The
+                       -- negativePairs are ignored if the positive masks are
+                       -- sufficient to uniquely identify an encoding.
+                       --
+                       -- This is fine unless the input data has errors.
                        }
                deriving (Eq, Ord, Show)
 
@@ -108,7 +115,7 @@ data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern (LinkedTableIndex, 
                              -- backwards mapping from e -> Int (which would put
                              -- an unfortunate 'Ord' constraint on e).
                              , tsPatternMnemonics :: !(M.Map Pattern String)
-                             -- ^ A mapping of patterns to their menmonics
+                             -- ^ A mapping of patterns to their mnemonics
                              , tsPatternSets :: !(HM.HashMap Pattern PatternSet)
                              -- ^ Record the singleton 'PatternSet' for each
                              -- pattern; when constructing the key for

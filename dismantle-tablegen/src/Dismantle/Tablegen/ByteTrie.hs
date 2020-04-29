@@ -23,6 +23,7 @@ import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as VU
 import           Data.Word ( Word8 )
 
+
 import qualified Dismantle.Tablegen.LinearizedTrie as LT
 import qualified Dismantle.Tablegen.Patterns as DTP
 
