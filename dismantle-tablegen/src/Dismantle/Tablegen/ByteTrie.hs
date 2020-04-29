@@ -21,29 +21,29 @@ module Dismantle.Tablegen.ByteTrie (
   unsafeByteTrieParseTableBytes,
   unsafeByteTriePayloads
   ) where
-import Debug.Trace
+import           Debug.Trace
 
 import qualified GHC.Prim as P
 import qualified GHC.Ptr as Ptr
 import qualified GHC.ForeignPtr as FP
 
-import Control.Applicative
-import Control.DeepSeq
+import           Control.Applicative
+import           Control.DeepSeq
 import qualified Control.Monad.Except as E
-import Control.Monad.Fail
+import           Control.Monad.Fail
 import qualified Control.Monad.State.Strict as St
 import qualified Data.Binary.Put as P
-import Data.Bits ( Bits, (.&.), (.|.), popCount, bit )
+import           Data.Bits ( Bits, (.&.), (.|.), popCount, bit )
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import           Data.Coerce ( coerce )
 import qualified Data.Foldable as F
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as DH
-import Data.Int ( Int32 )
+import           Data.Int ( Int32 )
 import qualified Data.List as L
 import qualified Data.Map.Strict as M
-import Data.Maybe (catMaybes)
+import           Data.Maybe (catMaybes)
 import qualified Data.Traversable as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as VG
@@ -51,10 +51,10 @@ import qualified Data.Vector.Generic.Mutable as VGM
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.Vector.Unboxed.Mutable as VUM
-import Data.Word ( Word8 )
+import           Data.Word ( Word8 )
 import qualified System.IO.Unsafe as IO
 
-import Prelude
+import           Prelude
 
 -- | A data type mapping sequences of bytes to elements of type @a@
 data ByteTrie a =
