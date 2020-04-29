@@ -23,7 +23,7 @@ import Language.Haskell.TH
 
 import Dismantle.Tablegen.Types
 import Dismantle.Tablegen.Parser.Types
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.Patterns as BT
 
 data Endianness =
     Little (LBS.ByteString -> LBS.ByteString) ([BT.Bit] -> [BT.Bit])

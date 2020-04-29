@@ -16,8 +16,8 @@ import Data.List (nub)
 import Data.Word ( Word8 )
 import Language.Haskell.TH.Syntax (Lift)
 
-import qualified Dismantle.Tablegen.ByteTrie as BT
 import Dismantle.Tablegen.Parser.Types (OBit)
+import qualified Dismantle.Tablegen.Patterns as DTP
 
 -- | A bit position in an instruction.
 newtype IBit = IBit Int
@@ -65,8 +65,8 @@ instance NFData OperandDescriptor where
 -- | Description of an instruction, abstracted from the tablegen
 -- definition
 data InstructionDescriptor =
-  InstructionDescriptor { idMask :: [BT.Bit]
-                        , idNegMasks :: [[BT.Bit]]
+  InstructionDescriptor { idMask :: [DTP.Bit]
+                        , idNegMasks :: [[DTP.Bit]]
                         , idMnemonic :: String
                         , idInputOperands :: [OperandDescriptor]
                         , idOutputOperands :: [OperandDescriptor]

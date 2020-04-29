@@ -56,6 +56,8 @@ import           Dismantle.Instruction.Random ( ArbitraryOperands(..), Arbitrary
 import           Dismantle.Tablegen
 import           Dismantle.Tablegen.Parser.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.LinearizedTrie as DTL
+import qualified Dismantle.Tablegen.Patterns as DTP
 import           Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import           Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
@@ -197,9 +199,9 @@ mkParser isa desc = do
   case BT.byteTrie Nothing trieInputs of
     Left err -> reportError ("Error while building parse tables: " ++ show err) >> return []
     Right bt0 -> do
-      let (parseTableBytes, parseTableSize, parseTableStartIndex) = BT.unsafeByteTrieParseTableBytes bt0
+      let (parseTableBytes, parseTableSize, parseTableStartIndex) = DTL.unsafeLinearizedTrieParseTableBytes bt0
           payloads0 :: [Maybe Name]
-          payloads0 = BT.unsafeByteTriePayloads bt0
+          payloads0 = DTL.unsafeLinearizedTriePayloads bt0
           toParserExpr Nothing = [| Nothing |]
           toParserExpr (Just name) = [| Just $(varE name) |]
           parseTableExprPayloads :: [Q Exp]
@@ -207,7 +209,7 @@ mkParser isa desc = do
       trie <- [|
                  let parseTableLit = $(litE (stringPrimL parseTableBytes))
                      payloads = $(listE parseTableExprPayloads)
-                 in BT.unsafeFromAddr payloads parseTableLit $(lift parseTableSize) $(lift parseTableStartIndex)
+                 in DTL.unsafeFromAddr payloads parseTableLit $(lift parseTableSize) $(lift parseTableStartIndex)
                |]
       parser <- [| parseInstruction $(return trie) |]
       parserTy <- [t| LBS.ByteString -> (Int, Maybe $(conT (mkName "Instruction"))) |]
@@ -225,7 +227,7 @@ parserName = mkName "disassembleInstruction"
 -- The [Word8] forms are suitable for constructing Addr# literals,
 -- which we can turn into bytestrings efficiently (i.e., without
 -- parsing)
-bitSpecAsBytes :: [BT.Bit] -> ([Word8], [Word8])
+bitSpecAsBytes :: [DTP.Bit] -> ([Word8], [Word8])
 bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroups)
   where
     byteGroups = L.chunksOf 8 bits
@@ -233,11 +235,11 @@ bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroup
     setTrueBits byteBits = foldr setTrueBit 0 (zip [7,6..0] byteBits)
     setRequiredBit (ix, b) w =
       case b of
-        BT.ExpectedBit _ -> w `setBit` ix
-        BT.Any -> w
+        DTP.ExpectedBit _ -> w `setBit` ix
+        DTP.Any -> w
     setTrueBit (ix, b) w =
       case b of
-        BT.ExpectedBit True -> w `setBit` ix
+        DTP.ExpectedBit True -> w `setBit` ix
         _ -> w
 
 -- | Note that the 'Maybe Name' is always a 'Just' value.

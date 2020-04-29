@@ -17,8 +17,11 @@ library
                    Dismantle.Instruction.Random
                    Dismantle.Tablegen
                    Dismantle.Tablegen.ISA
+                   Dismantle.Tablegen.BitTrie
                    Dismantle.Tablegen.ByteTrie
+                   Dismantle.Tablegen.LinearizedTrie
                    Dismantle.Tablegen.Combinators
+                   Dismantle.Tablegen.Patterns
                    Dismantle.Tablegen.TH
                    Dismantle.Tablegen.TH.Bits
                    Dismantle.Tablegen.TH.Capture

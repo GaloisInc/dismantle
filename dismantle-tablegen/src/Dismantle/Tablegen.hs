@@ -39,6 +39,8 @@ import Dismantle.Tablegen.Parser ( parseTablegen )
 import Dismantle.Tablegen.Parser.Types
 import Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.LinearizedTrie as LT
+import qualified Dismantle.Tablegen.Patterns as DTP
 import Debug.Trace
 
 -- Add a number of required bytes to the Parser structure.  Then
@@ -50,7 +52,7 @@ import Debug.Trace
 -- invoke).
 data Parser a = Parser Int (LBS.ByteString -> a)
 
-parseInstruction :: BT.ByteTrie (Maybe (Parser a)) -> LBS.ByteString -> (Int, Maybe a)
+parseInstruction :: LT.LinearizedTrie (Maybe (Parser a)) -> LBS.ByteString -> (Int, Maybe a)
 parseInstruction trie0 bs0 = go bs0 trie0 bs0 0
   where
     go bs1 trie bs consumed =
@@ -124,11 +126,11 @@ extractOperands i s = foldr extractOperandTypes s (idInputOperands i ++ idOutput
 extractOperandTypes :: OperandDescriptor -> S.Set OperandType -> S.Set OperandType
 extractOperandTypes f = S.insert (opType f)
 
-toTrieBit :: Maybe BitRef -> BT.Bit
+toTrieBit :: Maybe BitRef -> DTP.Bit
 toTrieBit br =
   case br of
-    Just (ExpectedBit b) -> BT.ExpectedBit b
-    _ -> BT.Any
+    Just (ExpectedBit b) -> DTP.ExpectedBit b
+    _ -> DTP.Any
 
 -- | The operand type of the "unpredictable" operand. This is used
 -- internally to synthesize an operand referring to any bits in the
@@ -426,7 +428,7 @@ finishInstructionDescriptor isa def mbits ins outs =
               Little _ rewrite -> rewrite
           usedBits = rewriteUsedBits usedBits0
           i = InstructionDescriptor { idMask = usedBits
-                                    , idNegMasks = [replicate 32 BT.Any]
+                                    , idNegMasks = [replicate 32 DTP.Any]
                                     , idDefaultPrettyVariableValues = isaDefaultPrettyVariableValues isa
                                     , idPrettyVariableOverrides = fromMaybe [] $ lookup (defName def) $ isaPrettyOverrides isa
                                     , idMnemonic = defName def
