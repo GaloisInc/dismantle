@@ -2,35 +2,40 @@
 module Trie ( trieTests ) where
 
 import qualified Data.ByteString as BS
-import Data.Either ( fromRight )
+import           Data.Either ( fromRight )
+import           GHC.Word ( Word8 )
 import           Numeric (showHex)
 import qualified Test.Tasty as T
 import           Test.Tasty.HUnit
 
-import Dismantle.Tablegen.ByteTrie ( byteTrie, lookupByte )
+import           Dismantle.Tablegen.ByteTrie ( ByteTrie, byteTrie, lookupByte )
+
+
+hexStr :: (Integral a, Show a) => a -> String -> String
+hexStr v = (<>) "0x" . showHex v
+
+testLookup :: (Eq a, Show a) => ByteTrie a -> Word8 -> a -> T.TestTree
+testLookup t b expected = testCase (hexStr b " lookup")
+                          (let Right v = lookupByte t b in v @?= expected)
 
 
 trieTests :: IO T.TestTree
 trieTests = return $
-  let hexStr v = (<>) "0x" . showHex v
-      testLookup t b expected = testCase (hexStr b " lookup")
-                                (let Right v = lookupByte t b in v @?= expected)
-  in
-    T.testGroup "ByteTrie"
-    [ T.testGroup "empty" $
-      let Right t = byteTrie (Nothing :: Maybe String) []
-      in
-        [
-          -- length is an nonsense operation on a ByteTrie
-          -- , testCase "empty length" $
-          --   let Right t = byteTrie (Nothing :: Maybe String) []
-          --   in length t @?= 0
-          testLookup t 0 Nothing
-        , testLookup t 1 Nothing
-        , testLookup t 10 Nothing
-        , testLookup t 0x3d Nothing
-        , testLookup t 255 Nothing
-        ]
+  T.testGroup "ByteTrie"
+  [ T.testGroup "empty" $
+    let Right t = byteTrie (Nothing :: Maybe String) []
+    in
+      [
+        -- length is an nonsense operation on a ByteTrie
+        -- , testCase "empty length" $
+        --   let Right t = byteTrie (Nothing :: Maybe String) []
+        --   in length t @?= 0
+        testLookup t 0 Nothing
+      , testLookup t 1 Nothing
+      , testLookup t 10 Nothing
+      , testLookup t 0x3d Nothing
+      , testLookup t 255 Nothing
+      ]
 
   ----------------------------------------------------------------------
 
