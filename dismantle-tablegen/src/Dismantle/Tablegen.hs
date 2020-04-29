@@ -38,7 +38,7 @@ import Dismantle.Tablegen.ISA
 import Dismantle.Tablegen.Parser ( parseTablegen )
 import Dismantle.Tablegen.Parser.Types
 import Dismantle.Tablegen.Types
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.BitTrie as BT
 import qualified Dismantle.Tablegen.LinearizedTrie as LT
 import qualified Dismantle.Tablegen.Patterns as DTP
 import Debug.Trace

@@ -113,7 +113,7 @@ import qualified Data.Parameterized.NatRepr as NR
 
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.Patterns as BT
 
 import           Data.PropTree ( PropTree )
 import qualified Data.PropTree as PropTree

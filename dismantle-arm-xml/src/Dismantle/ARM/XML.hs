@@ -83,7 +83,7 @@ import           Text.PrettyPrint.HughesPJClass ( (<+>), ($$) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import qualified Dismantle.Tablegen.Parser.Types as PT
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.Patterns as BT
 import qualified Dismantle.Tablegen as DT
 
 import           Data.BitMask (BitSection, QuasiBit, BitMask )

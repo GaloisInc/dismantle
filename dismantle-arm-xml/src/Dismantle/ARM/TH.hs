@@ -43,7 +43,7 @@ import qualified Dismantle.ARM.XML as XML
 import qualified Dismantle.ARM.ASL as ASL
 import qualified Dismantle.ARM.XML as ARM ( encodingOpToInstDescriptor, instDescriptorsToISA )
 import qualified Dismantle.Tablegen.TH as DTH
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.Patterns as BT
 
 -- | Top-level function for generating the template haskell for a given ISA.
 genISA :: DT.ISA

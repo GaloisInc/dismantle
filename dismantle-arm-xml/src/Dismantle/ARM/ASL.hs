@@ -76,7 +76,7 @@ import           Dismantle.ARM.XML ( ARMRegWidth
                                    )
 import qualified Dismantle.Tablegen as DT
 
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.Patterns as BT
 import qualified Data.BitMask as BM
 
 type ARMMaskTrie a = BM.MaskTrie BM.QuasiBit ARMRegWidth a

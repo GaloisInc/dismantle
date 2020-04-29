@@ -55,7 +55,7 @@ import           Dismantle.Instruction
 import           Dismantle.Instruction.Random ( ArbitraryOperands(..), ArbitraryOperand(..), arbitraryShapedList )
 import           Dismantle.Tablegen
 import           Dismantle.Tablegen.Parser.Types
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.BitTrie as BT
 import qualified Dismantle.Tablegen.LinearizedTrie as DTL
 import qualified Dismantle.Tablegen.Patterns as DTP
 import           Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
@@ -196,7 +196,7 @@ mkParser isa desc = do
   parserData <- forM (parsableInstructions isa desc) $ \i -> do
     mkTrieInput isa i
   let (trieInputs, decls) = unzip parserData
-  case BT.byteTrie Nothing trieInputs of
+  case BT.bitTrie Nothing trieInputs of
     Left err -> reportError ("Error while building parse tables: " ++ show err) >> return []
     Right bt0 -> do
       let (parseTableBytes, parseTableSize, parseTableStartIndex) = DTL.unsafeLinearizedTrieParseTableBytes bt0
