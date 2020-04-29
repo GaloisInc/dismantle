@@ -9,11 +9,8 @@
 module Dismantle.Tablegen.ByteTrie (
   ByteTrie(..),
   byteTrie,
-  mkTrie,
   lookupByte,
-  assertMapping,
   Bit(..),
-  TrieM,
   -- * Errors
   TrieError(..),
   -- * Unsafe
