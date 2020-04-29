@@ -76,15 +76,6 @@ data ByteTrie a =
            -- ^ The table index to start traversing from.
            }
 
-instance Functor ByteTrie where
-  fmap f bt = bt { btPayloads = fmap f (btPayloads bt) }
-
-instance F.Foldable ByteTrie where
-  foldr f seed bt = foldr f seed (btPayloads bt)
-
-instance T.Traversable ByteTrie where
-  traverse f bt = ByteTrie <$> traverse f (btPayloads bt) <*> pure (btParseTables bt) <*> pure (btStartIndex bt)
-
 -- | A bit with either an expected value ('ExpectedBit') or an
 -- unconstrained value ('Any')
 data Bit = ExpectedBit !Bool
