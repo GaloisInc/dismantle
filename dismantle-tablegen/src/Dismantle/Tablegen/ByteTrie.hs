@@ -9,11 +9,8 @@
 module Dismantle.Tablegen.ByteTrie (
   ByteTrie(..),
   byteTrie,
-  mkTrie,
   lookupByte,
-  assertMapping,
   Bit(..),
-  TrieM,
   -- * Errors
   TrieError(..),
   -- * Unsafe
@@ -21,29 +18,29 @@ module Dismantle.Tablegen.ByteTrie (
   unsafeByteTrieParseTableBytes,
   unsafeByteTriePayloads
   ) where
-import Debug.Trace
+import           Debug.Trace
 
 import qualified GHC.Prim as P
 import qualified GHC.Ptr as Ptr
 import qualified GHC.ForeignPtr as FP
 
-import Control.Applicative
-import Control.DeepSeq
+import           Control.Applicative
+import           Control.DeepSeq
 import qualified Control.Monad.Except as E
-import Control.Monad.Fail
+import           Control.Monad.Fail
 import qualified Control.Monad.State.Strict as St
 import qualified Data.Binary.Put as P
-import Data.Bits ( Bits, (.&.), (.|.), popCount, bit )
+import           Data.Bits ( Bits, (.&.), (.|.), popCount, bit )
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import           Data.Coerce ( coerce )
 import qualified Data.Foldable as F
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Hashable as DH
-import Data.Int ( Int32 )
+import           Data.Int ( Int32 )
 import qualified Data.List as L
 import qualified Data.Map.Strict as M
-import Data.Maybe (catMaybes)
+import           Data.Maybe (catMaybes)
 import qualified Data.Traversable as T
 import qualified Data.Vector as V
 import qualified Data.Vector.Generic as VG
@@ -51,10 +48,10 @@ import qualified Data.Vector.Generic.Mutable as VGM
 import qualified Data.Vector.Storable as SV
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.Vector.Unboxed.Mutable as VUM
-import Data.Word ( Word8 )
+import           Data.Word ( Word8 )
 import qualified System.IO.Unsafe as IO
 
-import Prelude
+import           Prelude
 
 -- | A data type mapping sequences of bytes to elements of type @a@
 data ByteTrie a =
@@ -76,15 +73,6 @@ data ByteTrie a =
            -- ^ The table index to start traversing from.
            }
 
-instance Functor ByteTrie where
-  fmap f bt = bt { btPayloads = fmap f (btPayloads bt) }
-
-instance F.Foldable ByteTrie where
-  foldr f seed bt = foldr f seed (btPayloads bt)
-
-instance T.Traversable ByteTrie where
-  traverse f bt = ByteTrie <$> traverse f (btPayloads bt) <*> pure (btParseTables bt) <*> pure (btStartIndex bt)
-
 -- | A bit with either an expected value ('ExpectedBit') or an
 -- unconstrained value ('Any')
 data Bit = ExpectedBit !Bool
@@ -96,8 +84,8 @@ instance NFData Bit where
 
 -- | A wrapper around a sequence of 'Bit's
 data Pattern = Pattern { requiredMask :: BS.ByteString
-                       -- ^ The mask of bits that must be set in order for the
-                       -- pattern to match
+                       -- ^ The mask of bits that are considered for
+                       -- the pattern to match
                        , trueMask :: BS.ByteString
                        -- ^ The bits that must be set (or not) in the positions
                        -- selected by the 'requiredMask'
@@ -106,7 +94,13 @@ data Pattern = Pattern { requiredMask :: BS.ByteString
                        -- each pair is the mask of bits that must /not/ match for
                        -- this pattern to apply, and the righthand side is the bits
                        -- that must be set (or not) in the positions selected by the
-                       -- lefthand side in order to reject the pattern
+                       -- lefthand side in order to reject the pattern.
+                       --
+                       -- NOTE that this is only used if there are
+                       -- multiple potential matches to resolve the
+                       -- conflict and select the better match.  The
+                       -- negativePairs is ignored if the
+                       -- requiredMask+trueMask is unambiguous.
                        }
                deriving (Eq, Ord, Show)
 
@@ -171,7 +165,7 @@ data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern (LinkedTableIndex, 
                              -- backwards mapping from e -> Int (which would put
                              -- an unfortunate 'Ord' constraint on e).
                              , tsPatternMnemonics :: !(M.Map Pattern String)
-                             -- ^ A mapping of patterns to their menmonics
+                             -- ^ A mapping of patterns to their mnemonics
                              , tsPatternSets :: !(HM.HashMap Pattern PatternSet)
                              -- ^ Record the singleton 'PatternSet' for each
                              -- pattern; when constructing the key for
