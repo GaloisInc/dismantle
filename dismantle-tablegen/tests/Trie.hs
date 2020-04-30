@@ -63,7 +63,9 @@ mkTrieTests implname con look = return $
         [
           testLookup look t 0    Nothing
         , testLookup look t 1  $ Just "solo one"
+        , testLookup look t 3    Nothing
         , testLookup look t 10   Nothing
+        , testLookup look t 0x81 Nothing
         , testLookup look t 0xfe Nothing
         , testLookup look t 0xff Nothing
         ]
