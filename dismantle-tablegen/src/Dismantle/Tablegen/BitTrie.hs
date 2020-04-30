@@ -125,7 +125,8 @@ makePayload :: M.Map DTP.Pattern (DTP.LinkedTableIndex, e)
 makePayload patterns bitIndex bitsSoFar bit =
   case M.toList matchingPatterns of
     [] -> return (bit, DTP.defaultElementIndex)
-    [(_, (eltIdx, _elt))] -> return (bit, eltIdx)
+    [(pat, (eltIdx, _elt))]
+      | patternBits pat == bitIndex - 1 -> return (bit, eltIdx)
     _ | all ((> (bitIndex + 1)) . patternBits) (M.keys matchingPatterns) -> do
           -- This case makes sure that we have covered all of the patterns
           -- completely; we can't stop early, since there could be a required
