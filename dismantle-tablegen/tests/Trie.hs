@@ -27,13 +27,13 @@ type Lookup e = LT.LinearizedTrie e -> Word8 -> Either (LT.LinearizedTrie e) e
 
 trieTests :: IO T.TestTree
 trieTests = do
-  bytes <- mkTrieTests Byte.byteTrie Byte.lookupByte
-  bits <- mkTrieTests Bit.bitTrie Bit.lookupByte
+  bytes <- mkTrieTests "ByteTrie" Byte.byteTrie Byte.lookupByte
+  bits <- mkTrieTests "BitTrie" Bit.bitTrie Bit.lookupByte
   return $ T.testGroup "trieTests" [bytes, bits]
 
-mkTrieTests :: (forall e . TrieBuilder e) -> (forall e . Lookup e) -> IO T.TestTree
-mkTrieTests con look = return $
-  T.testGroup "ByteTrie"
+mkTrieTests :: String -> (forall e . TrieBuilder e) -> (forall e . Lookup e) -> IO T.TestTree
+mkTrieTests implname con look = return $
+  T.testGroup implname
   [ T.testGroup "empty" $
     let Right t = con (Nothing :: Maybe String) []
     in
