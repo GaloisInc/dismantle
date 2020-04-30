@@ -4,6 +4,7 @@
 {-# LANGUAGE TypeFamilies #-}
 module Dismantle.Tablegen.Patterns (
   Pattern(..),
+  showPattern,
   Bit(..),
   TrieM(..),
   TrieState(..),
@@ -23,6 +24,7 @@ import           Control.DeepSeq (NFData(..))
 import qualified Control.Monad.Except as E
 import qualified Control.Monad.Fail as CMF
 import qualified Control.Monad.State.Strict as St
+import           Data.Bifunctor ( bimap )
 import           Data.Bits
 import qualified Data.ByteString as BS
 import           Data.Coerce ( coerce )
@@ -36,6 +38,7 @@ import qualified Data.Vector.Generic.Mutable as VGM
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.Vector.Unboxed.Mutable as VUM
 import           Data.Word ( Word8 )
+import           Numeric as N
 
 
 -- | A bit with either an expected value ('ExpectedBit') or an
@@ -77,9 +80,16 @@ instance DH.Hashable Pattern where
 
 showPattern :: Pattern -> String
 showPattern Pattern{..} =
-  "Pattern { requiredMask = " ++ show (BS.unpack requiredMask) ++
-  ", trueMask = " ++ show (BS.unpack trueMask) ++
-  "}"
+  let hexStr v = (<>) "0x" $ N.showHex v ""
+      hexBS b = hexStr <$> BS.unpack b
+  in
+  "Pattern { requiredMask = " ++ show (hexBS requiredMask) ++
+  ", trueMask = " ++ show (hexBS trueMask) ++
+  (if null negativePairs then ""
+    else let showNegPair p = bimap hexBS hexBS p in
+      ", negativePairs = " ++ (show $ map showNegPair negativePairs)
+  ) ++
+  " }"
 
 -- | Return the number of bytes occupied by a 'Pattern'
 patternBytes :: Pattern -> Int
