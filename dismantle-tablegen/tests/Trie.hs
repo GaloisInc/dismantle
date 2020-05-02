@@ -393,10 +393,17 @@ mkTrieTests implname con look = return $
           matchFOURb1 = [ 0x42, 0x46, 0x4a, 0x4e
                         , 0x62, 0x66, 0x6a, 0x6e
                         ]
+          matchFOUR = [ 0x24 ]
           matchFIVEb1 = [ 0x32, 0x36, 0x3a, 0x3e
                         , 0x72, 0x76, 0x7a, 0x7e
                         , 0xb2, 0xb6, 0xba, 0xbe
                         , 0xf2, 0xf6, 0xfa, 0xfe
+                        ]
+          matchFIVEb2 = [ 0xf4, 0xb5, 0x7c, 0x3d
+                        -- n.b. not a complete list: all combos of
+                        -- first nibble/second nibble will work, but
+                        -- this would create an enormous number of
+                        -- tests, so just a sampling is used here.
                         ]
           matchFIVE = [ 0xd1, 0xd5, 0xd9, 0xdd
                       , 0xf1, 0xf5, 0xf9, 0xfd
@@ -417,20 +424,51 @@ mkTrieTests implname con look = return $
               | n <- [0..255] ])
 
         , T.testGroup "five shortcut" $
-          -- See note for group four below
-          [ testLookup look t n (Just "val five") | n <- matchFIVEb1 ]
+          -- See note for group "four shortcut" below
+          [ testCase (hexStr n " is nextlevel") $
+            Just "nextlevel" @?= (fromRight (Just "nextlevel") $ look t n)
+          | n <- matchFIVEb1 ]
 
-        , T.testGroup "four" $
+        , T.testGroup "four shortcut" $
           -- While FOUR is defined via a 2-byte sequence, the match on
           -- the first byte is sufficient to unambiguously identify
           -- these entries, so only the values of the first byte are
           -- needed to match at the base level and the additional byte
           -- is ignored.
           --
-          -- QUESTIONABLE: ignoring the second byte will match against
+          -- However ignoring the second byte will match against
           -- _any_ of the second byte value, even though the
           -- specification above defined a specific second byte value.
-          [ testLookup look t n (Just "val four") | n <- matchFOURb1 ]
+          --
+          -- This has now been fixed, and this test is used to ensure
+          -- that the match isn't supplied solely on the first byte's
+          -- value.
+          [ testCase (hexStr n " is nextlevel") $
+            Just "nextlevel" @?= (fromRight (Just "nextlevel") $ look t n)
+          | n <- matchFOURb1 ]
+
+        -- MANYTESTS!!
+        , T.testGroup "four" $
+          [ T.testGroup (hexStr fb " four byte1") $
+            let Left l1 = look t fb in
+              [ testLookup look l1 n (if n `elem` matchFOUR
+                                      then Just "val four"
+                                      else Nothing)
+              | n <- [0..255] ]
+          | fb <- matchFOURb1 ]
+
+        -- MANYTESTS!!
+        , T.testGroup "five" $
+          [ T.testGroup (hexStr fb " five byte1") $
+            let Left l1 = look t fb in
+              [ T.testGroup (hexStr sb " five byte2") $
+                let Left l2 = look l1 sb in
+                  [ testLookup look l2 n (if n `elem` matchFIVE
+                                          then Just "val five"
+                                          else Nothing)
+                  | n <- [0..255] ]
+              | sb <- matchFIVEb2 ]
+          | fb <- matchFIVEb1 ]
 
         , T.testGroup "level 1" $
           [ testCase (hexStr n " get") $
@@ -438,9 +476,9 @@ mkTrieTests implname con look = return $
             (if n `elem` matchTHREE
               then Just "val three"
               else if n `elem` matchFOURb1
-                   then Just "val four"
+                   then Just "nextlevel"
                    else if n `elem` matchFIVEb1
-                        then Just "val five"
+                        then Just "nextlevel"
                         else if n `elem` [ 0x12, 0x16, 0x1a, 0x1e
                                          , 0x52, 0x56, 0x5a, 0x5e
                                          , 0x92, 0x96, 0x9a, 0x9e
