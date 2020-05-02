@@ -144,7 +144,7 @@ makePayload patterns bitIndex bitsSoFar bit =
          -- If we have no match and there are some patterns remaining that are
          -- longer than the current bit string, extend the parse tree to cover
          -- those patterns.
-         tix <- buildTableLevel matchingPatterns (bitIndex + 1) bitsSoFar'
+         tix <- buildTableLevel longerPatterns (bitIndex + 1) bitsSoFar'
          return (bit, tix)
      | otherwise -> do
          mapping <- St.gets DTP.tsPatternMnemonics
