@@ -235,12 +235,24 @@ negativePatternMatches bs p _ =
       let mHighestBit = highestRequiredBit negMask
       in if | mHighestBit == Nothing ->
               -- If there are actually no required bits in the negative mask, we
-              -- know it won't match anything
+              -- know it won't reject anything
               True
             | Just highestBit <- mHighestBit
-            , bitStringLength bs < highestBit ->
+            , not (bitStringLength bs > highestBit) ->
               -- If we don't have enough bits for the highest bit number in the
               -- negative mask, it won't match yet
+              --
+              --                 abc
+              -- Bit String: ????????
+              -- Mask:       00001100
+              --
+              -- - In @a@, length(bs)=5, highestBit(mask)=5
+              -- - In @b@, length(bs)=6, highestBit(mask)=5
+              -- - In @c@, length(bs)=7, highestBit(mask)=5
+              --
+              -- So we cannot apply the mask if until
+              --
+              -- > length(bs) > highestBit(mask)
               True
             | otherwise ->
               -- NOTE: the 'asBitList' function unrolls all of the bits in the
