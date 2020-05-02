@@ -124,9 +124,9 @@ mkTrieTests implname con look = return $
       let Right t = con Nothing [("SOLO",
                                        BS.pack [0x83],  -- which bits are important
                                        BS.pack [0x01],   -- values of the important bits
-                                       [ (BS.pack [0x80], BS.pack [0x00])
+                                       [ (BS.pack [0x80], BS.pack [0x80])
                                        , (BS.pack [0x70], BS.pack [0x30])  -- should eliminate 0x3d
-                                       , (BS.pack [0x18], BS.pack [0xc1])
+                                       , (BS.pack [0x18], BS.pack [0xc1])  -- match outside mask: ignored
                                        ],      -- no contra-indicators
                                        Just ("solo one" :: String))]
       in
@@ -134,7 +134,7 @@ mkTrieTests implname con look = return $
           , testLookup look t 1    $ Just "solo one"
           , testLookup look t 10   $ Nothing
           , testLookup look t 0xd  $ Just "solo one"
-          , testLookup look t 0x3d $ Just "solo one"  -- TODO: should have been eliminated?!
+          , testLookup look t 0x3d $ Nothing
           , testLookup look t 0x7d $ Just "solo one"
           , testLookup look t 0x8d $ Nothing
           , testLookup look t 0xfe $ Nothing
@@ -218,7 +218,8 @@ mkTrieTests implname con look = return $
                ],
                Just ("val one" :: String))
             ]
-          matchONE = [ 0x41, 0x45, 0x49, 0x4d, 0x61, 0x65, 0x69, 0x6d
+          matchONE = [ -- 0x41, 0x45,
+                       0x49, 0x4d, 0x61, 0x65, 0x69, 0x6d
                      ]
         in
         [ testLookup look t n (Just "val one") | n <- matchONE ]
@@ -297,8 +298,6 @@ mkTrieTests implname con look = return $
                Just ("val one" :: String))
             , ("TWO", BS.pack[0x83], BS.pack [0x1],
                 [
-                  -- note that this does not do anything because
-                  -- there's no other match
                   (BS.pack [0x31], BS.pack [0x21])
                 ],
                 Just ("val two"))
@@ -307,9 +306,9 @@ mkTrieTests implname con look = return $
                      ]
           matchTWO = [ 0x01, 0x05, 0x09, 0x0d
                      , 0x11, 0x15, 0x19, 0x1d
-                     , 0x21, 0x25, 0x29, 0x2d
+                     -- , 0x21, 0x25, 0x29, 0x2d  -- disallowed by TWO negative mask
                      , 0x31, 0x35, 0x39, 0x3d
-                     , 0x41, 0x45
+                     -- , 0x41, 0x45              -- disallowed by TWO negative mask
                      , 0x51, 0x55, 0x59, 0x5d
                      , 0x71, 0x75, 0x79, 0x7d
                      ]
@@ -325,8 +324,6 @@ mkTrieTests implname con look = return $
       let Right t = con Nothing
             [ ("TWO", BS.pack[0x83], BS.pack [0x1],
                 [
-                  -- note that this does not do anything because
-                  -- there's no other match
                   (BS.pack [0x31], BS.pack [0x21])
                 ],
                 Just ("val two"))
@@ -342,9 +339,9 @@ mkTrieTests implname con look = return $
                      ]
           matchTWO = [ 0x01, 0x05, 0x09, 0x0d
                      , 0x11, 0x15, 0x19, 0x1d
-                     , 0x21, 0x25, 0x29, 0x2d
+                     -- , 0x21, 0x25, 0x29, 0x2d  -- disallowed by TWO negative mask
                      , 0x31, 0x35, 0x39, 0x3d
-                     , 0x41, 0x45
+                     -- , 0x41, 0x45              -- disallowed by TWO negative mask
                      , 0x51, 0x55, 0x59, 0x5d
                      , 0x71, 0x75, 0x79, 0x7d
                      ]
@@ -367,8 +364,6 @@ mkTrieTests implname con look = return $
                Just ("val one" :: String))
             , ("TWO", BS.pack [0x33,0x3f,0x83], BS.pack [0x12,0x34,0x01],
                 [
-                  -- note that this does not do anything because
-                  -- there's no other match
                   (BS.pack [0x00,0x00,0x31], BS.pack [0x00,0x00,0x21])
                 ],
                 Just ("val two"))
@@ -386,9 +381,9 @@ mkTrieTests implname con look = return $
                      ]
           matchTWO = [ 0x01, 0x05, 0x09, 0x0d
                      , 0x11, 0x15, 0x19, 0x1d
-                     , 0x21, 0x25, 0x29, 0x2d
+                     -- , 0x21, 0x25, 0x29, 0x2d  -- disallowed by TWO negative mask
                      , 0x31, 0x35, 0x39, 0x3d
-                     , 0x41, 0x45
+                     -- , 0x41, 0x45              -- disallowed by TWO negative mask
                      , 0x51, 0x55, 0x59, 0x5d
                      , 0x71, 0x75, 0x79, 0x7d
                      ]
