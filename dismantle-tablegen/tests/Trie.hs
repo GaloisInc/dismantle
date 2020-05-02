@@ -468,7 +468,7 @@ mkTrieTests implname con look = return $
                  ]
         -- n.b. Pattern isn't exported from ByteTrie, so can only
         -- compare show representation.
-    in show e @?= "OverlappingBitPattern [(Pattern { requiredMask = [255], trueMask = [1]}, [\"DUO\",\"SOLO\"], 1)]"
+    in show e @?= "OverlappingBitPattern [(Pattern { requiredMask = [\"0xff\"], trueMask = [\"0x1\"] }, [\"DUO\",\"SOLO\"], 1)]"
 
   , testCase "mask length error" $
     let Left e = con (Nothing :: Maybe String)
@@ -476,7 +476,7 @@ mkTrieTests implname con look = return $
                  ]
         -- n.b. Pattern isn't exported from ByteTrie, so can only
         -- compare show representation.
-    in show e @?= "InvalidPatternLength Pattern { requiredMask = [255], trueMask = [1,2]}"
+    in show e @?= "InvalidPatternLength Pattern { requiredMask = [\"0xff\"], trueMask = [\"0x1\",\"0x2\"] }"
 
   , testCase "match length error" $
     let Left e = con (Nothing :: Maybe String)
@@ -484,6 +484,6 @@ mkTrieTests implname con look = return $
                  ]
         -- n.b. Pattern isn't exported from ByteTrie, so can only
         -- compare show representation.
-    in show e @?= "InvalidPatternLength Pattern { requiredMask = [255,255], trueMask = [1]}"
+    in show e @?= "InvalidPatternLength Pattern { requiredMask = [\"0xff\",\"0xff\"], trueMask = [\"0x1\"] }"
 
   ]
