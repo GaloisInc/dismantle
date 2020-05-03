@@ -85,6 +85,9 @@ buildTableLevel :: M.Map DTP.Pattern (DTP.LinkedTableIndex, e)
                 -- ^ The string of bits followed thus far
                 -> DTP.TrieM e DTP.LinkedTableIndex
 buildTableLevel patterns bitIndex bitsSoFar = do
+  payloads <- T.traverse (makePayloadCached patterns bitIndex bitsSoFar) [False, True]
+  newTable payloads
+{-
   cache <- St.gets DTP.tsCache
   psets <- St.gets DTP.tsPatternSets
   let addPatternToSet ps p =
@@ -93,13 +96,20 @@ buildTableLevel patterns bitIndex bitsSoFar = do
           Just s -> s .|. ps
   let pset = F.foldl' addPatternToSet (DTP.PatternSet 0) (M.keys patterns)
   let key = (bitIndex, pset)
-  -- case HM.lookup key cache of
-  --   Just tix -> return tix
-  --   Nothing -> do
-  payloads <- T.traverse (makePayload patterns bitIndex bitsSoFar) [False, True]
-  tix <- newTable payloads
-  St.modify' $ \s -> s { DTP.tsCache = HM.insert key tix (DTP.tsCache s) }
-  return tix
+  case HM.lookup key cache of
+    Just (tix, DTP.InvalidationPredicate ip)
+      | not (ip bitsSoFar) -> return tix
+    _ -> do
+      -- If the guard above fails, we need to invalidate the cache entry; we
+      -- just do it unconditionally because it is cheap
+      DTP.clearCache key
+
+      payloads <- T.traverse (makePayload patterns bitIndex bitsSoFar) [False, True]
+      tix <- newTable payloads
+      let ip = DTP.InvalidationPredicate (const False)
+      St.modify' $ \s -> s { DTP.tsCache = HM.insert key (tix, ip) (DTP.tsCache s) }
+      return tix
+-}
 
 -- | Allocate a new dispatch table that can dispatch to the given payloads
 --
@@ -116,14 +126,103 @@ newTable payloads = do
 patternBits :: DTP.Pattern -> Int
 patternBits = (8 *) . DTP.patternBytes
 
+makePayloadCached :: M.Map DTP.Pattern (DTP.LinkedTableIndex, e)
+                  -> Int
+                  -- ^ The bit index
+                  -> BitString
+                  -> Bool
+                  -- ^ The bit we are matching against
+                  -> DTP.TrieM e (Bool, DTP.LinkedTableIndex)
+makePayloadCached patterns bitIndex bitsSoFar bit = do
+  cache <- St.gets DTP.tsCache
+  psets <- St.gets DTP.tsPatternSets
+  let addPatternToSet ps p =
+        case HM.lookup p psets of
+          Nothing -> error ("Missing pattern set for pattern: " ++ show p)
+          Just s -> s .|. ps
+  let pset = F.foldl' addPatternToSet (DTP.PatternSet 0) (M.keys matchingPatterns)
+  let key = (bitIndex, pset)
+  case HM.lookup key cache of
+    Just tix -> do
+      -- traceM ("Cache hit at depth: " ++ show bitIndex)
+      return (bit, tix)
+    _ -> do
+      payload@(_, tix) <- makePayload matchingPatterns bitIndex bitsSoFar' bit
+      -- Construct a predicate that returns True if we need to ignore (and
+      -- invalidate) any cache entries for this set of patterns.  See
+      -- Note [Cache Invalidation] for details.
+      case patternsHighestRequiredBit (M.keys matchingPatterns) of
+        Just highestReq
+          | highestReq > bitIndex -> return ()
+        _ -> St.modify' $ \s -> s { DTP.tsCache = HM.insert key tix (DTP.tsCache s) }
+
+      return payload
+  where
+    -- The current bit string with the current bit under analysis appended
+    bitsSoFar' = bitSnoc bitsSoFar bit
+    -- All of the patterns that match the current bit prefix, purely considering
+    -- the positive patterns
+    --
+    -- Note that we don't pass in the entire bit prefix here: since we are in
+    -- this state, it means that the prefix matches all of the patterns we have
+    -- in @patterns@, so we don't need to re-examine those bits.  We only need
+    -- to look at the current bit.
+    matchingPositivePatterns = M.filterWithKey (patternMatches bitIndex bit) patterns
+    -- The remaining patterns that also satisfy any negative patterns that we
+    -- can apply at this point
+    --
+    -- We apply negative patterns as soon as possible: once we have enough bits
+    -- in the prefix to cover all of the required bits for the negative pattern
+    -- mask.
+    matchingPatterns = M.filterWithKey (negativePatternMatches bitsSoFar') matchingPositivePatterns
+
+
+
+{- Note [Cache Invalidation]
+
+The underlying problem with the cache is that we are keying it on the set of
+patterns that match up to this point.  If we reuse cached results on a bit
+sequence that triggers a negative pattern, we will get incorrect parse tables
+(i.e., they would ignore the negative patterns).  Precise caching would be
+*very* difficult, so we instead invalidate the cache when we encounter that
+situation.
+
+The cache invalidation mechanism simply piggybacks on the cache: every cached
+entry includes a 'DTP.InvalidationPredicate' that returns True if the entry
+needs to be invalidated.  This way we only have to pay the cost of constructing
+the predicate when we make cache entries; checking it is cheaper.
+
+The cache must be invalidated if the 'BitString' input to the predicate
+satisfies the negative pattern of *any* of the patterns.
+
+
+FIXME: The current cache invalidation strategy is not good.  The logic is subtly
+wrong, probably, but it is just inherently bad in that it clears the cache too
+often.  A more efficient model might be to look at the full concrete BitString
+in 'makePayloadCached' and compute all of the matching patterns *accounting for
+negative patterns*.  Then the cache entries can be in terms of the matching
+patterns and depth again, as is proper.  That would obviate the need for any
+cache invalidation.
+
+Question: Can you only cache if there are no more negative patterns left?
+
+-}
+
 makePayload :: M.Map DTP.Pattern (DTP.LinkedTableIndex, e)
+            -- ^ The set of patterns that match the current bit-string,
+            -- accounting for both negative and positive patterns.
+            --
+            -- Note that specialization and length matching rules are not yet
+            -- accounted for.
             -> Int
             -- ^ The bit index
             -> BitString
+            -- ^ This bitstring has the current bit (@bit@ in the argument list)
+            -- already appended
             -> Bool
             -- ^ The bit we are matching against
             -> DTP.TrieM e (Bool, DTP.LinkedTableIndex)
-makePayload patterns bitIndex bitsSoFar bit =
+makePayload matchingPatterns bitIndex bitsSoFar bit =
   if | M.null matchingPatterns -> do
          -- We failed to match any patterns (and eliminated all of the possible
          -- patterns)
@@ -144,7 +243,7 @@ makePayload patterns bitIndex bitsSoFar bit =
          -- If we have no match and there are some patterns remaining that are
          -- longer than the current bit string, extend the parse tree to cover
          -- those patterns.
-         tix <- buildTableLevel longerPatterns (bitIndex + 1) bitsSoFar'
+         tix <- buildTableLevel longerPatterns (bitIndex + 1) bitsSoFar
          return (bit, tix)
      | otherwise -> do
          mapping <- St.gets DTP.tsPatternMnemonics
@@ -154,23 +253,23 @@ makePayload patterns bitIndex bitsSoFar bit =
 
          error ("Overlapping bit pattern " ++ show (bitIndex, bitsSoFar, mapping, pats, mnemonics))
   where
-    bitsSoFar' = bitSnoc bitsSoFar bit
+    -- bitsSoFar' = bitSnoc bitsSoFar bit
 
-    -- All of the patterns that match the current bit prefix, purely considering
-    -- the positive patterns
-    --
-    -- Note that we don't pass in the entire bit prefix here: since we are in
-    -- this state, it means that the prefix matches all of the patterns we have
-    -- in @patterns@, so we don't need to re-examine those bits.  We only need
-    -- to look at the current bit.
-    matchingPositivePatterns = M.filterWithKey (patternMatches bitIndex bit) patterns
-    -- The remaining patterns that also satisfy any negative patterns that we
-    -- can apply at this point
-    --
-    -- We apply negative patterns as soon as possible: once we have enough bits
-    -- in the prefix to cover all of the required bits for the negative pattern
-    -- mask.
-    matchingNegativePatterns = M.filterWithKey (negativePatternMatches bitsSoFar') matchingPositivePatterns
+    -- -- All of the patterns that match the current bit prefix, purely considering
+    -- -- the positive patterns
+    -- --
+    -- -- Note that we don't pass in the entire bit prefix here: since we are in
+    -- -- this state, it means that the prefix matches all of the patterns we have
+    -- -- in @patterns@, so we don't need to re-examine those bits.  We only need
+    -- -- to look at the current bit.
+    -- matchingPositivePatterns = M.filterWithKey (patternMatches bitIndex bit) patterns
+    -- -- The remaining patterns that also satisfy any negative patterns that we
+    -- -- can apply at this point
+    -- --
+    -- -- We apply negative patterns as soon as possible: once we have enough bits
+    -- -- in the prefix to cover all of the required bits for the negative pattern
+    -- -- mask.
+    -- matchingNegativePatterns = M.filterWithKey (negativePatternMatches bitsSoFar') matchingPositivePatterns
 
     -- Now find the length of the smallest matching pattern
     --
@@ -186,12 +285,12 @@ makePayload patterns bitIndex bitsSoFar bit =
     -- the search with the full set of possible patterns.  If we continue a
     -- search past the size of a shortened pattern, we should remove the short
     -- patterns entirely because they did not match (so they will not match)
-    minLengthPatterns = M.filterWithKey (\p _ -> patternBits p - 1 == bitIndex) matchingNegativePatterns
+    minLengthPatterns = M.filterWithKey (\p _ -> patternBits p - 1 == bitIndex) matchingPatterns
 
     -- Remaining matching patterns longer than the current bit length
-    longerPatterns = M.filterWithKey (\p _ -> patternBits p >= bitIndex) matchingNegativePatterns
+    longerPatterns = M.filterWithKey (\p _ -> patternBits p >= bitIndex) matchingPatterns
 
-    matchingPatterns = matchingNegativePatterns
+    -- matchingPatterns = matchingNegativePatterns
 
 flattenTables :: DTP.LinkedTableIndex -> e -> DTP.TrieState e -> LT.LinearizedTrie e
 flattenTables t0 defElt finSt =
@@ -318,6 +417,26 @@ bitEmpty = BitString VU.empty
 bitStringLength :: BitString -> Int
 bitStringLength (BitString v) = VU.length v
 
+patternsHighestRequiredBit :: [DTP.Pattern] -> Maybe Int
+patternsHighestRequiredBit =
+  F.foldl' (\acc p -> liftedMax acc (patternHighestRequiredBit p)) Nothing
+
+patternHighestRequiredBit :: DTP.Pattern -> Maybe Int
+patternHighestRequiredBit = F.foldl' checkHighest Nothing . DTP.negativePairs
+  where
+    checkHighest acc (negMask, _) =
+      liftedMax acc (highestRequiredBit negMask)
+
+liftedMax :: (Ord a) => Maybe a -> Maybe a -> Maybe a
+liftedMax ma mb =
+  case (ma, mb) of
+    (Nothing, Nothing) -> Nothing
+    (Just a, Just b)
+      | a > b -> ma
+      | otherwise -> mb
+    (Just _, Nothing) -> ma
+    (Nothing, Just _) -> mb
+
 -- | Return the index of the highest 1 bit in the 'BS.ByteString'
 --
 -- If there are no 1 bits, returns Nothing
@@ -369,6 +488,16 @@ instance AsBitList BitString where
 
 This implementation is inspired by the ByteTrie, but instead of dispatching
 based on byte values at each level of the tree, it dispatches one bit at a time.
+
+At each level of the trie construction, we have a set of patterns that matched
+up to the current bit.  For each concrete bit (True or False) at the current
+position, we filter the set of patterns down to those that match accounting for
+the current concrete bit.  We apply negative patterns as soon as possible.  Once
+we reach the end of the bit stream, we produce a leaf that parses using the
+single remaining matching pattern.
+
+There is a special case to handle some overlapping patterns where we take the
+'most specific pattern'; see makePayload for details.
 
 Some important semantic notes for the table construction process:
 
