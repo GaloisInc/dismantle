@@ -11,6 +11,7 @@ module Dismantle.Tablegen.Patterns (
   emptyTrieState,
   TrieError(..),
   PatternSet(..),
+  emptyPatternSet,
   patternBytes,
   assertMapping,
   -- * Index Helpers
@@ -116,6 +117,9 @@ instance Show TrieError where
 
 newtype PatternSet = PatternSet { patternSetBits :: Integer }
   deriving (Eq, Ord, Show, DH.Hashable, Bits)
+
+emptyPatternSet :: PatternSet
+emptyPatternSet = PatternSet 0
 
 -- | The state of the 'TrieM' monad
 data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern (LinkedTableIndex, e))
