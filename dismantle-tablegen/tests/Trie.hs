@@ -308,7 +308,7 @@ mkTrieTests implname con look = return $
                      , 0x11, 0x15, 0x19, 0x1d
                      -- , 0x21, 0x25, 0x29, 0x2d  -- disallowed by TWO negative mask
                      , 0x31, 0x35, 0x39, 0x3d
-                     -- , 0x41, 0x45              -- disallowed by TWO negative mask
+                     , 0x41, 0x45
                      , 0x51, 0x55, 0x59, 0x5d
                      , 0x71, 0x75, 0x79, 0x7d
                      ]
@@ -341,7 +341,7 @@ mkTrieTests implname con look = return $
                      , 0x11, 0x15, 0x19, 0x1d
                      -- , 0x21, 0x25, 0x29, 0x2d  -- disallowed by TWO negative mask
                      , 0x31, 0x35, 0x39, 0x3d
-                     -- , 0x41, 0x45              -- disallowed by TWO negative mask
+                     , 0x41, 0x45
                      , 0x51, 0x55, 0x59, 0x5d
                      , 0x71, 0x75, 0x79, 0x7d
                      ]
@@ -383,7 +383,7 @@ mkTrieTests implname con look = return $
                      , 0x11, 0x15, 0x19, 0x1d
                      -- , 0x21, 0x25, 0x29, 0x2d  -- disallowed by TWO negative mask
                      , 0x31, 0x35, 0x39, 0x3d
-                     -- , 0x41, 0x45              -- disallowed by TWO negative mask
+                     , 0x41, 0x45
                      , 0x51, 0x55, 0x59, 0x5d
                      , 0x71, 0x75, 0x79, 0x7d
                      ]
