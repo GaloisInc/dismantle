@@ -124,11 +124,13 @@ makePayloadCached patterns bitIndex bitsSoFar bit = do
   let key = (bitIndex, pset)
   case HM.lookup key cache of
     Just tix
-      | inNegativePattern bitIndex bit pats -> do
+      | not (inNegativePattern bitIndex bit pats) -> do
           return (bit, tix)
     _ -> do
       payload@(_, tix) <- makePayload matchingPatterns bitIndex bitsSoFar' bit
-      St.modify' $ \s -> s { DTP.tsCache = HM.insert key tix (DTP.tsCache s) }
+      if | not (inNegativePattern bitIndex bit pats) ->
+           St.modify' $ \s -> s { DTP.tsCache = HM.insert key tix (DTP.tsCache s) }
+         | otherwise -> return ()
       return payload
   where
     -- The current bit string with the current bit under analysis appended
