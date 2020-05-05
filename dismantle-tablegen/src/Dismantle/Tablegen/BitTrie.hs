@@ -33,7 +33,7 @@ lookupByteRec :: LT.LinearizedTrie a
               -> Either (LT.LinearizedTrie a) a
 lookupByteRec lt byte n
   -- We found a terminal node in the trie, return the payload
-  | tableVal < 0 = Right (LT.ltPayloads lt `V.unsafeIndex` fromIntegral (negate tableVal))
+  | tableVal < 0 = Right (LT.ltPayloads lt `V.unsafeIndex` fromIntegral (negate tableVal - 1))
   -- We reached the end of the byte and the next node is another trie
   | n == 7 = Left $ lt { LT.ltStartIndex = fromIntegral tableVal }
   -- Otherwise, just keep traversing bits
@@ -318,7 +318,7 @@ makePayload matchingPatterns bitIndex bitsSoFar bit =
 flattenTables :: DTP.LinkedTableIndex -> e -> DTP.TrieState e -> LT.LinearizedTrie e
 flattenTables t0 defElt finSt =
   LT.LinearizedTrie { LT.ltStartIndex = ix0
-                    , LT.ltPayloads = V.fromList (undefined : defElt : sortedElts)
+                    , LT.ltPayloads = V.fromList (defElt : sortedElts)
                     , LT.ltParseTables = SV.fromList parseTables
                     }
   where
