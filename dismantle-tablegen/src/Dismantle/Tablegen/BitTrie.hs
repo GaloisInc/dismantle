@@ -134,7 +134,7 @@ makePayloadCached patterns bitIndex bitsSoFar bit = do
           return (bit, tix)
     _ -> do
       payload@(_, tix) <- makePayload matchingPatterns bitIndex bitsSoFar' bit
-      if | not (inNegativePattern bitIndex bit pats) ->
+      if | not (inNegativePattern bitIndex bit pats) && not (preceedsNegativePattern bitIndex pats) ->
            St.modify' $ \s -> s { DTP.tsCache = HM.insert key tix (DTP.tsCache s) }
          | otherwise -> return ()
       return payload
@@ -216,36 +216,6 @@ Some previous (unsuccessful) attempts to solve this problem include:
   - The recursion pattern we are using meant that this basically eliminated all caching
 - Only caching once all negated bits have been resolved
   - This was too expensive in practice
-
--}
-
-{- Note [Cache Invalidation]
-
-The underlying problem with the cache is that we are keying it on the set of
-patterns that match up to this point.  If we reuse cached results on a bit
-sequence that triggers a negative pattern, we will get incorrect parse tables
-(i.e., they would ignore the negative patterns).  Precise caching would be
-*very* difficult, so we instead invalidate the cache when we encounter that
-situation.
-
-The cache invalidation mechanism simply piggybacks on the cache: every cached
-entry includes a 'DTP.InvalidationPredicate' that returns True if the entry
-needs to be invalidated.  This way we only have to pay the cost of constructing
-the predicate when we make cache entries; checking it is cheaper.
-
-The cache must be invalidated if the 'BitString' input to the predicate
-satisfies the negative pattern of *any* of the patterns.
-
-
-FIXME: The current cache invalidation strategy is not good.  The logic is subtly
-wrong, probably, but it is just inherently bad in that it clears the cache too
-often.  A more efficient model might be to look at the full concrete BitString
-in 'makePayloadCached' and compute all of the matching patterns *accounting for
-negative patterns*.  Then the cache entries can be in terms of the matching
-patterns and depth again, as is proper.  That would obviate the need for any
-cache invalidation.
-
-Question: Can you only cache if there are no more negative patterns left?
 
 -}
 
@@ -355,9 +325,15 @@ inNegativePattern :: Int
 inNegativePattern bitIndex bVal = any (any negativeMatch . DTP.negativePairs)
   where
     negativeMatch (negMask, negBits) =
-      or [ bitIndexBytestring negMask bitIndex && bVal == bitIndexBytestring negBits bitIndex
-         , bitIndex + 1 < BS.length negMask * 8 && bitIndexBytestring negMask (bitIndex + 1)
-         ]
+      bitIndexBytestring negMask bitIndex && bVal == bitIndexBytestring negBits bitIndex
+
+preceedsNegativePattern :: Int
+                        -> [DTP.Pattern]
+                        -> Bool
+preceedsNegativePattern bitIndex = any (any negativeMatch . DTP.negativePairs)
+  where
+    negativeMatch (negMask, _negMask) =
+      bitIndex + 1 < BS.length negMask * 8 && bitIndexBytestring negMask (bitIndex + 1)
 
 -- | Return True if the 'BitString' does not violate any negative patterns in the 'DTP.Pattern'
 --
