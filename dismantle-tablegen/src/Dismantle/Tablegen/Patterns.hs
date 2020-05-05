@@ -14,6 +14,8 @@ module Dismantle.Tablegen.Patterns (
   emptyPatternSet,
   patternBytes,
   assertMapping,
+  -- * Hash helper
+  HashableUVec(..),
   -- * Index Helpers
   LinkedTableIndex(..),
   FlatTableIndex(..),
@@ -143,6 +145,7 @@ data TrieState e = TrieState { tsPatterns :: !(M.Map Pattern (LinkedTableIndex, 
                              -- ^ The actual tables, which point to either other
                              -- tables or terminal elements in the 'tsPatterns'
                              -- table.
+                             , tsTableCache :: !(HM.HashMap HashableUVec LinkedTableIndex)
                              , tsEltIdSrc :: LinkedTableIndex
                              -- ^ The next element ID to use
                              , tsTblIdSrc :: LinkedTableIndex
@@ -156,6 +159,7 @@ emptyTrieState =
             , tsPatternMnemonics = M.empty
             , tsPatternSets = HM.empty
             , tsTables = M.empty
+            , tsTableCache = HM.empty
             , tsEltIdSrc = firstElementIndex
             , tsTblIdSrc = firstTableIndex
             }
@@ -236,7 +240,14 @@ instance VG.Vector VU.Vector LinkedTableIndex where
 -- In this representation, negative values name a payload in 'tsPatterns', while
 -- non-negative values are table identifiers in 'tsTables'.
 newtype LinkedTableIndex = LTI Int32
-  deriving (Eq, Ord, Show, VU.Unbox)
+  deriving (Eq, Ord, Show, VU.Unbox, DH.Hashable)
+
+newtype HashableUVec = HashableUVec (VU.Vector LinkedTableIndex)
+  deriving (Eq)
+
+instance DH.Hashable HashableUVec where
+  hashWithSalt slt (HashableUVec v) = DH.hashWithSalt slt (VU.toList v)
+
 
 -- | This type represents payloads in the 'ByteTrie' type.
 --

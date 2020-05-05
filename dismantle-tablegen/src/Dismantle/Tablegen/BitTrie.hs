@@ -93,12 +93,18 @@ buildTableLevel patterns bitIndex bitsSoFar = do
 -- There are just two entries
 newTable :: [(Bool, DTP.LinkedTableIndex)] -> DTP.TrieM e DTP.LinkedTableIndex
 newTable payloads = do
-  tix <- St.gets DTP.tsTblIdSrc
   let a = VU.fromList (fmap snd (L.sortOn fst payloads))
-  St.modify' $ \s -> s { DTP.tsTables = M.insert tix a (DTP.tsTables s)
-                       , DTP.tsTblIdSrc = DTP.nextTableIndex tix
-                       }
-  return tix
+  tcache <- St.gets DTP.tsTableCache
+  case HM.lookup (DTP.HashableUVec a) tcache of
+    Just tix -> return tix
+    Nothing -> do
+      tix <- St.gets DTP.tsTblIdSrc
+      -- let a = VU.fromList (fmap snd (L.sortOn fst payloads))
+      St.modify' $ \s -> s { DTP.tsTables = M.insert tix a (DTP.tsTables s)
+                           , DTP.tsTblIdSrc = DTP.nextTableIndex tix
+                           , DTP.tsTableCache = HM.insert (DTP.HashableUVec a) tix (DTP.tsTableCache s)
+                           }
+      return tix
 
 patternBits :: DTP.Pattern -> Int
 patternBits = (8 *) . DTP.patternBytes
@@ -349,7 +355,9 @@ inNegativePattern :: Int
 inNegativePattern bitIndex bVal = any (any negativeMatch . DTP.negativePairs)
   where
     negativeMatch (negMask, negBits) =
-      bitIndexBytestring negMask bitIndex && bVal == bitIndexBytestring negBits bitIndex
+      or [ bitIndexBytestring negMask bitIndex && bVal == bitIndexBytestring negBits bitIndex
+         , bitIndex + 1 < BS.length negMask * 8 && bitIndexBytestring negMask (bitIndex + 1)
+         ]
 
 -- | Return True if the 'BitString' does not violate any negative patterns in the 'DTP.Pattern'
 --
