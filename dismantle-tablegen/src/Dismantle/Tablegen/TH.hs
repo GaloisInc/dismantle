@@ -12,7 +12,10 @@ module Dismantle.Tablegen.TH (
   genISA,
   genISADesc,
   genInstances,
-  genISARandomHelpers
+  genISARandomHelpers,
+  -- * More internal helpers
+  mkTrieInput,
+  parsableInstructions
   ) where
 
 import           GHC.Base ( Int(I#), getTag )

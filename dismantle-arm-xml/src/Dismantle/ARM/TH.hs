@@ -22,6 +22,7 @@ and emits a map from each generated opcode to a corresponding
 module Dismantle.ARM.TH
   ( parseMask
   , genISA
+  , armISADesc
   )
   where
 
@@ -34,7 +35,7 @@ import           Data.Parameterized.Some ( Some(..) )
 import qualified Language.Haskell.TH as TH
 import qualified Language.Haskell.TH.Syntax as TH
 
-import           System.IO ( withFile, IOMode(..), hPutStrLn )
+import           System.IO ( withFile, IOMode(..), hPutStrLn, Handle )
 import           System.FilePath.Glob ( namesMatching )
 import           System.FilePath ( (</>), (<.>) )
 
@@ -58,19 +59,32 @@ genISA :: DT.ISA
        -- ^ file to write out logs to
        -> TH.DecsQ
 genISA isa xmldirPath encIndexFile aslInstrs logFile = do
-  xmlFiles <- TH.runIO $ namesMatching (xmldirPath </> "*" <.> "xml")
-  (desc, encodingops) <- TH.runIO $ withFile logFile WriteMode $ \handle -> do
-    let doLog msg = hPutStrLn handle msg
+  (desc, encodingops, files) <- TH.runIO $ withFile logFile WriteMode $ \handle -> do
     putStrLn $ "Dismantle.ARM.TH log: " ++ logFile
-    encodings <- XML.loadEncodings (DT.isaName isa) xmlFiles (xmldirPath </> encIndexFile) doLog
-    pairedEncodings <- ASL.loadASL (DT.isaName isa) aslInstrs encodings doLog
-    let xmlEncodings = map fst pairedEncodings
-    return $ (ARM.instDescriptorsToISA $ map ARM.encodingOpToInstDescriptor xmlEncodings, pairedEncodings)
+    armISADesc isa xmldirPath encIndexFile aslInstrs handle
   TH.runIO $ putStrLn "Successfully generated ISA description."
-  let files = aslInstrs : xmlFiles
   aslMapDesc <- mkASLMap encodingops
   isaDesc <- DTH.genISADesc isa desc files
   return $ isaDesc ++ aslMapDesc
+
+-- | This function reads all of the ASL data and constructs the ISADescription
+--
+-- This is separated out from 'genISA' so that it can be called from helper
+-- utilities
+armISADesc :: DT.ISA
+           -> FilePath
+           -> FilePath
+           -> FilePath
+           -> Handle
+           -> IO (DT.ISADescriptor, [(XML.Encoding, ASL.Encoding)], [FilePath])
+armISADesc isa xmldirPath encIndexFile aslInstrs handle = do
+  let doLog msg = hPutStrLn handle msg
+  xmlFiles <- namesMatching (xmldirPath </> "*" <.> "xml")
+  encodings <- XML.loadEncodings (DT.isaName isa) xmlFiles (xmldirPath </> encIndexFile) doLog
+  pairedEncodings <- ASL.loadASL (DT.isaName isa) aslInstrs encodings doLog
+  let xmlEncodings = map fst pairedEncodings
+  let isaDesc = ARM.instDescriptorsToISA (map ARM.encodingOpToInstDescriptor xmlEncodings)
+  return (isaDesc, pairedEncodings, aslInstrs : xmlFiles)
 
 mkASLMap :: [(XML.Encoding, ASL.Encoding)] -> TH.DecsQ
 mkASLMap encodings = do
