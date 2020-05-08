@@ -99,13 +99,13 @@ newTable payloads = do
     Just tix -> return tix
     Nothing -> do
       tix <- St.gets DTP.tsTblIdSrc
-      -- let a = VU.fromList (fmap snd (L.sortOn fst payloads))
       St.modify' $ \s -> s { DTP.tsTables = M.insert tix a (DTP.tsTables s)
                            , DTP.tsTblIdSrc = DTP.nextTableIndex tix
                            , DTP.tsTableCache = HM.insert (DTP.HashableUVec a) tix (DTP.tsTableCache s)
                            }
       return tix
 
+-- | Return the number of bits in a pattern
 patternBits :: DTP.Pattern -> Int
 patternBits = (8 *) . DTP.patternBytes
 
@@ -157,67 +157,6 @@ makePayloadCached patterns bitIndex bitsSoFar bit = do
     -- mask.
     matchingPatterns = M.filterWithKey (negativePatternMatches bitsSoFar') matchingPositivePatterns
 
-{- Note [Caching With Negation]
-
-The underlying problem with the cache is that we are keying it on the set of
-patterns that match up to this point.  If we reuse cached results on a bit
-sequence that triggers a negative pattern, we will get incorrect parse tables
-(i.e., they would ignore the negative patterns).  Precise caching would be
-*very* difficult.  Instead, we inspect the bit pattern to see if we are on a
-path that *could* trigger a negative pattern from the currently active pattern
-set.  If we are, we simply do not use the cached result.
-
-The most common use of negative patterns is to say that some N-bit operand is a
-register operand, but must NOT equal a certain value in order to be a valid
-parse (because the excluded value parses as another instruction).
-
-- Under this example, we *might* trigger the negative pattern at any time until
-  the bit pattern is fully resolved (i.e., parsing is past the last bit in the
-  negative pattern)
-- However, not caching at all up to that point is extremely expensive
-
-Question 1: Can we use cached values if the prefix does not include any of the
-bits in the negative mask?
-
-Question 2: Do we need to worry about any negative bits except for the last one?
-
-Observation: construction is DFS.  In a bit pattern like
-
-> P = |1|0|?|?|1|?|?|1|
->      0 1 2 3 4 5 6 7
-
-where the second operand is not allowed to be 0b11.  We traverse out to the end
-of the bit-string depth first covering suffixes (starting from bit 5):
-
-- 0b001   # operand is 0b00 (and fine)
-- 0b011   # Operand is 0b01 (and still fine)
-- 0b101   # Here we backtrack to the first bit of the operand, which is 0b10 (and fine)
-
-These all share the same suffix of the tree, with a node indicating the
-transition on the final concrete 1 bit into an accept state.  That cache entry
-will look something like
-
-(7, {P}) -> (1)->Accept
-(6, {P}) ->
-
-and all of these share it.  When we backtrack to the first operand bit, it
-switches to a 1.  But the construction sees that there is a cached value for the
-next bit, even though it would be invalidated by the negative pattern.  It takes
-it, producing incorrect parse tables.  We need to catch it, but it is actually
-*not* something we can see at the last bit because we'll never get a chance to
-inspect that last bit.  We need to re-evaluate our cache usage as we unwind the
-recursion.  It seems like the best place to take corrective action is at the
-*first* bit of a negative pattern where we could maintain localized state on
-recursive calls until the end of the negated patterns.  If we are making
-"progress" towards satisfying a negated pattern, we cannot use the cache.
-
-Some previous (unsuccessful) attempts to solve this problem include:
-- Cache invalidation
-  - The recursion pattern we are using meant that this basically eliminated all caching
-- Only caching once all negated bits have been resolved
-  - This was too expensive in practice
-
--}
 
 makePayload :: M.Map DTP.Pattern (DTP.LinkedTableIndex, e)
             -- ^ The set of patterns that match the current bit-string,
@@ -282,8 +221,6 @@ makePayload matchingPatterns bitIndex bitsSoFar bit =
 
     -- Remaining matching patterns longer than the current bit length
     longerPatterns = M.filterWithKey (\p _ -> patternBits p >= bitIndex) matchingPatterns
-
-    -- matchingPatterns = matchingNegativePatterns
 
 flattenTables :: DTP.LinkedTableIndex -> e -> DTP.TrieState e -> LT.LinearizedTrie e
 flattenTables t0 defElt finSt =
@@ -510,5 +447,67 @@ Some important semantic notes for the table construction process:
 
 - We can match a negative pattern once we have reached the last set bit in the
   negative pattern mask
+
+-}
+
+{- Note [Caching With Negation]
+
+The underlying problem with the cache is that we are keying it on the set of
+patterns that match up to this point.  If we reuse cached results on a bit
+sequence that triggers a negative pattern, we will get incorrect parse tables
+(i.e., they would ignore the negative patterns).  Precise caching would be
+*very* difficult.  Instead, we inspect the bit pattern to see if we are on a
+path that *could* trigger a negative pattern from the currently active pattern
+set.  If we are, we simply do not use the cached result.
+
+The most common use of negative patterns is to say that some N-bit operand is a
+register operand, but must NOT equal a certain value in order to be a valid
+parse (because the excluded value parses as another instruction).
+
+- Under this example, we *might* trigger the negative pattern at any time until
+  the bit pattern is fully resolved (i.e., parsing is past the last bit in the
+  negative pattern)
+- However, not caching at all up to that point is extremely expensive
+
+Question 1: Can we use cached values if the prefix does not include any of the
+bits in the negative mask?
+
+Question 2: Do we need to worry about any negative bits except for the last one?
+
+Observation: construction is DFS.  In a bit pattern like
+
+> P = |1|0|?|?|1|?|?|1|
+>      0 1 2 3 4 5 6 7
+
+where the second operand is not allowed to be 0b11.  We traverse out to the end
+of the bit-string depth first covering suffixes (starting from bit 5):
+
+- 0b001   # operand is 0b00 (and fine)
+- 0b011   # Operand is 0b01 (and still fine)
+- 0b101   # Here we backtrack to the first bit of the operand, which is 0b10 (and fine)
+
+These all share the same suffix of the tree, with a node indicating the
+transition on the final concrete 1 bit into an accept state.  That cache entry
+will look something like
+
+(7, {P}) -> (1)->Accept
+(6, {P}) ->
+
+and all of these share it.  When we backtrack to the first operand bit, it
+switches to a 1.  But the construction sees that there is a cached value for the
+next bit, even though it would be invalidated by the negative pattern.  It takes
+it, producing incorrect parse tables.  We need to catch it, but it is actually
+*not* something we can see at the last bit because we'll never get a chance to
+inspect that last bit.  We need to re-evaluate our cache usage as we unwind the
+recursion.  It seems like the best place to take corrective action is at the
+*first* bit of a negative pattern where we could maintain localized state on
+recursive calls until the end of the negated patterns.  If we are making
+"progress" towards satisfying a negated pattern, we cannot use the cache.
+
+Some previous (unsuccessful) attempts to solve this problem include:
+- Cache invalidation
+  - The recursion pattern we are using meant that this basically eliminated all caching
+- Only caching once all negated bits have been resolved
+  - This was too expensive in practice
 
 -}
