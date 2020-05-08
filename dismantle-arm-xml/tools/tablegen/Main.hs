@@ -1,5 +1,6 @@
 module Main ( main ) where
 
+import qualified Codec.Compression.GZip as CCG
 import qualified Control.Concurrent as CC
 import qualified Control.Concurrent.Async as CCA
 import qualified Data.Binary as DB
@@ -44,7 +45,6 @@ generateParseTable isa xmldirPath encIndexFile aslInstrs logHandle = do
 
 data Options =
   Options { oParallel :: Bool
-          , oBase :: Maybe FilePath
           }
 
 options :: O.Parser Options
@@ -52,10 +52,6 @@ options = Options <$> O.switch ( O.long "parallel"
                                <> O.short 'p'
                                <> O.help "Generate tables in parallel"
                                )
-                  <*> O.optional (O.strOption ( O.long "base"
-                                              <> O.short 'b'
-                                              <> O.help "The directory to store results in; if not specified, it will be the data directory under cwd"
-                                              ))
 
 main :: IO ()
 main = genWithOpts =<< O.execParser opts
@@ -87,14 +83,14 @@ isaInfo = [ ISAInfo t32ISA Lite "data/ISA_uboot_req" "t32_encindex.xml" "data/Pa
 persistTables :: ISAInfo -> IO ()
 persistTables info = IO.withFile logFileName IO.WriteMode $ \handle -> do
   bytes <- generateParseTable (infoIsa info) (infoXMLPath info) (infoEncIndex info) (infoASLInstrs info) handle
-  LBS.writeFile serFileName bytes
+  LBS.writeFile serFileName (CCG.compress bytes)
   where
     baseFileName = concat [ DTI.isaName (infoIsa info)
                           , "-"
                           , show (infoARMSet info)
                           ]
     logFileName = "data" SF.</> baseFileName SF.<.> "log"
-    serFileName = baseFileName SF.<.> "bin"
+    serFileName = "data" SF.</> baseFileName SF.<.> "bin"
 
 genWithOpts :: Options -> IO ()
 genWithOpts opts = do

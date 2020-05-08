@@ -46,6 +46,7 @@ library
                        text,
                        transformers,
                        th-lift,
+                       zlib,
                        template-haskell,
                        xml
   hs-source-dirs:      src
@@ -85,6 +86,7 @@ executable dismantle-arm-xml-tablegen
                  template-haskell,
                  containers,
                  xml,
+                 zlib,
                  megaparsec,
                  parameterized-utils,
                  asl-parser,

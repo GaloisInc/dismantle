@@ -15,12 +15,12 @@ module Dismantle.Tablegen (
 
 import qualified GHC.Err.Located as L
 
-import Control.Monad ( when )
+import           Control.Monad ( when )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
-import Data.Tuple (swap)
+import           Data.Tuple (swap)
 import qualified Data.ByteString.Lazy as LBS
-import Data.CaseInsensitive ( CI )
+import           Data.CaseInsensitive ( CI )
 import qualified Data.CaseInsensitive as CI
 import           Data.Char ( toUpper )
 import qualified Data.Foldable as F
@@ -28,20 +28,19 @@ import qualified Data.List as L
 import qualified Data.List.NonEmpty as NL
 import qualified Data.List.Split as L
 import qualified Data.Map.Strict as M
-import Data.Maybe ( mapMaybe, fromMaybe )
+import           Data.Maybe ( mapMaybe, fromMaybe )
 import qualified Data.Set as S
-import Data.Word ( Word8 )
-import Text.Printf ( printf )
-import Data.Monoid ((<>))
+import           Data.Word ( Word8 )
+import           Text.Printf ( printf )
 
-import Dismantle.Tablegen.ISA
-import Dismantle.Tablegen.Parser ( parseTablegen )
-import Dismantle.Tablegen.Parser.Types
-import Dismantle.Tablegen.Types
+import           Dismantle.Tablegen.ISA
+import           Dismantle.Tablegen.Parser ( parseTablegen )
+import           Dismantle.Tablegen.Parser.Types
+import           Dismantle.Tablegen.Types
 import qualified Dismantle.Tablegen.BitTrie as BT
 import qualified Dismantle.Tablegen.LinearizedTrie as LT
 import qualified Dismantle.Tablegen.Patterns as DTP
-import Debug.Trace
+import           Debug.Trace
 
 -- Add a number of required bytes to the Parser structure.  Then
 -- `parseInstruction` can check to ensure that the bytestring has enough bytes

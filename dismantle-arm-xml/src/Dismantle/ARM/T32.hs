@@ -38,9 +38,9 @@ import Dismantle.ARM.ISA ( isa )
 import Dismantle.Tablegen.TH ( genInstances )
 
 #ifdef ASL_LITE
-$(genISA (isa "T32") "data/ISA_uboot_req" "t32_encindex.xml" "data/Parsed/arm_instrs.sexpr" "T32.log")
+$(genISA (isa "T32") "data/ISA_uboot_req" "t32_encindex.xml" "data/Parsed/arm_instrs.sexpr" "data/T32-Lite.bin" "T32.log")
 #else
-$(genISA (isa "T32") "data/ISA_v85A_AArch32_xml_00bet9" "t32_encindex.xml" "data/Parsed/arm_instrs.sexpr" "T32.log")
+$(genISA (isa "T32") "data/ISA_v85A_AArch32_xml_00bet9" "t32_encindex.xml" "data/Parsed/arm_instrs.sexpr" "data/T32-Full.bin" "T32.log")
 #endif
 $(return [])
 

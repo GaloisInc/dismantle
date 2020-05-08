@@ -26,9 +26,14 @@ module Dismantle.ARM.TH
   )
   where
 
-import           Data.Maybe ( fromJust )
-import qualified Data.Map as M
+import qualified Codec.Compression.GZip as CCG
+import qualified Control.Monad.Fail as Fail
+import qualified Data.Binary as DB
 import qualified Data.BitMask as BM
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.List as List
+import qualified Data.Map as M
+import           Data.Maybe ( fromJust )
 import qualified Data.Parameterized.NatRepr as NR
 import           Data.Parameterized.Some ( Some(..) )
 
@@ -39,12 +44,13 @@ import           System.IO ( withFile, IOMode(..), hPutStrLn, Handle )
 import           System.FilePath.Glob ( namesMatching )
 import           System.FilePath ( (</>), (<.>) )
 
-import qualified Dismantle.Tablegen as DT
-import qualified Dismantle.ARM.XML as XML
 import qualified Dismantle.ARM.ASL as ASL
 import qualified Dismantle.ARM.XML as ARM ( encodingOpToInstDescriptor, instDescriptorsToISA )
-import qualified Dismantle.Tablegen.TH as DTH
+import qualified Dismantle.ARM.XML as XML
+import qualified Dismantle.Tablegen as DT
+import qualified Dismantle.Tablegen.LinearizedTrie as DTL
 import qualified Dismantle.Tablegen.Patterns as BT
+import qualified Dismantle.Tablegen.TH as DTH
 
 -- | Top-level function for generating the template haskell for a given ISA.
 genISA :: DT.ISA
@@ -56,16 +62,28 @@ genISA :: DT.ISA
        -> FilePath
        -- ^ the full (relative) path to the parsed arm s-expression file: "arm_instrs.sexpr"
        -> FilePath
+       -- ^ The path to pre-computed parse tables
+       -> FilePath
        -- ^ file to write out logs to
        -> TH.DecsQ
-genISA isa xmldirPath encIndexFile aslInstrs logFile = do
+genISA isa xmldirPath encIndexFile aslInstrs parseTables logFile = do
+  -- The rest of the files are added by the base TH library
+  TH.qAddDependentFile parseTables
   (desc, encodingops, files) <- TH.runIO $ withFile logFile WriteMode $ \handle -> do
     putStrLn $ "Dismantle.ARM.TH log: " ++ logFile
     armISADesc isa xmldirPath encIndexFile aslInstrs handle
   TH.runIO $ putStrLn "Successfully generated ISA description."
   aslMapDesc <- mkASLMap encodingops
-  isaDesc <- DTH.genISADesc isa desc files
-  return $ isaDesc ++ aslMapDesc
+  inputBytes <- TH.runIO $ mapM LBS.readFile files
+  let hash = DTL.computeHash inputBytes
+  let asMaybeString :: DB.Get (Maybe String)
+      asMaybeString = DB.get
+  tableBytes <- TH.runIO $ LBS.readFile parseTables
+  case DTL.deserialize asMaybeString hash (CCG.decompress tableBytes) of
+    Left msg -> Fail.fail msg
+    Right lt -> do
+      isaDesc <- DTH.genISADesc isa desc files (Just lt)
+      return $ isaDesc ++ aslMapDesc
 
 -- | This function reads all of the ASL data and constructs the ISADescription
 --
@@ -84,7 +102,9 @@ armISADesc isa xmldirPath encIndexFile aslInstrs handle = do
   pairedEncodings <- ASL.loadASL (DT.isaName isa) aslInstrs encodings doLog
   let xmlEncodings = map fst pairedEncodings
   let isaDesc = ARM.instDescriptorsToISA (map ARM.encodingOpToInstDescriptor xmlEncodings)
-  return (isaDesc, pairedEncodings, aslInstrs : xmlFiles)
+  -- NOTE: We sort the filenames to keep things consistent in case
+  -- 'namesMatching' can exhibit non-determinism
+  return (isaDesc, pairedEncodings, List.sort (aslInstrs : xmlFiles))
 
 mkASLMap :: [(XML.Encoding, ASL.Encoding)] -> TH.DecsQ
 mkASLMap encodings = do

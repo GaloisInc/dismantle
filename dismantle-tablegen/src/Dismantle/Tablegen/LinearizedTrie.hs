@@ -5,6 +5,7 @@ module Dismantle.Tablegen.LinearizedTrie (
   -- * Serialization
   serialize,
   deserialize,
+  computeHash,
   -- * Unsafe
   unsafeFromAddr,
   unsafeLinearizedTrieParseTableBytes,
