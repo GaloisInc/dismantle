@@ -18,7 +18,6 @@ library
                    Dismantle.Tablegen
                    Dismantle.Tablegen.ISA
                    Dismantle.Tablegen.BitTrie
-                   Dismantle.Tablegen.ByteTrie
                    Dismantle.Tablegen.LinearizedTrie
                    Dismantle.Tablegen.Combinators
                    Dismantle.Tablegen.Patterns

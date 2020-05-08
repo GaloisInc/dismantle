@@ -9,7 +9,6 @@ import           Numeric (showHex)
 import qualified Test.Tasty as T
 import           Test.Tasty.HUnit
 
-import qualified Dismantle.Tablegen.ByteTrie as Byte
 import qualified Dismantle.Tablegen.BitTrie as Bit
 import           Dismantle.Tablegen.LinearizedTrie as LT
 import qualified Dismantle.Tablegen.Patterns as DTP
@@ -27,9 +26,8 @@ type Lookup e = LT.LinearizedTrie e -> Word8 -> Either (LT.LinearizedTrie e) e
 
 trieTests :: IO T.TestTree
 trieTests = do
-  bytes <- mkTrieTests "ByteTrie" Byte.byteTrie Byte.lookupByte
   bits <- mkTrieTests "BitTrie" Bit.bitTrie Bit.lookupByte
-  return $ T.testGroup "trieTests" [bytes, bits]
+  return $ T.testGroup "trieTests" [bits]
 
 mkTrieTests :: String -> (forall e . TrieBuilder e) -> (forall e . Lookup e) -> IO T.TestTree
 mkTrieTests implname con look = return $
