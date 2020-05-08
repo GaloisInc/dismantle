@@ -73,12 +73,12 @@ library
                        SHA >= 1.6 && < 1.7
   hs-source-dirs:      src
   default-language:    Haskell2010
-  ghc-options: -Wall -fprof-auto -fno-ignore-asserts
+  ghc-options: -Wcompat -Wall -fprof-auto -fno-ignore-asserts
 
 test-suite dismantle-tests
   default-language: Haskell2010
   type: exitcode-stdio-1.0
-  ghc-options: -Wall -rtsopts
+  ghc-options: -Wcompat -Wall -rtsopts
   hs-source-dirs: tests
   main-is: Main.hs
   other-modules: Operands
