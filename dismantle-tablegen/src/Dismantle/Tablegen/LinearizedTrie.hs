@@ -127,7 +127,7 @@ unsafeFromAddr :: [a]
                -> LinearizedTrie a
 unsafeFromAddr payloads addr nElts ix0 = SIU.unsafePerformIO $ do
   fp <- GFP.newForeignPtr_ (GPtr.Ptr addr)
-  return $! LinearizedTrie { ltPayloads = V.fromList (undefined : payloads)
+  return $! LinearizedTrie { ltPayloads = V.fromList payloads
                            , ltParseTables = SV.unsafeFromForeignPtr0 fp nElts
                            , ltStartIndex = ix0
                            }
@@ -154,4 +154,4 @@ unsafeLinearizedTriePayloads :: LinearizedTrie a -> [a]
 unsafeLinearizedTriePayloads lt =
   case V.null (ltPayloads lt) of
     True -> []
-    False -> tail (V.toList (ltPayloads lt))
+    False -> V.toList (ltPayloads lt)

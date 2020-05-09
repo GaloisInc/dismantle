@@ -255,7 +255,7 @@ convertOrMakeTrie mtrie trieInputs =
     nameIndex = F.foldl' addName M.empty trieInputs
     stringToName mstr =
       case mstr of
-        Nothing -> error "Unexpected Nothing in trie conversion"
+        Nothing -> Nothing
         Just str ->
           case M.lookup str nameIndex of
             Nothing -> error ("Missing Name for string in trie conversion: " ++ show str)
