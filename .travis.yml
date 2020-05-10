@@ -34,8 +34,7 @@ matrix:
     - env: TEST_ARCH=tablegen
     - env: TEST_ARCH=ppc
     - env: TEST_ARCH=arm
-      # Broken due to changes in ByteTrie to support negative patterns (apparently)
-   #- env: TEST_ARCH=thumb
+    - env: TEST_ARCH=thumb
       # Carve out a subset of the xml spec sufficient to test u-boot
     - env: TEST_ARCH=arm-xml-lite
     - env: TEST_ARCH=arm-xml
