@@ -12,14 +12,16 @@ module Dismantle.Tablegen.TH (
   genISA,
   genISADesc,
   genInstances,
-  genISARandomHelpers
+  genISARandomHelpers,
+  -- * More internal helpers
+  mkTrieInput,
+  parsableInstructions
   ) where
 
 import           GHC.Base ( Int(I#), getTag )
 import           GHC.TypeLits ( Symbol )
 
 import           Control.Monad ( forM )
-import           Data.Monoid ((<>))
 import           Data.Bits
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Unsafe as UBS
@@ -35,7 +37,7 @@ import           Data.Word ( Word8 )
 import qualified Data.Text.Lazy.IO as TL
 import           Language.Haskell.TH
 import           Language.Haskell.TH.Datatype
-import           Language.Haskell.TH.Syntax ( Lift(..), qAddDependentFile, Name(..) )
+import           Language.Haskell.TH.Syntax ( Lift(..), qAddDependentFile )
 import           System.IO.Unsafe ( unsafePerformIO )
 import           System.Directory ( doesFileExist, doesDirectoryExist, getDirectoryContents )
 import           System.FilePath ( (</>) )
@@ -55,7 +57,9 @@ import           Dismantle.Instruction
 import           Dismantle.Instruction.Random ( ArbitraryOperands(..), ArbitraryOperand(..), arbitraryShapedList )
 import           Dismantle.Tablegen
 import           Dismantle.Tablegen.Parser.Types
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.BitTrie as BT
+import qualified Dismantle.Tablegen.LinearizedTrie as DTL
+import qualified Dismantle.Tablegen.Patterns as DTP
 import           Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import           Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
 
@@ -78,10 +82,14 @@ loadISA isa path overridePaths = do
 genISA :: ISA -> FilePath -> [FilePath] -> DecsQ
 genISA isa path overridePaths = do
   desc <- loadISA isa path overridePaths
-  genISADesc isa desc [path]
+  genISADesc isa desc [path] Nothing
 
-genISADesc :: ISA -> ISADescriptor -> [FilePath] -> DecsQ
-genISADesc isa desc paths = do
+-- | This function creates all of the definitions for an ISA disassembler/assembler
+--
+-- It optionally takes a pre-computed set of parse tables (which avoids having
+-- to compute the parse tables at compile time)
+genISADesc :: ISA -> ISADescriptor -> [FilePath] -> Maybe (DTL.LinearizedTrie (Maybe String)) -> DecsQ
+genISADesc isa desc paths mtrie = do
   mapM_ qAddDependentFile paths
 
   case isaErrors desc of
@@ -94,7 +102,7 @@ genISADesc isa desc paths = do
   reprTypeDecls <- mkReprType isa >>= sequence
   setWrapperType <- [d| newtype NESetWrapper o p = NESetWrapper { unwrapNESet :: (NES.Set ($(conT $ mkName "Opcode") o p)) } |]
   ppDef <- mkPrettyPrinter desc
-  parserDef <- mkParser isa desc
+  parserDef <- mkParser isa desc mtrie
   asmDef <- mkAssembler isa desc
   return $ concat [ operandType
                   , opcodeType
@@ -186,20 +194,20 @@ opcodeTypeName = mkName "Opcode"
 operandTypeName :: Name
 operandTypeName = mkName "Operand"
 
-mkParser :: ISA -> ISADescriptor -> Q [Dec]
-mkParser isa desc = do
+mkParser :: ISA -> ISADescriptor -> Maybe (DTL.LinearizedTrie (Maybe String)) -> Q [Dec]
+mkParser isa desc mtrie = do
   -- Build up a table of AST fragments that are parser expressions.
   -- They are associated with the bit masks required to build the
   -- trie.  The trie is constructed at run time for now.
   parserData <- forM (parsableInstructions isa desc) $ \i -> do
     mkTrieInput isa i
   let (trieInputs, decls) = unzip parserData
-  case BT.byteTrie Nothing trieInputs of
+  case convertOrMakeTrie mtrie trieInputs of
     Left err -> reportError ("Error while building parse tables: " ++ show err) >> return []
     Right bt0 -> do
-      let (parseTableBytes, parseTableSize, parseTableStartIndex) = BT.unsafeByteTrieParseTableBytes bt0
+      let (parseTableBytes, parseTableSize, parseTableStartIndex) = DTL.unsafeLinearizedTrieParseTableBytes bt0
           payloads0 :: [Maybe Name]
-          payloads0 = BT.unsafeByteTriePayloads bt0
+          payloads0 = DTL.unsafeLinearizedTriePayloads bt0
           toParserExpr Nothing = [| Nothing |]
           toParserExpr (Just name) = [| Just $(varE name) |]
           parseTableExprPayloads :: [Q Exp]
@@ -207,11 +215,51 @@ mkParser isa desc = do
       trie <- [|
                  let parseTableLit = $(litE (stringPrimL parseTableBytes))
                      payloads = $(listE parseTableExprPayloads)
-                 in BT.unsafeFromAddr payloads parseTableLit $(lift parseTableSize) $(lift parseTableStartIndex)
+                 in DTL.unsafeFromAddr payloads parseTableLit $(lift parseTableSize) $(lift parseTableStartIndex)
                |]
       parser <- [| parseInstruction $(return trie) |]
       parserTy <- [t| LBS.ByteString -> (Int, Maybe $(conT (mkName "Instruction"))) |]
       return (decls ++ [ SigD parserName parserTy, ValD (VarP parserName) (NormalB parser) []])
+
+-- | Either convert a serialized 'DTL.LinearizedTrie' into the form we need to
+-- embed in generated code, or construct a new 'DTL.LinearizedTrie' if no
+-- pre-computed version was provided.
+--
+-- The serialized parser has payloads of type 'String', but the real type we
+-- need has 'Name' payloads; this is because we can't serialize 'Name'.  During
+-- this step, we translate 'String' into 'Name' (if necessary) by using the
+-- re-computed trie inputs (the second argument).  Re-computing them is
+-- unfortunately not free, but can be orders of magnitude cheaper than
+-- recomputing the trie.
+convertOrMakeTrie :: Maybe (DTL.LinearizedTrie (Maybe String))
+                  -> [(String, BS.ByteString, BS.ByteString,
+                        [(BS.ByteString, BS.ByteString)], Maybe Name)]
+                  -> Either DTP.TrieError (DTL.LinearizedTrie (Maybe Name))
+convertOrMakeTrie mtrie trieInputs =
+  case mtrie of
+    Nothing -> BT.bitTrie Nothing trieInputs
+    Just lt -> Right (fmap stringToName lt)
+  where
+    -- The payload is of type @Maybe Name@
+    --
+    -- The precomputed trie has elements that are of type @Maybe String@ where
+    -- the String is the 'nameBase'
+    --
+    -- We need to build a map from nameBase to Names so that we can convert from
+    -- Strings to Names.  This is a bit roundabout because we can't serialize
+    -- 'Name'
+    addName m (_, _, _, _, mnm) =
+      case mnm of
+        Nothing -> m
+        Just nm -> M.insert (nameBase nm) nm m
+    nameIndex = F.foldl' addName M.empty trieInputs
+    stringToName mstr =
+      case mstr of
+        Nothing -> Nothing
+        Just str ->
+          case M.lookup str nameIndex of
+            Nothing -> error ("Missing Name for string in trie conversion: " ++ show str)
+            Just nm -> Just nm
 
 parserName :: Name
 parserName = mkName "disassembleInstruction"
@@ -225,7 +273,7 @@ parserName = mkName "disassembleInstruction"
 -- The [Word8] forms are suitable for constructing Addr# literals,
 -- which we can turn into bytestrings efficiently (i.e., without
 -- parsing)
-bitSpecAsBytes :: [BT.Bit] -> ([Word8], [Word8])
+bitSpecAsBytes :: [DTP.Bit] -> ([Word8], [Word8])
 bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroups)
   where
     byteGroups = L.chunksOf 8 bits
@@ -233,11 +281,11 @@ bitSpecAsBytes bits = (map setRequiredBits byteGroups, map setTrueBits byteGroup
     setTrueBits byteBits = foldr setTrueBit 0 (zip [7,6..0] byteBits)
     setRequiredBit (ix, b) w =
       case b of
-        BT.ExpectedBit _ -> w `setBit` ix
-        BT.Any -> w
+        DTP.ExpectedBit _ -> w `setBit` ix
+        DTP.Any -> w
     setTrueBit (ix, b) w =
       case b of
-        BT.ExpectedBit True -> w `setBit` ix
+        DTP.ExpectedBit True -> w `setBit` ix
         _ -> w
 
 -- | Note that the 'Maybe Name' is always a 'Just' value.

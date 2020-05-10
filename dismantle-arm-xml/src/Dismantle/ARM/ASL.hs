@@ -42,9 +42,8 @@ import           GHC.Stack
 
 import           Control.Exception ( try )
 import qualified Control.Exception as E
-import           Control.Monad ( forM, forM_, zipWithM )
+import           Control.Monad ( foldM, forM, forM_, zipWithM, void, unless, liftM )
 import           Control.Monad.Fail
-import           Control.Monad.Identity
 import           Control.Monad.Trans ( lift, liftIO, MonadIO )
 import           Control.Monad.Trans.RWS.Strict ( RWST )
 import qualified Control.Monad.Trans.RWS.Strict as RWS
@@ -76,7 +75,7 @@ import           Dismantle.ARM.XML ( ARMRegWidth
                                    )
 import qualified Dismantle.Tablegen as DT
 
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.Patterns as BT
 import qualified Data.BitMask as BM
 
 type ARMMaskTrie a = BM.MaskTrie BM.QuasiBit ARMRegWidth a

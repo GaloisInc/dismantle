@@ -11,7 +11,7 @@ maintainer:          benselfridge@galois.com
 -- copyright:
 -- category:
 build-type:          Simple
-extra-source-files:  CHANGELOG.md data/ISA_v85A_AArch32_xml_00bet9/* data/Parsed/arm_instrs.sexpr data/ISA_uboot_req/*
+extra-source-files:  CHANGELOG.md data/ISA_v85A_AArch32_xml_00bet9/* data/Parsed/arm_instrs.sexpr data/ISA_uboot_req/* data/*.bin
 
 flag asl-lite
   Description: Use a trimmed-down set of instructions for the ASL specification (sufficient to disassemble u-boot).
@@ -42,10 +42,10 @@ library
                        parameterized-utils,
                        pretty,
                        split,
-                       strict,
                        text,
                        transformers,
                        th-lift,
+                       zlib,
                        template-haskell,
                        xml
   hs-source-dirs:      src
@@ -54,6 +54,41 @@ library
 
   if flag(asl-lite)
     cpp-options: -DASL_LITE
+
+-- NOTE: This doesn't depend on the library so that it can be built
+-- independently (since its outputs are actually used to build the library)
+executable dismantle-arm-xml-tablegen
+  default-language: Haskell2010
+  ghc-options: -Wall -Wcompat -rtsopts -threaded
+  hs-source-dirs: src, tools/tablegen
+  main-is: Main.hs
+  other-modules: Dismantle.ARM.XML,
+                 Dismantle.ARM.ASL,
+                 Dismantle.ARM.ISA,
+                 Dismantle.ARM.TH
+                 Data.BitMask
+                 Data.PropTree
+  build-depends: base,
+                 bytestring,
+                 directory,
+                 async,
+                 optparse-applicative,
+                 filepath,
+                 filemanip,
+                 pretty,
+                 split,
+                 mtl,
+                 transformers,
+                 text,
+                 binary,
+                 template-haskell,
+                 containers,
+                 xml,
+                 zlib,
+                 megaparsec,
+                 parameterized-utils,
+                 asl-parser,
+                 dismantle-tablegen
 
 test-suite dismantle-arm-xml-tests
   default-language: Haskell2010

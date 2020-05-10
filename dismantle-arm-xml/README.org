@@ -1,0 +1,18 @@
+This package provides a disassembler and assembler for AArch32, including both the A32 and T32 instruction encodings.  Unlike the other dismantle packages, this one uses the official ARM specs (written in ASL embedded in XML) [fn:arm-asl].  The Haskell support for working with ASL is provided by the asl-translator [fn:asl-translator] package.
+
+At a high level, this library takes the same approach as the rest of dismantle: automatically generate disassemblers and assemblers based on external data sources.  The disassemblers embed pre-computed parse tables into their compiled code to ensure fast startup and efficient execution.
+
+The major differences compared to the rest of dismantle are:
+- The data source is from ARM instead of LLVM
+- It uses pre-computed parse tables that are checked in (in binary form)
+
+* Pre-computed Parse Tables
+
+Using our current parse table construction algorithm, constructing the parse tables for the Thumb encoding takes over an hour.  This makes building the disassembler repeatedly untenable.  To mitigate this, there is a tool, dismantle-arm-xml-tablegen, which can be used to pre-compute the necessary parse tables and persist them in a serialized binary format.  During compilation, the Template Haskell in this package loads the pre-computed tables.
+
+That tool should be run from the root of this package (not the repository root).  It will save the necessary pre-computed tables in the data directory of this package.  The tool supports a ~--parallel~ flag to compute all of the necessary table variants in parallel.
+
+* References
+
+[fn:arm-asl] https://developer.arm.com/architectures/cpu-architecture/a-profile/exploration-tools
+[fn:asl-translator] https://github.com/GaloisInc/asl-translator

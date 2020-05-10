@@ -49,7 +49,6 @@ module Dismantle.ARM.XML
 
 import           Prelude hiding (fail)
 
-import qualified System.IO.Strict as SIO
 import           System.FilePath ( takeFileName )
 
 import           Control.Applicative ( (<|>) )
@@ -75,6 +74,7 @@ import qualified Data.Parameterized.NatRepr as NR
 import           Data.PropTree ( PropTree )
 import qualified Data.PropTree as PropTree
 import           Text.Printf (printf)
+import qualified Data.Text.IO as TIO
 
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
@@ -83,7 +83,7 @@ import           Text.PrettyPrint.HughesPJClass ( (<+>), ($$) )
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import qualified Dismantle.Tablegen.Parser.Types as PT
-import qualified Dismantle.Tablegen.ByteTrie as BT
+import qualified Dismantle.Tablegen.Patterns as BT
 import qualified Dismantle.Tablegen as DT
 
 import           Data.BitMask (BitSection, QuasiBit, BitMask )
@@ -289,7 +289,7 @@ logXML msg = do
 
 withParsedXMLFile :: FilePath -> (X.Element -> XML a) -> XML a
 withParsedXMLFile fullPath m = R.local (\e -> e { xmlCurrentFile = Just fullPath }) $ do
-  fileStr <- MS.liftIO $ SIO.readFile fullPath
+  fileStr <- MS.liftIO $ TIO.readFile fullPath
   case X.parseXMLDoc fileStr of
     Just c -> withElement c $ m c
     Nothing -> throwError $ InvalidXmlFile fullPath
