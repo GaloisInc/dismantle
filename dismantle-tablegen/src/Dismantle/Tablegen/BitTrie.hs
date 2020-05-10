@@ -203,12 +203,6 @@ makePayload matchingPatterns bitIndex bitsSoFar bit =
 
          error ("Overlapping bit pattern " ++ show (bitIndex, bitsSoFar, mapping, pats, mnemonics))
   where
-    -- Now find the length of the smallest matching pattern
-    --
-    -- If there are multiple matches and one is shorter than the rest, we can
-    -- use this to say that the unique shortest pattern supersedes the others.
-    -- minPatLen = minimum (patternBits <$> M.keys matchingNegativePatterns)
-
     -- It could be the case that some patterns are shorter than others, and that
     -- we hit a match to the shorter patterns early. We want to take those
     -- matches first.
@@ -301,7 +295,7 @@ negativePatternMatches bs p _ =
               -- - In @b@, length(bs)=6, highestBit(mask)=5
               -- - In @c@, length(bs)=7, highestBit(mask)=5
               --
-              -- So we cannot apply the mask if until
+              -- So we cannot apply the mask until
               --
               -- > length(bs) > highestBit(mask)
               True
@@ -336,8 +330,6 @@ findMostSpecificPatternElt = findMostSpecific [] . M.toList
 
 -- | Convert from indexes in linked tables to indexes suitable for the flat
 -- tables we are constructing for the ultimate BitTrie
---
--- Unlike the 'ByteTrie' (which has 256 entries per table), this one only has 2.
 linkedToFlatIndex :: DTP.LinkedTableIndex -> DTP.FlatTableIndex
 linkedToFlatIndex (DTP.LTI i)
   | i < 0 = DTP.FTI i
@@ -345,9 +337,8 @@ linkedToFlatIndex (DTP.LTI i)
 
 -- | A helper type to track accumulated concrete bits
 --
--- The ByteTrie uses a ByteString since that is fairly natural.  We could do the
--- same here, but a more specific bitstring type is a bit more explicit and
--- easier to follow
+-- This bit sequence is actually a 'VU.Vector' that stores the lowest bit at
+-- index 0.
 newtype BitString = BitString (VU.Vector Bool)
   deriving (Eq, Ord)
 
@@ -418,8 +409,8 @@ instance AsBitList BitString where
 
 {- [BitTrie Design]
 
-This implementation is inspired by the ByteTrie, but instead of dispatching
-based on byte values at each level of the tree, it dispatches one bit at a time.
+This trie maps bit patterns to payloads of arbitrary type.  It dispatches on a
+single bit at a time.
 
 At each level of the trie construction, we have a set of patterns that matched
 up to the current bit.  For each concrete bit (True or False) at the current
@@ -458,7 +449,8 @@ sequence that triggers a negative pattern, we will get incorrect parse tables
 (i.e., they would ignore the negative patterns).  Precise caching would be
 *very* difficult.  Instead, we inspect the bit pattern to see if we are on a
 path that *could* trigger a negative pattern from the currently active pattern
-set.  If we are, we simply do not use the cached result.
+set.  If we are, we simply do not use the cached result.  We also avoid making
+cache entries for bit patterns that could turn into a matching negative pattern.
 
 The most common use of negative patterns is to say that some N-bit operand is a
 register operand, but must NOT equal a certain value in order to be a valid
@@ -469,17 +461,12 @@ parse (because the excluded value parses as another instruction).
   negative pattern)
 - However, not caching at all up to that point is extremely expensive
 
-Question 1: Can we use cached values if the prefix does not include any of the
-bits in the negative mask?
-
-Question 2: Do we need to worry about any negative bits except for the last one?
-
 Observation: construction is DFS.  In a bit pattern like
 
 > P = |1|0|?|?|1|?|?|1|
 >      0 1 2 3 4 5 6 7
 
-where the second operand is not allowed to be 0b11.  We traverse out to the end
+where the second operand (bits 5 and 6) is not allowed to be 0b11.  We traverse out to the end
 of the bit-string depth first covering suffixes (starting from bit 5):
 
 - 0b001   # operand is 0b00 (and fine)

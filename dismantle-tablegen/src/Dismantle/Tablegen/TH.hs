@@ -84,7 +84,7 @@ genISA isa path overridePaths = do
   desc <- loadISA isa path overridePaths
   genISADesc isa desc [path] Nothing
 
--- | This function creates all of the definitions for an ISA dissasembler/assembler
+-- | This function creates all of the definitions for an ISA disassembler/assembler
 --
 -- It optionally takes a pre-computed set of parse tables (which avoids having
 -- to compute the parse tables at compile time)
