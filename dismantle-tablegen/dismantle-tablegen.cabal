@@ -48,8 +48,6 @@ library
                        pretty,
                        deepseq >= 1.4 && < 2,
                        process,
-                       located-base,
-                       array,
                        mwc-random >= 0.13 && < 0.15,
                        case-insensitive >= 1 && < 2,
                        filemanip,

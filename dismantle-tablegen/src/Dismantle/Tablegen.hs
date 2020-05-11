@@ -13,8 +13,6 @@ module Dismantle.Tablegen (
   module Dismantle.Tablegen.Types
   ) where
 
-import qualified GHC.Err.Located as L
-
 import           Control.Monad ( when )
 import qualified Control.Monad.Cont as CC
 import qualified Control.Monad.State.Strict as St
@@ -302,7 +300,7 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
       case dagVal of
         VDag (DagArg (Identifier hd) _) args
           | hd == dagHead -> F.foldlM parseOperand [] args
-        _ -> L.error (printf "Unexpected DAG head (%s) for %s" dagHead mnemonic)
+        _ -> error (printf "Unexpected DAG head (%s) for %s" dagHead mnemonic)
 
     parseOperand operands arg =
       case arg of
@@ -328,7 +326,7 @@ parseOperandsByName isa mnemonic (map unMetadata -> metadata) outs ins mbits kex
                                                        , opChunks = groupByChunk (L.sortOn snd arrVals)
                                                        }
                           return (desc : operands)
-        _ -> L.error (printf "Unexpected variable reference in a dag for %s: %s" mnemonic (show arg))
+        _ -> error (printf "Unexpected variable reference in a dag for %s: %s" mnemonic (show arg))
 
 indexFieldBits :: [Maybe BitRef] -> M.Map (CI String) [(IBit, OBit)]
 indexFieldBits bits = F.foldl' addBit M.empty (zip bitPositionRange bits)
