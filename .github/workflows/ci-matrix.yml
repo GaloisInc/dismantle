@@ -53,8 +53,9 @@ jobs:
     - name: Build
       run: |
         cabal v2-update
-        cabal v2-configure pkg:dismantle-${{ matrix.arch }}
-        cabal v2-build pkg:dismantle-${{ matrix.arch }} --write-ghc-environment-files=always
+        ln -s cabal.project.newbuild cabal.project
+        cabal v2-configure pkg:dismantle-${{ matrix.arch }} --write-ghc-environment-files=always
+        cabal v2-build pkg:dismantle-${{ matrix.arch }}
     - name: Test
       run: |
         cabal v2-test pkg:dismantle-${{ matrix.arch }}
