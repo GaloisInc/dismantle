@@ -60,6 +60,6 @@ jobs:
         cabal v2-build pkg:dismantle-${{ matrix.arch }}
 
     - name: Test
-      if: matrix.os != ${{ macOS-latest }}
+      if: matrix.os != macOS-latest
       run: |
         cabal v2-test pkg:dismantle-${{ matrix.arch }}
