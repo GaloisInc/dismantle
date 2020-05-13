@@ -76,11 +76,25 @@ serialize putA inputs lt = BP.runPut $ do
   SV.mapM_ BP.putInt32le (ltParseTables lt)
   BP.putInt64le (fromIntegral (ltStartIndex lt))
 
+-- | Hash all of the input bytestrings
+--
+-- There is one difficulty: many inputs are plain text and newline translation
+-- on Windows means that we have to be careful how we compute hashes or tables
+-- generated on Linux cannot be reused on Windows.
+--
+-- To fix this, we will filter out all whitespace from the input bytestrings
+-- before we add them to the hash.
+--
+-- NOTE: We are filtering out the basic newline, line feed, and carriage return
+-- characters.  We are ignoring any unicode oddities since it shouldn't really
+-- matter.
 computeHash :: [LBS.ByteString] -> DPS.Digest DPS.SHA1State
 computeHash inputs =
-  DPS.completeSha1Incremental (F.foldl' BG.pushChunks DPS.sha1Incremental inputs) (fromIntegral len)
+  DPS.completeSha1Incremental (F.foldl' BG.pushChunks DPS.sha1Incremental inputs') (fromIntegral len)
   where
-    len = sum (fmap LBS.length inputs)
+    inputs' = fmap (LBS.filter isNotNewline) inputs
+    len = sum (fmap LBS.length inputs')
+    isNotNewline w = not (w == 10 || w == 13)
 
 deserialize :: (BG.Get a)
             -> DPS.Digest DPS.SHA1State
