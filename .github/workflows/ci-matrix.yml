@@ -22,14 +22,13 @@ jobs:
         cabal: ['3.2.0.0']
         os: [ubuntu-latest, macOS-latest, windows-latest]
         exclude:
-          # - os: macOS-latest
-          #   ghc: 8.8.3
           - os: macOS-latest
             ghc: 8.6.5
           - os: windows-latest
             ghc: 8.8.3
-          # - os: windows-latest
-          #   ghc: 8.6.5
+          # This configuration runs out of memory
+          - os: windows-latest
+            arch: aarch64
 
     name: GHC ${{ matrix.ghc }} on ${{ matrix.os }} dismantle-${{ matrix.arch }}
 
