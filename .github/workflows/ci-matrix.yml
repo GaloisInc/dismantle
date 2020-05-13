@@ -31,7 +31,7 @@ jobs:
           # - os: windows-latest
           #   ghc: 8.6.5
 
-    name: GHC ${{ matrix.ghc }} on ${{ matrix.os }} dismantle-{{ matrix.arch }}
+    name: GHC ${{ matrix.ghc }} on ${{ matrix.os }} dismantle-${{ matrix.arch }}
 
     steps:
     - uses: actions/checkout@v2
