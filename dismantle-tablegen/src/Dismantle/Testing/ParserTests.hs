@@ -3,7 +3,6 @@ module Dismantle.Testing.ParserTests (parserTests) where
 
 import Control.DeepSeq (deepseq)
 import Control.Monad (when)
-import Data.Monoid ((<>))
 import qualified Data.Text.IO as TS
 import qualified Data.Text.Lazy as TL
 import qualified Test.Tasty as T

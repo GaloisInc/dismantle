@@ -9,10 +9,11 @@ module Data.Parameterized.Lift (
   ) where
 
 import Data.Proxy ( Proxy(..) )
+import Data.Kind ( Type )
 import Language.Haskell.TH ( Exp, Q )
 import Language.Haskell.TH.Syntax ( Lift(..) )
 
-class LiftF (f :: k -> *) where
+class LiftF (f :: k -> Type) where
   withLift :: p f -> q tp -> (Lift (f tp) => a) -> a
 
   default withLift :: (Lift  (f tp)) => p f -> q tp -> (Lift (f tp) => a) -> a

@@ -4,7 +4,6 @@
 module Data.Word.Indexed ( W, w, wRep, unW, rep, width ) where
 
 import           Data.Bits
-import           Data.Monoid ( (<>) )
 import qualified Data.Parameterized.NatRepr as NR
 import           GHC.TypeLits
 import qualified Text.PrettyPrint.HughesPJClass as PP

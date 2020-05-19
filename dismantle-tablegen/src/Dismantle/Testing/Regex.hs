@@ -13,7 +13,6 @@ module Dismantle.Testing.Regex
     )
     where
 
-import           Control.Monad.Fail
 import           Data.String
 import qualified Data.Text as DT
 import qualified Text.Regex.TDFA as RE
