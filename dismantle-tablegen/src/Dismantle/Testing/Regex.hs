@@ -13,6 +13,7 @@ module Dismantle.Testing.Regex
     )
     where
 
+import qualified Control.Monad.Fail as MF
 import           Data.String
 import qualified Data.Text as DT
 import qualified Text.Regex.TDFA as RE
@@ -34,4 +35,4 @@ hasMatches t r = RE.matchTest r t
 newtype EitherString a = EitherString { runEitherString :: Either String a }
     deriving (Eq, Ord, Read, Show, Functor, Applicative, Monad)
 
-instance MonadFail EitherString where fail = EitherString . Left
+instance MF.MonadFail EitherString where fail = EitherString . Left
