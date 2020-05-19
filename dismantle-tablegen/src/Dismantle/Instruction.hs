@@ -16,6 +16,7 @@ module Dismantle.Instruction (
   ) where
 
 import Control.Monad
+import Data.Kind ( Type )
 import qualified Data.Type.Equality as E
 import Data.Typeable ( Typeable )
 
@@ -71,7 +72,7 @@ instance (Show a, ShowF o) => ShowF (Annotated a o)
 --
 -- The name is 'GenericInstruction' so that specific aliases can be
 -- instantiated as just 'Instruction'
-data GenericInstruction (t :: (k -> *) -> [k] -> *) (o :: k -> *) where
+data GenericInstruction (t :: (k -> Type) -> [k] -> Type) (o :: k -> Type) where
   Instruction :: t o sh -> List o sh -> GenericInstruction t o
 
 instance (E.TestEquality o, OrdF (t o), OrdF (List o)) => Ord (GenericInstruction t o) where

@@ -1,4 +1,5 @@
 {-# LANGUAGE TupleSections #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Dismantle.Testing.Parser (
   objdumpParser,
   Disassembly(..),
@@ -12,7 +13,6 @@ import Control.Applicative
 import Control.Monad ( replicateM, replicateM_, void )
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List.NonEmpty as NL
-import Data.Monoid ((<>))
 import Data.Maybe ( catMaybes )
 import qualified Data.Text.Lazy as TL
 import Data.Word ( Word8, Word64 )
