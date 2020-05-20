@@ -802,11 +802,11 @@ mkOpcodePrettyPrinter i = do
   fTy <- [t| $(conT (mkName "Instruction")) -> PP.Doc |]
 
   let fName = mkName $ "pp_" <> idMnemonic i
-      pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
-      body = VarE 'prettyInstruction `AppE` ListE defaults `AppE` LitE (StringL (idAsmString i)) `AppE` ListE prettyOps
-      defaults = (mkDefault <$> idPrettyVariableOverrides i) <>
-                 (mkDefault <$> idDefaultPrettyVariableValues i)
-      mkDefault (varName, pretty) = TupE [LitE $ StringL varName, LitE $ StringL pretty]
+  let mkDefault (varName, pretty) = tupE [litE (stringL varName), litE (stringL pretty)]
+  pat <- conP 'Instruction [conP (mkName (toTypeName (idMnemonic i))) [], return opsPat]
+  defaults <- sequence ((mkDefault <$> idPrettyVariableOverrides i) <>
+                 (mkDefault <$> idDefaultPrettyVariableValues i))
+  let body = VarE 'prettyInstruction `AppE` ListE defaults `AppE` LitE (StringL (idAsmString i)) `AppE` ListE prettyOps
 
   let decls = [ SigD fName fTy
               , FunD fName [ Clause [pat] (NormalB body) []
