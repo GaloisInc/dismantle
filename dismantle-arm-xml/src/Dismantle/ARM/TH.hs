@@ -1,3 +1,4 @@
+{-# LANGUAGE GADTs #-}
 {-|
 Module           : Dismantle.ARM.TH
 Copyright        : (c) Galois, Inc 2019-2020
