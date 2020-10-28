@@ -1,7 +1,21 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ViewPatterns #-}
 {-|
 Module           : Dismantle.ARM.ASL
 Copyright        : (c) Galois, Inc 2019-2020
@@ -19,20 +33,6 @@ The top-level interface is provided by 'loadASL', which associates each
 'Encoding' (instruction encoding from the ASL specification).
 
 -}
-
-{-# LANGUAGE GADTs, DataKinds #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeApplications #-}
-
 module Dismantle.ARM.ASL
   ( Encoding(..)
   , FieldConstraint(..)
@@ -122,7 +122,7 @@ data ASLException =
   | NotImplementedYet String
   | IncompatibleFieldBits String
   | InvalidBitMaskLength Int
-  | InvalidBitPosition Int
+  | forall n . InvalidBitPosition (NR.NatRepr n) Int
   | InvalidASLField ASL.InstructionField
   | forall n . InvalidXMLField (NR.NatRepr n) (XML.Field n)
   | FailedToDeriveMask String
@@ -423,13 +423,26 @@ splitFieldMask nr mask = do
   constraintMap <- Map.fromListWithM noMerge l
   return $ Map.mapWithKey FieldConstraint constraintMap
 
+-- | Calculate the real beginning index of a field
+--
+-- Fields are indexed starting from 31, even if the instruction is only 16 bits.
+-- This function corrects the starting index such that it is valid for both 16
+-- and 32 bit encodings (i.e., mapping 31 to 15 for T16 encodings).
+fieldBeginIndex :: NR.NatRepr n -> Integer -> Integer
+fieldBeginIndex nr begin0
+  | Just PC.Refl <- PC.testEquality nr (NR.knownNat @16) = begin0 - 16
+  | otherwise = begin0
 
 aslFixedFieldMask :: (1 <= n) => ASL.InstructionEncoding -> NR.NatRepr n -> BM.BitMask n BM.QuasiBit -> ASL (BM.BitMask n FixedFieldBit)
 aslFixedFieldMask aslEncoding nr aslMask = do
   aslBitsects <- forM (ASL.encFields aslEncoding) $ \field -> do
+    -- NOTE: The field indexes we get from the ASL parser are always indexed
+    -- from bit 31 (even if the instruction is 16 bits).  We have to correct the
+    -- index coming from the ASL parser if we have a 16 bit instruction using
+    -- fieldBeginIndex.
     let
       fieldName = T.unpack $ ASL.instFieldName field
-      fieldLobit = fromIntegral $ ASL.instFieldBegin field
+      fieldLobit = fromIntegral $ fieldBeginIndex nr (ASL.instFieldBegin field)
       fieldWidth = fromIntegral $ ASL.instFieldOffset field
       fieldHibit = fieldLobit + fieldWidth - 1
       taggedBv = take fieldWidth $ repeat (mkFieldBit (Just fieldName) BM.bottomBit)
@@ -605,26 +618,20 @@ deduplicateEncodings instrs = do
 maskFromEncoding :: (1 <= n) => NR.NatRepr n -> ASL.InstructionEncoding -> ASL (BM.BitMask n BM.QuasiBit)
 maskFromEncoding nr enc = case BM.fromList nr $ maskToBits $ ASL.encOpcodeMask enc of
   Just mask -> do
-    bitsects <- forM (ASL.encUnpredictable enc) $ \(pos, isset) -> do
+    -- NOTE: We are doing an index correction here. The ASL parser returns
+    -- unpredictable bits in the encoding indexed from 31 for both 16- and 32-
+    -- bit instructions. This correction fixes it based on the expected
+    -- instruction width.
+    bitsects <- forM (ASL.encUnpredictable enc) $ \(fieldBeginIndex nr -> pos, isset) -> do
       let qbit = BM.bitToQuasi True (BT.ExpectedBit isset)
       case BM.bitSectionFromListHiBit (fromIntegral pos) [qbit] nr of
         Just bitsect -> return bitsect
-        Nothing -> throwErrorHere $ InvalidBitPosition (fromIntegral pos)
+        Nothing -> throwErrorHere $ InvalidBitPosition nr (fromIntegral pos)
     quasimask <- case BM.computePattern nr bitsects of
       Left msg -> throwErrorHere $ FailedToDeriveMask msg
       Right result -> return result
     fmap BM.bitAsQuasi mask `mergeBitMasks` quasimask
   Nothing -> throwErrorHere $ InvalidBitMaskLength (length (ASL.encOpcodeMask enc))
-
--- alternateT16Mask :: ASL.InstructionEncoding -> ASL (Maybe (ARMBitMask BM.QuasiBit))
--- alternateT16Mask enc = case ASL.encInstrSet enc of
---   ASL.T16 -> do
---     let (hiBits, loBits) = splitAt 16 $ ASL.encOpcodeMask enc
---     if loBits == take 16 (repeat ASL.MaskBitUnset) then do
---       let mask' = hiBits ++ (take 16 (repeat ASL.MaskBitEither))
---       Just <$> maskFromEncoding (enc { ASL.encOpcodeMask = mask' })
---     else return Nothing
---   _ -> return Nothing
 
 addEncodingMask :: ASL.Instruction -> ASL.InstructionEncoding -> ASL ()
 addEncodingMask instr enc = do
@@ -634,10 +641,6 @@ addEncodingMask instr enc = do
       let (hiBits, _loBits) = splitAt 16 (ASL.encOpcodeMask enc)
       maskFromEncoding n16 (enc { ASL.encOpcodeMask = hiBits }) >>= doAdd n16
     _ -> maskFromEncoding n32 enc >>= doAdd n32
-
-  -- alternateT16Mask enc >>= \case
-  --   Just t16mask -> doAdd t16mask
-  --   Nothing -> return ()
   where
     n16 = NR.knownNat @16
     n32 = NR.knownNat @32
@@ -646,8 +649,6 @@ addEncodingMask instr enc = do
     doAdd :: forall n . NR.NatRepr n -> BM.BitMask n BM.QuasiBit -> ASL ()
     doAdd nr mask = do
       MS.modify' $ \st -> st & stMaskTrie . PC.ixF nr . stTrie %~ BM.addToMaskTrie mask [(ident, mask)]
-      -- MS.modify' $ \st -> st { stMaskTrie = BM.addToMaskTrie mask [(ident, mask)] (stMaskTrie st) }
-
 
 assertEquivalentEncodings :: (ASL.Instruction, ASL.InstructionEncoding)
                           -> (ASL.Instruction, ASL.InstructionEncoding)

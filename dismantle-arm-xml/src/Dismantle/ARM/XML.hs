@@ -489,10 +489,18 @@ parseConstraint width str m = do
   let sign = if isPositive then id else PropTree.negate
   sign . PropTree.clause <$> m bits
 
+fieldBeginOffset :: NR.NatRepr n -> Int -> Int
+fieldBeginOffset nr i
+  | Just PC.Refl <- PC.testEquality nr (NR.knownNat @16) = i - 16
+  | otherwise = i
+
 getBoxField :: NR.NatRepr n -> X.Element -> XML (Field n)
 getBoxField nr box = do
   let width = maybe 1 read (X.findAttr (qname "width") box)
-  hibit <- read <$> getAttr "hibit" box
+  -- NOTE: The bit indices coming from the XML are all relative to bit 31, even
+  -- on 16 bit instructions.  We need to correct for that here for 16 bit
+  -- instructions.  We do it as early as possible to ensure consistency.
+  hibit <- fieldBeginOffset nr <$> read <$> getAttr "hibit" box
 
   constraint <- case X.findAttr (qname "constraint") box of
     Just constraint -> do
