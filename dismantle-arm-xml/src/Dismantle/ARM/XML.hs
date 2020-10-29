@@ -38,12 +38,8 @@ module Dismantle.ARM.XML
   , Operand(..)
   , Encoding(..)
   , Field(..)
-  , ARMRegWidth
-  , ARMBitSection
-  , ARMBitMask
   , xmlFieldNameToASL
   , getOperandDescriptors
-  , armRegWidthRepr
   -- FIXME: likely implemented elsewhere
   , fromListWithM
   ) where
@@ -92,7 +88,6 @@ import qualified Dismantle.Tablegen as DT
 import           Data.BitMask (BitSection, QuasiBit, BitMask )
 import qualified Data.BitMask as BM
 
-
 type IsMaskBit a = (BM.MaskBit a, Show a)
 
 data XMLException = MissingChildElement String
@@ -131,19 +126,6 @@ deriving instance Show XMLException
 instance E.Exception OuterXMLException
 
 data OuterXMLException = OuterXMLException XMLEnv XMLException
-
--- | Width of a single ARM opcode
-type ARMRegWidth = 32
-
--- | A 'BitSection' over ARM opcode bit widths
-type ARMBitSection bit = BitSection ARMRegWidth bit
-
--- | A 'BitMask' over ARM opcode bit widths
-type ARMBitMask bit = BitMask ARMRegWidth bit
-
--- | Repr for the width of ARM opcodes
-armRegWidthRepr :: NR.NatRepr ARMRegWidth
-armRegWidthRepr = NR.knownNat
 
 newtype XML a = XML (RWST XMLEnv () XMLState (ME.ExceptT OuterXMLException IO) a)
   deriving ( Functor
@@ -457,7 +439,8 @@ mergeFields' nr field1 field2 =
   let constraint = fieldConstraint field1 <> fieldConstraint field2
   (mask, _) <- BM.deriveMasks nr (fmap (fmap BM.JustBit) constraint)
   (hiBit, width) <- case BM.asContiguousSections (BM.maskAsBitSection mask) of
-    [(posBit, BM.SomeBitMask bmask)] -> return $ (fromIntegral (NR.intValue nr) - 1 - posBit, BM.lengthInt bmask)
+    [(posBit, BM.SomeBitMask bmask)] ->
+      return $ (fromIntegral (NR.intValue nr) - 1 - posBit, BM.lengthInt bmask)
     _ -> ME.throwError $ "not contiguous"
   return $ Field { fieldName = fieldName field1
                  , fieldHibit = hiBit
@@ -814,47 +797,6 @@ leafGetEncodingConstraints nr ileaf fields = do
           resolvePropTree nr fields parsedConstraints
       return (name, constraints)
 
-lookupEncIndexMask :: NR.NatRepr n -> InstructionLeaf -> String -> XML (Maybe ((BitMask n QuasiBit, [BitMask n BT.Bit]), Bool))
-lookupEncIndexMask size leaf encname = do
-  tbl <- MS.gets encodingTableMap
-  case M.lookup (IdentEncodingName encname) tbl of
-    Just (SomeEncodingMasks mrep qmask bitmasks)
-      | Just PC.Refl <- PC.testEquality mrep size -> return $ Just ((qmask, bitmasks), False)
-      | otherwise -> error ("Mismatched cached mask size for " ++ encname)
-    Nothing -> do
-      Just curFile <- R.asks xmlCurrentFile
-      iclassname <- getAttr "name" (ileafiClass leaf)
-      case M.lookup (IdentFileClassName iclassname curFile) tbl of
-        Just (SomeEncodingMasks mrep qmask bitmasks)
-          | Just PC.Refl <- PC.testEquality mrep size -> return $ Just ((qmask, bitmasks), False)
-          | otherwise -> error ("Mismatched cached mask size for " ++ encname)
-        Nothing -> return Nothing
-
-
-equivBy :: forall a. (a -> a -> Bool) -> [a] -> [a] -> Bool
-equivBy f l1 l2 = go l1 l2 && go l2 l1
-  where
-    go :: [a] -> [a] -> Bool
-    go [] _l2 = True
-    go (x : l1') l2' = isJust (List.find (f x) l2') && go l1' l2'
-
-validateEncoding :: InstructionLeaf -> Encoding -> XML ()
-validateEncoding leaf Encoding { encName = name
-                               , encMask = mask
-                               , encNegMasks = negmasks
-                               , encSize = size
-                               } = do
-  lookupEncIndexMask size leaf name >>= \case
-    Just ((mask', negmasks'), exact) -> do
-      let
-        check :: forall a n . NR.NatRepr n -> BM.MaskBit a => BitMask n a -> BitMask n a -> Bool
-        check _nr = if exact then (==) else BM.matchBit
-      unless (check size mask mask') $
-        throwError $ MismatchedMasks size mask mask'
-      unless (length negmasks == length negmasks' && equivBy (check size) negmasks negmasks') $
-        throwError $ MismatchedNegativeMasks size negmasks negmasks'
-    Nothing -> throwError $ MissingEncodingTableEntry name
-
 -- | Build operand descriptors out of the given fields
 leafGetEncodings :: forall n
                   . (1 <= n)
@@ -882,7 +824,6 @@ leafGetEncodings ileaf nrep allfields _quasimask iconstraints = do
                               , encNegMasks = negmasks
                               , encSize = nrep
                               }
-      -- validateEncoding ileaf encoding `ME.catchError` warnError
 
       MS.modify' $ \st -> st { encodingMap = M.insert encName' encoding (encodingMap st) }
       return encoding
@@ -955,8 +896,8 @@ instDescriptorsToISA instrs =
 instrOperandTypes :: DT.InstructionDescriptor -> [DT.OperandType]
 instrOperandTypes idesc = map DT.opType (DT.idInputOperands idesc ++ DT.idOutputOperands idesc)
 
-sectionToChunks :: BitSection n a -> [(DT.IBit, PT.OBit, Word8)]
-sectionToChunks sect =
+sectionToChunks :: NR.NatRepr n -> BitSection n a -> [(DT.IBit, PT.OBit, Word8)]
+sectionToChunks nr sect =
   map getChunk (BM.asContiguousSections sect)
   where
     -- BitSection positions are indexed from the start of the bitmask vector, which is
@@ -966,7 +907,7 @@ sectionToChunks sect =
     getChunk (pos, BM.SomeBitMask mask) =
       let
         width = BM.lengthInt mask
-        regwidth = fromIntegral $ NR.intValue armRegWidthRepr
+        regwidth = fromIntegral $ NR.intValue nr
         hibit = regwidth - pos - 1
         ibitpos = hibit - width + 1
       in (DT.IBit ibitpos, PT.OBit 0, fromIntegral width)
@@ -978,13 +919,13 @@ xmlFieldNameToASL name = case name of
   "type" -> "type1"
   _ -> name
 
-operandToDescriptor :: Operand n -> [DT.OperandDescriptor]
-operandToDescriptor (Operand name sect isPseudo) = case isPseudo of
+operandToDescriptor :: NR.NatRepr n -> Operand n -> [DT.OperandDescriptor]
+operandToDescriptor nr (Operand name sect isPseudo) = case isPseudo of
   False -> [DT.OperandDescriptor { DT.opName = xmlFieldNameToASL $ name
-                                 , DT.opChunks = sectionToChunks sect
+                                 , DT.opChunks = sectionToChunks nr sect
                                  , DT.opType = DT.OperandType $ printf "Bv%d" totalWidth
                                  }]
-  True -> map mkPseudo $ zip [0..] (sectionToChunks sect)
+  True -> map mkPseudo $ zip [0..] (sectionToChunks nr sect)
   where
     totalWidth = BM.sectTotalSetWidth sect
 
@@ -998,10 +939,10 @@ operandToDescriptor (Operand name sect isPseudo) = case isPseudo of
 
 -- | As 'operandToDescriptor' but creates a single, disjointed pseudo-operand instead of multiple.
 -- Currently using this will break instruction re-assembly for reasons that are not understood.
-_operandToDescriptor' :: Operand n -> [DT.OperandDescriptor]
-_operandToDescriptor' (Operand name sect isPseudo) =
+_operandToDescriptor' :: NR.NatRepr n -> Operand n -> [DT.OperandDescriptor]
+_operandToDescriptor' nr (Operand name sect isPseudo) =
   [DT.OperandDescriptor { DT.opName = name
-                        , DT.opChunks = sectionToChunks sect
+                        , DT.opChunks = sectionToChunks nr sect
                         , DT.opType = DT.OperandType $ printf opTypeFormat totalWidth
                         }]
   where
@@ -1012,10 +953,10 @@ _operandToDescriptor' (Operand name sect isPseudo) =
 
 -- | Return the list of real operands and pseudo operands for a given encoding.
 getOperandDescriptors :: Encoding -> ([DT.OperandDescriptor], [DT.OperandDescriptor])
-getOperandDescriptors Encoding { encOperands = operands } =
+getOperandDescriptors Encoding { encOperands = operands, encSize = nr } =
   let
     (pseudo, real) = List.partition opIsPseudo operands
-  in (concat $ map operandToDescriptor real, concat $ map operandToDescriptor pseudo)
+  in (concat $ map (operandToDescriptor nr) real, concat $ map (operandToDescriptor nr) pseudo)
 
 encodingOpToInstDescriptor :: Encoding -> DT.InstructionDescriptor
 encodingOpToInstDescriptor encoding@Encoding { encMnemonic = mnemonic
