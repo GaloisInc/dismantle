@@ -102,10 +102,9 @@ data SizedTrie n =
             , _stTrie :: BM.MaskTrie BM.QuasiBit n [(String, BM.BitMask n BM.QuasiBit)]
             }
 
-$(L.makeLenses ''SizedTrie)
+$(L.makeLensesFor [("_stTrie", "stTrie")] ''SizedTrie)
 
 data ASLState = ASLState { _stMaskTrie :: MapF.MapF NR.NatRepr SizedTrie
-                             -- ARMMaskTrie [(String, ARMBitMask BM.QuasiBit)]
                          , _stEncodingMap :: Map String (ASL.Instruction, ASL.InstructionEncoding)
                          }
 
