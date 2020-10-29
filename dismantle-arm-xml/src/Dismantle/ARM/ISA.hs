@@ -68,7 +68,7 @@ t32FromWord32 w
       -- Put the high 16 bits, then just the low 16 bits
       BP.putWord16le (fromIntegral $ w `shiftR` 16)
       BP.putWord16le (fromIntegral $ w .&. halfWordMask)
-  | otherwise = BP.runPut $ BP.putWord16le (fromIntegral $ w .&. halfWordMask)
+  | otherwise = BP.runPut $ BP.putWord16le (fromIntegral (w .&. halfWordMask))
   where
     matchesPattern p =
             let p' = ((fromIntegral p) :: Word32) `shiftL` 16

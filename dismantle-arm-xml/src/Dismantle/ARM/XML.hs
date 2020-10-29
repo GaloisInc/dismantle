@@ -425,7 +425,7 @@ withEncodingSize regdiagram k = do
     "16x2" -> k (NR.knownNat @32)
     _ -> withElement regdiagram (throwError (UnexpectedForm form))
 
-iclassFieldsAndProp :: X.Element -> XML FieldsAndConstraints -- (Fields, ARMBitSection (), PropTree (ARMBitSection QuasiBit))
+iclassFieldsAndProp :: X.Element -> XML FieldsAndConstraints
 iclassFieldsAndProp iclass = do
   -- NOTE: Here we know the width of the instruction based on the `form` field of the `regdiagram`
   --
