@@ -882,7 +882,7 @@ leafGetEncodings ileaf nrep allfields _quasimask iconstraints = do
                               , encNegMasks = negmasks
                               , encSize = nrep
                               }
-      validateEncoding ileaf encoding `ME.catchError` warnError
+      -- validateEncoding ileaf encoding `ME.catchError` warnError
 
       MS.modify' $ \st -> st { encodingMap = M.insert encName' encoding (encodingMap st) }
       return encoding
