@@ -294,7 +294,6 @@ loadASL archName aslFile xmlEncodings logFn = do
     forM_ instrs $ \(instr, enc) -> addEncodingMask instr enc
     forM xmlEncodings $ \xmlEncoding -> withXMLEncoding xmlEncoding $ do
       withEncoding xmlEncoding $ \nr aslIdent aslMask -> do
-        -- (aslIdent, aslMask) <- lookupEncoding xmlEncoding
         (instr, aslRawEncoding) <- lookupASLEncoding aslIdent
 
         withASLEncoding (instr, aslRawEncoding) $ do
@@ -456,7 +455,6 @@ aslFixedFieldMask aslEncoding nr aslMask = do
 withXmlFixedFieldMask :: XML.Encoding
                       -> (forall n . NR.NatRepr n -> BM.BitMask n FixedFieldBit -> [BM.BitMask n FixedFieldBit] -> ASL a)
                       -> ASL a
-                          -- ASL (ARMBitMask FixedFieldBit, [ARMBitMask FixedFieldBit])
 withXmlFixedFieldMask XML.Encoding { XML.encMask = emask
                                    , XML.encFields = fields
                                    , XML.encSize = size
@@ -499,7 +497,6 @@ correlateEncodings aslIdent maskRepr aslMask aslRawEncoding xmlEncoding = do
       Nothing -> error ("Mismatched instruction width for " ++ aslIdent)
       Just PC.Refl -> do
         aslFixedMask <- aslFixedFieldMask aslRawEncoding nr aslMask
-      -- (xmlFixedMask, xmlNegMasks) <- xmlFixedFieldMask xmlEncoding
         fixedMask <- xmlFixedMask `mergeBitMasks` aslFixedMask
         constraintMap <- splitFieldMask nr fixedMask
         negConstraintMap <-
@@ -553,7 +550,6 @@ lookupMasks nr mask = do
 -- specific encoding. This ambiguity is resolved later by resolving the ASL bits against
 -- the constraints from the XML in 'correlateEncodings'.
 withEncoding :: XML.Encoding -> (forall n . (1 <= n) => NR.NatRepr n -> String -> BM.BitMask n BM.QuasiBit -> ASL a) -> ASL a
--- ASL (String, XML.BitMask n BM.QuasiBit)
 withEncoding XML.Encoding { XML.encIConstraints = iconstraints
                             , XML.encMask = mask
                             , XML.encSize = size

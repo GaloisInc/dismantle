@@ -247,7 +247,6 @@ deriving instance Show SomeEncodingMasks
 
 data XMLState = XMLState { encodingMap :: M.Map String Encoding
                          , encodingTableMap :: M.Map EncIndexIdent SomeEncodingMasks
-                           -- (ARMBitMask QuasiBit, [ARMBitMask BT.Bit])
                          }
 
   deriving Show
@@ -446,9 +445,6 @@ iclassFieldsAndProp iclass = do
         _ -> throwError $ InvalidField nr field
     namedMap <- fromListWithM (mergeFields nr) namedFields
     return $ FieldsAndConstraints nr namedMap (quasiMaskOfFields nr fields) (mconcat (map fieldConstraint fields))
-    -- return $ ( namedMap
-    --          , quasiMaskOfFields fields
-    --          , mconcat (map fieldConstraint fields))
 
 mergeFields :: (1 <= n) => NR.NatRepr n -> Field n -> Field n -> XML (Field n)
 mergeFields nr field1 field2 = case mergeFields' nr field1 field2 of
@@ -465,7 +461,6 @@ mergeFields' nr field1 field2 =
   (mask, _) <- BM.deriveMasks nr (fmap (fmap BM.JustBit) constraint)
   (hiBit, width) <- case BM.asContiguousSections (BM.maskAsBitSection mask) of
     [(posBit, BM.SomeBitMask bmask)] -> return $ (fromIntegral (NR.intValue nr) - 1 - posBit, BM.lengthInt bmask)
-    -- [(posBit, BM.SomeBitMask bmask)] -> return $ (31 - posBit, BM.lengthInt bmask)
     _ -> ME.throwError $ "not contiguous"
   return $ Field { fieldName = fieldName field1
                  , fieldHibit = hiBit
