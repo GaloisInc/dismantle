@@ -375,13 +375,10 @@ addEncodingTableMapEntry iclass_sect = do
     encident <- getEncIndexIdent tr
     constraints <- instrTableConstraints nr fieldss tr
     (mask, negMasks) <- deriveMasks nr fieldConstraints (decodeConstraints <> constraints)
-    MS.modify' $ \st -> st { encodingTableMap = M.insert encident (SomeEncodingMasks nr mask negMasks) (encodingTableMap st)
+    MS.modify' $ \st -> st { encodingTableMap = M.insert encident (SomeEncodingMasks nr mask (List.nub negMasks)) (encodingTableMap st)
                            }
     return ()
   return ()
-
--- data SomeEncodingMasks where
---   SomeEncodingMasks :: NR.NatRepr n -> BitMask n QuasiBit -> [BitMask n BT.Bit] -> SomeEncodingMasks
 
 loadInstrs :: X.Element -> XML [Encoding]
 loadInstrs xmlElement = do
