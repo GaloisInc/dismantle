@@ -105,7 +105,7 @@ data XMLException = MissingChildElement String
                        | InvalidPattern String
                        | forall n . MismatchedFieldWidth (NR.NatRepr n) (Field n) Int
                        | forall a n . IsMaskBit a => MismatchedFieldsForBits (NR.NatRepr n) [NameExp (Field n)] [a]
-                       | forall a. Show a => MismatchedWidth Int [a]
+                       | forall a. Show a => MismatchedWidth String Int [a]
                        | InvalidXmlFile String
                        | forall e. (Show e, P.ShowErrorComponent e) => InnerParserFailure (P.ParseErrorBundle String e)
                        | UnexpectedAttributeValue String String
@@ -341,7 +341,7 @@ instrTableConstraints nr tablefieldss tr = do
     bitwidth <- read <$> getAttr "bitwidth" td
     -- soft-throw this error since the XML is occasionally wrong but this is recoverable
     unless (width == bitwidth) $
-      warnError $ MismatchedWidth bitwidth fields
+      warnError $ MismatchedWidth "instrTableConstraints" bitwidth fields
     fmap PropTree.collapse $ parseConstraint width (X.strContent td) $ \bits -> do
       unpackFieldConstraints nr (fields, bits)
 
@@ -480,7 +480,7 @@ parseConstraint width "" m = PropTree.clause <$> m (replicate width BT.Any)
 parseConstraint width str m = do
   (bits, isPositive) <- parseString constraintParser str
   unless (length bits == width) $
-    throwError $ MismatchedWidth width bits
+    throwError $ MismatchedWidth "parseConstraint" width bits
   let sign = if isPositive then id else PropTree.negate
   sign . PropTree.clause <$> m bits
 
@@ -513,7 +513,7 @@ getBoxField nr box = do
            return [qbit]
           _ -> throwError $ InvalidChildElement
       unless (length bits == width) $
-        throwError $ MismatchedWidth width bits
+        throwError $ MismatchedWidth "getBoxField" width bits
       bitsect <- bitSectionHibit nr hibit bits
       return $ PropTree.clause $ bitsect
   name <- case X.findAttr (qname "name") box of
