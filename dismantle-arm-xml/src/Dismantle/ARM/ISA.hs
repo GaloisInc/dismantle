@@ -39,8 +39,11 @@ fullWordStartPatterns =
     , 0b11111 `shiftL` 11
     ]
 
-asWord32 :: LBS.ByteString -> Word32
-asWord32 = BG.runGet $ do
+a32AsWord32 :: LBS.ByteString -> Word32
+a32AsWord32 bs = BG.runGet BG.getWord32le bs
+
+t32AsWord32 :: LBS.ByteString -> Word32
+t32AsWord32 = BG.runGet $ do
     w1 <- BG.getWord16le
     -- These bit patterns indicate a full word instruction so we need to
     -- parse another halfword and shift the first word left.
@@ -56,8 +59,11 @@ asWord32 = BG.runGet $ do
            return $ (((fromIntegral w1)::Word32) `shiftL` 16) .|.
                     (fromIntegral w2)
 
-fromWord32 :: Word32 -> LBS.ByteString
-fromWord32 w
+a32FromWord32 :: Word32 -> LBS.ByteString
+a32FromWord32 w = BP.runPut (BP.putWord32le w)
+
+t32FromWord32 :: Word32 -> LBS.ByteString
+t32FromWord32 w
   | fullWord = BP.runPut $ do
       -- Put the high 16 bits, then just the low 16 bits
       BP.putWord16le (fromIntegral $ w `shiftR` 16)
@@ -84,8 +90,8 @@ isa archName = DA.ISA { DA.isaName = archName
                       , DA.isaIgnoreOperand = const False
                       , DA.isaFormOverrides = []
                       , DA.isaPrettyOverrides = []
-                      , DA.isaInsnWordFromBytes = 'asWord32
-                      , DA.isaInsnWordToBytes = 'fromWord32
+                      , DA.isaInsnWordFromBytes = if archName == "T32" then 't32AsWord32 else 'a32AsWord32
+                      , DA.isaInsnWordToBytes = if archName == "T32" then 't32FromWord32 else 'a32FromWord32
                       , DA.isaInsnAssembleType = ''Word32
                       , DA.isaMapOperandPayloadType = id
                       , DA.isaDefaultPrettyVariableValues = []
