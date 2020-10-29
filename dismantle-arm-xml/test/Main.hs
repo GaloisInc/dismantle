@@ -38,6 +38,7 @@ import qualified Text.PrettyPrint.HughesPJClass as PP
 
 import qualified Dismantle.ARM.A32 as ARM
 import qualified Dismantle.ARM.ISA as ARM
+import qualified Dismantle.ARM.T32 as T32
 import           Dismantle.Testing
 import           Dismantle.Testing.ParserTests ( parserTests )
 import qualified Dismantle.Testing.Regex as RE
@@ -472,6 +473,20 @@ arm = ATC { testingISA = ARM.isa "A32"
           , instructionFilter = ((== FullWord) . insnLayout)
           }
 
+thumb :: ArchTestConfig
+thumb = ATC { testingISA = ARM.isa "T32"
+            , disassemble = T32.disassembleInstruction
+            , assemble = T32.assembleInstruction
+            , prettyPrint = T32.ppInstruction
+            , expectFailure = Just expectedFailures
+            , skipPrettyCheck = Just skipPretty
+            , ignoreAddresses = []
+            , customObjdumpArgs = []
+            , normalizePretty = normalize
+            , comparePretty = Just cmpInstrs
+            , instructionFilter = const True
+            }
+
 testSuitePath :: FilePath
 #ifdef ASL_LITE
 testSuitePath = "test/bin"
@@ -479,10 +494,14 @@ testSuitePath = "test/bin"
 testSuitePath = "test/bin-uboot"
 #endif
 
+thumbSuitePath :: FilePath
+thumbSuitePath = "test/bin-thumb"
+
 main :: IO ()
 main = do
-  tg <- binaryTestSuite arm testSuitePath
-  T.defaultMain $ T.testGroup "dismantle-arm-xml" [tg]
+  a32tg <- binaryTestSuite arm testSuitePath
+  t32tg <- binaryTestSuite thumb thumbSuitePath
+  T.defaultMain $ T.testGroup "dismantle-arm-xml" [a32tg, t32tg]
 
 normalize :: TL.Text -> TL.Text
 normalize =
