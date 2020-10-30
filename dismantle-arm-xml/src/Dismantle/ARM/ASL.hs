@@ -1,3 +1,21 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ViewPatterns #-}
 {-|
 Module           : Dismantle.ARM.ASL
 Copyright        : (c) Galois, Inc 2019-2020
@@ -15,20 +33,6 @@ The top-level interface is provided by 'loadASL', which associates each
 'Encoding' (instruction encoding from the ASL specification).
 
 -}
-
-{-# LANGUAGE GADTs, DataKinds #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TypeApplications #-}
-
 module Dismantle.ARM.ASL
   ( Encoding(..)
   , FieldConstraint(..)
@@ -37,11 +41,14 @@ module Dismantle.ARM.ASL
   )
   where
 
-import           Prelude hiding ( fail )
 import           GHC.Stack
+import           GHC.TypeLits
+import           Prelude hiding ( fail )
 
 import           Control.Exception ( try )
 import qualified Control.Exception as E
+import           Control.Lens ( (&), (%~) )
+import qualified Control.Lens as L
 import           Control.Monad ( foldM, forM, forM_, zipWithM, void, unless, liftM )
 import           Control.Monad.Fail
 import           Control.Monad.Trans ( lift, liftIO, MonadIO )
@@ -57,6 +64,8 @@ import           Data.Maybe ( catMaybes, fromMaybe )
 import           Data.List ( groupBy )
 import           Data.Map ( Map )
 import qualified Data.Map as Map
+import qualified Data.Parameterized.Classes as PC
+import qualified Data.Parameterized.Map as MapF
 -- FIXME: move or use library version of this
 import qualified Dismantle.ARM.XML as Map ( fromListWithM )
 import qualified Data.Text as T
@@ -70,15 +79,10 @@ import qualified Language.ASL.Parser as ASL
 import qualified Language.ASL.Syntax as ASL
 
 import qualified Dismantle.ARM.XML as XML
-import           Dismantle.ARM.XML ( ARMRegWidth
-                                   , ARMBitMask, armRegWidthRepr
-                                   )
 import qualified Dismantle.Tablegen as DT
 
 import qualified Dismantle.Tablegen.Patterns as BT
 import qualified Data.BitMask as BM
-
-type ARMMaskTrie a = BM.MaskTrie BM.QuasiBit ARMRegWidth a
 
 data ASLEnv = ASLEnv { envLogFn :: String -> IO ()
                      , envArchName :: String
@@ -93,9 +97,18 @@ data ASLContext = ASLContext { ctxASLEncoding :: Maybe (ASL.Instruction, ASL.Ins
                              , ctxSourceLoc :: Maybe SrcLoc
                              }
 
-data ASLState = ASLState { stMaskTrie :: ARMMaskTrie [(String, ARMBitMask BM.QuasiBit)]
-                         , stEncodingMap :: Map String (ASL.Instruction, ASL.InstructionEncoding)
+data SizedTrie n =
+  SizedTrie { _stRepr :: NR.NatRepr n
+            , _stTrie :: BM.MaskTrie BM.QuasiBit n [(String, BM.BitMask n BM.QuasiBit)]
+            }
+
+$(L.makeLensesFor [("_stTrie", "stTrie")] ''SizedTrie)
+
+data ASLState = ASLState { _stMaskTrie :: MapF.MapF NR.NatRepr SizedTrie
+                         , _stEncodingMap :: Map String (ASL.Instruction, ASL.InstructionEncoding)
                          }
+
+$(L.makeLenses ''ASLState)
 
 type ASLOut = ()
 
@@ -108,13 +121,13 @@ data ASLException =
   | NotImplementedYet String
   | IncompatibleFieldBits String
   | InvalidBitMaskLength Int
-  | InvalidBitPosition Int
+  | forall n . InvalidBitPosition (NR.NatRepr n) Int
   | InvalidASLField ASL.InstructionField
-  | InvalidXMLField XML.Field
+  | forall n . InvalidXMLField (NR.NatRepr n) (XML.Field n)
   | FailedToDeriveMask String
   | MissingEncodingForIdentifier String
-  | UnexpectedMatchingEntries (ARMBitMask BM.QuasiBit) [(String, ARMBitMask BM.QuasiBit)]
-  | UnexpectedSplitFields (ARMBitMask FixedFieldBit)
+  | forall n . UnexpectedMatchingEntries (NR.NatRepr n) (BM.BitMask n BM.QuasiBit) [(String, BM.BitMask n BM.QuasiBit)]
+  | forall n . UnexpectedSplitFields (NR.NatRepr n) (BM.BitMask n FixedFieldBit)
   | ASLParserError String
   | UnexpectedFieldWidth String Int Int
   | MissingConstraintForField XML.Encoding String [String]
@@ -182,16 +195,16 @@ instance Show OuterASLException where
 
 instance PP.Pretty ASLException where
   pPrint e = case e of
-    UnexpectedMatchingEntries mask [] ->
+    UnexpectedMatchingEntries _nr mask [] ->
       PP.text "Missing entry for:"
       $$ prettyMask mask
-    UnexpectedMatchingEntries mask matches ->
+    UnexpectedMatchingEntries _nr mask matches ->
       let content = PP.nest 1 (PP.space $$ PP.text "Entries:" $$ PP.vcat (map prettyMatch matches)) in
       PP.text "Multiple entries found for:"
       $$ prettyMask mask
       $$ content
       where
-        prettyMatch :: (String, ARMBitMask BM.QuasiBit) -> PP.Doc
+        prettyMatch :: forall n . (String, BM.BitMask n BM.QuasiBit) -> PP.Doc
         prettyMatch (nm, mask') = PP.text nm PP.<> PP.text ":" $$ PP.nest 1 (prettyMask mask')
     UnexpectedFieldWidth fname expected actual ->
       PP.text "Unexpected width for field: " <+> PP.text fname
@@ -203,7 +216,7 @@ instance PP.Pretty ASLException where
     _ ->
       PP.text (show e)
 
-prettyMask :: ARMBitMask BM.QuasiBit -> PP.Doc
+prettyMask :: BM.BitMask n BM.QuasiBit -> PP.Doc
 prettyMask mask = BM.prettySegmentedMask id mask
 
 logMsg :: String -> ASL ()
@@ -234,9 +247,13 @@ runASL archName aslfile logFn (ASL m) =
                         , envContext = initCtx
                         , envArchName = archName
                         }
-    initState = ASLState { stMaskTrie = BM.emptyMaskTrie
-                            , stEncodingMap = Map.empty
-                            }
+    n16 = NR.knownNat @16
+    n32 = NR.knownNat @32
+    t0 = MapF.insert n16 (SizedTrie n16 BM.emptyMaskTrie) $
+         MapF.insert n32 (SizedTrie n32 BM.emptyMaskTrie) MapF.empty
+    initState = ASLState { _stMaskTrie = t0
+                         , _stEncodingMap = Map.empty
+                         }
 
   in ME.runExceptT $ RWS.runRWST m initEnv initState
 
@@ -276,15 +293,15 @@ loadASL archName aslFile xmlEncodings logFn = do
     instrs <- parseInstsFile aslFile >>= deduplicateEncodings
     forM_ instrs $ \(instr, enc) -> addEncodingMask instr enc
     forM xmlEncodings $ \xmlEncoding -> withXMLEncoding xmlEncoding $ do
-      (aslIdent, aslMask) <- lookupEncoding xmlEncoding
-      (instr, aslRawEncoding) <- lookupASLEncoding aslIdent
+      withEncoding xmlEncoding $ \nr aslIdent aslMask -> do
+        (instr, aslRawEncoding) <- lookupASLEncoding aslIdent
 
-      withASLEncoding (instr, aslRawEncoding) $ do
-        aslEncoding <- correlateEncodings aslIdent aslMask aslRawEncoding xmlEncoding
-        logMsg $ "Correlated XML encoding: " ++ (XML.encName xmlEncoding) ++ " with ASL " ++ aslIdent
-        logMsg $ "with constraints:"
-        logMsg $ PP.render (prettyFieldConstraints (encConstraint aslEncoding) (encNegConstraints aslEncoding))
-        return (xmlEncoding, aslEncoding)
+        withASLEncoding (instr, aslRawEncoding) $ do
+          aslEncoding <- correlateEncodings aslIdent nr aslMask aslRawEncoding xmlEncoding
+          logMsg $ "Correlated XML encoding: " ++ (XML.encName xmlEncoding) ++ " with ASL " ++ aslIdent
+          logMsg $ "with constraints:"
+          logMsg $ PP.render (prettyFieldConstraints (encConstraint aslEncoding) (encNegConstraints aslEncoding))
+          return (xmlEncoding, aslEncoding)
 
   case result of
     Left err -> do
@@ -355,8 +372,8 @@ mkFieldBit Nothing bit = FieldBit (bit, BM.BottomBit)
 equivFields :: FixedFieldBit -> FixedFieldBit -> Bool
 equivFields fieldBit1 fieldBit2 = nameOfFixedFieldBit fieldBit1 == nameOfFixedFieldBit fieldBit2
 
-computeMask :: [BM.BitSection ARMRegWidth FieldBit] -> ASL (BM.BitMask ARMRegWidth FieldBit)
-computeMask fieldSects = case BM.computePattern armRegWidthRepr fieldSects of
+computeMask :: (1 <= n) => NR.NatRepr n -> [BM.BitSection n FieldBit] -> ASL (BM.BitMask n FieldBit)
+computeMask nr fieldSects = case BM.computePattern nr fieldSects of
   Left msg -> throwErrorHere $ IncompatibleFieldBits msg
   Right merged -> return $ merged
 
@@ -394,51 +411,70 @@ prettyFieldConstraints constraints negconstraints =
          $$ PP.vcat (map (\negs -> PP.vcat (map PP.pPrint negs) $$ PP.space) negconstraints)
 
 -- | Separate a mask over 'FieldBit's into individual field constraints.
-splitFieldMask :: BM.BitMask ARMRegWidth FixedFieldBit -> ASL (Map String FieldConstraint)
-splitFieldMask mask = do
+splitFieldMask :: NR.NatRepr n -> BM.BitMask n FixedFieldBit -> ASL (Map String FieldConstraint)
+splitFieldMask nr mask = do
   l <- liftM catMaybes $ forM (groupBy equivFields (BM.toList mask)) $ \(fieldBit : rst) ->
          case nameOfFixedFieldBit fieldBit of
            Just fieldName -> return $ Just (fieldName, fmap bitOfFixedFieldBit $ BM.someBitMaskFromCons fieldBit rst)
            Nothing -> return Nothing
-  let noMerge _ _ = throwErrorHere $ UnexpectedSplitFields mask
+  let noMerge _ _ = throwErrorHere $ UnexpectedSplitFields nr mask
   constraintMap <- Map.fromListWithM noMerge l
   return $ Map.mapWithKey FieldConstraint constraintMap
 
+-- | Calculate the real beginning index of a field
+--
+-- Fields are indexed starting from 31, even if the instruction is only 16 bits.
+-- This function corrects the starting index such that it is valid for both 16
+-- and 32 bit encodings (i.e., mapping 31 to 15 for T16 encodings).
+fieldBeginIndex :: NR.NatRepr n -> Integer -> Integer
+fieldBeginIndex nr begin0
+  | Just PC.Refl <- PC.testEquality nr (NR.knownNat @16) = begin0 - 16
+  | otherwise = begin0
 
-aslFixedFieldMask :: ASL.InstructionEncoding -> ARMBitMask BM.QuasiBit -> ASL (ARMBitMask FixedFieldBit)
-aslFixedFieldMask aslEncoding aslMask = do
+aslFixedFieldMask :: (1 <= n) => ASL.InstructionEncoding -> NR.NatRepr n -> BM.BitMask n BM.QuasiBit -> ASL (BM.BitMask n FixedFieldBit)
+aslFixedFieldMask aslEncoding nr aslMask = do
   aslBitsects <- forM (ASL.encFields aslEncoding) $ \field -> do
+    -- NOTE: The field indexes we get from the ASL parser are always indexed
+    -- from bit 31 (even if the instruction is 16 bits).  We have to correct the
+    -- index coming from the ASL parser if we have a 16 bit instruction using
+    -- fieldBeginIndex.
     let
       fieldName = T.unpack $ ASL.instFieldName field
-      fieldLobit = fromIntegral $ ASL.instFieldBegin field
+      fieldLobit = fromIntegral $ fieldBeginIndex nr (ASL.instFieldBegin field)
       fieldWidth = fromIntegral $ ASL.instFieldOffset field
       fieldHibit = fieldLobit + fieldWidth - 1
       taggedBv = take fieldWidth $ repeat (mkFieldBit (Just fieldName) BM.bottomBit)
-    case BM.bitSectionFromListHiBit fieldHibit taggedBv armRegWidthRepr of
+    case BM.bitSectionFromListHiBit fieldHibit taggedBv nr of
       Nothing -> throwErrorHere $ InvalidASLField field
       Just bitsect -> return $ bitsect
 
-  aslFieldMask <- computeMask aslBitsects
+  aslFieldMask <- computeMask nr aslBitsects
   let aslTotalMask = fmap (mkFieldBit Nothing) aslMask
   fmap fixFieldBit <$> mergeBitMasks aslFieldMask aslTotalMask
 
-xmlFixedFieldMask :: XML.Encoding -> ASL (ARMBitMask FixedFieldBit, [ARMBitMask FixedFieldBit])
-xmlFixedFieldMask xmlEncoding = do
+withXmlFixedFieldMask :: XML.Encoding
+                      -> (forall n . NR.NatRepr n -> BM.BitMask n FixedFieldBit -> [BM.BitMask n FixedFieldBit] -> ASL a)
+                      -> ASL a
+withXmlFixedFieldMask XML.Encoding { XML.encMask = emask
+                                   , XML.encFields = fields
+                                   , XML.encSize = size
+                                   } k = do
   (xmlMasks, xmlNegMasks) <- liftM unzip $
-    forM (filter XML.fieldUseName $ Map.elems $ XML.encFields xmlEncoding) $ \field -> do
+    forM (filter XML.fieldUseName $ Map.elems fields) $ \field -> do
       let
         fieldName = XML.xmlFieldNameToASL $ XML.fieldName field
         constraint = fmap (fmap $ mkFieldBit (Just fieldName)) $ XML.fieldConstraint field
-      case BM.deriveMasks armRegWidthRepr constraint of
+      case BM.deriveMasks size constraint of
         Left msg -> throwErrorHere $ IncompatibleFieldBits msg
         Right (mask, negmasks) -> do
           -- merge the tags of negative masks back into the mask to ensure we have all the field tags
           mask' <- foldM mergeBitMasks mask (map (fmap dropBitOfFieldBit) negmasks)
           return (mask', negmasks)
-  xmlFieldMask <- foldM mergeBitMasks BM.bottomBit xmlMasks
-  xmlTotalMask <- return $ fmap (mkFieldBit Nothing) $ XML.encMask xmlEncoding
+  let bottom = BM.bottomBitMask size
+  xmlFieldMask <- foldM mergeBitMasks bottom xmlMasks
+  xmlTotalMask <- return $ fmap (mkFieldBit Nothing) emask
   xmlFixedMask <- fmap fixFieldBit <$> mergeBitMasks xmlFieldMask xmlTotalMask
-  return (xmlFixedMask, map (fmap fixFieldBit) (concat xmlNegMasks))
+  k size xmlFixedMask (map (fmap fixFieldBit) (concat xmlNegMasks))
 
 -- | Correlate an ASL encoding with an XML encoding by matching up their fields, and potentially
 -- determining concrete instantiations for them.
@@ -448,43 +484,48 @@ xmlFixedFieldMask xmlEncoding = do
 --
 -- This serves as a final check that we have found the correct encoding, since
 -- every bit is checked that its tagged field name is the same in both masks.
-correlateEncodings :: String
-                   -> ARMBitMask BM.QuasiBit
+correlateEncodings :: (1 <= n)
+                   => String
+                   -> NR.NatRepr n
+                   -> BM.BitMask n BM.QuasiBit
                    -> ASL.InstructionEncoding
                    -> XML.Encoding
                    -> ASL Encoding
-correlateEncodings aslIdent aslMask aslRawEncoding xmlEncoding = do
-  aslFixedMask <- aslFixedFieldMask aslRawEncoding aslMask
-  (xmlFixedMask, xmlNegMasks) <- xmlFixedFieldMask xmlEncoding
-  fixedMask <- xmlFixedMask `mergeBitMasks` aslFixedMask
-  constraintMap <- splitFieldMask fixedMask
-  negConstraintMap <-
-    liftM (Map.unionsWith (++) . map (fmap (\x -> [x]))) $ mapM splitFieldMask xmlNegMasks
+correlateEncodings aslIdent maskRepr aslMask aslRawEncoding xmlEncoding = do
+  withXmlFixedFieldMask xmlEncoding $ \nr xmlFixedMask xmlNegMasks -> do
+    case PC.testEquality maskRepr nr of
+      Nothing -> error ("Mismatched instruction width for " ++ aslIdent)
+      Just PC.Refl -> do
+        aslFixedMask <- aslFixedFieldMask aslRawEncoding nr aslMask
+        fixedMask <- xmlFixedMask `mergeBitMasks` aslFixedMask
+        constraintMap <- splitFieldMask nr fixedMask
+        negConstraintMap <-
+          liftM (Map.unionsWith (++) . map (fmap (\x -> [x]))) $ mapM (splitFieldMask nr) xmlNegMasks
 
-  (posConstraints, negConstraints) <- liftM unzip $ forM (ASL.encFields aslRawEncoding) $ \field -> do
-    let
-      fieldName = T.unpack $ ASL.instFieldName field
-    pos <- case Map.lookup fieldName constraintMap of
-      Just (FieldConstraint _ (BM.SomeBitMask mask))
-        | (BM.bottomBitMask $ BM.length mask) == mask -> return []
-      Just constraint -> do
-        let
-          expectedWidth = fromIntegral $ ASL.instFieldOffset field
-          constraintWidth = cFieldWidth constraint
-        unless (constraintWidth == expectedWidth) $
-          throwErrorHere $ UnexpectedFieldWidth fieldName expectedWidth constraintWidth
-        return $ [constraint]
-      Nothing -> throwErrorHere $ MissingConstraintForField xmlEncoding fieldName (Map.keys constraintMap)
-    let neg = fromMaybe [] $ Map.lookup fieldName negConstraintMap
-    return (pos, neg)
-  let (realops, pseudoops) = XML.getOperandDescriptors xmlEncoding
-  return $ Encoding { encName = XML.encName xmlEncoding
-                    , encASLIdent = aslIdent
-                    , encRealOperands = map getSimpleOp realops
-                    , encPseudoOperands = map getSimpleOp pseudoops
-                    , encConstraint = concat posConstraints
-                    , encNegConstraints = filter (not . null) negConstraints
-                    }
+        (posConstraints, negConstraints) <- liftM unzip $ forM (ASL.encFields aslRawEncoding) $ \field -> do
+          let
+            fieldName = T.unpack $ ASL.instFieldName field
+          pos <- case Map.lookup fieldName constraintMap of
+            Just (FieldConstraint _ (BM.SomeBitMask mask))
+              | (BM.bottomBitMask $ BM.length mask) == mask -> return []
+            Just constraint -> do
+              let
+                expectedWidth = fromIntegral $ ASL.instFieldOffset field
+                constraintWidth = cFieldWidth constraint
+              unless (constraintWidth == expectedWidth) $
+                throwErrorHere $ UnexpectedFieldWidth fieldName expectedWidth constraintWidth
+              return $ [constraint]
+            Nothing -> throwErrorHere $ MissingConstraintForField xmlEncoding fieldName (Map.keys constraintMap)
+          let neg = fromMaybe [] $ Map.lookup fieldName negConstraintMap
+          return (pos, neg)
+        let (realops, pseudoops) = XML.getOperandDescriptors xmlEncoding
+        return $ Encoding { encName = XML.encName xmlEncoding
+                          , encASLIdent = aslIdent
+                          , encRealOperands = map getSimpleOp realops
+                          , encPseudoOperands = map getSimpleOp pseudoops
+                          , encConstraint = concat posConstraints
+                          , encNegConstraints = filter (not . null) negConstraints
+                          }
 
 getSimpleOp :: DT.OperandDescriptor -> (String, Integer)
 getSimpleOp opd =
@@ -492,37 +533,41 @@ getSimpleOp opd =
     totalWidth = sum (map (\(_, _, w) -> w) (DT.opChunks opd))
   in (DT.opName opd, fromIntegral totalWidth)
 
-lookupMasks :: ARMBitMask BM.QuasiBit -> ASL (String, ARMBitMask BM.QuasiBit)
-lookupMasks mask = do
-  masktree <- MS.gets stMaskTrie
+lookupMasks :: forall n . NR.NatRepr n -> BM.BitMask n BM.QuasiBit -> ASL (String, BM.BitMask n BM.QuasiBit)
+lookupMasks nr mask = do
+  masktrees <- MS.gets _stMaskTrie
+  let Just (SizedTrie _ masktree) = MapF.lookup nr masktrees
   case BM.lookupMaskTrie mask masktree of
     [result] -> return result
     results | [result] <- filter exactMatch results -> return result
-    x -> throwErrorHere $ UnexpectedMatchingEntries mask x
+    x -> throwErrorHere $ UnexpectedMatchingEntries nr mask x
   where
-    exactMatch :: (String, ARMBitMask BM.QuasiBit) -> Bool
+    exactMatch :: (String, BM.BitMask n BM.QuasiBit) -> Bool
     exactMatch (_, mask') = mask == mask'
 
 -- | Lookup the ASL identifier for a given XML 'Encoding' using the 'MaskTrie' in the state.
 -- Attempts a lookup with both the general instruction mask as well as the mask from this
 -- specific encoding. This ambiguity is resolved later by resolving the ASL bits against
 -- the constraints from the XML in 'correlateEncodings'.
-lookupEncoding :: XML.Encoding -> ASL (String, ARMBitMask BM.QuasiBit)
-lookupEncoding encoding = do
-  (imask, _inegmasks) <- case BM.deriveMasks NR.knownNat (XML.encIConstraints encoding) of
+withEncoding :: XML.Encoding -> (forall n . (1 <= n) => NR.NatRepr n -> String -> BM.BitMask n BM.QuasiBit -> ASL a) -> ASL a
+withEncoding XML.Encoding { XML.encIConstraints = iconstraints
+                            , XML.encMask = mask
+                            , XML.encSize = size
+                            } k = do
+  (imask, _inegmasks) <- case BM.deriveMasks size iconstraints of
     Left msg -> throwErrorHere $ FailedToDeriveMask msg
-    Right (mask, negmasks) -> return $ (mask, negmasks)
-  let mask = XML.encMask encoding
-  lookupMasks imask
+    Right (mask1, negmasks) -> return $ (mask1, negmasks)
+  (str, bm) <- lookupMasks size imask
     `ME.catchError`
      (\e -> if imask == mask then throwError e else
-         lookupMasks mask
+         lookupMasks size mask
            `ME.catchError`
            (\e' -> throwError $ MultipleExceptions [e, e']))
+  k size str bm
 
 lookupASLEncoding :: String -> ASL (ASL.Instruction, ASL.InstructionEncoding)
 lookupASLEncoding ident = do
-  encMap <- MS.gets stEncodingMap
+  encMap <- MS.gets _stEncodingMap
   case Map.lookup ident encMap of
     Just result -> return result
     Nothing -> throwErrorHere $ MissingEncodingForIdentifier ident
@@ -565,44 +610,40 @@ deduplicateEncodings instrs = do
   Map.elems <$> Map.fromListWithM assertEquivalentEncodings pairs
 
 
-maskFromEncoding :: ASL.InstructionEncoding -> ASL (ARMBitMask BM.QuasiBit)
-maskFromEncoding enc = case BM.fromList NR.knownNat $ maskToBits $ ASL.encOpcodeMask enc of
+maskFromEncoding :: (1 <= n) => NR.NatRepr n -> ASL.InstructionEncoding -> ASL (BM.BitMask n BM.QuasiBit)
+maskFromEncoding nr enc = case BM.fromList nr $ maskToBits $ ASL.encOpcodeMask enc of
   Just mask -> do
-    bitsects <- forM (ASL.encUnpredictable enc) $ \(pos, isset) -> do
+    -- NOTE: We are doing an index correction here. The ASL parser returns
+    -- unpredictable bits in the encoding indexed from 31 for both 16- and 32-
+    -- bit instructions. This correction fixes it based on the expected
+    -- instruction width.
+    bitsects <- forM (ASL.encUnpredictable enc) $ \(fieldBeginIndex nr -> pos, isset) -> do
       let qbit = BM.bitToQuasi True (BT.ExpectedBit isset)
-      case BM.bitSectionFromListHiBit (fromIntegral pos) [qbit] armRegWidthRepr of
+      case BM.bitSectionFromListHiBit (fromIntegral pos) [qbit] nr of
         Just bitsect -> return bitsect
-        Nothing -> throwErrorHere $ InvalidBitPosition (fromIntegral pos)
-    quasimask <- case BM.computePattern armRegWidthRepr bitsects of
+        Nothing -> throwErrorHere $ InvalidBitPosition nr (fromIntegral pos)
+    quasimask <- case BM.computePattern nr bitsects of
       Left msg -> throwErrorHere $ FailedToDeriveMask msg
       Right result -> return result
     fmap BM.bitAsQuasi mask `mergeBitMasks` quasimask
   Nothing -> throwErrorHere $ InvalidBitMaskLength (length (ASL.encOpcodeMask enc))
 
-alternateT16Mask :: ASL.InstructionEncoding -> ASL (Maybe (ARMBitMask BM.QuasiBit))
-alternateT16Mask enc = case ASL.encInstrSet enc of
-  ASL.T16 -> do
-    let (hiBits, loBits) = splitAt 16 $ ASL.encOpcodeMask enc
-    if loBits == take 16 (repeat ASL.MaskBitUnset) then do
-      let mask' = hiBits ++ (take 16 (repeat ASL.MaskBitEither))
-      Just <$> maskFromEncoding (enc { ASL.encOpcodeMask = mask' })
-    else return Nothing
-  _ -> return Nothing
-
 addEncodingMask :: ASL.Instruction -> ASL.InstructionEncoding -> ASL ()
 addEncodingMask instr enc = do
-  MS.modify' $ \st -> st { stEncodingMap = Map.insert ident (instr,enc) (stEncodingMap st) }
-  maskFromEncoding enc >>= doAdd
-  alternateT16Mask enc >>= \case
-    Just t16mask -> doAdd t16mask
-    Nothing -> return ()
+  MS.modify' $ \st -> st & stEncodingMap %~ Map.insert ident (instr, enc)
+  case ASL.encInstrSet enc of
+    ASL.T16 -> do
+      let (hiBits, _loBits) = splitAt 16 (ASL.encOpcodeMask enc)
+      maskFromEncoding n16 (enc { ASL.encOpcodeMask = hiBits }) >>= doAdd n16
+    _ -> maskFromEncoding n32 enc >>= doAdd n32
   where
+    n16 = NR.knownNat @16
+    n32 = NR.knownNat @32
     ident = encodingIdentifier instr enc
 
-    doAdd :: (ARMBitMask BM.QuasiBit) -> ASL ()
-    doAdd mask = do
-      MS.modify' $ \st -> st { stMaskTrie = BM.addToMaskTrie mask [(ident, mask)] (stMaskTrie st) }
-
+    doAdd :: forall n . NR.NatRepr n -> BM.BitMask n BM.QuasiBit -> ASL ()
+    doAdd nr mask = do
+      MS.modify' $ \st -> st & stMaskTrie . PC.ixF nr . stTrie %~ BM.addToMaskTrie mask [(ident, mask)]
 
 assertEquivalentEncodings :: (ASL.Instruction, ASL.InstructionEncoding)
                           -> (ASL.Instruction, ASL.InstructionEncoding)

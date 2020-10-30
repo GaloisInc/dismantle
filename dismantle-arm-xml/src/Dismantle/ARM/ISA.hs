@@ -1,3 +1,9 @@
+{-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeApplications #-}
 {-|
 Module           : Dismantle.ARM.ISA
 Copyright        : (c) Galois, Inc 2019-2020
@@ -6,12 +12,6 @@ Maintainer       : Daniel Matichuk <dmatichuk@galois.com>
 Specification of the A32 and T32 ISAs.
 
 -}
-
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeApplications #-}
 module Dismantle.ARM.ISA (
   isa
   ) where
@@ -20,9 +20,10 @@ import           GHC.TypeLits ( KnownNat )
 
 import qualified Data.Binary.Get as BG
 import qualified Data.Binary.Put as BP
+import           Data.Bits ( (.&.), (.|.), shiftL, shiftR )
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List.Split as L
-import           Data.Word ( Word32 )
+import           Data.Word ( Word16, Word32 )
 import qualified Data.Word.Indexed as W
 import qualified Language.Haskell.TH as TH
 import qualified Text.PrettyPrint.HughesPJClass as PP
@@ -31,11 +32,51 @@ import           Text.Printf (printf)
 import qualified Data.Word.Indexed as I
 import qualified Dismantle.Tablegen as DA
 
-asWord32 :: LBS.ByteString -> Word32
-asWord32 bs = BG.runGet BG.getWord32le bs
+fullWordStartPatterns :: [Word16]
+fullWordStartPatterns =
+    [ 0b11101 `shiftL` 11
+    , 0b11110 `shiftL` 11
+    , 0b11111 `shiftL` 11
+    ]
 
-fromWord32 :: Word32 -> LBS.ByteString
-fromWord32 w = BP.runPut (BP.putWord32le w)
+a32AsWord32 :: LBS.ByteString -> Word32
+a32AsWord32 bs = BG.runGet BG.getWord32le bs
+
+t32AsWord32 :: LBS.ByteString -> Word32
+t32AsWord32 = BG.runGet $ do
+    w1 <- BG.getWord16le
+    -- These bit patterns indicate a full word instruction so we need to
+    -- parse another halfword and shift the first word left.
+    --
+    -- For details, see the ARM ARM A6.1 Thumb Instruction Set Encoding,
+    -- version ARM DDI 0406C.b.
+    let matchesPattern p = (w1 .&. p) == p
+    let fullWord = any matchesPattern fullWordStartPatterns
+    if not fullWord
+       then return $ fromIntegral w1
+       else do
+           w2 <- BG.getWord16le
+           return $ (((fromIntegral w1)::Word32) `shiftL` 16) .|.
+                    (fromIntegral w2)
+
+a32FromWord32 :: Word32 -> LBS.ByteString
+a32FromWord32 w = BP.runPut (BP.putWord32le w)
+
+t32FromWord32 :: Word32 -> LBS.ByteString
+t32FromWord32 w
+  | fullWord = BP.runPut $ do
+      -- Put the high 16 bits, then just the low 16 bits
+      BP.putWord16le (fromIntegral $ w `shiftR` 16)
+      BP.putWord16le (fromIntegral $ w .&. halfWordMask)
+  | otherwise = BP.runPut $ BP.putWord16le (fromIntegral (w .&. halfWordMask))
+  where
+    matchesPattern p =
+            let p' = ((fromIntegral p) :: Word32) `shiftL` 16
+            in (w .&. p') == p'
+    fullWord :: Bool
+    fullWord = any matchesPattern fullWordStartPatterns
+    halfWordMask :: Word32
+    halfWordMask = 0x0000ffff
 
 -- | Create a 'DA.ISA' with the given name (either "A32" or "T32").
 isa :: String -> DA.ISA
@@ -49,8 +90,8 @@ isa archName = DA.ISA { DA.isaName = archName
                       , DA.isaIgnoreOperand = const False
                       , DA.isaFormOverrides = []
                       , DA.isaPrettyOverrides = []
-                      , DA.isaInsnWordFromBytes = 'asWord32
-                      , DA.isaInsnWordToBytes = 'fromWord32
+                      , DA.isaInsnWordFromBytes = if archName == "T32" then 't32AsWord32 else 'a32AsWord32
+                      , DA.isaInsnWordToBytes = if archName == "T32" then 't32FromWord32 else 'a32FromWord32
                       , DA.isaInsnAssembleType = ''Word32
                       , DA.isaMapOperandPayloadType = id
                       , DA.isaDefaultPrettyVariableValues = []

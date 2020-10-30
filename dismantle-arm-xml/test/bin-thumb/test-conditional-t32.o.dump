@@ -1,0 +1,24 @@
+
+test-conditional-t32.o:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	b480      	push	{r7}
+   2:	af00      	add	r7, sp, #0
+   4:	4b06      	ldr	r3, [pc, #24]	; (20 <_start+0x20>)
+   6:	681b      	ldr	r3, [r3, #0]
+   8:	2b00      	cmp	r3, #0
+   a:	dd04      	ble.n	16 <_start+0x16>
+   c:	4b04      	ldr	r3, [pc, #16]	; (20 <_start+0x20>)
+   e:	681b      	ldr	r3, [r3, #0]
+  10:	3301      	adds	r3, #1
+  12:	4a03      	ldr	r2, [pc, #12]	; (20 <_start+0x20>)
+  14:	6013      	str	r3, [r2, #0]
+  16:	df00      	svc	0
+  18:	bf00      	nop
+  1a:	46bd      	mov	sp, r7
+  1c:	bc80      	pop	{r7}
+  1e:	4770      	bx	lr
+  20:	00000000 	.word	0x00000000
