@@ -41,7 +41,7 @@ jobs:
       with:
         submodules: 'true'
 
-    - uses: actions/setup-haskell@v1.1
+    - uses: actions/setup-haskell@v1
       id: setup-haskell-cabal
       name: Setup Haskell
       with:
