@@ -6,7 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -fno-spec-constr -fno-specialise -fmax-simplifier-iterations=1 -fno-call-arity #-}
+{-# OPTIONS_GHC -fno-spec-constr -fno-specialise -fmax-simplifier-iterations=1 -fno-call-arity  -fbinary-blob-threshold=5000 #-}
 -- Dump TH splices to two files on disk. The generated file
 -- Dismantle/PPC.dump-splices will contain all splices, and not be
 -- valid Haskell, while the generated file Dismantle/PPC.th.hs will

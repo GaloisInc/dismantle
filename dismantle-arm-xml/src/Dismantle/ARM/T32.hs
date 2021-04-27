@@ -13,7 +13,7 @@
 -- valid Haskell, while the generated file Dismantle/PPC.th.hs will
 -- have only the top-level splices, and will be valid Haskell. The
 -- second file can be used when generating TAGS.
-{-# OPTIONS_GHC -ddump-splices -ddump-to-file -dth-dec-file -Wno-missing-signatures -O0 #-}
+{-# OPTIONS_GHC -ddump-splices -ddump-to-file -dth-dec-file -Wno-missing-signatures -fbinary-blob-threshold=50000 #-}
 module Dismantle.ARM.T32 (
   Instruction,
   AnnotatedInstruction,

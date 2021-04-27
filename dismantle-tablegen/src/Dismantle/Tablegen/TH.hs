@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
@@ -62,6 +63,25 @@ import qualified Dismantle.Tablegen.LinearizedTrie as DTL
 import qualified Dismantle.Tablegen.Patterns as DTP
 import           Dismantle.Tablegen.TH.Bits ( assembleBits, fieldFromWord )
 import           Dismantle.Tablegen.TH.Pretty ( prettyInstruction, PrettyOperand(..) )
+#if MIN_VERSION_template_haskell(2, 16, 0)
+import qualified Data.ByteString.Internal as DBI
+
+-- | Convert a 'BS.ByteString' into a TH literal
+--
+-- In ghc >= 8.10, there is an optimized @Bytes@ type to make this a lot more
+-- efficient on the parser
+bytestringL :: BS.ByteString -> Lit
+bytestringL (DBI.PS ptr off sz) =
+  bytesPrimL (mkBytes ptr (fromIntegral off) (fromIntegral sz))
+#else
+
+-- | Convert a 'BS.ByteString' into a TH literal
+--
+-- In ghc <= 8.10, we have to do this as a bytestring literal, which is a bit inefficient
+bytestringL :: BS.ByteString -> Lit
+bytestringL bs = stringPrimL (BS.unpack bs)
+#endif
+
 
 -- | Load an ISA from a base path and an optional collection of override
 -- paths. The resulting descriptor will have been filtered by the
@@ -212,8 +232,9 @@ mkParser isa desc mtrie = do
           toParserExpr (Just name) = [| Just $(varE name) |]
           parseTableExprPayloads :: [Q Exp]
           parseTableExprPayloads = map toParserExpr payloads0
+          parseTablePayload = BS.pack parseTableBytes
       trie <- [|
-                 let parseTableLit = $(litE (stringPrimL parseTableBytes))
+                 let parseTableLit = $(litE (bytestringL parseTablePayload))
                      payloads = $(listE parseTableExprPayloads)
                  in DTL.unsafeFromAddr payloads parseTableLit $(lift parseTableSize) $(lift parseTableStartIndex)
                |]
@@ -386,7 +407,8 @@ mkAsmCase isa i = do
   -- to the 'isaInsnWordFromBytes' to convert the mask into a word
   -- will re-byte swap.
   let (_, trueMask) = bitSpecAsBytes (idMask i)
-  trueMaskE <- [| $(varE (isaInsnWordFromBytes isa)) (LBS.fromStrict (unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (stringPrimL trueMask))))) |]
+  let trueMaskPayload = BS.pack trueMask
+  trueMaskE <- [| $(varE (isaInsnWordFromBytes isa)) (LBS.fromStrict (unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (bytestringL trueMaskPayload))))) |]
   (opsPat, operands) <- F.foldrM addOperand ((ConP 'SL.Nil []), []) (canonicalOperands i)
   let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
   body <- [| $(varE (isaInsnWordToBytes isa)) (assembleBits $(return trueMaskE) $(return (ListE operands))) |]
