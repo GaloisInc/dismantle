@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveLift #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -13,6 +14,9 @@
 -- have only the top-level splices, and will be valid Haskell. The
 -- second file can be used when generating TAGS.
 {-# OPTIONS_GHC -ddump-splices -ddump-to-file -dth-dec-file #-}
+#if MIN_VERSION_base(4, 14, 0)
+{-# OPTIONS_GHC -fbinary-blob-threshold=5000 #-}
+#endif
 -- | Description: PPC opcodes generated from LLVM .tgen file
 --
 -- PPC opcodes generated from LLVM .tgen file.
