@@ -455,7 +455,7 @@ There are only two steps for the TH, then:
 mkInstructionAliases :: Q [Dec]
 mkInstructionAliases =
   return [ TySynD (mkName "Instruction") [] ity
-         , TySynD (mkName "AnnotatedInstruction") [PlainTV annotVar] aty
+         , TySynD (mkName "AnnotatedInstruction") [plainTV annotVar] aty
          ]
   where
     annotVar = mkName "a"
@@ -481,8 +481,8 @@ mkOpcodeType isa = do
   where
     opVarName = mkName "o"
     shapeVarName = mkName "sh"
-    tyVars = [ KindedTV opVarName (ArrowT `AppT` ConT ''Symbol `AppT` StarT)
-             , KindedTV shapeVarName (ListT `AppT` ConT ''Symbol)
+    tyVars = [ kindedTV opVarName (ArrowT `AppT` ConT ''Symbol `AppT` StarT)
+             , kindedTV shapeVarName (ListT `AppT` ConT ''Symbol)
              ]
     cons = map mkOpcodeCon (isaInstructions isa)
 
@@ -624,7 +624,7 @@ mkReprType :: ISA -> Q [DecQ]
 mkReprType isa = do
   tpVarName <- newName "tp"
   let cons = map mkReprCon (isaOperandPayloadTypes isa)
-  return (dataDCompat (cxt []) operandReprName [PlainTV tpVarName] cons []
+  return (dataDCompat (cxt []) operandReprName [plainTV tpVarName] cons []
          : toStringSig
          : toStringFunc
          : map mkKnownReprInstance (isaOperandPayloadTypes isa)
@@ -723,7 +723,7 @@ mkOperandType isa desc = do
   -- Don't care about payloads here, just validation.
   mapM_ (lookupAndValidateOperand isa) (isaOperands desc)
   let cons = map mkOperandCon (isaOperandPayloadTypes isa)
-  return [ dataDCompat (cxt []) operandTypeName [KindedTV (mkName "tp") (ConT ''Symbol)] cons []
+  return [ dataDCompat (cxt []) operandTypeName [kindedTV (mkName "tp") (ConT ''Symbol)] cons []
          , standaloneDerivD (cxt []) [t| Show ($(conT operandTypeName) $(varT (mkName "tp"))) |]
          , mkOperandShowFInstance
          ]
