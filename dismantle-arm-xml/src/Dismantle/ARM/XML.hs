@@ -35,6 +35,7 @@ module Dismantle.ARM.XML
   ( loadEncodings
   , encodingOpToInstDescriptor
   , instDescriptorsToISA
+  , EncodedForm(..)
   , Operand(..)
   , Encoding(..)
   , Field(..)
@@ -115,8 +116,8 @@ data XMLException = MissingChildElement String
                        | forall a b. (IsMaskBit a, IsMaskBit b) => MismatchedListLengths [a] [b]
                        | UnexpectedElements [X.Element]
                        | MissingEncodingTableEntry String
-                       | forall n . MismatchedMasks (NR.NatRepr n) (BitMask n QuasiBit) (BitMask n QuasiBit)
-                       | forall n . MismatchedNegativeMasks (NR.NatRepr n) [BitMask n BT.Bit] [BitMask n BT.Bit]
+                       | forall n . MismatchedMasks EncodedForm (NR.NatRepr n) (BitMask n QuasiBit) (BitMask n QuasiBit)
+                       | forall n . MismatchedNegativeMasks EncodedForm (NR.NatRepr n) [BitMask n BT.Bit] [BitMask n BT.Bit]
                        | forall a n . IsMaskBit a => InvalidBitsForBitsection (NR.NatRepr n) Int [a]
                        | UnexpectedForm String
 
@@ -160,20 +161,20 @@ warnError e = do
   let pretty = PP.nest 1 (PP.text "WARNING:" $$ (PP.pPrint $ OuterXMLException env e))
   logXML $ PP.render pretty
 
-prettyMask :: BM.MaskBit bit => BitMask n bit -> PP.Doc
-prettyMask mask = BM.prettySegmentedMask endianness mask
+prettyMask :: BM.MaskBit bit => EncodedForm -> BitMask n bit -> PP.Doc
+prettyMask efrm mask = BM.prettySegmentedMask (endianness efrm) mask
 
 instance PP.Pretty XMLException where
   pPrint e = case e of
     UnexpectedElements elems ->
       PP.text "UnexpectedElements"
       <+> PP.brackets (PP.hsep (PP.punctuate (PP.text ",") (map simplePrettyElem elems)))
-    MismatchedMasks _nr mask mask' -> PP.text "MismatchedMasks"
-      $$ PP.nest 1 (prettyMask mask $$ prettyMask mask')
-    MismatchedNegativeMasks _nr masks masks' -> PP.text "MismatchedNegativeMasks"
-      $$ PP.nest 1 (PP.vcat (map prettyMask masks))
+    MismatchedMasks efrm _nr mask mask' -> PP.text "MismatchedMasks"
+      $$ PP.nest 1 (prettyMask efrm mask $$ prettyMask efrm mask')
+    MismatchedNegativeMasks efrm _nr masks masks' -> PP.text "MismatchedNegativeMasks"
+      $$ PP.nest 1 (PP.vcat (map (prettyMask efrm) masks))
       $$ PP.text "vs."
-      $$ PP.nest 1 (PP.vcat (map prettyMask masks'))
+      $$ PP.nest 1 (PP.vcat (map (prettyMask efrm) masks'))
     InnerParserFailure e' -> PP.text "InnerParserFailure"
       $$ PP.nest 1 (PP.vcat $ (map PP.text $ lines (P.errorBundlePretty e')))
     _ -> PP.text $ show e
@@ -337,7 +338,7 @@ loadEncIndex encodingindex = do
 
 addEncodingTableMapEntry :: X.Element -> XML ()
 addEncodingTableMapEntry iclass_sect = do
-  FieldsAndConstraints nr fields _ fieldConstraints <- iclassFieldsAndProp iclass_sect
+  FieldsAndConstraints _efrm nr fields _ fieldConstraints <- iclassFieldsAndProp iclass_sect
   decodeConstraints <- withChild "decode_constraints" iclass_sect $ \case
     Just dcs -> getDecodeConstraints nr fields dcs
     Nothing -> return mempty
@@ -372,8 +373,8 @@ loadInstrs xmlElement = do
         let leaf = InstructionLeaf xmlElement iclass
         isa <- getAttr "isa" iclass
         if isa == arch && not (isAliasedInstruction leaf) then do
-          FieldsAndConstraints nr fields qmasks iconstraints <- iclassFieldsAndProp iclass
-          leafGetEncodings leaf nr fields qmasks iconstraints
+          FieldsAndConstraints efrm nr fields qmasks iconstraints <- iclassFieldsAndProp iclass
+          leafGetEncodings efrm leaf nr fields qmasks iconstraints
         else return []
     _ -> return []
 
@@ -388,7 +389,7 @@ fromListWithM f l = sequence $ M.fromListWith doMerge $ map (\(k, a) -> (k, retu
       f a1 a2
 
 data FieldsAndConstraints where
-  FieldsAndConstraints :: (1 <= n) => NR.NatRepr n -> Fields n -> BitSection n () -> PropTree (BitSection n QuasiBit) -> FieldsAndConstraints
+  FieldsAndConstraints :: (1 <= n) => EncodedForm -> NR.NatRepr n -> Fields n -> BitSection n () -> PropTree (BitSection n QuasiBit) -> FieldsAndConstraints
 
 -- | Examine a "regdiagram" element and compute the NatRepr corresponding to the
 -- stated width.  Instruction width is one of 16, 16x2, or 32.  The NatRepr will
@@ -398,13 +399,13 @@ data FieldsAndConstraints where
 --
 -- > <regdiagram form="16" psname="aarch32/instrs/ADD_i/T1_A.txt">
 -- > </regdiagram>
-withEncodingSize :: X.Element -> (forall n . (1 <= n) => NR.NatRepr n -> XML a) -> XML a
+withEncodingSize :: X.Element -> (forall n . (1 <= n) => EncodedForm -> NR.NatRepr n -> XML a) -> XML a
 withEncodingSize regdiagram k = do
   form <- getAttr "form" regdiagram
   case form of
-    "16" -> k (NR.knownNat @16)
-    "32" -> k (NR.knownNat @32)
-    "16x2" -> k (NR.knownNat @32)
+    "16" -> k Thumb1Form (NR.knownNat @16)
+    "32" -> k ARMForm (NR.knownNat @32)
+    "16x2" -> k Thumb2Form (NR.knownNat @32)
     _ -> withElement regdiagram (throwError (UnexpectedForm form))
 
 iclassFieldsAndProp :: X.Element -> XML FieldsAndConstraints
@@ -415,7 +416,7 @@ iclassFieldsAndProp iclass = do
   --
   -- We can compute the NatRepr here and pass it everywhere, ultimately embedding it in the return value
   rd <- getChild "regdiagram" iclass
-  withEncodingSize rd $ \nr -> do
+  withEncodingSize rd $ \efrm nr -> do
     fields <- forChildren "box" rd (getBoxField nr)
     namedFields <- fmap catMaybes $ forM fields $ \field -> do
       case (fieldName field, fieldUseName field) of
@@ -423,7 +424,7 @@ iclassFieldsAndProp iclass = do
         (_, False) -> return Nothing
         _ -> throwError $ InvalidField nr field
     namedMap <- fromListWithM (mergeFields nr) namedFields
-    return $ FieldsAndConstraints nr namedMap (quasiMaskOfFields nr fields) (mconcat (map fieldConstraint fields))
+    return $ FieldsAndConstraints efrm nr namedMap (quasiMaskOfFields nr fields) (mconcat (map fieldConstraint fields))
 
 mergeFields :: (1 <= n) => NR.NatRepr n -> Field n -> Field n -> XML (Field n)
 mergeFields nr field1 field2 = case mergeFields' nr field1 field2 of
@@ -607,14 +608,27 @@ data Field n = Field { fieldName :: String
                    }
   deriving (Show, Eq)
 
-endianness :: [a] -> [a]
-endianness bits = concat (reverse (List.chunksOf 8 bits))
+-- | Perform any necessary byte swapping to interpret masks
+--
+-- The different instruction forms have different rules.  Thumb1 instructions
+-- are (semantically) read as a Word16 where the two bytes need to be swapped.
+-- ARM instructions are (semantically) read as a Word32 where the four bytes are
+-- reversed. Thumb2 is the strange case, where they are read as two Word16s,
+-- with independent byte swapping.
+endianness :: EncodedForm -> [a] -> [a]
+endianness efrm bits =
+  case efrm of
+    Thumb1Form -> byteswap bits
+    Thumb2Form -> concatMap byteswap (List.chunksOf 16 bits)
+    ARMForm -> byteswap bits
+  where
+    byteswap bs = concat (reverse (List.chunksOf 8 bs))
 
 instance PP.Pretty Encoding where
-  pPrint Encoding { encMask = mask, encNegMasks = negMasks, encOperands = operands, encName = name } =
+  pPrint Encoding { encMask = mask, encNegMasks = negMasks, encOperands = operands, encName = name, encForm = efrm } =
     PP.text "Encoding:" <+> PP.text name
     $$ PP.text "Endian Swapped"
-    $$ mkBody endianness
+    $$ mkBody (endianness efrm)
     $$ PP.text "Original"
     $$ mkBody id
     $$ PP.text "Operands:"
@@ -710,6 +724,10 @@ data Operand n = Operand { opName :: String
                        }
   deriving Show
 
+data EncodedForm = Thumb1Form
+                 | Thumb2Form
+                 | ARMForm
+                 deriving (Eq, Ord, Show)
 
 -- | An 'Encoding' represents an encoding from the ARM XML specification,
 -- which includes a description of its fields.
@@ -735,6 +753,9 @@ data Encoding =
                          -- ^ the complete positive mask of this encoding (derived from the constraints)
                          , encNegMasks :: [BitMask n BT.Bit]
                          -- ^ the complete negative masks of this encoding (derived from the constraints)
+                         , encForm :: EncodedForm
+                         -- ^ The instruction encoding (thumb1, thumb2, or arm),
+                         -- which is used to help determine byte swapping as applied to the masks
                          }
 
 deriving instance Show Encoding
@@ -800,13 +821,14 @@ leafGetEncodingConstraints nr ileaf fields = do
 -- | Build operand descriptors out of the given fields
 leafGetEncodings :: forall n
                   . (1 <= n)
-                 => InstructionLeaf
+                 => EncodedForm
+                 -> InstructionLeaf
                  -> NR.NatRepr n
                  -> Fields n
                  -> BitSection n ()
                  -> PropTree (BitSection n QuasiBit)
                  -> XML [Encoding]
-leafGetEncodings ileaf nrep allfields _quasimask iconstraints = do
+leafGetEncodings frm ileaf nrep allfields _quasimask iconstraints = do
   mnemonic <- leafMnemonic' ileaf
   encodingConstraints <- leafGetEncodingConstraints nrep ileaf allfields
 
@@ -823,6 +845,7 @@ leafGetEncodings ileaf nrep allfields _quasimask iconstraints = do
                               , encMask = mask
                               , encNegMasks = negmasks
                               , encSize = nrep
+                              , encForm = frm
                               }
 
       MS.modify' $ \st -> st { encodingMap = M.insert encName' encoding (encodingMap st) }
@@ -963,19 +986,20 @@ encodingOpToInstDescriptor encoding@Encoding { encMnemonic = mnemonic
                                              , encName = name
                                              , encNegMasks = negMasks
                                              , encMask = mask
+                                             , encForm = efrm
                                              } =
   let
     (realops, pseudoops) = getOperandDescriptors encoding
   in DT.InstructionDescriptor
-       { DT.idMask = map BM.flattenQuasiBit (endianness $ BM.toList mask)
-       , DT.idNegMasks = map (endianness . BM.toList) negMasks
+       { DT.idMask = map BM.flattenQuasiBit (endianness efrm $ BM.toList mask)
+       , DT.idNegMasks = map (endianness efrm . BM.toList) negMasks
        , DT.idMnemonic = name
        , DT.idInputOperands = realops ++ pseudoops
        , DT.idOutputOperands = []
        , DT.idNamespace = mnemonic
        , DT.idDecoderNamespace = ""
        , DT.idAsmString = name
-         ++ "(" ++ PP.render (BM.prettySegmentedMask endianness mask) ++ ") "
+         ++ "(" ++ PP.render (BM.prettySegmentedMask (endianness efrm) mask) ++ ") "
          ++ simpleOperandFormat (realops ++ pseudoops)
        , DT.idPseudo = False
        , DT.idDefaultPrettyVariableValues = []
