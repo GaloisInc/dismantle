@@ -241,7 +241,13 @@ withObjDump endianness parser f hout finalize k = do
                                  Little swapBytes _ -> fmap (rewriteSection swapBytes)
                                  _ -> id
           rewriteSection fn s = s { instructions = rewriteInstruction fn <$> instructions s }
-          rewriteInstruction fn i = i { insnBytes = fn $ insnBytes i }
+          rewriteInstruction fn i = i { insnBytes =
+                                        case insnLayout i of
+                                          HalfWordPair ->
+                                            let (w1, w2) = LBS.splitAt 2 (insnBytes i)
+                                            in (fn w1 <> fn w2)
+                                          _ -> fn $ insnBytes i
+                                      }
           d' = Disassembly { sections = rewriteDisassembly (sections d) }
       res <- k d'
       hClose hout
