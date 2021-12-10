@@ -11,7 +11,7 @@ maintainer:          benselfridge@galois.com
 -- copyright:
 -- category:
 build-type:          Simple
-extra-source-files:  CHANGELOG.md data/ISA_v85A_AArch32_xml_00bet9/* data/Parsed/arm_instrs.sexpr data/ISA_uboot_req/* data/*.bin
+extra-source-files:  CHANGELOG.md data/ISA_v85A_AArch32_xml_00bet9/*.xml data/Parsed/arm_instrs.sexpr data/ISA_uboot_req/*.xml data/*.bin
 
 flag asl-lite
   Description: Use a trimmed-down set of instructions for the ASL specification (sufficient to disassemble u-boot).
