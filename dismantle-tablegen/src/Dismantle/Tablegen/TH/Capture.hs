@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Dismantle.Tablegen.TH.Capture (
@@ -98,7 +99,7 @@ genMatchExpr operands operandListName body = do
         [] -> [p| SL.Nil |]
         ((opConStr, operandName) : rest) -> do
           let patRest = buildPattern rest
-          let p = ConP (mkName opConStr) [VarP operandName]
+          let p = conPCompat (mkName opConStr) [VarP operandName]
           [p| $(return p) SL.:< $(patRest) |]
 
 allocateMatchNames :: String -> [String] -> Q ([(String, Name)], Exp)
@@ -163,3 +164,10 @@ deconstructShape t =
       tlTypes <- deconstructShape tl
       return (hdType ++ tlTypes)
     _ -> fail ("Unexpected type structure: " ++ show t)
+
+conPCompat :: Name -> [Pat] -> Pat
+conPCompat n pats = ConP n
+#if MIN_VERSION_template_haskell(2,18,0)
+                           []
+#endif
+                           pats

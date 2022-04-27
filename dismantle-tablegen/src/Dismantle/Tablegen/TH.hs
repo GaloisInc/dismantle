@@ -82,6 +82,13 @@ bytestringL :: BS.ByteString -> Lit
 bytestringL bs = stringPrimL (BS.unpack bs)
 #endif
 
+conPCompat :: Name -> [Pat] -> Pat
+conPCompat n pats = ConP n
+#if MIN_VERSION_template_haskell(2,18,0)
+                           []
+#endif
+                           pats
+
 
 -- | Load an ISA from a base path and an optional collection of override
 -- paths. The resulting descriptor will have been filtered by the
@@ -387,7 +394,7 @@ mkAssembler isa desc = do
                   , ValD (VarP pairsExprName) (NormalB mapExpr) []
                   ]
       insTagExpr = [ SigD insnTagName insTagTy
-                   , FunD insnTagName [Clause [ConP 'Instruction [VarP (mkName "t"), WildP]] (NormalB tagExpr) []]
+                   , FunD insnTagName [Clause [conPCompat 'Instruction [VarP (mkName "t"), WildP]] (NormalB tagExpr) []]
                    ]
 
 
@@ -409,8 +416,8 @@ mkAsmCase isa i = do
   let (_, trueMask) = bitSpecAsBytes (idMask i)
   let trueMaskPayload = BS.pack trueMask
   trueMaskE <- [| $(varE (isaInsnWordFromBytes isa)) (LBS.fromStrict (unsafePerformIO (UBS.unsafePackAddressLen $(litE (integerL (fromIntegral (length trueMask)))) $(litE (bytestringL trueMaskPayload))))) |]
-  (opsPat, operands) <- F.foldrM addOperand ((ConP 'SL.Nil []), []) (canonicalOperands i)
-  let pat = ConP 'Instruction [ConP (mkName (toTypeName (idMnemonic i))) [], opsPat]
+  (opsPat, operands) <- F.foldrM addOperand ((conPCompat 'SL.Nil []), []) (canonicalOperands i)
+  let pat = conPCompat 'Instruction [conPCompat (mkName (toTypeName (idMnemonic i))) [], opsPat]
   body <- [| $(varE (isaInsnWordToBytes isa)) (assembleBits $(return trueMaskE) $(return (ListE operands))) |]
 
   let decls = [ SigD fName fTy
@@ -429,7 +436,7 @@ mkAsmCase isa i = do
       chunks <- lift (opChunks op)
       vname <- newName "operand"
       asmOp <- [| ( $(opToBits) $(varE vname),  $(return chunks) ) |]
-      return (InfixP (ConP (mkName otyname) [VarP vname]) '(SL.:<) pat, asmOp : operands)
+      return (InfixP (conPCompat (mkName otyname) [VarP vname]) '(SL.:<) pat, asmOp : operands)
 
 {-
 
@@ -820,7 +827,7 @@ canonicalOperands i = idOutputOperands i ++ idInputOperands i
 
 mkOpcodePrettyPrinter :: InstructionDescriptor -> Q ((Exp, Name), [Dec])
 mkOpcodePrettyPrinter i = do
-  (opsPat, prettyOps) <- F.foldrM addOperand ((ConP 'SL.Nil []), []) (canonicalOperands i)
+  (opsPat, prettyOps) <- F.foldrM addOperand ((conPCompat 'SL.Nil []), []) (canonicalOperands i)
   fTy <- [t| $(conT (mkName "Instruction")) -> PP.Doc |]
 
   let fName = mkName $ "pp_" <> idMnemonic i
@@ -844,7 +851,7 @@ mkOpcodePrettyPrinter i = do
       let oname = opName op
           OperandType otyname = opType op
       prettyOp <- [| PrettyOperand oname $(return (VarE vname)) PP.pPrint |]
-      return (InfixP (ConP (mkName (toTypeName otyname)) [(VarP vname)]) '(SL.:<) pat, prettyOp : pret)
+      return (InfixP (conPCompat (mkName (toTypeName otyname)) [(VarP vname)]) '(SL.:<) pat, prettyOp : pret)
 
 {-
 
