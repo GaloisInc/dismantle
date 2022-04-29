@@ -18,22 +18,23 @@ jobs:
     strategy:
       matrix:
         arch: ['tablegen', 'arm', 'thumb', 'ppc', 'aarch64', 'arm-xml']
-        ghc: ['8.6.5', '8.8.3', '8.10.1', '9.0.1']
-        cabal: ['3.2.0.0']
+        ghc: ['8.8.4', '8.10.7', '9.0.2', '9.2.2']
+        cabal: ['3.6.2.0']
         os: [ubuntu-latest, macOS-latest, windows-latest]
         exclude:
+          # Only test macOS and Windows on the latest supported GHC versions
           - os: macOS-latest
-            ghc: 8.6.5
+            ghc: 8.8.4
           - os: macOS-latest
-            ghc: 8.8.3
+            ghc: 8.10.7
           - os: macOS-latest
-            ghc: 8.10.1
+            ghc: 9.0.2
           - os: windows-latest
-            ghc: 8.8.3
+            ghc: 8.8.4
           - os: windows-latest
-            ghc: 8.10.1
+            ghc: 8.10.7
           - os: windows-latest
-            ghc: 9.0.1
+            ghc: 9.0.2
           # This configuration runs out of memory
           - os: windows-latest
             arch: aarch64

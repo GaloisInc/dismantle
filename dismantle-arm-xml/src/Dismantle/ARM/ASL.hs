@@ -61,7 +61,7 @@ import           Control.Monad.Except ( throwError, ExceptT, MonadError )
 import qualified Control.Monad.Except as ME
 
 import           Data.Maybe ( catMaybes, fromMaybe )
-import           Data.List ( groupBy )
+import qualified Data.List.NonEmpty as NE
 import           Data.Map ( Map )
 import qualified Data.Map as Map
 import qualified Data.Parameterized.Classes as PC
@@ -169,7 +169,11 @@ instance MonadError ASLException ASL where
 
 throwErrorHere :: HasCallStack => ASLException -> ASL a
 throwErrorHere e = do
-  let (_, src): _ = getCallStack callStack
+  -- The only way for HasCallStack to be empty is for a user to manually
+  -- construct one as an implicit argument, which is unlikely.
+  src <- case getCallStack callStack of
+           (_, src): _ -> return src
+           []          -> error "throwErrorHere: Unexpected empty call stack"
   ctx <- MR.asks envContext
   ASL (lift $ throwError $ OuterASLException (ctx { ctxSourceLoc = Just src }) e)
 
@@ -413,7 +417,7 @@ prettyFieldConstraints constraints negconstraints =
 -- | Separate a mask over 'FieldBit's into individual field constraints.
 splitFieldMask :: NR.NatRepr n -> BM.BitMask n FixedFieldBit -> ASL (Map String FieldConstraint)
 splitFieldMask nr mask = do
-  l <- liftM catMaybes $ forM (groupBy equivFields (BM.toList mask)) $ \(fieldBit : rst) ->
+  l <- liftM catMaybes $ forM (NE.groupBy equivFields (BM.toList mask)) $ \(fieldBit NE.:| rst) ->
          case nameOfFixedFieldBit fieldBit of
            Just fieldName -> return $ Just (fieldName, fmap bitOfFixedFieldBit $ BM.someBitMaskFromCons fieldBit rst)
            Nothing -> return Nothing
@@ -536,7 +540,9 @@ getSimpleOp opd =
 lookupMasks :: forall n . NR.NatRepr n -> BM.BitMask n BM.QuasiBit -> ASL (String, BM.BitMask n BM.QuasiBit)
 lookupMasks nr mask = do
   masktrees <- MS.gets _stMaskTrie
-  let Just (SizedTrie _ masktree) = MapF.lookup nr masktrees
+  masktree <- case MapF.lookup nr masktrees of
+                Just (SizedTrie _ masktree) -> return masktree
+                Nothing -> error $ "lookupMasks: Could not find mask trie for: " ++ show nr
   case BM.lookupMaskTrie mask masktree of
     [result] -> return result
     results | [result] <- filter exactMatch results -> return result
@@ -669,7 +675,7 @@ assertEqualBy f a a' = case (f a) == (f a') of
 -- | Derive a unique identifier for an instruction/encoding pair based on their
 -- names as well as the mask of the encoding. Some instruction/encoding pairs are
 -- duplicated in the ASL specification, however we validate that all key clashes
--- point to syntactically identical specifications when building the disassembler. 
+-- point to syntactically identical specifications when building the disassembler.
 encodingIdentifier :: ASL.Instruction -> ASL.InstructionEncoding -> String
 encodingIdentifier instr enc =
   T.unpack (ASL.instName instr)

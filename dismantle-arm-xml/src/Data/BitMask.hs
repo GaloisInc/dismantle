@@ -35,7 +35,7 @@ a lookup will retrieve all elements with a key that matches the provided mask.
 
 module Data.BitMask
   (
-    -- * Generalized mask bits 
+    -- * Generalized mask bits
     MaskBit
   , SemiMaskBit(..)
   , HasBottomMaskBit(..)
@@ -55,7 +55,7 @@ module Data.BitMask
   , isQBit
   , bitToQuasi
   , bitAsQuasi
-  
+
   -- * Bitmasks as vectors of mask bits
   , BitMask
   , splitBitMask
@@ -66,7 +66,7 @@ module Data.BitMask
   , someBitMaskFromCons
   , prettyMask
   , prettySegmentedMask
-  
+
   -- * Bitsections as bitmasks with holes
   , BitSection
   , maskAsBitSection
@@ -78,9 +78,9 @@ module Data.BitMask
   , mkBitSectionHiBit
   , bitSectionFromList
   , bitSectionFromListHiBit
-   
+
   -- * Bitmask operations
-  , computePattern 
+  , computePattern
   , deriveMasks
 
   -- * Using bitmasks as lookup keys
@@ -88,7 +88,7 @@ module Data.BitMask
   , emptyMaskTrie
   , addToMaskTrie
   , lookupMaskTrie
-  
+
   -- re-exported vector functions
   , V.toList
   , V.fromList
@@ -632,7 +632,10 @@ addSectionToMask (BitSection mask) dest = do
   merged <- mergeBitMasksErr mask (fmap JustBit dest)
   -- The semantics of 'mergeBit' for 'WithBottom bit' guarantee that no 'BottomBit' bits are leftover after
   -- the merge.
-  return $ fmap (\(JustBit bit) -> bit) merged
+  return $ fmap (\wb -> case wb of
+                          JustBit bit -> bit
+                          BottomBit{} -> error $ "addSectionToMask: impossible")
+                merged
 
 prependErr :: ME.MonadError String m => String -> String -> m a
 prependErr msg err = ME.throwError $ msg ++ " " ++ err
