@@ -19,10 +19,26 @@ hexStr v = (<>) "0x" . showHex v
 
 testLookup :: (Eq a, Show a) => (forall e . Lookup e) -> LT.LinearizedTrie a -> Word8 -> a -> T.TestTree
 testLookup look t b expected = testCase (hexStr b " lookup")
-                          (let Right v = look t b in v @?= expected)
+                          (let v = lookupTerminalNode (look t b) in v @?= expected)
 
 type TrieBuilder e = e -> [(String, BS.ByteString, BS.ByteString, [(BS.ByteString, BS.ByteString)], e)] -> Either DTP.TrieError (LT.LinearizedTrie e)
 type Lookup e = LT.LinearizedTrie e -> Word8 -> Either (LT.LinearizedTrie e) e
+
+tbError :: Either DTP.TrieError (LT.LinearizedTrie e) -> DTP.TrieError
+tbError (Left e)  = e
+tbError (Right _) = error "Expected TrieError, but encountered LinearizedTrie"
+
+tbSuccess :: Either DTP.TrieError (LT.LinearizedTrie e) -> LT.LinearizedTrie e
+tbSuccess (Left e)   = error $ "Expected LinearizedTrie, but encountered TrieError: " ++ show e
+tbSuccess (Right lt) = lt
+
+lookupTrie :: Either (LT.LinearizedTrie e) e -> LT.LinearizedTrie e
+lookupTrie (Left lt)  = lt
+lookupTrie (Right _)  = error "Expected LinearizedTrie, but encountered terminal node"
+
+lookupTerminalNode :: Either (LT.LinearizedTrie e) e -> e
+lookupTerminalNode (Left _)  = error "Expected terminal node, but encountered LinearizedTrie"
+lookupTerminalNode (Right n) = n
 
 trieTests :: IO T.TestTree
 trieTests = do
@@ -33,12 +49,12 @@ mkTrieTests :: String -> (forall e . TrieBuilder e) -> (forall e . Lookup e) -> 
 mkTrieTests implname con look = return $
   T.testGroup implname
   [ T.testGroup "empty" $
-    let Right t = con (Nothing :: Maybe String) []
+    let t = tbSuccess $ con (Nothing :: Maybe String) []
     in
       [
         -- length is an nonsense operation on a ByteTrie
         -- , testCase "empty length" $
-        --   let Right t = byteTrie (Nothing :: Maybe String) []
+        --   let t = tbSuccess $ con (Nothing :: Maybe String) []
         --   in length t @?= 0
         testLookup look t 0 Nothing
       , testLookup look t 1 Nothing
@@ -52,7 +68,7 @@ mkTrieTests implname con look = return $
   , T.testGroup "single entry, single level trie"
     [
       T.testGroup "ff req mask and 1 true mask" $
-      let Right t = con Nothing [("SOLO",
+      let t = tbSuccess $ con Nothing [("SOLO",
                                        BS.pack [0xff],  -- which bits are important
                                        BS.pack [0x1],   -- values of the important bits
                                        [],      -- no contra-indicators
@@ -69,7 +85,7 @@ mkTrieTests implname con look = return $
         ]
 
     , T.testGroup "ff req mask and d1 true mask" $
-      let Right t = con Nothing [("SOLO",
+      let t = tbSuccess $ con Nothing [("SOLO",
                                        BS.pack [0xff],  -- which bits are important
                                        BS.pack [0xd1],  -- values of the important bits
                                        -- "\x01",  -- must match this value
@@ -87,7 +103,7 @@ mkTrieTests implname con look = return $
         ]
 
     , T.testGroup "d3 req mask and 1 true mask" $
-      let Right t = con Nothing [("SOLO",
+      let t = tbSuccess $ con Nothing [("SOLO",
                                        BS.pack [0xd3],  -- which bits are important
                                        BS.pack [0x01],   -- values of the important bits
                                        [],      -- no contra-indicators
@@ -108,7 +124,7 @@ mkTrieTests implname con look = return $
       --
       -- QUESTIONABLE: should this throw an error when building the
       -- Trie instead of silently ignoring the entry?
-      let Right t = con Nothing [("SOLO",
+      let t = tbSuccess $ con Nothing [("SOLO",
                                        BS.pack [0x83],  -- which bits are important
                                        BS.pack [0x09],   -- values of the important bits
                                        [],      -- no contra-indicators
@@ -119,7 +135,7 @@ mkTrieTests implname con look = return $
 
     , T.testGroup "83 req mask and 1 true mask with negatives" $
       -- all negatives are applied when the table is built, not during lookups
-      let Right t = con Nothing [("SOLO",
+      let t = tbSuccess $ con Nothing [("SOLO",
                                        BS.pack [0x83],  -- which bits are important
                                        BS.pack [0x01],   -- values of the important bits
                                        [ (BS.pack [0x80], BS.pack [0x80])
@@ -140,7 +156,7 @@ mkTrieTests implname con look = return $
           ]
 
     , T.testGroup "0 req mask and 0x31 true mask (ignored)" $
-      let Right t = con Nothing [("SOLO",
+      let t = tbSuccess $ con Nothing [("SOLO",
                                        BS.pack [0x0],  -- which bits are important
                                        BS.pack [0x31],   -- values of the important bits
                                        [],      -- no contra-indicators
@@ -158,7 +174,7 @@ mkTrieTests implname con look = return $
         ]
 
     , T.testGroup "0 req mask and 0 true mask (Broken?)" $
-      let Right t = con Nothing [("SOLO",
+      let t = tbSuccess $ con Nothing [("SOLO",
                                        BS.pack [0x0],  -- which bits are important
                                        BS.pack [0x0],   -- values of the important bits
                                        [],      -- no contra-indicators
@@ -186,7 +202,7 @@ mkTrieTests implname con look = return $
 
     , T.testGroup "0xd3/0x41 req mask/true mask" $
       -- establish baseline for next test
-      let Right t = con Nothing
+      let t = tbSuccess $ con Nothing
             [("ONE",
                BS.pack [0xd3],  -- which bits are important
                BS.pack [0x41],  -- values of the important bits
@@ -207,7 +223,7 @@ mkTrieTests implname con look = return $
       -- nothing else to match against.  This same negative match will
       -- be used in "0xd3/0x41 and 0x83/0x01 req mask/true mask,
       -- negatives" below.
-      let Right t = con Nothing
+      let t = tbSuccess $ con Nothing
             [("ONE",
                BS.pack [0xd3],  -- which bits are important
                BS.pack [0x41],  -- values of the important bits
@@ -229,7 +245,7 @@ mkTrieTests implname con look = return $
     -- Establish baseline results for two entries
     [
       T.testGroup "0xd3/0x41 and 0x83/0x01 req mask/true mask" $
-      let Right t = con Nothing
+      let t = tbSuccess $ con Nothing
             [("ONE",
                BS.pack [0xd3],  -- which bits are important
                BS.pack [0x41],  -- values of the important bits
@@ -257,7 +273,7 @@ mkTrieTests implname con look = return $
 
     , T.testGroup "0xd3/0x41 and 0x83/0x01 req mask/true mask null negatives" $
       -- Negatives with a null mask don't do anything
-      let Right t = con Nothing
+      let t = tbSuccess $ con Nothing
             [("ONE",
                BS.pack [0xd3],  -- which bits are important
                BS.pack [0x41],  -- values of the important bits
@@ -286,7 +302,7 @@ mkTrieTests implname con look = return $
     , T.testGroup "0xd3/0x41 and 0x83/0x01 req mask/true mask, negatives" $
       -- Demonstrates that the negative match on the first entry
       -- allows the second to take over some of the matches.
-      let Right t = con Nothing
+      let t = tbSuccess $ con Nothing
             [("ONE",
                BS.pack [0xd3],  -- which bits are important
                BS.pack [0x41],  -- values of the important bits
@@ -319,7 +335,7 @@ mkTrieTests implname con look = return $
       -- Repeats the above tests but declaring the entries in the
       -- reverse order; the same results are obtained demonstrating
       -- that the ByteTrie is stable relative to entry order.
-      let Right t = con Nothing
+      let t = tbSuccess $ con Nothing
             [ ("TWO", BS.pack[0x83], BS.pack [0x1],
                 [
                   (BS.pack [0x31], BS.pack [0x21])
@@ -354,7 +370,7 @@ mkTrieTests implname con look = return $
   , T.testGroup "multi-entry, multi-level trie"
     [
       T.testGroup "five opcodes various depths" $
-      let Right t = con Nothing
+      let t = tbSuccess $ con Nothing
             [ ("ONE", BS.pack [0xff,0xff,0xd3], BS.pack [0x12,0x34,0x41],
                [
                  (BS.pack [0x00,0x00,0x69], BS.pack [0x00,0x00,0x41])
@@ -410,8 +426,8 @@ mkTrieTests implname con look = return $
         [ T.testGroup "three" [ testLookup look t n (Just "val three") | n <- matchTHREE ]
 
         , T.testGroup "one/two/five"
-          (let Left l1 = look t 0x12
-               Left l2 = look l1 0x34
+          (let l1 = lookupTrie $ look t 0x12
+               l2 = lookupTrie $ look l1 0x34
            in [ testLookup look l2 n (if n `elem` matchONE
                                  then Just "val one"
                                  else if n `elem` matchTWO
@@ -448,7 +464,7 @@ mkTrieTests implname con look = return $
         -- MANYTESTS!!
         , T.testGroup "four" $
           [ T.testGroup (hexStr fb " four byte1") $
-            let Left l1 = look t fb in
+            let l1 = lookupTrie $ look t fb in
               [ testLookup look l1 n (if n `elem` matchFOUR
                                       then Just "val four"
                                       else Nothing)
@@ -458,9 +474,9 @@ mkTrieTests implname con look = return $
         -- MANYTESTS!!
         , T.testGroup "five" $
           [ T.testGroup (hexStr fb " five byte1") $
-            let Left l1 = look t fb in
+            let l1 = lookupTrie $ look t fb in
               [ T.testGroup (hexStr sb " five byte2") $
-                let Left l2 = look l1 sb in
+                let l2 = lookupTrie $ look l1 sb in
                   [ testLookup look l2 n (if n `elem` matchFIVE
                                           then Just "val five"
                                           else Nothing)
@@ -493,7 +509,7 @@ mkTrieTests implname con look = return $
   ----------------------------------------------------------------------
 
   , testCase "creation failures" $
-    let Left e = con (Nothing :: Maybe String)
+    let e = tbError $ con (Nothing :: Maybe String)
                  [ ("SOLO", BS.pack [0xff], BS.pack [0x01], [], Just "solo one")
                  , ("DUO",  BS.pack [0xff], BS.pack [0x01], [], Just "solo dup")
                  ]
@@ -502,7 +518,7 @@ mkTrieTests implname con look = return $
     in show e @?= "OverlappingBitPattern [(Pattern { requiredMask = [\"0xff\"], trueMask = [\"0x1\"] }, [\"DUO\",\"SOLO\"], 1)]"
 
   , testCase "mask length error" $
-    let Left e = con (Nothing :: Maybe String)
+    let e = tbError $ con (Nothing :: Maybe String)
                  [ ("SOLO", BS.pack [0xff], BS.pack [0x01,0x02], [], Just "solo one")
                  ]
         -- n.b. Pattern isn't exported from ByteTrie, so can only
@@ -510,7 +526,7 @@ mkTrieTests implname con look = return $
     in show e @?= "InvalidPatternLength Pattern { requiredMask = [\"0xff\"], trueMask = [\"0x1\",\"0x2\"] }"
 
   , testCase "match length error" $
-    let Left e = con (Nothing :: Maybe String)
+    let e = tbError $ con (Nothing :: Maybe String)
                  [ ("SOLO", BS.pack [0xff,0xff], BS.pack [0x01], [], Just "solo one")
                  ]
         -- n.b. Pattern isn't exported from ByteTrie, so can only

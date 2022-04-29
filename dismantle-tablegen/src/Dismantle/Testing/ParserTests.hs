@@ -12,6 +12,7 @@ import qualified System.FilePath.Glob as G
 import System.Directory (canonicalizePath)
 import System.Exit (die)
 import System.FilePath (takeFileName)
+import qualified Text.Regex.TDFA as TDFA
 
 import qualified Dismantle.Tablegen as D
 import qualified Dismantle.Tablegen.Parser.Types as D
@@ -32,7 +33,7 @@ requireGlob ty pat = do
 mkTest :: FilePath -> T.TestTree
 mkTest p = T.testCase (takeFileName p) $ do
   t <- TS.readFile p
-  let (Right re) = RE.mkRegex "^def "
+  re <- TDFA.makeRegexM "^def "
   let expectedDefCount = RE.countMatches t re
   case D.parseTablegen p (TL.fromStrict t) of
     Left err ->
