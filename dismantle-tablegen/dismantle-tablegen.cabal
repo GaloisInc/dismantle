@@ -66,7 +66,7 @@ library
                        hashable,
                        unordered-containers,
                        zlib >= 0.6 && < 0.7,
-                       text >= 1 && < 2,
+                       text >= 1 && < 2.1,
                        vector,
                        tasty >= 0.10,
                        tasty-hunit,
