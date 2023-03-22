@@ -32,6 +32,7 @@ a lookup will retrieve all elements with a key that matches the provided mask.
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Data.BitMask
   (
