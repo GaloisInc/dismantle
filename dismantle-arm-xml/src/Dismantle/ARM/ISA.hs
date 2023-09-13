@@ -4,6 +4,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-|
 Module           : Dismantle.ARM.ISA
 Copyright        : (c) Galois, Inc 2019-2020
@@ -119,7 +120,7 @@ operandPayloadTypes =
 -- | QuasiMask / Psuedo-operand
 
 newtype QuasiMask n = QuasiMask { unQuasiMask :: W.W n }
-  deriving (Eq, Ord, Show)
+  deriving (Eq, Ord, Show, Enum, Num, Real, Integral)
 
 quasimask :: KnownNat n => Word32 -> QuasiMask n
 quasimask = QuasiMask . fromIntegral
