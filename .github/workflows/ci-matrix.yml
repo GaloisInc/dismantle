@@ -18,19 +18,19 @@ jobs:
     strategy:
       matrix:
         arch: ['tablegen', 'arm', 'thumb', 'ppc', 'aarch64', 'arm-xml']
-        ghc: ['8.10.7', '9.2.7', '9.4.4']
-        cabal: ['3.8.1.0']
+        ghc: ['9.2.7', '9.4.4', '9.6.2']
+        cabal: ['3.10.1.0']
         os: [ubuntu-latest, macOS-latest, windows-latest]
         exclude:
           # Only test macOS and Windows on the latest supported GHC versions
           - os: macOS-latest
-            ghc: 8.10.7
+            ghc: 9.2.7
           - os: macOS-latest
-            ghc: 9.2.7
-          - os: windows-latest
-            ghc: 8.10.7
+            ghc: 9.4.4
           - os: windows-latest
             ghc: 9.2.7
+          - os: windows-latest
+            ghc: 9.4.4
           # This configuration runs out of memory
           - os: windows-latest
             arch: aarch64
@@ -42,7 +42,7 @@ jobs:
       with:
         submodules: 'true'
 
-    - uses: haskell/actions/setup@v1
+    - uses: haskell-actions/setup@v2
       id: setup-haskell-cabal
       name: Setup Haskell
       with:

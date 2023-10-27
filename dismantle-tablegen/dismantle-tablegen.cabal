@@ -50,7 +50,7 @@ library
   build-depends:       base >=4.10 && <5,
                        ghc-prim,
                        template-haskell,
-                       th-abstraction >= 0.2 && < 0.5,
+                       th-abstraction >= 0.2 && < 0.6,
                        bytestring,
                        binary,
                        pretty,
