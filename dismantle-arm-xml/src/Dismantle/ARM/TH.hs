@@ -31,6 +31,7 @@ import qualified Codec.Compression.GZip as CCG
 import qualified Control.Monad.Fail as Fail
 import qualified Data.Binary as DB
 import qualified Data.BitMask as BM
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List as List
 import qualified Data.Map as M
@@ -75,7 +76,18 @@ genISA isa xmldirPath encIndexFile aslInstrs parseTables logFile = do
     armISADesc isa xmldirPath encIndexFile aslInstrs handle
   TH.runIO $ putStrLn "Successfully generated ISA description."
   aslMapDesc <- mkASLMap encodingops
-  inputBytes <- TH.runIO $ mapM LBS.readFile files
+  -- The full ASL specification consists of ~590 files, so we avoid using lazy
+  -- IO to open each file. If we did, we would have all files open
+  -- simultaneously, which would exceed the maximum number of file descriptors
+  -- allowed by default on many operating systems (e.g., macOS, which has a
+  -- default maximum of 256).
+  --
+  -- Instead of using LBS.readFile (which uses lazy IO), we use BS.readFile,
+  -- which reads the entire contents of each file into memory and then closes
+  -- the file. This ensures that we only have one of the ~590 files open at a
+  -- time. This comes at the expense of loading more things into memory
+  -- upfront, but each of these files are relatively small (~15K or so).
+  inputBytes <- TH.runIO $ mapM (fmap LBS.fromStrict . BS.readFile) files
   let hash = DTL.computeHash inputBytes
   let asMaybeString :: DB.Get (Maybe String)
       asMaybeString = DB.get
