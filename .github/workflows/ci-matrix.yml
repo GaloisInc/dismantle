@@ -68,6 +68,10 @@ jobs:
 
     - uses: actions/cache/save@v4
       name: Save cabal store cache
+      # Always save the cache, even if a previous step fails. (By default, the
+      # `cache` action will skip saving the cache, which would require every
+      # subsequent CI job to rebuild the dependencies until there is a
+      # successful job.)
       if: always()
       with:
         path: ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
