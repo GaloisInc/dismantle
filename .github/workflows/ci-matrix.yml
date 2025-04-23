@@ -58,8 +58,9 @@ jobs:
     - name: Build
       run: |
         cp cabal.project.newbuild cabal.project
-        cabal v2-configure pkg:dismantle-${{ matrix.arch }} --write-ghc-environment-files=always -j1
-        cabal v2-build pkg:dismantle-${{ matrix.arch }}
+        cabal v2-configure pkg:dismantle-${{ matrix.arch }} --write-ghc-environment-files=always
+        cabal v2-build pkg:dismantle-${{ matrix.arch }} --only-dependencies --semaphore
+        cabal v2-build pkg:dismantle-${{ matrix.arch }} -j1
 
     - name: Test
       if: runner.os == 'Linux'
