@@ -19,7 +19,7 @@ jobs:
       matrix:
         arch: ['tablegen', 'arm', 'thumb', 'ppc', 'aarch64', 'arm-xml']
         ghc: ['9.6.7', '9.8.4', '9.10.1']
-        cabal: ['3.10.3.0']
+        cabal: ['3.14.2.0']
         os: [ubuntu-latest, macOS-latest, windows-latest]
         exclude:
           # Only test macOS and Windows on the latest supported GHC versions
