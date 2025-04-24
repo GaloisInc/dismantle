@@ -1,12 +1,5 @@
-# This CI configuration is inspired by
-#
-# https://kodimensional.dev/github-actions
-#
-# It builds with a majority of the latest compiler releases from each major GHC
-# revision on Linux and builds macOS and Windows against the latest GHC.
 name: CI Matrix
 
-# Trigger the workflow on push or pull request, but only for the master branch
 on:
   pull_request:
   push:
@@ -14,66 +7,35 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} ghc-${{ matrix.ghc }} dismantle-${{ matrix.pkg }}
     strategy:
       matrix:
-        arch: ['tablegen', 'arm', 'thumb', 'ppc', 'aarch64', 'arm-xml']
         ghc: ['9.6.7', '9.8.4', '9.10.1']
         cabal: ['3.14.2.0']
         os: [ubuntu-latest, macOS-latest, windows-latest]
+        pkg: ['tablegen', 'arm', 'thumb', 'ppc', 'aarch64', 'arm-xml']
         exclude:
           # Only test macOS and Windows on the latest supported GHC versions
           - os: macOS-latest
-            ghc: 9.6.6
+            ghc: 9.6.7
           - os: macOS-latest
             ghc: 9.8.4
           - os: windows-latest
-            ghc: 9.6.6
+            ghc: 9.6.7
           - os: windows-latest
             ghc: 9.8.4
           # This configuration runs out of memory
           - os: windows-latest
-            arch: aarch64
-
-    name: GHC ${{ matrix.ghc }} on ${{ matrix.os }} dismantle-${{ matrix.arch }}
-
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: 'true'
-
-    - uses: haskell-actions/setup@v2
-      id: setup-haskell-cabal
-      name: Setup Haskell
-      with:
-        ghc-version: ${{ matrix.ghc }}
-        cabal-version: ${{ matrix.cabal }}
-
-    - uses: actions/cache/restore@v4
-      name: Restore cabal store cache
-      with:
-        path: ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
-        key: ${{ runner.os }}-${{ matrix.ghc }}-cabal
-
-    - name: Build
-      run: |
+            pkg: aarch64
+    uses: GaloisInc/.github/.github/workflows/haskell-ci.yml@v1
+    with:
+      build-targets: dismantle-${{ matrix.pkg }}
+      check: false
+      ghc: ${{ matrix.ghc }}
+      os: ${{ matrix.os }}
+      pre-hook: |
         cp cabal.project.newbuild cabal.project
-        cabal v2-configure pkg:dismantle-${{ matrix.arch }} --write-ghc-environment-files=always
-        cabal v2-build pkg:dismantle-${{ matrix.arch }} --only-dependencies --semaphore
-        cabal v2-build pkg:dismantle-${{ matrix.arch }} -j1
-
-    - name: Test
-      if: runner.os == 'Linux'
-      run: |
-        cabal v2-test pkg:dismantle-${{ matrix.arch }}
-
-    - uses: actions/cache/save@v4
-      name: Save cabal store cache
-      # Always save the cache, even if a previous step fails. (By default, the
-      # `cache` action will skip saving the cache, which would require every
-      # subsequent CI job to rebuild the dependencies until there is a
-      # successful job.)
-      if: always()
-      with:
-        path: ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
-        key: ${{ runner.os }}-${{ matrix.ghc }}-cabal
+      sdist-targets: dismantle-${{ matrix.pkg }}
+      submodules: "true"
+      test-targets: dismantle-${{ matrix.pkg }}
+      test: ${{ startsWith(matrix.os, 'ubuntu') }}
