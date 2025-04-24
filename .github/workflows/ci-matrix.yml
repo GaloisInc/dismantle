@@ -1,12 +1,5 @@
-# This CI configuration is inspired by
-#
-# https://kodimensional.dev/github-actions
-#
-# It builds with a majority of the latest compiler releases from each major GHC
-# revision on Linux and builds macOS and Windows against the latest GHC.
 name: CI Matrix
 
-# Trigger the workflow on push or pull request, but only for the master branch
 on:
   pull_request:
   push:
@@ -24,11 +17,11 @@ jobs:
         exclude:
           # Only test macOS and Windows on the latest supported GHC versions
           - os: macOS-latest
-            ghc: 9.6.6
+            ghc: 9.6.7
           - os: macOS-latest
             ghc: 9.8.4
           - os: windows-latest
-            ghc: 9.6.6
+            ghc: 9.6.7
           - os: windows-latest
             ghc: 9.8.4
           # This configuration runs out of memory
