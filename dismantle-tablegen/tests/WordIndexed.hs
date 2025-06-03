@@ -5,7 +5,7 @@
 module WordIndexed ( wordIndexedTests ) where
 
 import Control.Exception
-import GHC.Exception ( ErrorCall(..) )
+import GHC.Exception ( ErrorCall(ErrorCall) )
 import           Data.Bits
 import           Data.Monoid ( (<>) )
 import           Test.Tasty
@@ -26,7 +26,7 @@ wordIndexedTests =
                         "unexpected equality of " <> show a <> " against " <> show b
         tstOverflow v = catch (evaluate (fromInteger v :: W 5) >>=
                               \wv -> "expected overflow exception" @=? "success with " <> show wv)
-                              (\(ErrorCallWithLocation e _l) ->
+                              (\(ErrorCall e) ->
                                    "Value " <> show v <> " too large for Word.Indexed of size 5" @=? e)
     in
     [ let wi = (w 65535 :: W 5) in testCase "w constructor" $ do
@@ -101,21 +101,21 @@ wordIndexedTests =
 
         catch (evaluate (wi1 == 65530) >>=
                \_ -> "expected overflow exception" @=? "success with wi1 == 65530")
-              (\(ErrorCallWithLocation e _l) -> "Value 65530 too large for Word.Indexed of size 5" @=? e)
+              (\(ErrorCall e) -> "Value 65530 too large for Word.Indexed of size 5" @=? e)
         tstNEq wi1 (w 65530 :: W 5)
 
         wi1 @=? (w 65535 :: W 5)
         wi1 @=? (w 32767 :: W 5)
         catch (evaluate (65530 == wi1) >>=
                \_ -> "expected overflow exception" @=? "success with 65530 == wi1")
-              (\(ErrorCallWithLocation e _l) -> "Value 65530 too large for Word.Indexed of size 5" @=? e)
+              (\(ErrorCall e) -> "Value 65530 too large for Word.Indexed of size 5" @=? e)
         tstNEq (w 65530 :: W 5) wi1
         (w 65535 :: W 5) @=? wi1
         (w 32767 :: W 5) @=? wi1
 
         catch (evaluate (wi2 == 31) >>=
                \_ -> "expected overflow exception" @=? "success with wi2 == 31")
-              (\(ErrorCallWithLocation e _l) -> "Value 31 too large for Word.Indexed of size 4" @=? e)
+              (\(ErrorCall e) -> "Value 31 too large for Word.Indexed of size 4" @=? e)
 
     , let wi1 = w 65535 :: W 5
           wi2 = w 65535 :: W 4
@@ -140,7 +140,7 @@ wordIndexedTests =
         tstOrd wi1 31 EQ
         catch (evaluate (compare wi1 65530) >>=
                \_ -> "expected overflow exception" @=? "success with compare 65530 wi1 = GT")
-              (\(ErrorCallWithLocation e _l) -> "Value 65530 too large for Word.Indexed of size 5" @=? e)
+              (\(ErrorCall e) -> "Value 65530 too large for Word.Indexed of size 5" @=? e)
         tstOrd wi1 (w 65530 :: W 5) GT  -- hi bits of 65530 are dropped
         tstOrd (w 0xffff01a :: W 5) (w 0x51f :: W 5) LT -- only low bits count
 

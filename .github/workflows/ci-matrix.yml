@@ -10,20 +10,20 @@ jobs:
     name: ${{ matrix.os }} ghc-${{ matrix.ghc }} dismantle-${{ matrix.pkg }}
     strategy:
       matrix:
-        ghc: ['9.6.7', '9.8.4', '9.10.1']
         cabal: ['3.14.2.0']
+        ghc: ['9.8.4', '9.10.1', '9.12.2']
         os: [ubuntu-latest, macOS-latest, windows-latest]
         pkg: ['tablegen', 'arm', 'thumb', 'ppc', 'aarch64', 'arm-xml']
         exclude:
           # Only test macOS and Windows on the latest supported GHC versions
           - os: macOS-latest
-            ghc: 9.6.7
+            ghc: 9.8.4
           - os: macOS-latest
-            ghc: 9.8.4
-          - os: windows-latest
-            ghc: 9.6.7
+            ghc: 9.10.1
           - os: windows-latest
             ghc: 9.8.4
+          - os: windows-latest
+            ghc: 9.10.1
           # This configuration runs out of memory
           - os: windows-latest
             pkg: aarch64
@@ -31,6 +31,12 @@ jobs:
     with:
       build-targets: dismantle-${{ matrix.pkg }}
       check: false
+      # See Note [Parallelism] in `haskell-ci.yml` for why `--ghc-options='-j'`
+      # and `--semaphore`.
+      #
+      # For `--allow-newer`, see
+      # https://github.com/hedgehogqa/haskell-hedgehog-classes/issues/63
+      configure-flags: --enable-tests --ghc-options='-Werror=compat -Werror=default -j' --semaphore --allow-newer=hedgehog-classes:base
       ghc: ${{ matrix.ghc }}
       os: ${{ matrix.os }}
       pre-hook: |
