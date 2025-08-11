@@ -172,11 +172,10 @@ parseMask maskStr |
 parseMask str = error $ "parseMask: unexpected string: " ++ show str
 
 instance TH.Lift (BM.SomeBitMask BM.QuasiBit) where
-  lift smask = do
+  lift = TH.unTypeCode . TH.liftTyped
+  liftTyped smask = do
     let str = printMask smask
-    [e| parseMask str |]
-  liftTyped _ =
-    error "TODO: liftTyped not yet supported on (SomeBitMask QuasiBit)"
+    [|| parseMask str ||]
 
 deriving instance TH.Lift ASL.FieldConstraint
 deriving instance TH.Lift ASL.Encoding
