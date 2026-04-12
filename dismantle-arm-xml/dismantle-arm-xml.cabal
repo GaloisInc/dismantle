@@ -30,7 +30,8 @@ library
   -- other-extensions:
   build-depends:       asl-parser,
                        base >=4.10 && < 5,
-                       lens,
+                       microlens,
+                       microlens-th,
                        binary,
                        bytestring,
                        containers,
@@ -70,7 +71,8 @@ executable dismantle-arm-xml-tablegen
                  Data.BitMask
                  Data.PropTree
   build-depends: base,
-                 lens,
+                 microlens,
+                 microlens-th,
                  bytestring,
                  directory,
                  async,
