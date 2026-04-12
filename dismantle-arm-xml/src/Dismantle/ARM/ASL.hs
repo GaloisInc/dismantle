@@ -47,8 +47,6 @@ import           Prelude hiding ( fail )
 
 import           Control.Exception ( try )
 import qualified Control.Exception as E
-import           Control.Lens ( (&), (%~) )
-import qualified Control.Lens as L
 import           Control.Monad ( foldM, forM, forM_, zipWithM, void, unless, liftM )
 import           Control.Monad.Fail
 import           Control.Monad.Trans ( lift, liftIO, MonadIO )
@@ -59,6 +57,9 @@ import qualified Control.Monad.Reader as MR
 import qualified Control.Monad.Writer as MW
 import           Control.Monad.Except ( throwError, ExceptT, MonadError )
 import qualified Control.Monad.Except as ME
+
+import           Lens.Micro ( (&), (%~) )
+import qualified Lens.Micro.TH as L
 
 import           Data.Maybe ( catMaybes, fromMaybe )
 import qualified Data.List.NonEmpty as NE
