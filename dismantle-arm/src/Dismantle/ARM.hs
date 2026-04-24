@@ -1,12 +1,3 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveLift #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -fno-spec-constr -fno-specialise -fmax-simplifier-iterations=1 -fno-call-arity #-}
 module Dismantle.ARM (
   Instruction,
   AnnotatedInstruction,
@@ -21,19 +12,11 @@ module Dismantle.ARM (
   disassembleInstruction,
   assembleInstruction,
   ppInstruction
-  )where
+  ) where
 
-import Data.Parameterized.List ( List(..) )
-
-import Dismantle.ARM.ISA ( isa )
-import Dismantle.Instruction
-import Dismantle.Tablegen.TH ( genISA, genInstances )
-import Dismantle.ARM.Operands (mkPred)
-
-$(genISA isa "data/ARM.tgen" [])
-$(return [])
-
--- We need a separate call to generate some instances, since the helper(s) that
--- create these instances use reify, which we can't call until we flush the TH
--- generation using the @$(return [])@ trick.
-$(genInstances)
+import Dismantle.Instruction ( GenericInstruction(..), Annotated(..) )
+import Dismantle.ARM.Assembler ( assembleInstruction )
+import Dismantle.ARM.Disassembler ( disassembleInstruction )
+import Dismantle.ARM.Opcodes ( Instruction, AnnotatedInstruction, List(..), Operand(..), OperandRepr(..), operandReprString, Opcode(..) )
+import Dismantle.ARM.Operands ( mkPred )
+import Dismantle.ARM.PrettyPrint ( ppInstruction )

@@ -16,6 +16,10 @@ library
                    Dismantle.AArch64.ISA
                    Dismantle.AArch64.Random
                    Dismantle.AArch64.Operands
+  other-modules:   Dismantle.AArch64.Opcodes
+                   Dismantle.AArch64.Disassembler
+                   Dismantle.AArch64.Assembler
+                   Dismantle.AArch64.PrettyPrint
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
                        parameterized-utils >= 1 && < 2.2,

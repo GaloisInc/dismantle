@@ -15,7 +15,11 @@ library
   exposed-modules: Dismantle.PPC
                    Dismantle.PPC.ISA
                    Dismantle.PPC.Random
-  other-modules: Dismantle.PPC.Operands
+  other-modules:   Dismantle.PPC.Opcodes
+                   Dismantle.PPC.Disassembler
+                   Dismantle.PPC.Assembler
+                   Dismantle.PPC.PrettyPrint
+                   Dismantle.PPC.Operands
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
                        parameterized-utils >= 1 && < 2.2,

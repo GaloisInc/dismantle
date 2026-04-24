@@ -16,6 +16,10 @@ library
                    Dismantle.ARM.ISA
                    Dismantle.ARM.Random
                    Dismantle.ARM.Operands
+  other-modules:   Dismantle.ARM.Opcodes
+                   Dismantle.ARM.Disassembler
+                   Dismantle.ARM.Assembler
+                   Dismantle.ARM.PrettyPrint
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
                        parameterized-utils >= 1 && < 2.2,

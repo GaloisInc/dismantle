@@ -1,22 +1,3 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveLift #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -fno-spec-constr -fno-specialise -fmax-simplifier-iterations=1 -fno-call-arity #-}
--- Dump TH splices to two files on disk. The generated file
--- Dismantle/PPC.dump-splices will contain all splices, and not be
--- valid Haskell, while the generated file Dismantle/PPC.th.hs will
--- have only the top-level splices, and will be valid Haskell. The
--- second file can be used when generating TAGS.
-{-# OPTIONS_GHC -ddump-splices -ddump-to-file -dth-dec-file #-}
-#if MIN_VERSION_base(4, 14, 0)
-{-# OPTIONS_GHC -fbinary-blob-threshold=5000 #-}
-#endif
 -- | Description: PPC opcodes generated from LLVM .tgen file
 --
 -- PPC opcodes generated from LLVM .tgen file.
@@ -100,19 +81,11 @@ module Dismantle.PPC (
   disassembleInstruction,
   assembleInstruction,
   ppInstruction
-  )where
+  ) where
 
-import Data.Parameterized.List ( List(..) )
-
-import Dismantle.Instruction
+import Dismantle.Instruction ( GenericInstruction(..), Annotated(..) )
+import Dismantle.PPC.Assembler ( assembleInstruction )
+import Dismantle.PPC.Disassembler ( disassembleInstruction )
+import Dismantle.PPC.Opcodes ( Instruction, AnnotatedInstruction, List(..), Operand(..), OperandRepr(..), operandReprString, Opcode(..) )
 import Dismantle.PPC.Operands
-import Dismantle.PPC.ISA ( isa )
-import Dismantle.Tablegen.TH ( genISA, genInstances )
-
-$(genISA isa "data/PPC.tgen" ["data/override"])
-$(return [])
-
--- We need a separate call to generate some instances, since the helper(s) that
--- create these instances use reify, which we can't call until we flush the TH
--- generation using the @$(return [])@ trick.
-$(genInstances)
+import Dismantle.PPC.PrettyPrint ( ppInstruction )

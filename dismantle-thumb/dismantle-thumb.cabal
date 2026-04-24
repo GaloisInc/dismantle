@@ -16,6 +16,10 @@ library
                    Dismantle.Thumb.ISA
                    Dismantle.Thumb.Operands
                    Dismantle.Thumb.Random
+  other-modules:   Dismantle.Thumb.Opcodes
+                   Dismantle.Thumb.Disassembler
+                   Dismantle.Thumb.Assembler
+                   Dismantle.Thumb.PrettyPrint
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
                        parameterized-utils >= 1 && < 2.2,
