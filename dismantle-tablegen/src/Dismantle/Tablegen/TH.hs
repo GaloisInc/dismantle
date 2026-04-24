@@ -12,6 +12,10 @@
 module Dismantle.Tablegen.TH (
   genISA,
   genISADesc,
+  genOpcodeTypes,
+  genDisassembler,
+  genAssembler,
+  genPrettyPrinter,
   genInstances,
   genISARandomHelpers,
   -- * More internal helpers
@@ -122,24 +126,70 @@ genISADesc isa desc paths mtrie = do
   case isaErrors desc of
     [] -> return ()
     errs -> reportWarning ("Unhandled instruction definitions for ISA: " ++ show (length errs))
+  opcodeDecls <- mkOpcodeTypeDecls isa desc
+  ppDef <- mkPrettyPrinter desc
+  parserDef <- mkParser isa desc mtrie
+  asmDef <- mkAssembler isa desc
+  return $ concat [opcodeDecls, ppDef, parserDef, asmDef]
 
+-- | Generate only the opcode/operand types, repr types, instruction aliases,
+-- and getInstructionTag helper. Intended for use in a dedicated @Opcodes@
+-- sub-module; the disassembler, assembler, and pretty-printer modules can then
+-- import that sub-module and each be compiled in parallel.
+genOpcodeTypes :: ISA -> FilePath -> [FilePath] -> DecsQ
+genOpcodeTypes isa path overridePaths = do
+  desc <- loadISA isa path overridePaths
+  qAddDependentFile path
+  mkOpcodeTypeDecls isa desc
+
+-- | Generate only the disassembler (@disassembleInstruction@).
+-- The opcode/operand types must already be in scope (i.e. import the
+-- corresponding @Opcodes@ module before this splice).
+genDisassembler :: ISA -> FilePath -> [FilePath] -> DecsQ
+genDisassembler isa path overridePaths = do
+  desc <- loadISA isa path overridePaths
+  qAddDependentFile path
+  mkParser isa desc Nothing
+
+-- | Generate only the assembler (@assembleInstruction@).
+-- The opcode/operand types must already be in scope.
+genAssembler :: ISA -> FilePath -> [FilePath] -> DecsQ
+genAssembler isa path overridePaths = do
+  desc <- loadISA isa path overridePaths
+  qAddDependentFile path
+  mkAssembler isa desc
+
+-- | Generate only the pretty-printer (@ppInstruction@).
+-- The opcode/operand types must already be in scope.
+genPrettyPrinter :: ISA -> FilePath -> [FilePath] -> DecsQ
+genPrettyPrinter isa path overridePaths = do
+  desc <- loadISA isa path overridePaths
+  qAddDependentFile path
+  mkPrettyPrinter desc
+
+-- | Shared helper: all declarations that belong in the Opcodes module.
+mkOpcodeTypeDecls :: ISA -> ISADescriptor -> Q [Dec]
+mkOpcodeTypeDecls isa desc = do
   operandType <- mkOperandType isa desc >>= sequence
   opcodeType <- mkOpcodeType desc >>= sequence
   instrTypes <- mkInstructionAliases
   reprTypeDecls <- mkReprType isa >>= sequence
   setWrapperType <- [d| newtype NESetWrapper o p = NESetWrapper { unwrapNESet :: (NES.Set ($(conT $ mkName "Opcode") o p)) } |]
-  ppDef <- mkPrettyPrinter desc
-  parserDef <- mkParser isa desc mtrie
-  asmDef <- mkAssembler isa desc
-  return $ concat [ operandType
-                  , opcodeType
-                  , reprTypeDecls
-                  , setWrapperType
-                  , instrTypes
-                  , ppDef
-                  , parserDef
-                  , asmDef
-                  ]
+  insTagTy <- [t| $(conT (mkName "Instruction")) -> Some $(conT (mkName "Opcode") `appT` (conT (mkName "Operand"))) |]
+  tagExpr <- [e| Some $(varE $ mkName "t") |]
+  let insTagDec =
+        [ SigD insnTagName insTagTy
+        , FunD insnTagName [Clause [conPCompat 'Instruction [VarP (mkName "t"), WildP]] (NormalB tagExpr) []]
+        ]
+  let allDecls =
+        [ operandType
+        , opcodeType
+        , reprTypeDecls
+        , setWrapperType
+        , instrTypes
+        , insTagDec
+        ]
+  return $ concat allDecls
 
 
 loadTablegen :: FilePath -> IO Records
@@ -370,7 +420,6 @@ mkAssembler :: ISA -> ISADescriptor -> Q [Dec]
 mkAssembler isa desc = do
   insnName <- newName "insn"
   unparserTy <- [t| $(conT (mkName "Instruction")) -> LBS.ByteString |]
-  insTagTy <- [t| $(conT (mkName "Instruction")) -> Some $(conT (mkName "Opcode") `appT` (conT (mkName "Operand"))) |]
   pairsTy <- [t| M.Map (Some ($(conT (mkName "Opcode")) $(conT (mkName "Operand")))) ($(conT (mkName "Instruction")) -> LBS.ByteString) |]
   cases <- mapM (mkAsmCase isa) (isaInstructions desc)
 
@@ -383,7 +432,6 @@ mkAssembler isa desc = do
 
   pairsBody <- ListE <$> mapM mkTuple pairs
   mapExpr <- [e| M.fromList $(return pairsBody) |]
-  tagExpr <- [e| Some $(varE $ mkName "t") |]
 
   -- maybe (error "") ($ i) lookup (getOpcode isnName) (Data.Map.fromList pairs)
   body <- [e| maybe (error "BUG: Unhandled instruction in assembler")
@@ -393,14 +441,9 @@ mkAssembler isa desc = do
   let pairsExpr = [ SigD pairsExprName pairsTy
                   , ValD (VarP pairsExprName) (NormalB mapExpr) []
                   ]
-      insTagExpr = [ SigD insnTagName insTagTy
-                   , FunD insnTagName [Clause [conPCompat 'Instruction [VarP (mkName "t"), WildP]] (NormalB tagExpr) []]
-                   ]
-
 
   return $ decls <>
            pairsExpr <>
-           insTagExpr <>
            [ SigD unparserName unparserTy
            , FunD unparserName [Clause [VarP insnName] (NormalB body) []]
            ]
