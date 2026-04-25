@@ -1,7 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -fno-spec-constr -fno-specialise -fmax-simplifier-iterations=1 -fno-call-arity #-}
 {-# OPTIONS_GHC -ddump-splices -ddump-to-file -dth-dec-file #-}
 #if MIN_VERSION_base(4, 14, 0)
 {-# OPTIONS_GHC -fbinary-blob-threshold=5000 #-}
