@@ -10,7 +10,6 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ViewPatterns #-}
 module Dismantle.Tablegen.TH (
-  genISA,
   genISADesc,
   genOpcodeTypes,
   genDisassembler,
@@ -109,11 +108,6 @@ loadISA isa path overridePaths = do
   initialRecs <- runIO $ loadTablegen path
   overrides <- loadOverrides overridePaths
   return $ filterISA isa $ applyOverrides overrides initialRecs
-
-genISA :: ISA -> FilePath -> [FilePath] -> DecsQ
-genISA isa path overridePaths = do
-  desc <- loadISA isa path overridePaths
-  genISADesc isa desc [path] Nothing
 
 -- | This function creates all of the definitions for an ISA disassembler/assembler
 --
