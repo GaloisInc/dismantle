@@ -105,7 +105,7 @@ loadISA :: ISA
         -- used to override entries in the base tablegen data.
         -> Q ISADescriptor
 loadISA isa path overridePaths = do
-  initialRecs <- runIO $ loadTablegen path
+  initialRecs <- loadTablegen path
   overrides <- loadOverrides overridePaths
   return $ filterISA isa $ applyOverrides overrides initialRecs
 
@@ -133,7 +133,6 @@ genISADesc isa desc paths mtrie = do
 genOpcodeTypes :: ISA -> FilePath -> [FilePath] -> DecsQ
 genOpcodeTypes isa path overridePaths = do
   desc <- loadISA isa path overridePaths
-  qAddDependentFile path
   mkOpcodeTypeDecls isa desc
 
 -- | Generate only the disassembler (@disassembleInstruction@).
@@ -142,7 +141,6 @@ genOpcodeTypes isa path overridePaths = do
 genDisassembler :: ISA -> FilePath -> [FilePath] -> DecsQ
 genDisassembler isa path overridePaths = do
   desc <- loadISA isa path overridePaths
-  qAddDependentFile path
   mkParser isa desc Nothing
 
 -- | Generate only the assembler (@assembleInstruction@).
@@ -150,7 +148,6 @@ genDisassembler isa path overridePaths = do
 genAssembler :: ISA -> FilePath -> [FilePath] -> DecsQ
 genAssembler isa path overridePaths = do
   desc <- loadISA isa path overridePaths
-  qAddDependentFile path
   mkAssembler isa desc
 
 -- | Generate only the pretty-printer (@ppInstruction@).
@@ -158,7 +155,6 @@ genAssembler isa path overridePaths = do
 genPrettyPrinter :: ISA -> FilePath -> [FilePath] -> DecsQ
 genPrettyPrinter isa path overridePaths = do
   desc <- loadISA isa path overridePaths
-  qAddDependentFile path
   mkPrettyPrinter desc
 
 -- | Shared helper: all declarations that belong in the Opcodes module.
@@ -186,9 +182,10 @@ mkOpcodeTypeDecls isa desc = do
   return $ concat allDecls
 
 
-loadTablegen :: FilePath -> IO Records
+loadTablegen :: FilePath -> Q Records
 loadTablegen path = do
-  txt <- TL.readFile path
+  txt <- runIO $ TL.readFile path
+  qAddDependentFile path
   case parseTablegen path txt of
     Left err -> fail err
     Right defs -> return defs
@@ -222,8 +219,7 @@ loadOverridesFromDir path = do
 
             let go [] = return emptyRecords
                 go (f:rest) = do
-                    overrides <- runIO $ loadTablegen f
-                    qAddDependentFile f
+                    overrides <- loadTablegen f
                     desc <- go rest
                     return $ applyOverrides overrides desc
 
