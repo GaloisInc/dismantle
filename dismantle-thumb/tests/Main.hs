@@ -13,8 +13,11 @@ import Dismantle.Testing
 import Dismantle.Testing.ParserTests (parserTests)
 import qualified Dismantle.Testing.Regex as RE
 
-import qualified Dismantle.Thumb as Thumb
 import qualified Dismantle.Thumb.ISA as Thumb
+import qualified Dismantle.Thumb.Disassembler as Thumb
+import qualified Dismantle.Thumb.Assembler as Thumb
+import qualified Dismantle.Thumb.PrettyPrint as Thumb
+import qualified Dismantle.Thumb.Operands as Thumb
 
 ignored :: [(FilePath, [Word64])]
 ignored =

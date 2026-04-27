@@ -1,7 +1,8 @@
+cabal-version:       3.0
 name:                dismantle-aarch64
 version:             0.1.0.0
 synopsis:            A disassembler and assembler for AArch64 (ARM 64-bit)
-license:             BSD3
+license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Jonathan Daugherty
 maintainer:          jtd@galois.com
@@ -9,29 +10,59 @@ copyright:           2017 Jonathan Daugherty, Tristan Ravitch
 category:            Development
 build-type:          Simple
 extra-source-files:  ChangeLog.md, data/AArch64.tgen
-cabal-version:       >=1.10
 
-library
-  exposed-modules: Dismantle.AArch64
-                   Dismantle.AArch64.ISA
-                   Dismantle.AArch64.Random
-                   Dismantle.AArch64.Operands
-  other-modules:   Dismantle.AArch64.Opcodes
-                   Dismantle.AArch64.Disassembler
-                   Dismantle.AArch64.Assembler
-                   Dismantle.AArch64.PrettyPrint
+common deps
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
                        parameterized-utils >= 1 && < 2.2,
                        dismantle-tablegen,
-                       dismantle-arm,
                        bytestring,
                        binary,
                        containers,
                        pretty,
                        split
-  hs-source-dirs:      src
   default-language:    Haskell2010
+
+library opcodes
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.AArch64.ISA
+                 , Dismantle.AArch64.Opcodes
+                 , Dismantle.AArch64.Operands
+  build-depends: dismantle-arm:opcodes
+  hs-source-dirs: src/opcodes
+
+library disassembler
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.AArch64.Disassembler
+  build-depends: dismantle-aarch64:opcodes
+               , dismantle-arm:opcodes
+  hs-source-dirs: src/disassembler
+
+library assembler
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.AArch64.Assembler
+  build-depends: dismantle-aarch64:opcodes
+               , dismantle-arm:opcodes
+  hs-source-dirs: src/assembler
+
+library prettyprinter
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.AArch64.PrettyPrint
+  build-depends: dismantle-aarch64:opcodes
+               , dismantle-arm:opcodes
+  hs-source-dirs: src/prettyprinter
+
+library testing
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.AArch64.Random
+  build-depends: dismantle-aarch64:opcodes
+               , dismantle-arm:opcodes
+  hs-source-dirs: src/testing
 
 test-suite dismantle-aarch64-tests
   default-language: Haskell2010
@@ -41,8 +72,11 @@ test-suite dismantle-aarch64-tests
   main-is: Main.hs
   build-depends: base,
                  dismantle-tablegen,
-                 dismantle-aarch64,
-                 dismantle-arm,
+                 dismantle-arm:opcodes,
+                 dismantle-aarch64:opcodes,
+                 dismantle-aarch64:disassembler,
+                 dismantle-aarch64:assembler,
+                 dismantle-aarch64:prettyprinter,
                  tasty,
                  pretty,
                  text

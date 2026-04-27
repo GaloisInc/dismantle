@@ -10,8 +10,10 @@ import Dismantle.Testing
 import Dismantle.Testing.ParserTests (parserTests)
 import qualified Dismantle.Testing.Regex as RE
 
-import qualified Dismantle.PPC as PPC
 import qualified Dismantle.PPC.ISA as PPC
+import qualified Dismantle.PPC.Disassembler as PPC
+import qualified Dismantle.PPC.Assembler as PPC
+import qualified Dismantle.PPC.PrettyPrint as PPC
 
 ppc :: ArchTestConfig
 ppc = ATC { testingISA = PPC.isa

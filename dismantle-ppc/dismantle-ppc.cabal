@@ -1,7 +1,8 @@
+cabal-version:       3.0
 name:                dismantle-ppc
 version:             0.1.0.0
 synopsis:            A disassembler and assembler for PPC
-license:             BSD3
+license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Tristan Ravitch
 maintainer:          tristan@nochair.net
@@ -9,17 +10,8 @@ copyright:           2016-2017 Tristan Ravitch
 category:            Development
 build-type:          Simple
 extra-source-files:  ChangeLog.md, data/PPC.tgen, data/override/*.tgen
-cabal-version:       >=1.10
 
-library
-  exposed-modules: Dismantle.PPC
-                   Dismantle.PPC.ISA
-                   Dismantle.PPC.Random
-  other-modules:   Dismantle.PPC.Opcodes
-                   Dismantle.PPC.Disassembler
-                   Dismantle.PPC.Assembler
-                   Dismantle.PPC.PrettyPrint
-                   Dismantle.PPC.Operands
+common deps
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
                        parameterized-utils >= 1 && < 2.2,
@@ -27,8 +19,43 @@ library
                        bytestring,
                        binary,
                        pretty
-  hs-source-dirs:      src
   default-language:    Haskell2010
+
+library opcodes
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.PPC.ISA
+                 , Dismantle.PPC.Opcodes
+                 , Dismantle.PPC.Operands
+  hs-source-dirs: src/opcodes
+
+library disassembler
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.PPC.Disassembler
+  build-depends: dismantle-ppc:opcodes
+  hs-source-dirs: src/disassembler
+
+library assembler
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.PPC.Assembler
+  build-depends: dismantle-ppc:opcodes
+  hs-source-dirs: src/assembler
+
+library prettyprinter
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.PPC.PrettyPrint
+  build-depends: dismantle-ppc:opcodes
+  hs-source-dirs: src/prettyprinter
+
+library testing
+  import: deps
+  visibility: public
+  exposed-modules: Dismantle.PPC.Random
+  build-depends: dismantle-ppc:opcodes
+  hs-source-dirs: src/testing
 
 test-suite dismantle-ppc-tests
   default-language: Haskell2010
@@ -38,6 +65,9 @@ test-suite dismantle-ppc-tests
   main-is: Main.hs
   build-depends: base,
                  dismantle-tablegen,
-                 dismantle-ppc,
+                 dismantle-ppc:opcodes,
+                 dismantle-ppc:disassembler,
+                 dismantle-ppc:assembler,
+                 dismantle-ppc:prettyprinter,
                  tasty,
                  text
