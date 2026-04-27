@@ -15,8 +15,10 @@ import qualified Test.Tasty as T
 import           Test.Tasty.HUnit
 import           Text.PrettyPrint.HughesPJClass hiding ( (<>) )
 
-import qualified Dismantle.ARM as ARM
 import qualified Dismantle.ARM.ISA as ARM
+import qualified Dismantle.ARM.Disassembler as ARM
+import qualified Dismantle.ARM.Assembler as ARM
+import qualified Dismantle.ARM.PrettyPrint as ARM
 import           Dismantle.ARM.Operands
 import           Dismantle.Testing
 import           Dismantle.Testing.ParserTests ( parserTests )

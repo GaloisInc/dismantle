@@ -13,9 +13,11 @@ import Dismantle.Testing
 import Dismantle.Testing.ParserTests (parserTests)
 import qualified Dismantle.Testing.Regex as RE
 
-import qualified Dismantle.ARM as ARM
-import qualified Dismantle.AArch64 as AArch64
+import qualified Dismantle.ARM.Operands as ARM
 import qualified Dismantle.AArch64.ISA as AArch64
+import qualified Dismantle.AArch64.Disassembler as AArch64
+import qualified Dismantle.AArch64.Assembler as AArch64
+import qualified Dismantle.AArch64.PrettyPrint as AArch64
 
 ignored :: [(FilePath, [Word64])]
 ignored =

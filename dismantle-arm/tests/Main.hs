@@ -32,8 +32,11 @@ import           Data.Word (Word64)
 import qualified Test.Tasty as T
 import qualified Text.PrettyPrint.HughesPJClass as PP
 
-import qualified Dismantle.ARM as ARM
 import qualified Dismantle.ARM.ISA as ARM
+import qualified Dismantle.ARM.Disassembler as ARM
+import qualified Dismantle.ARM.Assembler as ARM
+import qualified Dismantle.ARM.PrettyPrint as ARM
+import qualified Dismantle.ARM.Operands as ARM
 import           Dismantle.Testing
 import           Dismantle.Testing.ParserTests ( parserTests )
 import qualified Dismantle.Testing.Regex as RE
