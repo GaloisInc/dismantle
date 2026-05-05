@@ -14,7 +14,7 @@ extra-source-files:  ChangeLog.md, data/AArch64.tgen
 common deps
   build-depends:       base >= 4.8 && < 5,
                        template-haskell,
-                       parameterized-utils >= 1 && < 2.2,
+                       parameterized-utils >= 1 && < 2.4,
                        dismantle-tablegen,
                        bytestring,
                        binary,
