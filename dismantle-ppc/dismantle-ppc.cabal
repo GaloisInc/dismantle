@@ -64,10 +64,13 @@ test-suite dismantle-ppc-tests
   hs-source-dirs: tests
   main-is: Main.hs
   build-depends: base,
+                 bytestring,
                  dismantle-tablegen,
                  dismantle-ppc:opcodes,
                  dismantle-ppc:disassembler,
                  dismantle-ppc:assembler,
                  dismantle-ppc:prettyprinter,
                  tasty,
+                 tasty-hunit,
+                 pretty,
                  text

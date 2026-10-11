@@ -73,7 +73,9 @@
 -- @ADD4o@ (i.e. @add.@) in the @PPC.tgen@. BUT WAIT! You should
 -- probably try 'disassembleInstruction' first, as explained above,
 -- because it's likely the opcode you want is defined, it just has a
--- weird LLVM name you've never heard of :P
+-- weird LLVM name you've never heard of :P. The overflow arithmetic
+-- overrides are an example where the upstream table omits architecturally
+-- valid combinations of the OE and Rc bits entirely.
 --
 -- See @SFE.Instrument.TrapArithOverflows.Arch.PPC@ in @sfe@ for
 -- concrete examples of converting PPC assembler to the

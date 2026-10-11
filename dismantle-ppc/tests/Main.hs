@@ -2,9 +2,12 @@
 module Main ( main ) where
 
 import Data.Char (isSpace)
+import qualified Data.ByteString.Lazy as LBS
 import qualified Data.List as L
 import qualified Test.Tasty as T
+import qualified Test.Tasty.HUnit as T
 import qualified Data.Text.Lazy as TL
+import qualified Text.PrettyPrint as PP
 
 import Dismantle.Testing
 import Dismantle.Testing.ParserTests (parserTests)
@@ -33,7 +36,30 @@ main :: IO ()
 main = do
   tg <- binaryTestSuite ppc "tests/bin"
   pt <- parserTests
-  T.defaultMain $ T.testGroup "dismantle-ppc" [tg, pt]
+  T.defaultMain $ T.testGroup "dismantle-ppc" [tg, pt, overflowOpcodeTests]
+
+overflowOpcodeTests :: T.TestTree
+overflowOpcodeTests =
+  T.testGroup "overflow arithmetic opcodes"
+    [ opcodeTest [0x7d, 0x04, 0x2e, 0x14] "addo r8, r4, r5"
+    , opcodeTest [0x7d, 0x04, 0x2c, 0x50] "subfo r8, r4, r5"
+    , opcodeTest [0x7d, 0x04, 0x2c, 0x51] "subfo. r8, r4, r5"
+    , opcodeTest [0x7d, 0x04, 0x04, 0xd0] "nego r8, r4"
+    , opcodeTest [0x7d, 0x04, 0x04, 0xd1] "nego. r8, r4"
+    , opcodeTest [0x7d, 0x04, 0x2d, 0xd6] "mullwo r8, r4, r5"
+    , opcodeTest [0x7d, 0x04, 0x2d, 0xd7] "mullwo. r8, r4, r5"
+    ]
+
+opcodeTest :: [Word] -> String -> T.TestTree
+opcodeTest bytes expected =
+  T.testCase expected $
+    case PPC.disassembleInstruction (LBS.pack (map fromIntegral bytes)) of
+      (4, Just instruction) ->
+        T.assertEqual "pretty-printed instruction"
+          expected
+          (PP.render (PPC.ppInstruction instruction))
+      result ->
+        T.assertFailure ("failed to decode instruction: " ++ show result)
 
 normalize :: TL.Text -> TL.Text
 normalize =
